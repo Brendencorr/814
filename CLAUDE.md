@@ -20,5 +20,20 @@ Never set max_tokens above 1500 in any netlify/functions/ file.
 - dashboard.html — private agent dashboard
 - All functions use the same handler pattern — only system prompts differ
 
-## Environment Variables
-ANTHROPIC_API_KEY — set in Netlify, never hardcode
+## Required Environment Variables
+- ANTHROPIC_API_KEY — Anthropic Claude API key (set in Netlify, never hardcode)
+- SUPABASE_URL — Supabase project URL
+- SUPABASE_ANON_KEY — Supabase publishable key
+- SUPABASE_SERVICE_KEY — Supabase secret key for server-side operations
+
+## Supabase
+The shared client is at netlify/functions/supabase-client.js.
+Always use SUPABASE_SERVICE_KEY (not SUPABASE_ANON_KEY) in functions — server-side only.
+All Supabase writes are non-blocking and non-fatal: if Supabase is unavailable, functions still return Claude's reply.
+
+Tables:
+- scout_history — topics/pillars covered each week (prevents repetition)
+- echo_scores — weekly performance metrics
+- published_posts — record of every post sent through the pipeline
+
+Migration file: supabase/migrations/001_initial.sql — run this in the Supabase SQL editor to create tables.

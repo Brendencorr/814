@@ -1,4 +1,5 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { getSupabaseClient } = require('./supabase-client');
 
 const SYSTEM_PROMPT = `You are Scout — the content research agent for The 8:14 Project (eight14.us).
 
@@ -96,6 +97,79 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Pull recent scout history from Supabase to avoid repeating topics
+async function getRecentHistory(supabase) {
+  try {
+    const { data, error } = await supabase
+      .from("scout_history")
+      .select("pillars_covered, topics_covered, top_theme")
+      .order("week_of", { ascending: false })
+      .limit(4);
+    if (error || !data || data.length === 0) return "";
+    const allTopics = data.flatMap((r) => r.topics_covered || []);
+    const allPillars = data.flatMap((r) => r.pillars_covered || []);
+    const themes = data.map((r) => r.top_theme).filter(Boolean);
+    return (
+      "\n\nTOPICS COVERED IN LAST 4 WEEKS — DO NOT REPEAT THESE:\n" +
+      allTopics.map((t) => `- ${t}`).join("\n") +
+      (allPillars.length
+        ? "\n\nPILLARS RECENTLY COVERED (rotate away from these if possible):\n" +
+          [...new Set(allPillars)].map((p) => `- ${p}`).join("\n")
+        : "") +
+      (themes.length
+        ? "\n\nRECENT TOP THEMES (do not repeat):\n" +
+          themes.map((t) => `- ${t}`).join("\n")
+        : "")
+    );
+  } catch (e) {
+    console.warn("scout_history fetch failed (non-fatal):", e.message);
+    return "";
+  }
+}
+
+// Parse pillars and topics from Scout's reply to store in history
+function parseScoutReply(reply) {
+  const pillars = [];
+  const topics = [];
+
+  // Extract Pillar: lines
+  const pillarMatches = reply.matchAll(/^Pillar:\s*(.+)$/gm);
+  for (const m of pillarMatches) {
+    const p = m[1].trim();
+    if (p && !pillars.includes(p)) pillars.push(p);
+  }
+
+  // Extract Topic: lines
+  const topicMatches = reply.matchAll(/^Topic:\s*(.+)$/gm);
+  for (const m of topicMatches) {
+    const t = m[1].trim();
+    if (t && !topics.includes(t)) topics.push(t);
+  }
+
+  // Extract top theme
+  const themeMatch = reply.match(/^TOP THEME:\s*(.+)$/m);
+  const topTheme = themeMatch ? themeMatch[1].trim() : null;
+
+  return { pillars, topics, topTheme };
+}
+
+// Write this week's scout run to Supabase
+async function saveScoutHistory(supabase, reply) {
+  try {
+    const { pillars, topics, topTheme } = parseScoutReply(reply);
+    const weekOf = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("scout_history").insert({
+      week_of: weekOf,
+      pillars_covered: pillars.length ? pillars : ["unknown"],
+      topics_covered: topics.length ? topics : ["unknown"],
+      top_theme: topTheme,
+    });
+    if (error) console.error("scout_history insert error:", error.message);
+  } catch (e) {
+    console.warn("saveScoutHistory failed (non-fatal):", e.message);
+  }
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
@@ -129,6 +203,18 @@ exports.handler = async function (event) {
       };
     }
 
+    // Fetch recent history from Supabase and prepend to message
+    let supabase = null;
+    let historyContext = "";
+    try {
+      supabase = getSupabaseClient();
+      historyContext = await getRecentHistory(supabase);
+    } catch (e) {
+      console.warn("Supabase init failed (non-fatal):", e.message);
+    }
+
+    const enrichedMessage = message + historyContext;
+
     const response = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -140,7 +226,7 @@ exports.handler = async function (event) {
         model: "claude-sonnet-4-6",
         max_tokens: 2000,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: message }],
+        messages: [{ role: "user", content: enrichedMessage }],
       }),
     });
 
@@ -150,12 +236,17 @@ exports.handler = async function (event) {
       return {
         statusCode: 502,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Upstream API error" }),
+        body: JSON.stringify({ error: "Upstream API error", detail: errorBody }),
       };
     }
 
     const data = await response.json();
     const reply = data.content && data.content[0] && data.content[0].text;
+
+    // Save this run to Supabase history (non-blocking)
+    if (supabase && reply) {
+      saveScoutHistory(supabase, reply);
+    }
 
     return {
       statusCode: 200,

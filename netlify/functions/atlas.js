@@ -1,4 +1,5 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { getSupabaseClient } = require('./supabase-client');
 
 const SYSTEM_PROMPT = `You are Atlas — the publishing and operations agent for The 8:14 Project (eight14.us).
 
@@ -89,6 +90,47 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Default schedule used when parsing Atlas reply
+const DEFAULT_SCHEDULE = [
+  { post_number: 1,  platform: "Instagram",  post_type: "Carousel (Educational)",   scheduled_time: "Monday 8am MT" },
+  { post_number: 2,  platform: "Instagram",  post_type: "Quote Graphic",             scheduled_time: "Monday 6pm MT" },
+  { post_number: 3,  platform: "Facebook",   post_type: "Caption Post",              scheduled_time: "Tuesday 10am MT" },
+  { post_number: 4,  platform: "Instagram",  post_type: "Carousel (Tool/Method)",    scheduled_time: "Wednesday 8am MT" },
+  { post_number: 5,  platform: "Instagram",  post_type: "Stories Repost",            scheduled_time: "Wednesday 12pm MT" },
+  { post_number: 6,  platform: "Facebook",   post_type: "Group Check-In",            scheduled_time: "Wednesday 6pm MT" },
+  { post_number: 7,  platform: "YouTube",    post_type: "Community Post",            scheduled_time: "Thursday 9am MT" },
+  { post_number: 8,  platform: "Instagram",  post_type: "Carousel (Story Arc)",      scheduled_time: "Thursday 6pm MT" },
+  { post_number: 9,  platform: "Facebook",   post_type: "Page Repost",               scheduled_time: "Friday 10am MT" },
+  { post_number: 10, platform: "Instagram",  post_type: "Caption Post",              scheduled_time: "Friday 6pm MT" },
+  { post_number: 11, platform: "Instagram",  post_type: "Carousel (Myth vs Reality)",scheduled_time: "Saturday 9am MT" },
+  { post_number: 12, platform: "Facebook",   post_type: "Group Weekly Check-In",     scheduled_time: "Sunday 8am MT" },
+];
+
+// Extract a short caption preview from Atlas's reply for a given post number
+function extractCaptionPreview(reply, postNum) {
+  const pattern = new RegExp(`POST:\\s*${postNum}[\\s\\S]*?CAPTION:\\s*([^\\n]+)`, "i");
+  const m = reply.match(pattern);
+  return m ? m[1].trim().slice(0, 200) : null;
+}
+
+// Save published posts to Supabase using the default schedule as the source of truth
+async function savePublishedPosts(supabase, reply) {
+  try {
+    const weekOf = new Date().toISOString().slice(0, 10);
+    const rows = DEFAULT_SCHEDULE.map((slot) => ({
+      week_of: weekOf,
+      post_number: slot.post_number,
+      platform: slot.platform,
+      post_type: slot.post_type,
+      caption_preview: extractCaptionPreview(reply, slot.post_number),
+    }));
+    const { error } = await supabase.from("published_posts").insert(rows);
+    if (error) console.error("published_posts insert error:", error.message);
+  } catch (e) {
+    console.warn("savePublishedPosts failed (non-fatal):", e.message);
+  }
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
@@ -143,12 +185,20 @@ exports.handler = async function (event) {
       return {
         statusCode: 502,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Upstream API error" }),
+        body: JSON.stringify({ error: "Upstream API error", detail: errorBody }),
       };
     }
 
     const data = await response.json();
     const reply = data.content && data.content[0] && data.content[0].text;
+
+    // Save published posts to Supabase (non-blocking)
+    try {
+      const supabase = getSupabaseClient();
+      savePublishedPosts(supabase, reply || "");
+    } catch (e) {
+      console.warn("Supabase init failed (non-fatal):", e.message);
+    }
 
     return {
       statusCode: 200,

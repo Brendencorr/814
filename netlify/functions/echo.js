@@ -1,4 +1,5 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { getSupabaseClient } = require('./supabase-client');
 
 const SYSTEM_PROMPT = `You are Echo — the analytics and optimization agent for The 8:14 Project (eight14.us).
 
@@ -91,6 +92,46 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Parse numeric values from the user's message to store in echo_scores
+function parseMetrics(message) {
+  const extract = (pattern) => {
+    const m = message.match(pattern);
+    return m ? parseInt(m[1], 10) || 0 : 0;
+  };
+  return {
+    email_signups: extract(/email signups[^:]*:\s*(\d+)/i),
+    chatbot_opens: extract(/chatbot opens[^:]*:\s*(\d+)/i),
+    instagram_saves: extract(/instagram saves[^:]*:\s*(\d+)/i),
+    link_clicks: extract(/link clicks[^:]*:\s*(\d+)/i),
+  };
+}
+
+// Parse biggest lever from Echo's reply
+function parseBiggestLever(reply) {
+  const m = reply.match(/THE SINGLE BIGGEST LEVER[^\n]*\n([\s\S]*?)(?=\n[A-Z]|\n---)/);
+  return m ? m[1].trim().slice(0, 500) : null;
+}
+
+// Save echo scores to Supabase
+async function saveEchoScores(supabase, message, reply) {
+  try {
+    const metrics = parseMetrics(message);
+    const biggestLever = parseBiggestLever(reply);
+    const weekOf = new Date().toISOString().slice(0, 10);
+    const { error } = await supabase.from("echo_scores").insert({
+      week_of: weekOf,
+      email_signups: metrics.email_signups,
+      chatbot_opens: metrics.chatbot_opens,
+      instagram_saves: metrics.instagram_saves,
+      link_clicks: metrics.link_clicks,
+      biggest_lever: biggestLever,
+    });
+    if (error) console.error("echo_scores insert error:", error.message);
+  } catch (e) {
+    console.warn("saveEchoScores failed (non-fatal):", e.message);
+  }
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
@@ -145,12 +186,20 @@ exports.handler = async function (event) {
       return {
         statusCode: 502,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Upstream API error" }),
+        body: JSON.stringify({ error: "Upstream API error", detail: errorBody }),
       };
     }
 
     const data = await response.json();
     const reply = data.content && data.content[0] && data.content[0].text;
+
+    // Save scores to Supabase (non-blocking)
+    try {
+      const supabase = getSupabaseClient();
+      saveEchoScores(supabase, message, reply || "");
+    } catch (e) {
+      console.warn("Supabase init failed (non-fatal):", e.message);
+    }
 
     return {
       statusCode: 200,

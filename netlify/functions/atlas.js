@@ -113,22 +113,77 @@ function extractCaptionPreview(reply, postNum) {
   return m ? m[1].trim().slice(0, 200) : null;
 }
 
-// Save published posts to Supabase using the default schedule as the source of truth
+// Call buffer-publish for a single post, return Buffer update ID
+async function publishToBuffer(siteUrl, text, profileIds, scheduledAt) {
+  if (!siteUrl || !profileIds.length) return null;
+  try {
+    const res = await fetch(`${siteUrl}/.netlify/functions/buffer-publish`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, profile_ids: profileIds, scheduled_at: scheduledAt }),
+    });
+    const data = await res.json();
+    if (data.success) return data.update_id || "scheduled";
+    console.warn("Buffer publish returned error:", data.error);
+    return null;
+  } catch (e) {
+    console.warn("publishToBuffer failed (non-fatal):", e.message);
+    return null;
+  }
+}
+
+// Save published posts to Supabase and optionally push to Buffer
 async function savePublishedPosts(supabase, reply) {
   try {
-    const weekOf = new Date().toISOString().slice(0, 10);
-    const rows = DEFAULT_SCHEDULE.map((slot) => ({
-      week_of: weekOf,
-      post_number: slot.post_number,
-      platform: slot.platform,
-      post_type: slot.post_type,
-      caption_preview: extractCaptionPreview(reply, slot.post_number),
-    }));
-    const { error } = await supabase.from("published_posts").insert(rows);
-    if (error) console.error("published_posts insert error:", error.message);
+    const weekOf     = new Date().toISOString().slice(0, 10);
+    const siteUrl    = process.env.URL || "";
+    const profileIds = (process.env.BUFFER_PROFILE_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const token      = process.env.BUFFER_API_TOKEN;
+
+    for (const slot of DEFAULT_SCHEDULE) {
+      const captionPreview = extractCaptionPreview(reply, slot.post_number);
+      let bufferUpdateId   = null;
+
+      // Only call Buffer if token + profile IDs are configured
+      if (token && profileIds.length && captionPreview) {
+        // Build rough ISO time from day/time string
+        const scheduledAt = buildScheduledTime(slot.scheduled_time);
+        bufferUpdateId = await publishToBuffer(siteUrl, captionPreview, profileIds, scheduledAt);
+      }
+
+      const { error } = await supabase.from("published_posts").insert({
+        week_of:          weekOf,
+        post_number:      slot.post_number,
+        platform:         slot.platform,
+        post_type:        slot.post_type,
+        caption_preview:  captionPreview,
+        buffer_update_id: bufferUpdateId,
+      });
+      if (error) console.error("published_posts insert error:", error.message);
+    }
   } catch (e) {
     console.warn("savePublishedPosts failed (non-fatal):", e.message);
   }
+}
+
+// Convert "Monday 8am MT" to a rough ISO timestamp for next occurrence
+function buildScheduledTime(dayTimeStr) {
+  const dayMap = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6, sunday: 0 };
+  const lower  = dayTimeStr.toLowerCase();
+  let targetDay = -1;
+  for (const [name, num] of Object.entries(dayMap)) {
+    if (lower.includes(name)) { targetDay = num; break; }
+  }
+  const hourMatch = lower.match(/(\d+)\s*(?:am|pm)/);
+  let hour = hourMatch ? parseInt(hourMatch[1], 10) : 8;
+  if (lower.includes("pm") && hour !== 12) hour += 12;
+
+  const now = new Date();
+  const diff = ((targetDay - now.getDay() + 7) % 7) || 7;
+  const d    = new Date(now);
+  d.setDate(d.getDate() + diff);
+  d.setUTCHours(hour + 6, 0, 0, 0); // MT ≈ UTC-6
+  return d.toISOString();
 }
 
 exports.handler = async function (event) {

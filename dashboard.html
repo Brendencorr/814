@@ -239,6 +239,43 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
 .success-next { font-size: .8rem; color: var(--muted); margin-top: .5rem; }
 .success-btn { margin-top: 1rem; padding: .8rem 2rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .9rem; cursor: pointer; }
 
+/* ── Pipeline Run History ── */
+.pipeline-section { margin-bottom: 1.25rem; }
+.pipeline-section-label { font-size: .65rem; color: var(--gold); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .6rem; display: flex; align-items: center; justify-content: space-between; }
+.pipeline-run-row { display: flex; align-items: center; gap: .6rem; padding: .55rem .75rem; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: .4rem; font-size: .75rem; }
+.pipeline-run-date { color: var(--muted2); flex-shrink: 0; min-width: 70px; }
+.pipeline-run-stats { flex: 1; color: var(--text); }
+.status-badge { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 4px; flex-shrink: 0; }
+.status-success { background: rgba(58,191,106,.15); color: var(--green); }
+.status-partial  { background: rgba(201,168,76,.15); color: var(--gold); }
+.status-failed   { background: rgba(191,74,74,.15);  color: var(--red); }
+.status-running  { background: rgba(58,122,191,.15); color: var(--blue); }
+
+/* ── Countdown ── */
+.countdown-card { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .75rem .9rem; margin-bottom: .6rem; }
+.countdown-label { font-size: .65rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .25rem; }
+.countdown-value { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.countdown-sub { font-size: .65rem; color: var(--muted); margin-top: .15rem; }
+.override-btn { width: 100%; padding: .55rem; background: transparent; border: 1px solid var(--gold-dim); border-radius: 7px; color: var(--gold); font-size: .75rem; font-weight: 600; cursor: pointer; margin-top: .5rem; transition: background .15s; }
+.override-btn:hover { background: rgba(201,168,76,.1); }
+.override-btn:disabled { opacity: .4; cursor: default; }
+
+/* ── Perf Charts ── */
+.perf-chart { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .85rem; margin-bottom: .6rem; }
+.perf-chart-title { font-size: .68rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .65rem; }
+.bar-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.bar-label { font-size: .7rem; color: var(--text); min-width: 68px; }
+.bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; background: var(--gold); transition: width .4s ease; }
+.bar-val { font-size: .68rem; color: var(--muted2); min-width: 24px; text-align: right; }
+
+/* ── Settings additions ── */
+.agent-trigger-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.agent-trigger-btn { padding: .45rem .85rem; background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2); font-size: .75rem; cursor: pointer; transition: color .15s, border-color .15s; }
+.agent-trigger-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+.agent-trigger-btn:disabled { opacity: .4; cursor: default; }
+.trigger-result { font-size: .75rem; margin-top: .5rem; min-height: 1.1em; color: var(--muted2); }
+
 /* ── Mobile ── */
 @media (max-width: 700px) {
   #screen-home { flex-direction: column; }
@@ -310,10 +347,29 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
         <div class="metric-delta" id="d-list">Goal: 500</div>
       </div>
       <button class="enter-numbers-btn" onclick="openNumbersModal()">+ Enter This Week's Numbers</button>
+
+      <!-- Countdown to next pipeline run -->
+      <div class="countdown-card" style="margin-top:.75rem">
+        <div class="countdown-label">Next Auto-Run</div>
+        <div class="countdown-value" id="countdown-value">Calculating&#8230;</div>
+        <div class="countdown-sub">Every Sunday 6am MT</div>
+        <button class="override-btn" id="btn-override" onclick="triggerPipelineManual()">&#9654; Run Pipeline Now</button>
+      </div>
     </div>
 
-    <!-- Middle: Echo Analysis -->
+    <!-- Middle: Echo Analysis + Pipeline History -->
     <div class="echo-col">
+      <!-- Pipeline run history -->
+      <div class="pipeline-section" id="pipeline-history-section" style="display:none">
+        <div class="pipeline-section-label">
+          <span>&#128337; Pipeline History</span>
+          <span id="pipeline-last-run" style="font-weight:400"></span>
+        </div>
+        <div id="pipeline-run-list"></div>
+        <!-- Performance charts -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.65rem" id="perf-charts"></div>
+      </div>
+
       <div class="echo-empty" id="echo-empty">
         <div class="big-icon">&#128202;</div>
         <p>Enter this week's numbers and Echo will analyze performance. Then start your content pipeline.</p>
@@ -321,11 +377,11 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
       <div class="echo-report" id="echo-report" style="display:none"></div>
     </div>
 
-    <!-- Right: History -->
+    <!-- Right: History (from Supabase) -->
     <div class="history-col">
       <div class="history-header">
         <span>Recent Posts</span>
-        <button class="add-posts-btn" onclick="alert('Manual post logging coming soon.')">+ Add</button>
+        <button class="add-posts-btn" onclick="refreshSupabaseHistory()">&#8635; Refresh</button>
       </div>
       <div class="history-list" id="history-list">
         <div class="history-empty">Your post history will appear here after your first scheduled week.</div>
@@ -452,16 +508,46 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
         </div>
         <div class="settings-status" id="buffer-status"></div>
       </div>
+
+      <div class="settings-section">
+        <h3>Buffer Profile IDs</h3>
+        <p>Comma-separated Buffer profile IDs for your connected platforms (Instagram, Facebook, YouTube). Find them in your Buffer dashboard under each channel.</p>
+        <input type="text" id="buffer-profiles-input" placeholder="abc123, def456, ghi789">
+        <div class="phase-actions" style="margin-top:0">
+          <button class="btn-run" onclick="saveBufferProfiles()">Save Profile IDs</button>
+        </div>
+        <div class="settings-status" id="profiles-status"></div>
+      </div>
+
+      <div class="settings-section">
+        <h3>Autonomous Pipeline</h3>
+        <p>The pipeline runs automatically every Sunday at 6am Mountain Time. Run individual agents manually for testing or one-off tasks.</p>
+        <div style="padding:.6rem .85rem;background:var(--card2);border:1px solid var(--border);border-radius:7px;font-size:.78rem;color:var(--muted2);margin-bottom:.75rem">
+          &#128337; Schedule: <strong style="color:var(--text)">Every Sunday 6am MT (12:00 UTC)</strong><br>
+          &#128200; Last run: <strong id="settings-last-run" style="color:var(--text)">checking&#8230;</strong>
+        </div>
+        <div class="agent-trigger-row">
+          <button class="agent-trigger-btn" id="trig-scout"  onclick="triggerAgent('scout',  this)">&#128269; Scout</button>
+          <button class="agent-trigger-btn" id="trig-sage"   onclick="triggerAgent('sage',   this)">&#9997;&#65039; Sage</button>
+          <button class="agent-trigger-btn" id="trig-atlas"  onclick="triggerAgent('atlas',  this)">&#128197; Atlas</button>
+          <button class="agent-trigger-btn" id="trig-echo"   onclick="triggerAgent('echo',   this)">&#128202; Echo</button>
+          <button class="agent-trigger-btn" id="trig-pipeline" onclick="triggerPipelineManual()" style="color:var(--gold);border-color:var(--gold-dim)">&#9654; Full Pipeline</button>
+        </div>
+        <div class="trigger-result" id="trigger-result"></div>
+      </div>
+
       <div class="settings-section">
         <h3>Clear All Stored Data</h3>
-        <p>Resets all weekly numbers, post history, and Echo reports stored in this browser.</p>
+        <p>Resets all weekly numbers, post history, and Echo reports stored in this browser. Does not affect Supabase data.</p>
         <div class="phase-actions" style="margin-top:0">
           <button class="btn-edit" style="color:var(--red);border-color:var(--red)" onclick="clearAllData()">Clear All Data</button>
         </div>
       </div>
       <div class="settings-section">
         <h3>About</h3>
-        <p>8:14 Command Center &#8212; Scout, Sage, Atlas, Echo<br>Backend: jade-zabaione-30e1f0.netlify.app<br>Model: claude-sonnet-4-6</p>
+        <p>8:14 Command Center &#8212; Scout, Sage, Atlas, Echo, Riley<br>
+        Model: claude-sonnet-4-6<br>
+        Pipeline: Sunday 6am MT (12:00 UTC)</p>
       </div>
     </div>
   </div>
@@ -517,7 +603,7 @@ const PASSWORD = 'Riley814';
 const LS = {
   AUTH:'814_auth', METRICS:'814_metrics', HISTORY:'814_history',
   ECHO:'814_echo', SAGE:'814_sage', ATLAS:'814_atlas', SCOUT:'814_scout',
-  BUFFER:'814_buffer_token'
+  BUFFER:'814_buffer_token', PROFILES:'814_buffer_profiles'
 };
 
 /* ─────────────────────────────────────────
@@ -569,6 +655,9 @@ function init() {
   loadHistory();
   loadEchoReport();
   loadBufferToken();
+  loadBufferProfiles();
+  startCountdown();
+  loadPipelineStatus();
 }
 
 /* ─────────────────────────────────────────
@@ -1258,6 +1347,222 @@ function appendError(containerId, msg) {
   sec.innerHTML = '<div class="result-section-title" style="color:var(--red)">Error</div>' +
                   '<div class="result-text" style="color:var(--red)">' + esc(msg) + '</div>';
   c.appendChild(sec);
+}
+
+/* ─────────────────────────────────────────
+   PIPELINE STATUS — load from Supabase via pipeline-status function
+───────────────────────────────────────── */
+var _pipelineData = null;
+
+async function loadPipelineStatus() {
+  try {
+    const res = await fetch(BASE + '/pipeline-status');
+    if (!res.ok) return;
+    _pipelineData = await res.json();
+    renderPipelineRuns(_pipelineData.pipeline_runs || []);
+    renderPerfCharts(_pipelineData.echo_scores || []);
+    renderSupabaseHistory(_pipelineData.published_posts || []);
+    updateSettingsLastRun(_pipelineData.pipeline_runs || []);
+  } catch(e) {
+    console.warn('[8:14] pipeline-status fetch failed (non-fatal):', e.message);
+  }
+}
+
+function renderPipelineRuns(runs) {
+  if (!runs.length) return;
+  const section = document.getElementById('pipeline-history-section');
+  section.style.display = 'block';
+  const list = document.getElementById('pipeline-run-list');
+  list.innerHTML = '';
+
+  const latest = runs[0];
+  const lastRunEl = document.getElementById('pipeline-last-run');
+  if (lastRunEl && latest) lastRunEl.textContent = 'Last: ' + fmtDate(latest.run_date);
+
+  runs.slice(0, 5).forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'pipeline-run-row';
+    const statsStr = [
+      r.scout_topics_count ? r.scout_topics_count + ' topics' : '',
+      r.sage_posts_count   ? r.sage_posts_count + ' posts' : '',
+      r.buffer_posts_scheduled ? r.buffer_posts_scheduled + ' buffered' : '',
+    ].filter(Boolean).join(' · ') || 'no stats';
+    row.innerHTML =
+      '<span class="pipeline-run-date">' + esc(fmtDate(r.run_date)) + '</span>' +
+      '<span class="pipeline-run-stats">' + esc(statsStr) + '</span>' +
+      '<span class="status-badge status-' + esc(r.status || 'unknown') + '">' + esc(r.status || '?') + '</span>';
+    list.appendChild(row);
+  });
+}
+
+function renderPerfCharts(scores) {
+  const container = document.getElementById('perf-charts');
+  if (!container || !scores.length) return;
+  container.innerHTML = '';
+
+  // Format performance
+  const formatCounts = {};
+  scores.forEach(s => { if (s.format_winner) formatCounts[s.format_winner] = (formatCounts[s.format_winner] || 0) + 1; });
+  if (Object.keys(formatCounts).length) {
+    container.appendChild(buildBarChart('Format Performance', formatCounts));
+  }
+
+  // Pillar performance
+  const pillarCounts = {};
+  scores.forEach(s => { if (s.best_pillar) pillarCounts[s.best_pillar] = (pillarCounts[s.best_pillar] || 0) + 1; });
+  if (Object.keys(pillarCounts).length) {
+    container.appendChild(buildBarChart('Pillar Performance', pillarCounts));
+  }
+}
+
+function buildBarChart(title, counts) {
+  const card = document.createElement('div');
+  card.className = 'perf-chart';
+  const max = Math.max(...Object.values(counts));
+  let html = '<div class="perf-chart-title">' + esc(title) + '</div>';
+  Object.entries(counts).sort((a,b) => b[1]-a[1]).forEach(([label, val]) => {
+    const pct = max > 0 ? Math.round(val / max * 100) : 0;
+    html += '<div class="bar-row">' +
+      '<span class="bar-label">' + esc(label.slice(0,10)) + '</span>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<span class="bar-val">' + val + '</span></div>';
+  });
+  card.innerHTML = html;
+  return card;
+}
+
+function renderSupabaseHistory(posts) {
+  if (!posts.length) return;
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  posts.slice(0, 20).forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'post-entry';
+    const perf = p.buffer_update_id ? 'good' : 'avg';
+    div.innerHTML =
+      '<div class="post-platform">' + platIcon3(p.platform) + '</div>' +
+      '<div class="post-info">' +
+        '<div class="post-type">' + esc(p.post_type || 'Post') + '</div>' +
+        '<div class="post-date">' + esc(fmtDate(p.week_of)) + (p.buffer_update_id ? ' &#10003;' : '') + '</div>' +
+      '</div>' +
+      '<div class="post-metric ' + perf + '">' + esc(p.platform?.slice(0,2) || '??') + '</div>';
+    list.appendChild(div);
+  });
+}
+
+function refreshSupabaseHistory() { loadPipelineStatus(); }
+
+function updateSettingsLastRun(runs) {
+  const el = document.getElementById('settings-last-run');
+  if (el) el.textContent = runs[0] ? fmtDate(runs[0].run_date) + ' (' + (runs[0].status || '?') + ')' : 'Never';
+}
+
+function platIcon3(p) {
+  const s = (p||'').toLowerCase();
+  if (s.includes('instagram')) return '&#128247;';
+  if (s.includes('facebook'))  return '&#128309;';
+  if (s.includes('youtube'))   return '&#9654;&#65039;';
+  return '&#128196;';
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  try { return new Date(str).toLocaleDateString('en-US', { month:'short', day:'numeric' }); } catch(e) { return str; }
+}
+
+/* ─────────────────────────────────────────
+   COUNTDOWN to next Sunday 6am MT
+───────────────────────────────────────── */
+var _countdownInterval = null;
+
+function startCountdown() {
+  updateCountdown();
+  _countdownInterval = setInterval(updateCountdown, 60000);
+}
+
+function updateCountdown() {
+  const el = document.getElementById('countdown-value');
+  if (!el) return;
+  const now = new Date();
+  // Next Sunday 12:00 UTC (= 6am MT)
+  const next = new Date(now);
+  const daysUntilSun = ((7 - now.getUTCDay()) % 7) || 7;
+  next.setUTCDate(next.getUTCDate() + daysUntilSun);
+  next.setUTCHours(12, 0, 0, 0);
+  const diff = next - now;
+  if (diff <= 0) { el.textContent = 'Running now'; return; }
+  const days  = Math.floor(diff / 864e5);
+  const hours = Math.floor((diff % 864e5) / 36e5);
+  const mins  = Math.floor((diff % 36e5) / 6e4);
+  el.textContent = days > 0 ? days + 'd ' + hours + 'h' : hours + 'h ' + mins + 'm';
+}
+
+/* ─────────────────────────────────────────
+   MANUAL PIPELINE TRIGGER
+───────────────────────────────────────── */
+async function triggerPipelineManual() {
+  const btn = document.getElementById('btn-override');
+  const settingsBtn = document.getElementById('trig-pipeline');
+  const resultEl = document.getElementById('trigger-result');
+  if (btn) btn.disabled = true;
+  if (settingsBtn) settingsBtn.disabled = true;
+  if (resultEl) resultEl.textContent = 'Starting pipeline&#8230;';
+
+  try {
+    const res = await fetch(BASE + '/weekly-pipeline', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trigger: 'manual' }),
+    });
+    const data = await res.json();
+    const msg = data.status === 'success'
+      ? '&#10003; Pipeline complete — ' + (data.sage_posts || 0) + ' posts, ' + (data.buffer_scheduled || 0) + ' buffered'
+      : '&#9888; ' + (data.error || 'Pipeline returned partial result');
+    if (resultEl) resultEl.innerHTML = msg;
+    // Refresh status after a short delay
+    setTimeout(loadPipelineStatus, 2000);
+  } catch(e) {
+    if (resultEl) resultEl.textContent = 'Error: ' + e.message;
+  } finally {
+    if (btn) btn.disabled = false;
+    if (settingsBtn) settingsBtn.disabled = false;
+  }
+}
+
+/* Per-agent manual trigger from Settings */
+async function triggerAgent(agent, btn) {
+  const resultEl = document.getElementById('trigger-result');
+  const prompt = prompt('Message to send to ' + agent + ':', agent === 'scout' ? 'What is trending in sobriety and wellness this week?' : 'Run your standard analysis.');
+  if (prompt === null) return;
+  btn.disabled = true;
+  if (resultEl) resultEl.textContent = 'Running ' + agent + '&#8230;';
+  try {
+    const reply = await callAgent(agent, prompt);
+    if (resultEl) resultEl.textContent = agent + ' complete (' + reply.length + ' chars)';
+  } catch(e) {
+    if (resultEl) resultEl.textContent = agent + ' error: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ─────────────────────────────────────────
+   BUFFER PROFILE IDs
+───────────────────────────────────────── */
+function loadBufferProfiles() {
+  const v = localStorage.getItem(LS.PROFILES);
+  if (v) {
+    const el = document.getElementById('buffer-profiles-input');
+    if (el) el.value = v;
+  }
+}
+
+function saveBufferProfiles() {
+  const v = (document.getElementById('buffer-profiles-input')?.value || '').trim();
+  if (!v) return;
+  localStorage.setItem(LS.PROFILES, v);
+  const el = document.getElementById('profiles-status');
+  if (el) { el.textContent = '&#10003; Profile IDs saved.'; el.className = 'settings-status ok'; }
 }
 </script>
 </body>

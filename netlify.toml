@@ -15,3 +15,12 @@
 
 [functions."riley-chat"]
   timeout = 26
+
+[functions."buffer-publish"]
+  timeout = 26
+
+[functions."pipeline-status"]
+  timeout = 26
+
+[functions."weekly-pipeline"]
+  schedule = "0 12 * * 0"

@@ -1,4 +1,5 @@
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { getSupabaseClient } = require('./supabase-client');
 
 const SYSTEM_PROMPT = `You are Sage — the content writer and creative director for The 8:14 Project (eight14.us).
 
@@ -215,6 +216,42 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Fetch performance context to prepend to Sage's message
+async function getSageContext(supabase) {
+  try {
+    const [echoRes, scoutRes] = await Promise.all([
+      supabase
+        .from("echo_scores")
+        .select("best_pillar, format_winner, worst_pillar, biggest_lever")
+        .order("created_at", { ascending: false })
+        .limit(1),
+      supabase
+        .from("scout_history")
+        .select("top_theme, topics_covered")
+        .order("week_of", { ascending: false })
+        .limit(1),
+    ]);
+
+    let context = "";
+    const echo  = echoRes.data?.[0];
+    const scout = scoutRes.data?.[0];
+
+    if (echo || scout) {
+      context += "\n\nPERFORMANCE DATA — ADAPT YOUR OUTPUT:";
+      if (echo?.format_winner) context += `\nFormat winner last week: ${echo.format_winner} — produce more of this type`;
+      if (echo?.best_pillar)   context += `\nPillar winner last week: ${echo.best_pillar} — weight toward this`;
+      if (echo?.worst_pillar)  context += `\nPillar to reduce: ${echo.worst_pillar} — less of this this week`;
+      if (scout?.top_theme)    context += `\nScout top theme this week: ${scout.top_theme}`;
+      if (scout?.topics_covered?.length)
+        context += `\nTopics Scout identified: ${scout.topics_covered.slice(0, 5).join(", ")}`;
+    }
+    return context;
+  } catch (e) {
+    console.warn("sage context fetch failed (non-fatal):", e.message);
+    return "";
+  }
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
@@ -248,6 +285,17 @@ exports.handler = async function (event) {
       };
     }
 
+    // Fetch performance context and inject into message
+    let performanceContext = "";
+    try {
+      const supabase = getSupabaseClient();
+      performanceContext = await getSageContext(supabase);
+    } catch (e) {
+      console.warn("Supabase init failed (non-fatal):", e.message);
+    }
+
+    const enrichedMessage = message + performanceContext;
+
     const response = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: {
@@ -259,7 +307,7 @@ exports.handler = async function (event) {
         model: "claude-sonnet-4-6",
         max_tokens: 2000,
         system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: message }],
+        messages: [{ role: "user", content: enrichedMessage }],
       }),
     });
 

@@ -97,32 +97,56 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Pull recent scout history from Supabase to avoid repeating topics
+// Pull recent scout history + echo performance data to inject into prompt
 async function getRecentHistory(supabase) {
   try {
-    const { data, error } = await supabase
-      .from("scout_history")
-      .select("pillars_covered, topics_covered, top_theme")
-      .order("week_of", { ascending: false })
-      .limit(4);
-    if (error || !data || data.length === 0) return "";
-    const allTopics = data.flatMap((r) => r.topics_covered || []);
-    const allPillars = data.flatMap((r) => r.pillars_covered || []);
-    const themes = data.map((r) => r.top_theme).filter(Boolean);
-    return (
-      "\n\nTOPICS COVERED IN LAST 4 WEEKS — DO NOT REPEAT THESE:\n" +
-      allTopics.map((t) => `- ${t}`).join("\n") +
-      (allPillars.length
-        ? "\n\nPILLARS RECENTLY COVERED (rotate away from these if possible):\n" +
-          [...new Set(allPillars)].map((p) => `- ${p}`).join("\n")
-        : "") +
-      (themes.length
-        ? "\n\nRECENT TOP THEMES (do not repeat):\n" +
-          themes.map((t) => `- ${t}`).join("\n")
-        : "")
-    );
+    const [histRes, echoRes] = await Promise.all([
+      supabase
+        .from("scout_history")
+        .select("pillars_covered, topics_covered, top_theme")
+        .order("week_of", { ascending: false })
+        .limit(4),
+      supabase
+        .from("echo_scores")
+        .select("best_pillar, format_winner, worst_pillar, biggest_lever")
+        .order("created_at", { ascending: false })
+        .limit(1),
+    ]);
+
+    let context = "";
+
+    // Performance data from Echo
+    const echo = echoRes.data?.[0];
+    if (echo) {
+      context += "\n\nPERFORMANCE DATA FROM LAST WEEK:";
+      if (echo.best_pillar)   context += `\nBest performing pillar: ${echo.best_pillar} — prioritize this`;
+      if (echo.format_winner) context += `\nFormat that got most saves: ${echo.format_winner} — Sage should use more of this`;
+      if (echo.worst_pillar)  context += `\nWorst performing pillar: ${echo.worst_pillar} — reduce this week`;
+      if (echo.biggest_lever) context += `\nKey insight: ${echo.biggest_lever}`;
+    }
+
+    // Topic history to avoid repetition
+    const hist = histRes.data;
+    if (hist && hist.length > 0) {
+      const allTopics  = hist.flatMap((r) => r.topics_covered || []);
+      const allPillars = hist.flatMap((r) => r.pillars_covered || []);
+      const themes     = hist.map((r) => r.top_theme).filter(Boolean);
+      context +=
+        "\n\nTOPICS COVERED IN LAST 4 WEEKS — DO NOT REPEAT THESE:\n" +
+        allTopics.map((t) => `- ${t}`).join("\n") +
+        (allPillars.length
+          ? "\n\nPILLARS RECENTLY COVERED (rotate away from these if possible):\n" +
+            [...new Set(allPillars)].map((p) => `- ${p}`).join("\n")
+          : "") +
+        (themes.length
+          ? "\n\nRECENT TOP THEMES (do not repeat):\n" +
+            themes.map((t) => `- ${t}`).join("\n")
+          : "");
+    }
+
+    return context;
   } catch (e) {
-    console.warn("scout_history fetch failed (non-fatal):", e.message);
+    console.warn("scout context fetch failed (non-fatal):", e.message);
     return "";
   }
 }

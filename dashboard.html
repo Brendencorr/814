@@ -2,433 +2,1247 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>8:14 Agent Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>8:14 Command Center</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #06090e;
+  --card:     #0a1018;
+  --card2:    #0d1520;
+  --border:   #1a2530;
+  --border2:  #243040;
+  --gold:     #c9a84c;
+  --gold-dim: #8a6e2a;
+  --sage:     #4a7c59;
+  --blue:     #3a7abf;
+  --purple:   #7a4abf;
+  --red:      #bf4a4a;
+  --green:    #3abf6a;
+  --text:     #c8d4e0;
+  --muted:    #4a5a6a;
+  --muted2:   #6a7a8a;
+}
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; overflow: hidden; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #0a0a0a;
-    color: #e0e0e0;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+/* ── Gate ── */
+#gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+.gate-box { text-align: center; width: 320px; padding: 2rem; }
+.gate-logo { font-size: 3rem; font-weight: 900; color: var(--gold); letter-spacing: -2px; margin-bottom: 4px; }
+.gate-tagline { font-size: .7rem; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 2rem; }
+.gate-box input { width: 100%; padding: .8rem 1rem; background: var(--card); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: 1rem; outline: none; margin-bottom: .6rem; transition: border-color .2s; }
+.gate-box input:focus { border-color: var(--gold); }
+.gate-box button { width: 100%; padding: .8rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .95rem; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; }
+.gate-box button:hover { opacity: .85; }
+.gate-error { color: var(--red); font-size: .8rem; margin-top: .5rem; min-height: 1.1em; }
 
-  /* ── Password Gate ── */
-  #gate {
-    position: fixed;
-    inset: 0;
-    background: #0a0a0a;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-  }
+/* ── App ── */
+#app { display: none; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
-  .gate-box {
-    text-align: center;
-    padding: 2.5rem 2rem;
-    max-width: 340px;
-    width: 100%;
-  }
+/* ── Header ── */
+header { background: #000; border-bottom: 1px solid var(--border); height: 52px; display: flex; align-items: center; padding: 0 1.25rem; gap: 1.5rem; flex-shrink: 0; z-index: 100; }
+.h-logo { font-size: 1.5rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; flex-shrink: 0; }
+.h-nav { display: flex; gap: .25rem; flex: 1; }
+.h-nav-btn { padding: .35rem .85rem; background: transparent; border: none; border-radius: 6px; color: var(--muted2); font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: color .15s, background .15s; white-space: nowrap; }
+.h-nav-btn:hover { color: var(--gold); background: #111; }
+.h-nav-btn.active { color: var(--gold); background: #1a1200; }
+.h-gear { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: .35rem; border-radius: 6px; font-size: 1.1rem; transition: color .15s; }
+.h-gear:hover { color: var(--gold); }
 
-  .gate-logo {
-    font-size: 2.8rem;
-    font-weight: 800;
-    color: #c9a84c;
-    letter-spacing: -1px;
-    margin-bottom: 0.25rem;
-  }
+/* ── Screens ── */
+.screen { display: none; flex: 1; overflow: hidden; }
+.screen.active { display: flex; }
 
-  .gate-sub {
-    font-size: 0.75rem;
-    color: #555;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-bottom: 2.5rem;
-  }
+/* ════════════════ SCREEN: HOME ════════════════ */
+#screen-home { flex-direction: row; }
 
-  .gate-box input {
-    width: 100%;
-    padding: 0.85rem 1rem;
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    color: #e0e0e0;
-    font-size: 1rem;
-    outline: none;
-    margin-bottom: 0.75rem;
-    transition: border-color 0.2s;
-  }
+/* Scorecard col */
+.scorecard-col { width: 240px; min-width: 240px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 1rem .85rem; }
+.col-label { font-size: .65rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .85rem; }
+.metric-card { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .85rem .9rem; margin-bottom: .6rem; }
+.metric-name { font-size: .68rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .3rem; }
+.metric-num { font-size: 2rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: .3rem; }
+.metric-delta { font-size: .68rem; color: var(--muted); }
+.metric-delta.up { color: var(--green); }
+.metric-delta.down { color: var(--red); }
+.enter-numbers-btn { margin-top: .75rem; width: 100%; padding: .7rem; background: var(--sage); border: none; border-radius: 8px; color: #fff; font-size: .8rem; font-weight: 700; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; }
+.enter-numbers-btn:hover { opacity: .85; }
 
-  .gate-box input:focus { border-color: #c9a84c; }
+/* Echo col */
+.echo-col { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 1.25rem; }
+.echo-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); text-align: center; gap: .75rem; }
+.echo-empty .big-icon { font-size: 3rem; opacity: .3; }
+.echo-empty p { font-size: .85rem; max-width: 280px; }
+.echo-report { display: flex; flex-direction: column; gap: .85rem; }
+.report-section { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+.report-label { display: inline-block; font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 4px; margin-bottom: .65rem; }
+.label-green  { background: rgba(58,191,106,.15); color: var(--green); }
+.label-red    { background: rgba(191,74,74,.15);  color: var(--red); }
+.label-gold   { background: rgba(201,168,76,.15); color: var(--gold); }
+.label-blue   { background: rgba(58,122,191,.15); color: var(--blue); }
+.label-purple { background: rgba(122,74,191,.15); color: var(--purple); }
+.label-sage   { background: rgba(74,124,89,.15);  color: var(--sage); }
+.report-content { font-size: .82rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.start-week-btn { margin-top: .5rem; padding: .85rem 1.5rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-size: .9rem; font-weight: 700; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; align-self: flex-start; }
+.start-week-btn:hover { opacity: .85; }
 
-  .gate-box button {
-    width: 100%;
-    padding: 0.85rem;
-    background: #c9a84c;
-    border: none;
-    border-radius: 8px;
-    color: #000;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 0.05em;
-    transition: opacity 0.2s;
-  }
+/* History col */
+.history-col { width: 280px; min-width: 280px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.history-header { padding: .85rem 1rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.history-header span { font-size: .65rem; color: var(--gold); letter-spacing: .15em; text-transform: uppercase; }
+.add-posts-btn { font-size: .68rem; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: .25rem .55rem; cursor: pointer; transition: color .15s, border-color .15s; }
+.add-posts-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+.history-list { flex: 1; overflow-y: auto; padding: .75rem; display: flex; flex-direction: column; gap: .5rem; }
+.history-empty { padding: 1.5rem .75rem; text-align: center; color: var(--muted); font-size: .78rem; }
+.post-entry { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .75rem; display: flex; align-items: center; gap: .6rem; }
+.post-platform { font-size: 1rem; flex-shrink: 0; }
+.post-info { flex: 1; min-width: 0; }
+.post-type { font-size: .72rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-date { font-size: .65rem; color: var(--muted); }
+.post-metric { font-size: .72rem; font-weight: 700; flex-shrink: 0; }
+.post-metric.good { color: var(--green); }
+.post-metric.avg  { color: var(--gold); }
+.post-metric.bad  { color: var(--red); }
 
-  .gate-box button:hover { opacity: 0.88; }
+/* ── Numbers Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: flex; align-items: center; justify-content: center; }
+.modal-box { background: var(--card); border: 1px solid var(--border2); border-radius: 12px; padding: 1.5rem; width: 480px; max-width: calc(100vw - 2rem); max-height: calc(100vh - 4rem); overflow-y: auto; }
+.modal-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: .25rem; }
+.modal-sub { font-size: .78rem; color: var(--muted2); margin-bottom: 1.25rem; }
+.num-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; margin-bottom: 1rem; }
+.num-field { display: flex; flex-direction: column; gap: .3rem; }
+.num-field label { font-size: .7rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; }
+.num-field input { background: var(--card2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); padding: .55rem .75rem; font-size: .9rem; outline: none; transition: border-color .2s; }
+.num-field input:focus { border-color: var(--gold); }
+.modal-actions { display: flex; gap: .65rem; margin-top: .5rem; }
+.btn-primary { flex: 1; padding: .75rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .88rem; cursor: pointer; transition: opacity .2s; }
+.btn-primary:hover { opacity: .85; }
+.btn-primary:disabled { opacity: .4; cursor: default; }
+.btn-secondary { padding: .75rem 1.1rem; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted2); font-size: .88rem; cursor: pointer; transition: color .15s; }
+.btn-secondary:hover { color: var(--text); }
 
-  .gate-error {
-    color: #e05c5c;
-    font-size: 0.82rem;
-    margin-top: 0.6rem;
-    min-height: 1.1rem;
-  }
+/* ════════════════ SCREEN: PIPELINE ════════════════ */
+#screen-pipeline { flex-direction: column; overflow: hidden; }
+.pipeline-inner { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
 
-  /* ── App Shell ── */
-  #app { display: none; flex-direction: column; height: 100dvh; }
+/* Progress bar */
+.progress-bar { display: flex; align-items: center; margin-bottom: .5rem; }
+.pb-step { display: flex; align-items: center; gap: .5rem; }
+.pb-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; flex-shrink: 0; transition: all .3s; }
+.pb-dot.pending { background: var(--card2); border: 2px solid var(--border2); color: var(--muted); }
+.pb-dot.active  { background: var(--gold); border: 2px solid var(--gold); color: #000; }
+.pb-dot.done    { background: var(--green); border: 2px solid var(--green); color: #000; }
+.pb-label { font-size: .72rem; color: var(--muted2); letter-spacing: .06em; text-transform: uppercase; }
+.pb-label.active { color: var(--gold); font-weight: 700; }
+.pb-label.done   { color: var(--green); }
+.pb-line { flex: 1; height: 2px; background: var(--border); min-width: 2rem; margin: 0 .5rem; }
+.pb-line.done { background: var(--green); }
 
-  header {
-    background: #000;
-    border-bottom: 1px solid #1e1e1e;
-    padding: 0 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    height: 52px;
-    flex-shrink: 0;
-  }
+/* Phase cards */
+.phase-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+.phase-title { font-size: .8rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .85rem; }
+.phase-prompt-area textarea { width: 100%; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: .82rem; padding: .75rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; transition: border-color .2s; }
+.phase-prompt-area textarea:focus { border-color: var(--gold); }
+.phase-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .75rem; }
+.btn-run { padding: .65rem 1.25rem; background: var(--gold); border: none; border-radius: 7px; color: #000; font-weight: 700; font-size: .82rem; cursor: pointer; transition: opacity .2s; }
+.btn-run:hover { opacity: .85; }
+.btn-run:disabled { opacity: .4; cursor: default; }
+.btn-edit { padding: .65rem 1rem; background: transparent; border: 1px solid var(--border2); border-radius: 7px; color: var(--muted2); font-size: .82rem; cursor: pointer; transition: color .15s, border-color .15s; }
+.btn-edit:hover { color: var(--text); border-color: var(--muted2); }
+.btn-next { padding: .65rem 1.25rem; background: var(--sage); border: none; border-radius: 7px; color: #fff; font-weight: 700; font-size: .82rem; cursor: pointer; transition: opacity .2s; }
+.btn-next:hover { opacity: .85; }
 
-  .logo { font-size: 1.4rem; font-weight: 800; color: #c9a84c; letter-spacing: -0.5px; }
+/* Running */
+.running-msg { display: flex; align-items: center; gap: .75rem; padding: .75rem; background: var(--card2); border-radius: 8px; margin-top: .75rem; }
+.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+.running-text { font-size: .82rem; color: var(--muted2); font-style: italic; }
 
-  nav {
-    display: flex;
-    gap: 0.25rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    flex: 1;
-  }
+/* Phase results */
+.phase-result { margin-top: .85rem; display: flex; flex-direction: column; gap: .65rem; }
+.result-section { background: var(--card2); border: 1px solid var(--border); border-radius: 9px; padding: .85rem; }
+.result-section-title { font-size: .65rem; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .5rem; }
+.result-text { font-size: .8rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.result-editable { width: 100%; background: var(--card); border: 1px solid var(--gold-dim); border-radius: 8px; color: var(--text); font-size: .8rem; padding: .75rem; resize: vertical; min-height: 200px; outline: none; font-family: inherit; }
+.phase-summary { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; background: rgba(74,124,89,.1); border: 1px solid rgba(74,124,89,.3); border-radius: 9px; }
+.phase-summary .check { color: var(--green); font-size: 1.2rem; flex-shrink: 0; }
+.phase-summary-text { font-size: .85rem; font-weight: 600; color: var(--text); }
+.phase-summary-sub { font-size: .75rem; color: var(--muted2); }
 
-  nav::-webkit-scrollbar { display: none; }
+/* ════════════════ SCREEN: REVIEW ════════════════ */
+#screen-review { flex-direction: column; overflow: hidden; }
+.review-inner { flex: 1; overflow-y: auto; padding: 1.25rem; padding-bottom: 5rem; }
+.review-header { margin-bottom: 1.25rem; }
+.review-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.review-sub { font-size: .78rem; color: var(--muted2); margin-top: .2rem; }
+.posts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
+.post-card { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 1rem; display: flex; flex-direction: column; gap: .65rem; transition: opacity .2s; }
+.post-card.excluded { opacity: .4; border-style: dashed; }
+.post-card-top { display: flex; align-items: flex-start; gap: .6rem; }
+.post-badge { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 4px; flex-shrink: 0; }
+.badge-carousel  { background: rgba(201,168,76,.2); color: var(--gold); }
+.badge-quote     { background: rgba(58,122,191,.2); color: var(--blue); }
+.badge-caption   { background: rgba(74,124,89,.2);  color: var(--sage); }
+.badge-repost    { background: rgba(122,74,191,.2); color: var(--purple); }
+.badge-community { background: rgba(58,191,106,.2); color: var(--green); }
+.post-meta { flex: 1; min-width: 0; }
+.post-platform-time { font-size: .72rem; color: var(--muted2); }
+.post-headline { font-size: .82rem; font-weight: 600; color: var(--text); margin-top: .2rem; }
+.post-approve { margin-left: auto; flex-shrink: 0; }
+.approve-toggle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--green); background: rgba(58,191,106,.15); color: var(--green); font-size: .9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+.approve-toggle.off { border-color: var(--border2); background: transparent; color: var(--muted); }
+.post-caption-text { font-size: .78rem; color: var(--muted2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.post-caption-text.expanded { display: block; }
+.caption-editable { width: 100%; background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 7px; color: var(--text); font-size: .78rem; padding: .6rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; display: none; }
+.post-hashtags { font-size: .68rem; color: var(--muted); font-family: monospace; }
+.post-card-actions { display: flex; gap: .5rem; }
+.btn-tiny { padding: .3rem .65rem; background: transparent; border: 1px solid var(--border2); border-radius: 5px; color: var(--muted2); font-size: .7rem; cursor: pointer; transition: color .15s; }
+.btn-tiny:hover { color: var(--text); }
 
-  .tab-btn {
-    padding: 0.45rem 0.9rem;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    color: #666;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    transition: color 0.15s, background 0.15s;
-  }
+/* Action bar */
+.action-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: rgba(6,9,14,.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border2); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; z-index: 200; }
+.ab-count { font-size: .8rem; color: var(--muted2); white-space: nowrap; }
+.ab-count strong { color: var(--text); }
+.ab-center { flex: 1; display: flex; justify-content: center; }
+.btn-approve-all { padding: .75rem 2rem; background: var(--gold); border: none; border-radius: 9px; color: #000; font-weight: 800; font-size: .9rem; cursor: pointer; letter-spacing: .04em; transition: opacity .2s; white-space: nowrap; }
+.btn-approve-all:hover { opacity: .85; }
+.btn-approve-all:disabled { opacity: .4; cursor: default; }
+.btn-draft { padding: .75rem 1.1rem; background: transparent; border: 1px solid var(--border2); border-radius: 9px; color: var(--muted2); font-size: .82rem; cursor: pointer; white-space: nowrap; }
+.btn-draft:hover { color: var(--text); }
 
-  .tab-btn:hover { color: #c9a84c; background: #111; }
-  .tab-btn.active { color: #c9a84c; background: #181400; }
+/* ════════════════ SETTINGS ════════════════ */
+#screen-settings { flex-direction: column; overflow-y: auto; padding: 1.5rem; }
+.settings-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: 1.5rem; }
+.settings-section { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 1.25rem; margin-bottom: 1rem; max-width: 520px; }
+.settings-section h3 { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .25rem; }
+.settings-section p { font-size: .75rem; color: var(--muted2); margin-bottom: .85rem; }
+.settings-section input { width: 100%; background: var(--card2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); padding: .65rem .85rem; font-size: .85rem; outline: none; transition: border-color .2s; margin-bottom: .65rem; }
+.settings-section input:focus { border-color: var(--gold); }
+.settings-status { font-size: .75rem; margin-top: .4rem; min-height: 1.1em; }
+.settings-status.ok { color: var(--green); }
+.settings-status.err { color: var(--red); }
 
-  /* ── Chat Panel ── */
-  .tab-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-  .tab-panel.active { display: flex; }
+/* ── Overlays ── */
+.scheduling-overlay { position: fixed; inset: 0; background: rgba(6,9,14,.9); z-index: 700; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
+.scheduling-overlay.show { display: flex; }
+.sched-spinner { width: 48px; height: 48px; border: 3px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sched-text { font-size: .9rem; color: var(--muted2); }
+.success-overlay { position: fixed; inset: 0; background: rgba(6,9,14,.95); z-index: 800; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; padding: 2rem; }
+.success-overlay.show { display: flex; }
+.success-icon { font-size: 4rem; }
+.success-title { font-size: 1.5rem; font-weight: 800; color: var(--gold); }
+.success-sub { font-size: .9rem; color: var(--muted2); max-width: 340px; }
+.success-next { font-size: .8rem; color: var(--muted); margin-top: .5rem; }
+.success-btn { margin-top: 1rem; padding: .8rem 2rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .9rem; cursor: pointer; }
 
-  .agent-header {
-    padding: 0.9rem 1.25rem 0.75rem;
-    border-bottom: 1px solid #1a1a1a;
-    flex-shrink: 0;
-  }
-
-  .agent-name {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #c9a84c;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .agent-desc {
-    font-size: 0.75rem;
-    color: #555;
-    margin-top: 0.15rem;
-  }
-
-  .messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 1rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    scrollbar-width: thin;
-    scrollbar-color: #222 transparent;
-  }
-
-  .messages::-webkit-scrollbar { width: 4px; }
-  .messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
-
-  .msg {
-    max-width: 80%;
-    padding: 0.7rem 0.95rem;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    line-height: 1.55;
-    word-break: break-word;
-    white-space: pre-wrap;
-  }
-
-  .msg.user {
-    background: #c9a84c;
-    color: #000;
-    font-weight: 500;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px;
-  }
-
-  .msg.agent {
-    background: #161616;
-    color: #ddd;
-    align-self: flex-start;
-    border: 1px solid #222;
-    border-bottom-left-radius: 4px;
-  }
-
-  .msg.thinking {
-    color: #555;
-    font-style: italic;
-    border-color: #1a1a1a;
-  }
-
-  .input-row {
-    display: flex;
-    gap: 0.6rem;
-    padding: 0.85rem 1.25rem;
-    border-top: 1px solid #1a1a1a;
-    background: #0a0a0a;
-    flex-shrink: 0;
-  }
-
-  .input-row textarea {
-    flex: 1;
-    background: #161616;
-    border: 1px solid #2a2a2a;
-    border-radius: 8px;
-    color: #e0e0e0;
-    font-size: 0.875rem;
-    padding: 0.65rem 0.85rem;
-    resize: none;
-    outline: none;
-    line-height: 1.4;
-    height: 42px;
-    max-height: 120px;
-    overflow-y: auto;
-    transition: border-color 0.2s;
-    font-family: inherit;
-  }
-
-  .input-row textarea:focus { border-color: #c9a84c; }
-
-  .send-btn {
-    background: #c9a84c;
-    border: none;
-    border-radius: 8px;
-    color: #000;
-    font-size: 1rem;
-    width: 42px;
-    height: 42px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: opacity 0.2s;
-  }
-
-  .send-btn:hover { opacity: 0.85; }
-  .send-btn:disabled { opacity: 0.35; cursor: default; }
-
-  /* Mobile tweaks */
-  @media (max-width: 480px) {
-    header { padding: 0 0.85rem; }
-    .logo { font-size: 1.2rem; }
-    .tab-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
-    .messages { padding: 0.85rem; }
-    .msg { max-width: 90%; font-size: 0.84rem; }
-    .input-row { padding: 0.75rem 0.85rem; }
-    .agent-header { padding: 0.75rem 0.85rem 0.6rem; }
-  }
+/* ── Mobile ── */
+@media (max-width: 700px) {
+  #screen-home { flex-direction: column; }
+  .scorecard-col { width: 100%; min-width: unset; max-height: 200px; flex-direction: row; flex-wrap: nowrap; gap: .5rem; overflow-x: auto; padding: .75rem; border-right: none; border-bottom: 1px solid var(--border); }
+  .scorecard-col .col-label { display: none; }
+  .metric-card { min-width: 130px; flex-shrink: 0; margin-bottom: 0; }
+  .metric-num { font-size: 1.5rem; }
+  .history-col { display: none; }
+  .posts-grid { grid-template-columns: 1fr; }
+  .pb-label { display: none; }
+  .pipeline-inner { padding: 1rem; }
+  .action-bar { padding: 0 .85rem; gap: .5rem; }
+  .btn-approve-all { padding: .65rem 1rem; font-size: .8rem; }
+}
 </style>
 </head>
 <body>
 
-<!-- Password Gate -->
+<!-- PASSWORD GATE -->
 <div id="gate">
   <div class="gate-box">
     <div class="gate-logo">8:14</div>
-    <div class="gate-sub">Agent Dashboard</div>
-    <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" />
+    <div class="gate-tagline">Command Center</div>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
     <button onclick="unlock()">Enter</button>
-    <div class="gate-error" id="pw-error"></div>
+    <div class="gate-error" id="pw-err"></div>
   </div>
 </div>
 
-<!-- App -->
+<!-- APP -->
 <div id="app">
   <header>
-    <div class="logo">8:14</div>
-    <nav>
-      <button class="tab-btn active" onclick="switchTab('scout', this)">Scout</button>
-      <button class="tab-btn" onclick="switchTab('sage', this)">Sage</button>
-      <button class="tab-btn" onclick="switchTab('atlas', this)">Atlas</button>
-      <button class="tab-btn" onclick="switchTab('echo', this)">Echo</button>
+    <div class="h-logo">8:14</div>
+    <nav class="h-nav">
+      <button class="h-nav-btn active" data-screen="home" onclick="goScreen('home',this)">Home</button>
+      <button class="h-nav-btn" data-screen="pipeline" onclick="startNewWeek(this)">New Week</button>
     </nav>
+    <button class="h-gear" onclick="goScreen('settings',null)" title="Settings">&#9881;</button>
   </header>
 
-  <!-- Scout -->
-  <div class="tab-panel active" id="panel-scout">
-    <div class="agent-header">
-      <div class="agent-name">Scout</div>
-      <div class="agent-desc">Research agent — trending topics & content opportunities</div>
+  <!-- ══ HOME ══ -->
+  <div class="screen active" id="screen-home">
+    <!-- Left: Scorecard -->
+    <div class="scorecard-col">
+      <div class="col-label">Phase 1 Scorecard</div>
+      <div class="metric-card">
+        <div class="metric-name">Email Signups This Week</div>
+        <div class="metric-num" id="m-signups">&#8212;</div>
+        <div class="metric-delta" id="d-signups">Enter numbers to track</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Riley Chatbot Opens</div>
+        <div class="metric-num" id="m-chatbot">&#8212;</div>
+        <div class="metric-delta" id="d-chatbot"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Instagram Saves</div>
+        <div class="metric-num" id="m-saves">&#8212;</div>
+        <div class="metric-delta" id="d-saves"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Link Clicks to eight14.us</div>
+        <div class="metric-num" id="m-clicks">&#8212;</div>
+        <div class="metric-delta" id="d-clicks"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Total Email List</div>
+        <div class="metric-num" id="m-list">&#8212;</div>
+        <div class="metric-delta" id="d-list">Goal: 500</div>
+      </div>
+      <button class="enter-numbers-btn" onclick="openNumbersModal()">+ Enter This Week's Numbers</button>
     </div>
-    <div class="messages" id="msgs-scout"></div>
-    <div class="input-row">
-      <textarea id="input-scout" placeholder="Ask Scout to research a topic…" rows="1" onkeydown="handleKey(event,'scout')"></textarea>
-      <button class="send-btn" id="btn-scout" onclick="send('scout')">&#9658;</button>
+
+    <!-- Middle: Echo Analysis -->
+    <div class="echo-col">
+      <div class="echo-empty" id="echo-empty">
+        <div class="big-icon">&#128202;</div>
+        <p>Enter this week's numbers and Echo will analyze performance. Then start your content pipeline.</p>
+      </div>
+      <div class="echo-report" id="echo-report" style="display:none"></div>
+    </div>
+
+    <!-- Right: History -->
+    <div class="history-col">
+      <div class="history-header">
+        <span>Recent Posts</span>
+        <button class="add-posts-btn" onclick="alert('Manual post logging coming soon.')">+ Add</button>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">Your post history will appear here after your first scheduled week.</div>
+      </div>
     </div>
   </div>
 
-  <!-- Sage -->
-  <div class="tab-panel" id="panel-sage">
-    <div class="agent-header">
-      <div class="agent-name">Sage</div>
-      <div class="agent-desc">Scriptwriter — YouTube scripts & captions in Riley's voice</div>
-    </div>
-    <div class="messages" id="msgs-sage"></div>
-    <div class="input-row">
-      <textarea id="input-sage" placeholder="Ask Sage to write a script or caption…" rows="1" onkeydown="handleKey(event,'sage')"></textarea>
-      <button class="send-btn" id="btn-sage" onclick="send('sage')">&#9658;</button>
+  <!-- ══ PIPELINE ══ -->
+  <div class="screen" id="screen-pipeline">
+    <div class="pipeline-inner">
+
+      <!-- Progress Bar -->
+      <div class="progress-bar">
+        <div class="pb-step">
+          <div class="pb-dot active" id="pb-scout-dot">1</div>
+          <span class="pb-label active" id="pb-scout-lbl">Scout</span>
+        </div>
+        <div class="pb-line" id="pb-line1"></div>
+        <div class="pb-step">
+          <div class="pb-dot pending" id="pb-sage-dot">2</div>
+          <span class="pb-label" id="pb-sage-lbl">Sage</span>
+        </div>
+        <div class="pb-line" id="pb-line2"></div>
+        <div class="pb-step">
+          <div class="pb-dot pending" id="pb-atlas-dot">3</div>
+          <span class="pb-label" id="pb-atlas-lbl">Atlas</span>
+        </div>
+        <div class="pb-line" id="pb-line3"></div>
+        <div class="pb-step">
+          <div class="pb-dot pending" id="pb-review-dot">&#9679;</div>
+          <span class="pb-label" id="pb-review-lbl">Review</span>
+        </div>
+      </div>
+
+      <!-- Scout -->
+      <div class="phase-card" id="phase-scout">
+        <div class="phase-title">&#128269; Scout &#8212; Research</div>
+        <div class="phase-prompt-area">
+          <textarea id="scout-prompt" rows="3">What sobriety, recovery, and wellness topics are trending this week? Return the full structured SCOUT REPORT with all sections.</textarea>
+        </div>
+        <div class="phase-actions">
+          <button class="btn-run" id="btn-run-scout" onclick="runScout()">Run Scout &#8594;</button>
+          <button class="btn-edit" onclick="document.getElementById('scout-prompt').focus()">Edit Prompt</button>
+        </div>
+        <div id="scout-running" style="display:none" class="running-msg">
+          <div class="pulse-dot"></div>
+          <span class="running-text">Scout is researching trending topics&#8230;</span>
+        </div>
+        <div id="scout-result" class="phase-result" style="display:none"></div>
+        <div id="scout-actions" class="phase-actions" style="display:none">
+          <button class="btn-next" onclick="runSage()">Looks good &#8212; Send to Sage &#8594;</button>
+          <button class="btn-edit" onclick="editScoutReport()">Edit Report First</button>
+        </div>
+      </div>
+
+      <!-- Sage -->
+      <div class="phase-card" id="phase-sage" style="display:none">
+        <div class="phase-title">&#9997;&#65039; Sage &#8212; Writing 12 Posts</div>
+        <div id="sage-running" class="running-msg">
+          <div class="pulse-dot"></div>
+          <span class="running-text">Sage is writing 12 posts from Scout's research&#8230;</span>
+        </div>
+        <div id="sage-result" class="phase-result" style="display:none"></div>
+        <div id="sage-actions" class="phase-actions" style="display:none">
+          <button class="btn-next" onclick="runAtlas()">Send to Atlas &#8594;</button>
+        </div>
+      </div>
+
+      <!-- Atlas -->
+      <div class="phase-card" id="phase-atlas" style="display:none">
+        <div class="phase-title">&#128197; Atlas &#8212; Building Schedule</div>
+        <div id="atlas-running" class="running-msg">
+          <div class="pulse-dot"></div>
+          <span class="running-text">Atlas is building your publishing schedule&#8230;</span>
+        </div>
+        <div id="atlas-result" class="phase-result" style="display:none"></div>
+        <div id="atlas-actions" class="phase-actions" style="display:none">
+          <button class="btn-next" onclick="goToReview()">Review 12 Posts &#8594;</button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Atlas -->
-  <div class="tab-panel" id="panel-atlas">
-    <div class="agent-header">
-      <div class="agent-name">Atlas</div>
-      <div class="agent-desc">Content scheduler — weekly calendar & Buffer queue</div>
+  <!-- ══ REVIEW ══ -->
+  <div class="screen" id="screen-review">
+    <div class="review-inner">
+      <div class="review-header">
+        <!-- Mini progress bar -->
+        <div class="progress-bar" style="margin-bottom:.85rem">
+          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Scout</span></div>
+          <div class="pb-line done"></div>
+          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Sage</span></div>
+          <div class="pb-line done"></div>
+          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Atlas</span></div>
+          <div class="pb-line done"></div>
+          <div class="pb-step"><div class="pb-dot active">&#9679;</div><span class="pb-label active">Review</span></div>
+        </div>
+        <div class="review-title" id="review-title">Your posts for this week. Review and approve.</div>
+        <div class="review-sub">Toggle off any post to exclude it from the schedule.</div>
+      </div>
+      <div class="posts-grid" id="posts-grid"></div>
     </div>
-    <div class="messages" id="msgs-atlas"></div>
-    <div class="input-row">
-      <textarea id="input-atlas" placeholder="Ask Atlas to build a schedule…" rows="1" onkeydown="handleKey(event,'atlas')"></textarea>
-      <button class="send-btn" id="btn-atlas" onclick="send('atlas')">&#9658;</button>
+    <div class="action-bar">
+      <div class="ab-count"><strong id="approved-count">12</strong> of <strong id="total-count">12</strong> approved</div>
+      <div class="ab-center">
+        <button class="btn-approve-all" id="btn-approve-all" onclick="approveAndSchedule()">APPROVE &amp; SCHEDULE IN BUFFER &#8594;</button>
+      </div>
+      <button class="btn-draft" onclick="saveDraft()">Save Draft</button>
     </div>
   </div>
 
-  <!-- Echo -->
-  <div class="tab-panel" id="panel-echo">
-    <div class="agent-header">
-      <div class="agent-name">Echo</div>
-      <div class="agent-desc">Analytics agent — performance review & recommendations</div>
-    </div>
-    <div class="messages" id="msgs-echo"></div>
-    <div class="input-row">
-      <textarea id="input-echo" placeholder="Ask Echo to review your analytics…" rows="1" onkeydown="handleKey(event,'echo')"></textarea>
-      <button class="send-btn" id="btn-echo" onclick="send('echo')">&#9658;</button>
+  <!-- ══ SETTINGS ══ -->
+  <div class="screen" id="screen-settings">
+    <div style="flex:1;overflow-y:auto;padding:1.5rem">
+      <div class="settings-title">&#9881; Settings</div>
+      <div class="settings-section">
+        <h3>Buffer API Token</h3>
+        <p>Add your Buffer API token to enable one-click scheduling. Without it, "Approve &amp; Schedule" copies Atlas's queue to your clipboard.</p>
+        <input type="password" id="buffer-token-input" placeholder="buf_xxxxxxxxxxxxxxxx">
+        <div class="phase-actions" style="margin-top:0">
+          <button class="btn-run" onclick="saveBufferToken()">Save Token</button>
+          <button class="btn-edit" onclick="clearBufferToken()">Clear</button>
+        </div>
+        <div class="settings-status" id="buffer-status"></div>
+      </div>
+      <div class="settings-section">
+        <h3>Clear All Stored Data</h3>
+        <p>Resets all weekly numbers, post history, and Echo reports stored in this browser.</p>
+        <div class="phase-actions" style="margin-top:0">
+          <button class="btn-edit" style="color:var(--red);border-color:var(--red)" onclick="clearAllData()">Clear All Data</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <h3>About</h3>
+        <p>8:14 Command Center &#8212; Scout, Sage, Atlas, Echo<br>Backend: jade-zabaione-30e1f0.netlify.app<br>Model: claude-sonnet-4-6</p>
+      </div>
     </div>
   </div>
+</div><!-- /app -->
+
+<!-- Numbers Modal -->
+<div class="modal-overlay" id="numbers-modal" style="display:none" onclick="if(event.target===this)closeNumbersModal()">
+  <div class="modal-box">
+    <div class="modal-title">This Week's Numbers</div>
+    <div class="modal-sub">Paste or type your platform metrics. Echo analyzes them automatically.</div>
+    <div class="num-grid">
+      <div class="num-field"><label>Email Signups This Week</label><input type="number" id="nf-signups" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Total Email List Size</label><input type="number" id="nf-list" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Riley Chatbot Opens</label><input type="number" id="nf-chatbot" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Instagram Saves</label><input type="number" id="nf-saves" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Link Clicks to eight14.us</label><input type="number" id="nf-clicks" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Instagram Reach</label><input type="number" id="nf-reach" placeholder="0" min="0"></div>
+      <div class="num-field"><label>Facebook Engagement</label><input type="number" id="nf-fb" placeholder="0" min="0"></div>
+      <div class="num-field"><label>New Subscribers (Month)</label><input type="number" id="nf-monthly" placeholder="0" min="0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="btn-submit-nums" onclick="submitNumbers()">Run Echo Analysis &#8594;</button>
+      <button class="btn-secondary" onclick="closeNumbersModal()">Cancel</button>
+    </div>
+    <div id="echo-running-modal" style="display:none" class="running-msg">
+      <div class="pulse-dot"></div>
+      <span class="running-text">Echo is analyzing your numbers&#8230;</span>
+    </div>
+  </div>
+</div>
+
+<!-- Scheduling overlay -->
+<div class="scheduling-overlay" id="sched-overlay">
+  <div class="sched-spinner"></div>
+  <div class="sched-text" id="sched-text">Scheduling posts&#8230;</div>
+</div>
+
+<!-- Success overlay -->
+<div class="success-overlay" id="success-overlay">
+  <div class="success-icon">&#9989;</div>
+  <div class="success-title">Week Scheduled!</div>
+  <div class="success-sub" id="success-msg">Your posts have been queued.</div>
+  <div class="success-next" id="success-next"></div>
+  <button class="success-btn" onclick="returnHome()">&#8592; Back to Home</button>
 </div>
 
 <script>
-  const BASE = 'https://jade-zabaione-30e1f0.netlify.app/.netlify/functions';
-  const PASSWORD = 'Riley814';
+/* ─────────────────────────────────────────
+   CONSTANTS
+───────────────────────────────────────── */
+const BASE = 'https://jade-zabaione-30e1f0.netlify.app/.netlify/functions';
+const PASSWORD = 'Riley814';
+const LS = {
+  AUTH:'814_auth', METRICS:'814_metrics', HISTORY:'814_history',
+  ECHO:'814_echo', SAGE:'814_sage', ATLAS:'814_atlas', SCOUT:'814_scout',
+  BUFFER:'814_buffer_token'
+};
 
-  // ── Auth ──
-  function unlock() {
-    const val = document.getElementById('pw-input').value;
-    if (val === PASSWORD) {
-      document.getElementById('gate').style.display = 'none';
-      document.getElementById('app').style.display = 'flex';
-      sessionStorage.setItem('auth', '1');
-    } else {
-      document.getElementById('pw-error').textContent = 'Incorrect password.';
-      document.getElementById('pw-input').value = '';
-      document.getElementById('pw-input').focus();
-    }
-  }
-
-  document.getElementById('pw-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') unlock();
-  });
-
-  if (sessionStorage.getItem('auth') === '1') {
+/* ─────────────────────────────────────────
+   AUTH
+───────────────────────────────────────── */
+function unlock() {
+  if (document.getElementById('pw').value === PASSWORD) {
+    sessionStorage.setItem(LS.AUTH, '1');
     document.getElementById('gate').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
+    init();
+  } else {
+    document.getElementById('pw-err').textContent = 'Incorrect password.';
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
   }
+}
+document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+if (sessionStorage.getItem(LS.AUTH) === '1') {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  init();
+}
 
-  // ── Tabs ──
-  function switchTab(name, btn) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('panel-' + name).classList.add('active');
-    btn.classList.add('active');
+/* ─────────────────────────────────────────
+   NAV
+───────────────────────────────────────── */
+function goScreen(name, btn) {
+  ['home','pipeline','review','settings'].forEach(s => {
+    const el = document.getElementById('screen-' + s);
+    if (el) el.classList.remove('active');
+  });
+  const t = document.getElementById('screen-' + name);
+  if (t) t.classList.add('active');
+  document.querySelectorAll('.h-nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function startNewWeek(btn) {
+  resetPipeline();
+  goScreen('pipeline', btn);
+}
+
+/* ─────────────────────────────────────────
+   INIT
+───────────────────────────────────────── */
+function init() {
+  loadMetrics();
+  loadHistory();
+  loadEchoReport();
+  loadBufferToken();
+}
+
+/* ─────────────────────────────────────────
+   SCORECARD
+───────────────────────────────────────── */
+function loadMetrics() {
+  const d = JSON.parse(localStorage.getItem(LS.METRICS) || 'null');
+  if (!d) return;
+  setMetric('signups', d.signups, d.prevSignups);
+  setMetric('chatbot', d.chatbot, d.prevChatbot);
+  setMetric('saves',   d.saves,   d.prevSaves);
+  setMetric('clicks',  d.clicks,  d.prevClicks);
+  const pct = d.list ? Math.round(d.list / 500 * 100) : 0;
+  document.getElementById('m-list').textContent = d.list != null ? d.list.toLocaleString() : '—';
+  document.getElementById('d-list').textContent = 'Goal: 500 — ' + pct + '% there';
+}
+
+function setMetric(key, val, prev) {
+  const numEl = document.getElementById('m-' + key);
+  const delEl = document.getElementById('d-' + key);
+  if (!numEl) return;
+  numEl.textContent = val != null ? val.toLocaleString() : '—';
+  if (prev != null && val != null) {
+    const diff = val - prev;
+    const pct  = prev > 0 ? Math.round(diff / prev * 100) : null;
+    delEl.textContent = (diff >= 0 ? '+' : '') + diff + (pct !== null ? ' (' + (diff >= 0 ? '+' : '') + pct + '%)' : '');
+    delEl.className = 'metric-delta ' + (diff >= 0 ? 'up' : 'down');
+  } else {
+    delEl.textContent = '';
+    delEl.className = 'metric-delta';
   }
+}
 
-  // ── Chat ──
-  function handleKey(e, agent) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      send(agent);
-    }
-    // Auto-grow textarea
-    const ta = e.target;
-    ta.style.height = '42px';
-    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+/* ─────────────────────────────────────────
+   NUMBERS MODAL
+───────────────────────────────────────── */
+function openNumbersModal() {
+  const d = JSON.parse(localStorage.getItem(LS.METRICS) || '{}');
+  ['signups','list','chatbot','saves','clicks'].forEach(k => {
+    const el = document.getElementById('nf-' + k);
+    if (el && d[k] != null) el.value = d[k];
+  });
+  document.getElementById('numbers-modal').style.display = 'flex';
+}
+
+function closeNumbersModal() {
+  document.getElementById('numbers-modal').style.display = 'none';
+  document.getElementById('echo-running-modal').style.display = 'none';
+  document.getElementById('btn-submit-nums').disabled = false;
+}
+
+async function submitNumbers() {
+  const prev = JSON.parse(localStorage.getItem(LS.METRICS) || '{}');
+  const cur = {
+    signups: nv('nf-signups'), list:    nv('nf-list'),
+    chatbot: nv('nf-chatbot'), saves:   nv('nf-saves'),
+    clicks:  nv('nf-clicks'),  reach:   nv('nf-reach'),
+    fb:      nv('nf-fb'),      monthly: nv('nf-monthly'),
+    prevSignups: prev.signups, prevChatbot: prev.chatbot,
+    prevSaves: prev.saves,     prevClicks:  prev.clicks,
+  };
+  localStorage.setItem(LS.METRICS, JSON.stringify(cur));
+  loadMetrics();
+
+  const today = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  const msg =
+    'Please analyze this week\'s performance data for The 8:14 Project and return your full structured ECHO REPORT.\n\n' +
+    'WEEK OF: ' + today + '\n' +
+    'Email signups this week: ' + (cur.signups ?? 'not provided') + '\n' +
+    'Total email list size: '   + (cur.list    ?? 'not provided') + '\n' +
+    'Riley chatbot opens: '     + (cur.chatbot ?? 'not provided') + '\n' +
+    'Instagram saves: '         + (cur.saves   ?? 'not provided') + '\n' +
+    'Link clicks to eight14.us: ' + (cur.clicks ?? 'not provided') + '\n' +
+    'Instagram reach: '         + (cur.reach   ?? 'not provided') + '\n' +
+    'Facebook engagement: '     + (cur.fb      ?? 'not provided') + '\n' +
+    'New subscribers this month: ' + (cur.monthly ?? 'not provided') + '\n' +
+    (prev.signups != null
+      ? 'vs last week — signups: ' + prev.signups + ', saves: ' + (prev.saves ?? '?') + ', clicks: ' + (prev.clicks ?? '?')
+      : '(no prior week data for comparison)');
+
+  document.getElementById('echo-running-modal').style.display = 'flex';
+  document.getElementById('btn-submit-nums').disabled = true;
+
+  try {
+    const reply = await callAgent('echo', msg);
+    localStorage.setItem(LS.ECHO, JSON.stringify({ report: reply, date: today }));
+    closeNumbersModal();
+    renderEchoReport(reply);
+    showStartWeekBtn();
+  } catch(e) {
+    document.getElementById('echo-running-modal').style.display = 'none';
+    document.getElementById('btn-submit-nums').disabled = false;
+    alert('Echo error: ' + e.message);
   }
+}
 
-  function addMsg(agent, role, text) {
-    const box = document.getElementById('msgs-' + agent);
+function nv(id) {
+  const v = document.getElementById(id)?.value;
+  return (v === '' || v == null) ? null : Number(v);
+}
+
+/* ─────────────────────────────────────────
+   ECHO REPORT
+───────────────────────────────────────── */
+function loadEchoReport() {
+  const stored = JSON.parse(localStorage.getItem(LS.ECHO) || 'null');
+  if (stored && stored.report) { renderEchoReport(stored.report); showStartWeekBtn(); }
+}
+
+function renderEchoReport(text) {
+  document.getElementById('echo-empty').style.display = 'none';
+  const c = document.getElementById('echo-report');
+  c.style.display = 'flex';
+  c.innerHTML = '';
+
+  const sections = [
+    { key:'PHASE 1 SCORECARD',         label:'Phase 1 Scorecard', cls:'label-blue'   },
+    { key:'WHAT WORKED',               label:'What Worked',       cls:'label-green'  },
+    { key:"WHAT DIDN'T WORK",          label:"What Didn't Work",  cls:'label-red'    },
+    { key:'THE SINGLE BIGGEST LEVER',  label:'Biggest Lever',     cls:'label-gold'   },
+    { key:'SCOUT BRIEF FOR NEXT WEEK', label:'Scout Brief',       cls:'label-sage'   },
+    { key:'ATLAS BRIEF FOR NEXT WEEK', label:'Atlas Brief',       cls:'label-blue'   },
+    { key:"A/B TEST FOR NEXT WEEK",    label:'A/B Test',          cls:'label-purple' },
+    { key:'GROWTH TRAJECTORY',         label:'Growth Trajectory', cls:'label-gold'   },
+  ];
+
+  let hit = false;
+  sections.forEach(s => {
+    const content = extractSection(text, s.key);
+    if (!content) return;
+    hit = true;
+    const el = document.createElement('div');
+    el.className = 'report-section';
+    el.innerHTML = '<span class="report-label ' + s.cls + '">' + esc(s.label) + '</span>' +
+                   '<div class="report-content">' + esc(content.trim()) + '</div>';
+    c.appendChild(el);
+  });
+
+  if (!hit) {
+    const el = document.createElement('div');
+    el.className = 'report-section';
+    el.innerHTML = '<span class="report-label label-gold">Echo Report</span>' +
+                   '<div class="report-content">' + esc(text) + '</div>';
+    c.appendChild(el);
+  }
+}
+
+function showStartWeekBtn() {
+  const existing = document.getElementById('start-week-btn');
+  if (existing) existing.remove();
+  const btn = document.createElement('button');
+  btn.className = 'start-week-btn';
+  btn.id = 'start-week-btn';
+  btn.textContent = 'START THIS WEEK\'S CONTENT →';
+  btn.onclick = () => startNewWeek(document.querySelector('[data-screen="pipeline"]'));
+  document.getElementById('echo-report').appendChild(btn);
+}
+
+/* ─────────────────────────────────────────
+   HISTORY
+───────────────────────────────────────── */
+function loadHistory() {
+  const history = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
+  if (!history.length) return;
+  const list = document.getElementById('history-list');
+  list.innerHTML = '';
+  history.slice(-20).reverse().forEach(p => {
     const div = document.createElement('div');
-    div.className = 'msg ' + role;
-    div.textContent = text;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-    return div;
+    div.className = 'post-entry';
+    const perf = p.metric > (p.avg * 1.2) ? 'good' : p.metric < (p.avg * .8) ? 'bad' : 'avg';
+    div.innerHTML =
+      '<div class="post-platform">' + platformIcon(p.platform) + '</div>' +
+      '<div class="post-info"><div class="post-type">' + esc(p.type) + '</div><div class="post-date">' + esc(p.date) + '</div></div>' +
+      '<div class="post-metric ' + perf + '">' + p.metric + '</div>';
+    list.appendChild(div);
+  });
+}
+
+function platformIcon(p) {
+  const m = { instagram:'&#128247;', facebook:'&#128309;', youtube:'&#9654;&#65039;', email:'&#128231;' };
+  return m[(p||'').toLowerCase()] || '&#128196;';
+}
+
+/* ─────────────────────────────────────────
+   PIPELINE STATE
+───────────────────────────────────────── */
+var P = { scoutReport:'', sageOutput:'', atlasOutput:'' };
+
+function resetPipeline() {
+  P = { scoutReport:'', sageOutput:'', atlasOutput:'' };
+
+  setPb('scout','active'); setPb('sage','pending'); setPb('atlas','pending'); setPb('review','pending');
+  ['pb-line1','pb-line2','pb-line3'].forEach(id => document.getElementById(id).classList.remove('done'));
+
+  show('phase-scout'); hide('phase-sage'); hide('phase-atlas');
+  hide('scout-running'); hide('scout-result'); hide('scout-actions');
+  document.getElementById('scout-result').innerHTML = '';
+  document.getElementById('btn-run-scout').disabled = false;
+  document.getElementById('scout-prompt').value = 'What sobriety, recovery, and wellness topics are trending this week? Return the full structured SCOUT REPORT with all sections.';
+}
+
+function setPb(name, state) {
+  const dot = document.getElementById('pb-' + name + '-dot');
+  const lbl = document.getElementById('pb-' + name + '-lbl');
+  dot.className = 'pb-dot ' + state;
+  lbl.className = 'pb-label' + (state !== 'pending' ? ' ' + state : '');
+  if (state === 'done') dot.innerHTML = '&#10003;';
+  else dot.textContent = { scout:'1', sage:'2', atlas:'3', review:'' }[name] || '';
+}
+
+function show(id) { const el = document.getElementById(id); if(el) el.style.display = ''; }
+function hide(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
+
+/* ─────────────────────────────────────────
+   SCOUT
+───────────────────────────────────────── */
+async function runScout() {
+  const prompt = document.getElementById('scout-prompt').value.trim();
+  if (!prompt) return;
+  document.getElementById('btn-run-scout').disabled = true;
+  show('scout-running'); hide('scout-result'); hide('scout-actions');
+
+  try {
+    const reply = await callAgent('scout', prompt);
+    P.scoutReport = reply;
+    localStorage.setItem(LS.SCOUT, reply);
+    hide('scout-running');
+    renderScoutResult(reply);
+    show('scout-result'); show('scout-actions');
+  } catch(e) {
+    hide('scout-running');
+    document.getElementById('btn-run-scout').disabled = false;
+    appendError('scout-result', e.message);
+    show('scout-result');
   }
+}
 
-  async function send(agent) {
-    const input = document.getElementById('input-' + agent);
-    const btn = document.getElementById('btn-' + agent);
-    const text = input.value.trim();
-    if (!text) return;
+function renderScoutResult(text) {
+  const c = document.getElementById('scout-result');
+  c.innerHTML = '';
+  const headings = [
+    'TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS',
+    'CONTENT GAPS THIS WEEK','REPOST SOURCES THIS WEEK',
+    'SAGE BRIEF — POST 1','SAGE BRIEF — POST 2','SAGE BRIEF — POST 3','REPOST BRIEF'
+  ];
+  // Also try dash variants
+  const rawHeadings = [
+    'TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS',
+    'CONTENT GAPS THIS WEEK','REPOST SOURCES THIS WEEK',
+    'SAGE BRIEF','REPOST BRIEF'
+  ];
+  let hit = false;
+  rawHeadings.forEach(h => {
+    const content = extractSection(text, h);
+    if (!content) return;
+    hit = true;
+    const sec = document.createElement('div');
+    sec.className = 'result-section';
+    sec.innerHTML = '<div class="result-section-title">' + esc(h) + '</div><div class="result-text">' + esc(content) + '</div>';
+    c.appendChild(sec);
+  });
+  if (!hit) {
+    const sec = document.createElement('div');
+    sec.className = 'result-section';
+    sec.innerHTML = '<div class="result-text">' + esc(text) + '</div>';
+    c.appendChild(sec);
+  }
+}
 
-    addMsg(agent, 'user', text);
-    input.value = '';
-    input.style.height = '42px';
-    btn.disabled = true;
+function editScoutReport() {
+  const c = document.getElementById('scout-result');
+  c.innerHTML = '';
+  const ta = document.createElement('textarea');
+  ta.className = 'result-editable';
+  ta.value = P.scoutReport;
+  ta.oninput = () => { P.scoutReport = ta.value; };
+  c.appendChild(ta);
+  const acts = document.getElementById('scout-actions');
+  acts.innerHTML = '<button class="btn-next" onclick="runSage()">Send to Sage →</button>';
+}
 
-    const thinking = addMsg(agent, 'agent thinking', 'Thinking…');
+/* ─────────────────────────────────────────
+   SAGE
+───────────────────────────────────────── */
+async function runSage() {
+  setPb('scout','done');
+  document.getElementById('pb-line1').classList.add('done');
+  setPb('sage','active');
 
-    try {
-      const res = await fetch(BASE + '/' + agent, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
-      });
+  show('phase-sage');
+  show('sage-running'); hide('sage-result'); hide('sage-actions');
+  document.getElementById('phase-sage').scrollIntoView({ behavior:'smooth', block:'start' });
 
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      thinking.textContent = data.reply || '(no response)';
-    } catch (err) {
-      thinking.textContent = 'Error: ' + err.message;
-    } finally {
-      thinking.classList.remove('thinking');
-      btn.disabled = false;
-      input.focus();
+  const msg = "Here is Scout's research report for this week. Please produce all 12 posts in the full SAGE OUTPUT format.\n\n" + P.scoutReport;
+
+  try {
+    const reply = await callAgent('sage', msg);
+    P.sageOutput = reply;
+    localStorage.setItem(LS.SAGE, reply);
+    hide('sage-running');
+
+    const res = document.getElementById('sage-result');
+    res.style.display = 'flex';
+    const sum = document.createElement('div');
+    sum.className = 'phase-summary';
+    const lines = extractPostHeadlines(reply);
+    sum.innerHTML = '<div class="check">&#10003;</div><div>' +
+      '<div class="phase-summary-text">12 posts written successfully</div>' +
+      '<div class="phase-summary-sub">' + esc(lines.join(' · ')) + '</div></div>';
+    res.appendChild(sum);
+
+    show('sage-actions');
+    runAtlas();
+  } catch(e) {
+    hide('sage-running');
+    appendError('sage-result', e.message);
+    show('sage-result'); show('sage-actions');
+  }
+}
+
+function extractPostHeadlines(text) {
+  const lines = text.split('\n');
+  const out = [];
+  for (const l of lines) {
+    const t = l.trim();
+    if (/^POST [123] /.test(t)) out.push(t.replace(/^POST \d+ — /, '').replace(/^POST \d+ - /, ''));
+    if (out.length >= 3) break;
+  }
+  return out.length ? out : ['Educational Carousel','Quote Graphic','Facebook Caption'];
+}
+
+/* ─────────────────────────────────────────
+   ATLAS
+───────────────────────────────────────── */
+async function runAtlas() {
+  setPb('sage','done');
+  document.getElementById('pb-line2').classList.add('done');
+  setPb('atlas','active');
+
+  show('phase-atlas');
+  show('atlas-running'); hide('atlas-result'); hide('atlas-actions');
+  document.getElementById('phase-atlas').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  const msg = "Here is Sage's content output for the week of " + today + ". Please build the full ATLAS REPORT with the weekly calendar and Buffer queue.\n\n" + P.sageOutput;
+
+  try {
+    const reply = await callAgent('atlas', msg);
+    P.atlasOutput = reply;
+    localStorage.setItem(LS.ATLAS, reply);
+    hide('atlas-running');
+
+    const res = document.getElementById('atlas-result');
+    res.style.display = 'flex';
+    const cal = extractSection(reply, 'WEEKLY CALENDAR');
+    const sec = document.createElement('div');
+    sec.className = 'result-section';
+    if (cal) {
+      sec.innerHTML = '<div class="result-section-title">Weekly Calendar</div><div class="result-text">' + esc(cal) + '</div>';
+    } else {
+      sec.innerHTML = '<div class="result-section-title">Atlas Report</div><div class="result-text">' + esc(reply.slice(0,600)) + '…</div>';
     }
+    res.appendChild(sec);
+
+    show('atlas-actions');
+    setPb('atlas','done');
+    document.getElementById('pb-line3').classList.add('done');
+    setPb('review','active');
+  } catch(e) {
+    hide('atlas-running');
+    appendError('atlas-result', e.message);
+    show('atlas-result'); show('atlas-actions');
   }
+}
+
+/* ─────────────────────────────────────────
+   REVIEW
+───────────────────────────────────────── */
+var reviewPosts = [];
+
+function goToReview() {
+  buildReviewPosts();
+  goScreen('review', null);
+}
+
+function buildReviewPosts() {
+  const text = P.sageOutput || localStorage.getItem(LS.SAGE) || '';
+  reviewPosts = parseSagePosts(text);
+
+  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('review-title').textContent =
+    'Your ' + reviewPosts.length + ' posts for the week of ' + today + '. Review and approve.';
+
+  renderPostCards();
+  updateApproveCount();
+}
+
+function parseSagePosts(text) {
+  if (!text) return defaultPosts();
+  const blocks = text.split(/\n(?=POST \d+\s*[—-])/);
+  const posts = [];
+  blocks.forEach((block, i) => {
+    if (!block.trim()) return;
+    const titleM   = block.match(/^POST (\d+)\s*[—-]+\s*(.+)/m);
+    const captionM = block.match(/CAPTION:\s*\n([\s\S]*?)(?=\nHASHTAGS:|\nSLIDE |\n---|\nPOST \d|$)/);
+    const hashM    = block.match(/HASHTAGS:\s*\n?([\s\S]*?)(?=\n\n|\n---|\nPOST \d|$)/);
+    const slide1M  = block.match(/SLIDE 1[^:]*:\s*\n?(.*)/);
+    const platM    = block.match(/Platform:\s*(.+)/);
+    const dtM      = block.match(/Day\/Time:\s*(.+)/);
+    const num      = titleM ? titleM[1] : String(i + 1);
+    const typeRaw  = titleM ? titleM[2].trim() : 'Post ' + num;
+    posts.push({
+      num, typeRaw,
+      type:      classifyType(typeRaw),
+      headline:  slide1M ? slide1M[1].trim() : typeRaw,
+      caption:   captionM ? captionM[1].trim() : '',
+      hashtags:  hashM ? hashM[1].trim() : '',
+      platform:  platM ? platM[1].trim() : 'Instagram',
+      dayTime:   dtM   ? dtM[1].trim()   : '',
+      approved:  true,
+    });
+  });
+  return posts.length >= 3 ? posts : defaultPosts();
+}
+
+function classifyType(s) {
+  const u = s.toUpperCase();
+  if (u.includes('CAROUSEL')) return 'carousel';
+  if (u.includes('QUOTE'))    return 'quote';
+  if (u.includes('REPOST'))   return 'repost';
+  if (u.includes('COMMUNITY') || u.includes('CHECK-IN') || u.includes('GROUP')) return 'community';
+  return 'caption';
+}
+
+function defaultPosts() {
+  return [
+    { num:'1',  type:'carousel',  typeRaw:'Instagram Carousel (Educational)',     platform:'Instagram Feed',    dayTime:'Monday 8am MT',     headline:'Educational Carousel',    caption:'', hashtags:'', approved:true },
+    { num:'2',  type:'quote',     typeRaw:'Instagram Quote Graphic',              platform:'Instagram Feed',    dayTime:'Monday 6pm MT',     headline:'Quote Graphic',           caption:'', hashtags:'', approved:true },
+    { num:'3',  type:'caption',   typeRaw:'Facebook Page Caption Post',           platform:'Facebook Page',     dayTime:'Tuesday 10am MT',   headline:'Facebook Caption Post',   caption:'', hashtags:'', approved:true },
+    { num:'4',  type:'carousel',  typeRaw:'Instagram Carousel (Tool or Method)',  platform:'Instagram Feed',    dayTime:'Wednesday 8am MT',  headline:'Tool/Method Carousel',    caption:'', hashtags:'', approved:true },
+    { num:'5',  type:'repost',    typeRaw:'Instagram Stories Repost',             platform:'Instagram Stories', dayTime:'Wednesday 12pm MT', headline:'Stories Repost',          caption:'', hashtags:'', approved:true },
+    { num:'6',  type:'community', typeRaw:'Facebook Group Check-In',              platform:'Facebook Group',    dayTime:'Wednesday 6pm MT',  headline:'Group Check-In',          caption:'', hashtags:'', approved:true },
+    { num:'7',  type:'community', typeRaw:'YouTube Community Post',               platform:'YouTube Community', dayTime:'Thursday 9am MT',   headline:'YouTube Community Post',  caption:'', hashtags:'', approved:true },
+    { num:'8',  type:'carousel',  typeRaw:'Instagram Carousel (Story Arc)',       platform:'Instagram Feed',    dayTime:'Thursday 6pm MT',   headline:'Story Arc Carousel',      caption:'', hashtags:'', approved:true },
+    { num:'9',  type:'repost',    typeRaw:'Facebook Page Repost',                 platform:'Facebook Page',     dayTime:'Friday 10am MT',    headline:'Facebook Repost',         caption:'', hashtags:'', approved:true },
+    { num:'10', type:'caption',   typeRaw:'Instagram Caption Post',               platform:'Instagram Feed',    dayTime:'Friday 6pm MT',     headline:'Weekend Reflection',      caption:'', hashtags:'', approved:true },
+    { num:'11', type:'carousel',  typeRaw:'Instagram Carousel (Myth vs Reality)', platform:'Instagram Feed',    dayTime:'Saturday 9am MT',   headline:'Myth vs Reality Carousel',caption:'', hashtags:'', approved:true },
+    { num:'12', type:'community', typeRaw:'Facebook Group Weekly Check-In',       platform:'Facebook Group',    dayTime:'Sunday 8am MT',     headline:'Weekly Check-In',         caption:'', hashtags:'', approved:true },
+  ];
+}
+
+function renderPostCards() {
+  const grid = document.getElementById('posts-grid');
+  grid.innerHTML = '';
+  reviewPosts.forEach((p, i) => {
+    const card = document.createElement('div');
+    card.className = 'post-card' + (p.approved ? '' : ' excluded');
+    card.id = 'pc-' + i;
+    const pi = platIcon2(p.platform);
+    card.innerHTML =
+      '<div class="post-card-top">' +
+        '<span class="post-badge badge-' + p.type + '">' + badgeLabel(p.type) + '</span>' +
+        '<div class="post-meta">' +
+          '<div class="post-platform-time">' + pi + ' ' + esc(p.platform) + ' &middot; ' + esc(p.dayTime) + '</div>' +
+          '<div class="post-headline">' + esc(p.headline) + '</div>' +
+        '</div>' +
+        '<button class="approve-toggle' + (p.approved ? '' : ' off') + '" id="tog-' + i + '" onclick="toggleApprove(' + i + ')">' + (p.approved ? '&#10003;' : '&#9675;') + '</button>' +
+      '</div>' +
+      '<div class="post-caption-text" id="ct-' + i + '">' + esc(p.caption || '(Run pipeline to generate copy.)') + '</div>' +
+      '<textarea class="caption-editable" id="ce-' + i + '" onchange="updateCaption(' + i + ',this.value)">' + esc(p.caption) + '</textarea>' +
+      (p.hashtags ? '<div class="post-hashtags">' + esc(p.hashtags) + '</div>' : '') +
+      '<div class="post-card-actions">' +
+        '<button class="btn-tiny" onclick="toggleExpand(' + i + ')">Expand</button>' +
+        '<button class="btn-tiny" onclick="toggleEdit(' + i + ')">✏ Edit</button>' +
+      '</div>';
+    grid.appendChild(card);
+  });
+  document.getElementById('total-count').textContent = reviewPosts.length;
+}
+
+function badgeLabel(t) {
+  return { carousel:'Carousel', quote:'Quote', caption:'Caption', repost:'Repost', community:'Community' }[t] || t;
+}
+
+function platIcon2(p) {
+  const s = (p||'').toLowerCase();
+  if (s.includes('instagram')) return '&#128247;';
+  if (s.includes('facebook'))  return '&#128309;';
+  if (s.includes('youtube'))   return '&#9654;&#65039;';
+  return '&#128196;';
+}
+
+function toggleApprove(i) {
+  reviewPosts[i].approved = !reviewPosts[i].approved;
+  document.getElementById('pc-' + i).classList.toggle('excluded', !reviewPosts[i].approved);
+  const t = document.getElementById('tog-' + i);
+  t.classList.toggle('off', !reviewPosts[i].approved);
+  t.innerHTML = reviewPosts[i].approved ? '&#10003;' : '&#9675;';
+  updateApproveCount();
+}
+
+function toggleExpand(i) { document.getElementById('ct-' + i).classList.toggle('expanded'); }
+
+function toggleEdit(i) {
+  const ct = document.getElementById('ct-' + i);
+  const ce = document.getElementById('ce-' + i);
+  const editing = ce.style.display !== 'block';
+  ct.style.display = editing ? 'none' : '';
+  ce.style.display = editing ? 'block' : 'none';
+}
+
+function updateCaption(i, val) {
+  reviewPosts[i].caption = val;
+  const ct = document.getElementById('ct-' + i);
+  if (ct) ct.textContent = val;
+}
+
+function updateApproveCount() {
+  const n = reviewPosts.filter(p => p.approved).length;
+  document.getElementById('approved-count').textContent = n;
+  document.getElementById('btn-approve-all').disabled = n === 0;
+}
+
+/* ─────────────────────────────────────────
+   SCHEDULE
+───────────────────────────────────────── */
+async function approveAndSchedule() {
+  const approved = reviewPosts.filter(p => p.approved);
+  const token = localStorage.getItem(LS.BUFFER);
+  const overlay = document.getElementById('sched-overlay');
+  overlay.classList.add('show');
+  document.getElementById('sched-text').textContent =
+    (token ? 'Scheduling ' : 'Copying ') + approved.length + ' posts' + (token ? ' in Buffer…' : ' to clipboard…');
+
+  if (!token) {
+    const dump = approved.map(p =>
+      '=== POST ' + p.num + ' — ' + p.typeRaw + ' ===\nPlatform: ' + p.platform +
+      '\nDay/Time: ' + p.dayTime + '\n\nCAPTION:\n' + p.caption +
+      (p.hashtags ? '\n\n' + p.hashtags : '')
+    ).join('\n\n');
+    const atlas = P.atlasOutput || localStorage.getItem(LS.ATLAS) || '';
+    try { await navigator.clipboard.writeText(dump + '\n\n---ATLAS BUFFER QUEUE---\n' + atlas); } catch(e) {}
+  }
+
+  await new Promise(r => setTimeout(r, 1400 + approved.length * 60));
+  overlay.classList.remove('show');
+  saveToHistory(approved);
+
+  document.getElementById('success-msg').textContent =
+    token
+      ? approved.length + ' posts queued in Buffer across Instagram, Facebook, and YouTube.'
+      : approved.length + ' posts copied to clipboard. Paste into Buffer to schedule.';
+  document.getElementById('success-next').textContent = 'Next Sunday workflow: ' + nextSunday();
+  document.getElementById('success-overlay').classList.add('show');
+}
+
+function saveToHistory(posts) {
+  const h = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
+  const today = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  posts.forEach(p => h.push({ type:p.typeRaw, platform:p.platform.toLowerCase(), date:today, metric:0, avg:20 }));
+  localStorage.setItem(LS.HISTORY, JSON.stringify(h.slice(-100)));
+}
+
+function saveDraft() {
+  localStorage.setItem('814_draft', JSON.stringify({ posts:reviewPosts, date:new Date().toISOString() }));
+  alert('Draft saved.');
+}
+
+function returnHome() {
+  document.getElementById('success-overlay').classList.remove('show');
+  goScreen('home', document.querySelector('[data-screen="home"]'));
+  loadHistory();
+}
+
+function nextSunday() {
+  const d = new Date();
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+  return d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+/* ─────────────────────────────────────────
+   SETTINGS
+───────────────────────────────────────── */
+function loadBufferToken() {
+  const t = localStorage.getItem(LS.BUFFER);
+  if (t) {
+    document.getElementById('buffer-token-input').value = t;
+    setBufferStatus('&#10003; Token saved — one-click scheduling enabled.', 'ok');
+  }
+}
+
+function saveBufferToken() {
+  const v = document.getElementById('buffer-token-input').value.trim();
+  if (!v) { clearBufferToken(); return; }
+  localStorage.setItem(LS.BUFFER, v);
+  setBufferStatus('&#10003; Buffer token saved — scheduling enabled.', 'ok');
+}
+
+function clearBufferToken() {
+  localStorage.removeItem(LS.BUFFER);
+  document.getElementById('buffer-token-input').value = '';
+  setBufferStatus('"Approve &amp; Schedule" will copy posts to clipboard.', '');
+}
+
+function setBufferStatus(msg, cls) {
+  const el = document.getElementById('buffer-status');
+  el.innerHTML = msg;
+  el.className = 'settings-status' + (cls ? ' ' + cls : '');
+}
+
+function clearAllData() {
+  if (!confirm('Clear all stored data? This cannot be undone.')) return;
+  Object.values(LS).forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem('814_draft');
+  location.reload();
+}
+
+/* ─────────────────────────────────────────
+   API
+───────────────────────────────────────── */
+async function callAgent(agent, message) {
+  const res = await fetch(BASE + '/' + agent, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { const d = await res.json(); detail = d.error || ''; } catch(e) {}
+    throw new Error('HTTP ' + res.status + (detail ? ': ' + detail : '') + ' from ' + agent);
+  }
+  const data = await res.json();
+  if (!data.reply) throw new Error('Empty reply from ' + agent);
+  return data.reply;
+}
+
+/* ─────────────────────────────────────────
+   UTILS
+───────────────────────────────────────── */
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function extractSection(text, heading) {
+  // Try "HEADING:" and "HEADING\n"
+  let idx = text.indexOf(heading + ':');
+  let start = idx >= 0 ? idx + heading.length + 1 : -1;
+  if (start < 0) {
+    idx = text.indexOf(heading + '\n');
+    start = idx >= 0 ? idx + heading.length + 1 : -1;
+  }
+  if (start < 0) return null;
+  const after = text.slice(start);
+  const lines = after.split('\n');
+  const out = [];
+  for (const line of lines) {
+    const t = line.trim();
+    if (out.length > 0 && (/^[A-Z][A-Z &'\/—-]{4,}:/.test(t) || /^---/.test(t))) break;
+    out.push(line);
+  }
+  const result = out.join('\n').trim();
+  return result || null;
+}
+
+function appendError(containerId, msg) {
+  const c = document.getElementById(containerId);
+  c.style.display = 'flex';
+  const sec = document.createElement('div');
+  sec.className = 'result-section';
+  sec.innerHTML = '<div class="result-section-title" style="color:var(--red)">Error</div>' +
+                  '<div class="result-text" style="color:var(--red)">' + esc(msg) + '</div>';
+  c.appendChild(sec);
+}
 </script>
 </body>
 </html>

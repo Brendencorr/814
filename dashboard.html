@@ -1190,18 +1190,34 @@ function clearAllData() {
    API
 ───────────────────────────────────────── */
 async function callAgent(agent, message) {
-  const res = await fetch(BASE + '/' + agent, {
+  const url = BASE + '/' + agent;
+  const body = JSON.stringify({ message });
+  console.log('[8:14] callAgent →', agent);
+  console.log('[8:14] URL:', url);
+  console.log('[8:14] Body:', body);
+
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message }),
+    body,
   });
+
+  // Always read as text first so we never lose the error body
+  const rawText = await res.text();
+  console.log('[8:14] Response status:', res.status);
+  console.log('[8:14] Response body:', rawText);
+
   if (!res.ok) {
-    let detail = '';
-    try { const d = await res.json(); detail = d.error || ''; } catch(e) {}
-    throw new Error('HTTP ' + res.status + (detail ? ': ' + detail : '') + ' from ' + agent);
+    let detail = rawText;
+    try { const d = JSON.parse(rawText); detail = d.error || rawText; } catch(e) {}
+    throw new Error('HTTP ' + res.status + ' from ' + agent + ': ' + detail);
   }
-  const data = await res.json();
-  if (!data.reply) throw new Error('Empty reply from ' + agent);
+
+  let data;
+  try { data = JSON.parse(rawText); } catch(e) {
+    throw new Error('Invalid JSON from ' + agent + ': ' + rawText.slice(0, 200));
+  }
+  if (!data.reply) throw new Error('Empty reply from ' + agent + '. Raw: ' + rawText.slice(0, 200));
   return data.reply;
 }
 

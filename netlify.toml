@@ -1,2 +1,17 @@
 [functions]
   directory = "netlify/functions"
+
+[functions."scout"]
+  timeout = 26
+
+[functions."sage"]
+  timeout = 26
+
+[functions."atlas"]
+  timeout = 26
+
+[functions."echo"]
+  timeout = 26
+
+[functions."riley-chat"]
+  timeout = 26

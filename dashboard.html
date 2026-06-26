@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8:14 Agent Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Password Gate ── */
+  #gate {
+    position: fixed;
+    inset: 0;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
+
+  .gate-box {
+    text-align: center;
+    padding: 2.5rem 2rem;
+    max-width: 340px;
+    width: 100%;
+  }
+
+  .gate-logo {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #c9a84c;
+    letter-spacing: -1px;
+    margin-bottom: 0.25rem;
+  }
+
+  .gate-sub {
+    font-size: 0.75rem;
+    color: #555;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  .gate-box input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    outline: none;
+    margin-bottom: 0.75rem;
+    transition: border-color 0.2s;
+  }
+
+  .gate-box input:focus { border-color: #c9a84c; }
+
+  .gate-box button {
+    width: 100%;
+    padding: 0.85rem;
+    background: #c9a84c;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s;
+  }
+
+  .gate-box button:hover { opacity: 0.88; }
+
+  .gate-error {
+    color: #e05c5c;
+    font-size: 0.82rem;
+    margin-top: 0.6rem;
+    min-height: 1.1rem;
+  }
+
+  /* ── App Shell ── */
+  #app { display: none; flex-direction: column; height: 100dvh; }
+
+  header {
+    background: #000;
+    border-bottom: 1px solid #1e1e1e;
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 52px;
+    flex-shrink: 0;
+  }
+
+  .logo { font-size: 1.4rem; font-weight: 800; color: #c9a84c; letter-spacing: -0.5px; }
+
+  nav {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+
+  nav::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    padding: 0.45rem 0.9rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: #666;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .tab-btn:hover { color: #c9a84c; background: #111; }
+  .tab-btn.active { color: #c9a84c; background: #181400; }
+
+  /* ── Chat Panel ── */
+  .tab-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .tab-panel.active { display: flex; }
+
+  .agent-header {
+    padding: 0.9rem 1.25rem 0.75rem;
+    border-bottom: 1px solid #1a1a1a;
+    flex-shrink: 0;
+  }
+
+  .agent-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #c9a84c;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .agent-desc {
+    font-size: 0.75rem;
+    color: #555;
+    margin-top: 0.15rem;
+  }
+
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    scrollbar-width: thin;
+    scrollbar-color: #222 transparent;
+  }
+
+  .messages::-webkit-scrollbar { width: 4px; }
+  .messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+
+  .msg {
+    max-width: 80%;
+    padding: 0.7rem 0.95rem;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    word-break: break-word;
+    white-space: pre-wrap;
+  }
+
+  .msg.user {
+    background: #c9a84c;
+    color: #000;
+    font-weight: 500;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.agent {
+    background: #161616;
+    color: #ddd;
+    align-self: flex-start;
+    border: 1px solid #222;
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.thinking {
+    color: #555;
+    font-style: italic;
+    border-color: #1a1a1a;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid #1a1a1a;
+    background: #0a0a0a;
+    flex-shrink: 0;
+  }
+
+  .input-row textarea {
+    flex: 1;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 0.875rem;
+    padding: 0.65rem 0.85rem;
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+    height: 42px;
+    max-height: 120px;
+    overflow-y: auto;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .input-row textarea:focus { border-color: #c9a84c; }
+
+  .send-btn {
+    background: #c9a84c;
+    border: none;
+    border-radius: 8px;
+    color: #000;
+    font-size: 1rem;
+    width: 42px;
+    height: 42px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+  }
+
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    header { padding: 0 0.85rem; }
+    .logo { font-size: 1.2rem; }
+    .tab-btn { padding: 0.4rem 0.7rem; font-size: 0.78rem; }
+    .messages { padding: 0.85rem; }
+    .msg { max-width: 90%; font-size: 0.84rem; }
+    .input-row { padding: 0.75rem 0.85rem; }
+    .agent-header { padding: 0.75rem 0.85rem 0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Password Gate -->
+<div id="gate">
+  <div class="gate-box">
+    <div class="gate-logo">8:14</div>
+    <div class="gate-sub">Agent Dashboard</div>
+    <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" />
+    <button onclick="unlock()">Enter</button>
+    <div class="gate-error" id="pw-error"></div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="logo">8:14</div>
+    <nav>
+      <button class="tab-btn active" onclick="switchTab('scout', this)">Scout</button>
+      <button class="tab-btn" onclick="switchTab('sage', this)">Sage</button>
+      <button class="tab-btn" onclick="switchTab('atlas', this)">Atlas</button>
+      <button class="tab-btn" onclick="switchTab('echo', this)">Echo</button>
+    </nav>
+  </header>
+
+  <!-- Scout -->
+  <div class="tab-panel active" id="panel-scout">
+    <div class="agent-header">
+      <div class="agent-name">Scout</div>
+      <div class="agent-desc">Research agent — trending topics & content opportunities</div>
+    </div>
+    <div class="messages" id="msgs-scout"></div>
+    <div class="input-row">
+      <textarea id="input-scout" placeholder="Ask Scout to research a topic…" rows="1" onkeydown="handleKey(event,'scout')"></textarea>
+      <button class="send-btn" id="btn-scout" onclick="send('scout')">&#9658;</button>
+    </div>
+  </div>
+
+  <!-- Sage -->
+  <div class="tab-panel" id="panel-sage">
+    <div class="agent-header">
+      <div class="agent-name">Sage</div>
+      <div class="agent-desc">Scriptwriter — YouTube scripts & captions in Riley's voice</div>
+    </div>
+    <div class="messages" id="msgs-sage"></div>
+    <div class="input-row">
+      <textarea id="input-sage" placeholder="Ask Sage to write a script or caption…" rows="1" onkeydown="handleKey(event,'sage')"></textarea>
+      <button class="send-btn" id="btn-sage" onclick="send('sage')">&#9658;</button>
+    </div>
+  </div>
+
+  <!-- Atlas -->
+  <div class="tab-panel" id="panel-atlas">
+    <div class="agent-header">
+      <div class="agent-name">Atlas</div>
+      <div class="agent-desc">Content scheduler — weekly calendar & Buffer queue</div>
+    </div>
+    <div class="messages" id="msgs-atlas"></div>
+    <div class="input-row">
+      <textarea id="input-atlas" placeholder="Ask Atlas to build a schedule…" rows="1" onkeydown="handleKey(event,'atlas')"></textarea>
+      <button class="send-btn" id="btn-atlas" onclick="send('atlas')">&#9658;</button>
+    </div>
+  </div>
+
+  <!-- Echo -->
+  <div class="tab-panel" id="panel-echo">
+    <div class="agent-header">
+      <div class="agent-name">Echo</div>
+      <div class="agent-desc">Analytics agent — performance review & recommendations</div>
+    </div>
+    <div class="messages" id="msgs-echo"></div>
+    <div class="input-row">
+      <textarea id="input-echo" placeholder="Ask Echo to review your analytics…" rows="1" onkeydown="handleKey(event,'echo')"></textarea>
+      <button class="send-btn" id="btn-echo" onclick="send('echo')">&#9658;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const BASE = 'https://jade-zabaione-30e1f0.netlify.app/.netlify/functions';
+  const PASSWORD = 'Riley814';
+
+  // ── Auth ──
+  function unlock() {
+    const val = document.getElementById('pw-input').value;
+    if (val === PASSWORD) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      sessionStorage.setItem('auth', '1');
+    } else {
+      document.getElementById('pw-error').textContent = 'Incorrect password.';
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  }
+
+  document.getElementById('pw-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') unlock();
+  });
+
+  if (sessionStorage.getItem('auth') === '1') {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+  }
+
+  // ── Tabs ──
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── Chat ──
+  function handleKey(e, agent) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send(agent);
+    }
+    // Auto-grow textarea
+    const ta = e.target;
+    ta.style.height = '42px';
+    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
+  }
+
+  function addMsg(agent, role, text) {
+    const box = document.getElementById('msgs-' + agent);
+    const div = document.createElement('div');
+    div.className = 'msg ' + role;
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  async function send(agent) {
+    const input = document.getElementById('input-' + agent);
+    const btn = document.getElementById('btn-' + agent);
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMsg(agent, 'user', text);
+    input.value = '';
+    input.style.height = '42px';
+    btn.disabled = true;
+
+    const thinking = addMsg(agent, 'agent thinking', 'Thinking…');
+
+    try {
+      const res = await fetch(BASE + '/' + agent, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      thinking.textContent = data.reply || '(no response)';
+    } catch (err) {
+      thinking.textContent = 'Error: ' + err.message;
+    } finally {
+      thinking.classList.remove('thinking');
+      btn.disabled = false;
+      input.focus();
+    }
+  }
+</script>
+</body>
+</html>

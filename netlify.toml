@@ -13,7 +13,6 @@
 [functions."echo"]
   timeout = 26
 
-# Riley streams responses — 30s to allow for Supabase context load + streaming
 [functions."riley-chat"]
   timeout = 30
 
@@ -26,10 +25,10 @@
 [functions."pipeline-status"]
   timeout = 26
 
-# Manual trigger endpoint — HTTP callable from dashboard, returns JSON status
 [functions."weekly-pipeline"]
+  timeout = 26
 
-# Autonomous background function — runs every Sunday 6am MT (12:00 UTC)
-# Background functions have no HTTP timeout, run until completion
-[functions."weekly-pipeline-background"]
+# Runs every Sunday 6am MT (12:00 UTC) as a background function
+# Scheduled functions automatically run as background functions — no -background suffix needed
+[functions."weekly-pipeline-cron"]
   schedule = "0 12 * * 0"

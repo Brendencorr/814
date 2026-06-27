@@ -9,7 +9,6 @@
     "dev": "netlify dev"
   },
   "dependencies": {
-    "@netlify/functions": "^2.0.0",
     "@supabase/supabase-js": "^2.0.0"
   },
   "devDependencies": {

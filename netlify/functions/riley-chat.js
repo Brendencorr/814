@@ -1,34 +1,31 @@
 /**
- * riley-chat.js — Netlify Streaming Function
+ * riley-chat.js — Standard Netlify Serverless Function
  *
- * Streams Riley's response word-by-word from Anthropic to the browser.
- * Falls back to regular JSON if client sends Accept: application/json
- * or body field stream: false.
+ * Returns Riley's response as Content-Type: text/plain so the streaming
+ * client UI (response.body.getReader()) works without any special Netlify
+ * streaming runtime. The blinking cursor shows while the request is in
+ * flight; the full reply appears when the response arrives.
  *
- * Request body:
- *   { message?, messages?, user_id?, session_id?, stream? }
+ * Request body (POST JSON):
+ *   { message?, messages?, user_id?, session_id? }
  *
- * Streaming response: text/plain — plain text chunks appended in real time
- * JSON fallback response: { "reply": "..." }
+ * Response: text/plain — the reply text only (no JSON wrapper)
+ * Error responses: application/json { error: "..." }
  *
- * max_tokens: 1000 for Riley (short conversational responses, stays within timeout)
+ * max_tokens: 1000 — short conversational replies
  * Model: claude-sonnet-4-6
  */
 
-const { stream } = require("@netlify/functions");
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient } = require("./supabase-client");
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-
-// ── CORS headers (applied to every response) ──────────────────────────────────
-const CORS = {
+const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 // ── System prompt ─────────────────────────────────────────────────────────────
-// [USER_CONTEXT_PLACEHOLDER] is replaced at runtime with personalised user data.
 const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for The 8:14 Project at eight14.us.
 
 RESPONSE STYLE — CRITICAL:
@@ -137,16 +134,13 @@ Never diagnose. Never prescribe. Never replace clinical care.
 // ── User context builder ──────────────────────────────────────────────────────
 function buildUserContext(profile) {
   if (!profile) return "USER CONTEXT:\nThis visitor is not logged in.";
-
   const lines = ["USER CONTEXT — this person is logged in:"];
   if (profile.full_name) lines.push(`Name: ${profile.full_name}`);
   if (profile.email)     lines.push(`Email: ${profile.email}`);
-
   if (profile.sobriety_date) {
     const days = Math.floor((Date.now() - new Date(profile.sobriety_date)) / 86400000);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
   }
-
   lines.push(
     profile.programs_purchased?.length
       ? `Programs purchased: ${profile.programs_purchased.join(", ")}`
@@ -156,7 +150,6 @@ function buildUserContext(profile) {
   lines.push("");
   lines.push("Use their name naturally (not every message). Reference their sobriety date when relevant.");
   lines.push("If they have no programs yet, the free 7-Day Rebuild Reset is the right first suggestion.");
-
   return lines.join("\n");
 }
 
@@ -175,16 +168,14 @@ async function getContentContext(supabase) {
       supabase.from("echo_scores").select("best_pillar").order("created_at", { ascending: false }).limit(1),
       supabase.from("published_posts").select("caption_preview, post_type, platform").order("created_at", { ascending: false }).limit(3),
     ]);
-
     const scout = scoutRes.data?.[0];
     const echo  = echoRes.data?.[0];
     const posts = postsRes.data || [];
     if (!scout && !echo && !posts.length) return "";
-
     let ctx = "\n\nCURRENT CONTENT CONTEXT — updated weekly:";
-    if (scout?.top_theme)           ctx += `\nThis week's theme: ${scout.top_theme}`;
+    if (scout?.top_theme)              ctx += `\nThis week's theme: ${scout.top_theme}`;
     if (scout?.topics_covered?.length) ctx += `\nTopics: ${scout.topics_covered.slice(0, 5).join(", ")}`;
-    if (echo?.best_pillar)          ctx += `\nWhat resonates most: ${echo.best_pillar}`;
+    if (echo?.best_pillar)             ctx += `\nWhat resonates most: ${echo.best_pillar}`;
     posts.forEach((p) => {
       if (p.caption_preview) ctx += `\n- ${p.post_type || "Post"} (${p.platform || ""}): ${p.caption_preview.slice(0, 100)}`;
     });
@@ -201,12 +192,12 @@ async function buildSystemPrompt(supabase, userId) {
   return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile)) + contentCtx;
 }
 
-async function persistMessages(supabase, userId, sessionId, userMsg, assistantReply) {
-  if (!userId || !sessionId || !assistantReply) return;
+async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
+  if (!userId || !sessionId || !reply) return;
   try {
     await supabase.from("riley_conversations").insert([
       { user_id: userId, session_id: sessionId, role: "user",      content: userMsg },
-      { user_id: userId, session_id: sessionId, role: "assistant", content: assistantReply },
+      { user_id: userId, session_id: sessionId, role: "assistant", content: reply },
     ]);
   } catch (e) { console.warn("persistMessages failed (non-fatal):", e.message); }
 }
@@ -225,114 +216,52 @@ function buildConversationHistory(message, messages) {
   return [{ role: "user", content: message || "" }];
 }
 
-// ── Anthropic SSE parser: extracts plain text from event stream ───────────────
-async function* parseAnthropicStream(readableStream) {
-  const reader  = readableStream.getReader();
-  const decoder = new TextDecoder();
-  let buffer    = "";
-
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const dataStr = line.slice(6).trim();
-        if (!dataStr || dataStr === "[DONE]") continue;
-        try {
-          const evt = JSON.parse(dataStr);
-          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
-            yield evt.delta.text;
-          }
-        } catch { /* skip malformed lines */ }
-      }
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
-
-// ── JSON fallback (for clients that don't support streaming) ──────────────────
-async function respondJSON(systemPrompt, conversationHistory, apiKey, userId, sessionId, supabase) {
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: systemPrompt, messages: conversationHistory }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    return new Response(JSON.stringify({ error: "Upstream API error", detail: err.slice(0, 200) }), {
-      status: 502,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
-  }
-
-  const data  = await res.json();
-  const reply = data.content?.[0]?.text || "";
-
-  if (supabase && userId && sessionId && reply) {
-    const userMsg = conversationHistory[conversationHistory.length - 1]?.content || "";
-    persistMessages(supabase, userId, sessionId, userMsg, reply);
-  }
-
-  return new Response(JSON.stringify({ reply }), {
-    status: 200,
-    headers: { ...CORS, "Content-Type": "application/json" },
-  });
-}
-
-// ── Main streaming handler ────────────────────────────────────────────────────
-exports.handler = stream(async (event) => {
-  // Handle CORS preflight
+// ── Handler — standard Lambda format (no streaming wrapper needed) ────────────
+exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS });
+    return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
-
   if (event.httpMethod !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
   }
 
   let body;
   try {
     body = JSON.parse(event.body || "{}");
   } catch {
-    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-      status: 400,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return {
+      statusCode: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Invalid JSON body" }),
+    };
   }
 
   const { message, messages, user_id, session_id } = body;
-  const wantsJson = body.stream === false ||
-    (event.headers?.accept || event.headers?.Accept || "").includes("application/json");
 
   if (!message && (!messages?.length)) {
-    return new Response(JSON.stringify({ error: "message or messages array is required" }), {
-      status: 400,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return {
+      statusCode: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "message or messages array is required" }),
+    };
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: "Server configuration error" }), {
-      status: 500,
-      headers: { ...CORS, "Content-Type": "application/json" },
-    });
+    return {
+      statusCode: 500,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Server configuration error" }),
+    };
   }
 
-  // Build system prompt + conversation history (Supabase context is non-fatal)
+  // Build context-aware system prompt (Supabase failures are non-fatal)
   let systemPrompt = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(null));
-  let supabase     = null;
+  let supabase = null;
   try {
     supabase     = getSupabaseClient();
     systemPrompt = await buildSystemPrompt(supabase, user_id || null);
@@ -342,69 +271,49 @@ exports.handler = stream(async (event) => {
 
   const conversationHistory = buildConversationHistory(message, messages);
 
-  // ── JSON fallback path ────────────────────────────────────────────────────
-  if (wantsJson) {
-    return respondJSON(systemPrompt, conversationHistory, apiKey, user_id, session_id, supabase);
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model:      "claude-sonnet-4-6",
+      max_tokens: 1000,
+      system:     systemPrompt,
+      messages:   conversationHistory,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error("Anthropic API error:", response.status, err);
+    return {
+      statusCode: 502,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      body: JSON.stringify({ error: "Upstream API error", detail: err.slice(0, 200) }),
+    };
   }
 
-  // ── Streaming path ────────────────────────────────────────────────────────
-  const encoder = new TextEncoder();
+  const data  = await response.json();
+  const reply = data.content?.[0]?.text || "";
 
-  return new Response(
-    new ReadableStream({
-      async start(controller) {
-        let fullText = "";
-        try {
-          const anthropicRes = await fetch(ANTHROPIC_API_URL, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": apiKey,
-              "anthropic-version": "2023-06-01",
-            },
-            body: JSON.stringify({
-              model:    "claude-sonnet-4-6",
-              max_tokens: 1000,
-              stream:   true,
-              system:   systemPrompt,
-              messages: conversationHistory,
-            }),
-          });
+  // Persist conversation for logged-in users (non-blocking)
+  if (supabase && user_id && session_id && reply) {
+    const userMsg = message || conversationHistory[conversationHistory.length - 1]?.content || "";
+    persistMessages(supabase, user_id, session_id, userMsg, reply);
+  }
 
-          if (!anthropicRes.ok) {
-            const errText = await anthropicRes.text();
-            controller.enqueue(encoder.encode(`[Error ${anthropicRes.status}: ${errText.slice(0, 100)}]`));
-            controller.close();
-            return;
-          }
-
-          for await (const chunk of parseAnthropicStream(anthropicRes.body)) {
-            fullText += chunk;
-            controller.enqueue(encoder.encode(chunk));
-          }
-
-          // Save complete response to Supabase after stream finishes
-          if (supabase && user_id && session_id && fullText) {
-            const userMsg = message || conversationHistory[conversationHistory.length - 1]?.content || "";
-            persistMessages(supabase, user_id, session_id, userMsg, fullText);
-          }
-
-        } catch (err) {
-          console.error("riley-chat stream error:", err.message);
-          controller.enqueue(encoder.encode(`[Error: ${err.message}]`));
-        } finally {
-          controller.close();
-        }
-      },
-    }),
-    {
-      status: 200,
-      headers: {
-        ...CORS,
-        "Content-Type":           "text/plain; charset=utf-8",
-        "X-Content-Type-Options": "nosniff",
-        "Cache-Control":          "no-cache",
-      },
-    }
-  );
-});
+  // Return plain text so the streaming client UI (getReader) works without
+  // any special Netlify streaming infrastructure.
+  // Client code: fullText += decoder.decode(value) → bubble.textContent = fullText ✓
+  return {
+    statusCode: 200,
+    headers: {
+      ...CORS_HEADERS,
+      "Content-Type": "text/plain; charset=utf-8",
+    },
+    body: reply,
+  };
+};

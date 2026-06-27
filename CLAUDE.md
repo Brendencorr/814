@@ -15,11 +15,13 @@ When editing any file in netlify/functions/, always verify the model string is c
 - Never raise agent max_tokens above 2000 without testing for timeout first
 - Riley streaming bypasses the synchronous timeout — max_tokens 1000 comfortably finishes within 30s
 
-## CRITICAL: riley-chat.js is a STREAMING function
-riley-chat.js uses @netlify/functions stream() wrapper and returns text/plain chunks.
-All Riley widgets MUST use the streaming fetch pattern — NOT response.json():
+## riley-chat.js response format
+riley-chat.js is a STANDARD Netlify serverless function (no streaming wrapper).
+It returns Content-Type: text/plain with the reply text directly (no JSON wrapper).
 
-  const res    = await fetch('/.netlify/functions/riley-chat', { method: 'POST', ... });
+Riley widgets use response.body.getReader() to read the plain text:
+
+  const res     = await fetch('/.netlify/functions/riley-chat', { method: 'POST', ... });
   const reader  = res.body.getReader();
   const decoder = new TextDecoder();
   let fullText  = '';
@@ -27,16 +29,21 @@ All Riley widgets MUST use the streaming fetch pattern — NOT response.json():
     const { done, value } = await reader.read();
     if (done) break;
     fullText += decoder.decode(value, { stream: true });
-    bubble.textContent = fullText; // update in real time
+    bubble.textContent = fullText;
   }
 
-Fallback to JSON: send body field stream: false OR header Accept: application/json.
-JSON fallback returns: { "reply": "..." }
+This works because getReader() works fine with regular (non-streaming) responses too —
+the full body arrives in one or a few chunks. The blinking cursor shows while the
+request is in flight.
 
-## CRITICAL: Scheduled pipeline is weekly-pipeline-background.js
-The cron schedule is on weekly-pipeline-background (not weekly-pipeline).
+DO NOT use response.json() for riley-chat — it returns text/plain not JSON.
+DO NOT add @netlify/functions or stream() wrapper — Netlify's standard Lambda format is correct.
+
+## CRITICAL: Scheduled pipeline is weekly-pipeline-cron.js
+The cron schedule is on weekly-pipeline-CRON (not weekly-pipeline, not weekly-pipeline-background).
 weekly-pipeline.js is the manual HTTP trigger endpoint (callable from dashboard).
-weekly-pipeline-background.js runs every Sunday 12:00 UTC (6am MT) as a background function.
+weekly-pipeline-cron.js runs every Sunday 12:00 UTC (6am MT) as a scheduled background function.
+Netlify scheduled functions do NOT need a -background suffix — the schedule makes them background automatically.
 
 ## Repo Structure
 - netlify/functions/ — 8 Netlify serverless functions
@@ -89,15 +96,16 @@ Run in order in Supabase SQL editor:
 - buffer-publish.js — POST endpoint to schedule one post to Buffer API
 - pipeline-status.js — GET endpoint, returns pipeline_runs + echo_scores + published_posts for dashboard
 - weekly-pipeline.js — HTTP POST manual trigger; returns JSON status; callable from dashboard
-- weekly-pipeline-background.js — background function on cron schedule (Sunday 6am MT); no timeout; full pipeline
+- weekly-pipeline-cron.js — cron-scheduled function (Sunday 6am MT); runs as background; full pipeline
 
 ### Auth pages
 - login.html — Google OAuth sign-in page → redirects to /dashboard.html on success
 - riley-auth.html — Full Riley chat experience with Google auth, sobriety date, conversation history
 
 ## Scheduled Pipeline
-- weekly-pipeline-background.js runs every Sunday at 6am Mountain Time (12:00 UTC)
-- Configured in netlify.toml: schedule = "0 12 * * 0" on the -background function
+- weekly-pipeline-cron.js runs every Sunday at 6am Mountain Time (12:00 UTC)
+- Configured in netlify.toml: schedule = "0 12 * * 0"
+- Do NOT add -background suffix to scheduled functions — it conflicts with Netlify's cron handling
 - Background functions have no HTTP timeout — run until complete (10 min free / 15 min Pro)
 - Sequence: Echo data read → Scout → Sage → Atlas → Buffer publish → log to pipeline_runs
 - Each step is individually fault-tolerant; pipeline logs partial status and continues

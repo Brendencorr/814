@@ -48,6 +48,6 @@
 
 [[redirects]]
   from = "https://admin.eight14.us/*"
-  to = "/admin.html"
+  to = "/dashboard.html"
   status = 200
   force = true

@@ -1449,12 +1449,16 @@ async function sendRiley() {
   input.value = '';
   input.style.height = '42px';
   addRileyMsg('user', text);
-  rileyHistory.push({ role: 'user', content: text });
+
+  // Build the outbound messages array as a snapshot BEFORE touching rileyHistory.
+  // This guarantees the fetch sees the correct array regardless of any prior
+  // async slice/reassignment of rileyHistory.
+  const userMsg = { role: 'user', content: text };
+  const outboundMessages = [...rileyHistory, userMsg];
 
   sendBtn.disabled = true;
   input.disabled   = true;
 
-  // Create empty bubble immediately — text streams into it
   const bubble = addRileyMsg('riley', '');
   bubble.classList.add('streaming');
 
@@ -1464,18 +1468,16 @@ async function sendRiley() {
     const res = await fetch(BASE + '/riley-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: rileyHistory }),
+      body: JSON.stringify({ messages: outboundMessages }),
     });
 
     if (!res.ok) {
-      // Non-streaming error — read as text for detail
       const errText = await res.text();
       let detail = errText;
       try { detail = JSON.parse(errText).error || errText; } catch {}
       throw new Error('HTTP ' + res.status + ': ' + detail);
     }
 
-    // Stream chunks into the bubble
     const reader  = res.body.getReader();
     const decoder = new TextDecoder();
     const thread  = document.getElementById('riley-messages');
@@ -1490,13 +1492,14 @@ async function sendRiley() {
 
     if (!fullText) throw new Error('Empty reply from Riley');
 
-    // Save to history
+    // Only update history after a successful response — no need to pop on error
+    rileyHistory.push(userMsg);
     rileyHistory.push({ role: 'assistant', content: fullText });
     if (rileyHistory.length > 40) rileyHistory = rileyHistory.slice(-40);
 
   } catch(e) {
     bubble.textContent = 'Sorry, something went wrong. (' + e.message + ')';
-    rileyHistory.pop(); // remove failed user message
+    // rileyHistory is untouched — no cleanup needed
   } finally {
     bubble.classList.remove('streaming');
     sendBtn.disabled = false;

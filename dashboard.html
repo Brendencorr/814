@@ -288,6 +288,8 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
 .riley-msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
 .riley-msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .riley-msg.riley.thinking { color: var(--muted2); font-style: italic; }
+.riley-msg.riley.streaming::after { content: '▋'; color: var(--gold); animation: blink-cursor .9s step-end infinite; }
+@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
 .riley-input-row { display: flex; gap: .6rem; padding: .85rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
 .riley-input-row textarea { flex: 1; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: .875rem; padding: .65rem .85rem; resize: none; outline: none; line-height: 1.45; height: 42px; max-height: 120px; overflow-y: auto; transition: border-color .2s; font-family: inherit; }
 .riley-input-row textarea:focus { border-color: var(--gold); }
@@ -586,7 +588,8 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
         <h3>Autonomous Pipeline</h3>
         <p>The pipeline runs automatically every Sunday at 6am Mountain Time. Run individual agents manually for testing or one-off tasks.</p>
         <div style="padding:.6rem .85rem;background:var(--card2);border:1px solid var(--border);border-radius:7px;font-size:.78rem;color:var(--muted2);margin-bottom:.75rem">
-          &#128337; Schedule: <strong style="color:var(--text)">Every Sunday 6am MT (12:00 UTC)</strong><br>
+          &#128337; Schedule: <strong style="color:var(--text)">weekly-pipeline-background — Every Sunday 6am MT</strong><br>
+          &#128172; Riley: <strong style="color:var(--text)">Streaming (text/plain chunks)</strong><br>
           &#128200; Last run: <strong id="settings-last-run" style="color:var(--text)">checking&#8230;</strong>
         </div>
         <div class="agent-trigger-row">
@@ -1443,55 +1446,62 @@ async function sendRiley() {
   const text    = input.value.trim();
   if (!text) return;
 
-  // Add user message to UI + history
   input.value = '';
   input.style.height = '42px';
   addRileyMsg('user', text);
   rileyHistory.push({ role: 'user', content: text });
 
-  // Disable input while waiting
   sendBtn.disabled = true;
   input.disabled   = true;
 
-  // Show thinking indicator
-  const thinking = addRileyMsg('riley', 'Riley is thinking…');
-  thinking.classList.add('thinking');
+  // Create empty bubble immediately — text streams into it
+  const bubble = addRileyMsg('riley', '');
+  bubble.classList.add('streaming');
+
+  let fullText = '';
 
   try {
     const res = await fetch(BASE + '/riley-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Send full conversation history — server uses messages array, falls back to message
       body: JSON.stringify({ message: text, messages: rileyHistory }),
     });
 
-    const rawText = await res.text();
-    let data;
-    try { data = JSON.parse(rawText); } catch(e) { throw new Error('Bad response: ' + rawText.slice(0, 100)); }
+    if (!res.ok) {
+      // Non-streaming error — read as text for detail
+      const errText = await res.text();
+      let detail = errText;
+      try { detail = JSON.parse(errText).error || errText; } catch {}
+      throw new Error('HTTP ' + res.status + ': ' + detail);
+    }
 
-    if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
-    if (!data.reply) throw new Error('Empty reply from Riley');
+    // Stream chunks into the bubble
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    const thread  = document.getElementById('riley-messages');
 
-    // Replace thinking bubble with real reply
-    thinking.textContent = data.reply;
-    thinking.classList.remove('thinking');
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullText += decoder.decode(value, { stream: true });
+      bubble.textContent = fullText;
+      thread.scrollTop = thread.scrollHeight;
+    }
 
-    // Append assistant reply to history
-    rileyHistory.push({ role: 'assistant', content: data.reply });
+    if (!fullText) throw new Error('Empty reply from Riley');
 
-    // Cap history to last 20 exchanges (40 messages) to avoid bloat
+    // Save to history
+    rileyHistory.push({ role: 'assistant', content: fullText });
     if (rileyHistory.length > 40) rileyHistory = rileyHistory.slice(-40);
 
   } catch(e) {
-    thinking.textContent = 'Sorry, something went wrong. (' + e.message + ')';
-    thinking.classList.remove('thinking');
-    // Remove failed user message from history so retry is clean
-    rileyHistory.pop();
+    bubble.textContent = 'Sorry, something went wrong. (' + e.message + ')';
+    rileyHistory.pop(); // remove failed user message
   } finally {
+    bubble.classList.remove('streaming');
     sendBtn.disabled = false;
     input.disabled   = false;
     input.focus();
-    // Scroll to bottom
     const thread = document.getElementById('riley-messages');
     thread.scrollTop = thread.scrollHeight;
   }

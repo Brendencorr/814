@@ -1,8 +1,34 @@
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+/**
+ * riley-chat.js — Netlify Streaming Function
+ *
+ * Streams Riley's response word-by-word from Anthropic to the browser.
+ * Falls back to regular JSON if client sends Accept: application/json
+ * or body field stream: false.
+ *
+ * Request body:
+ *   { message?, messages?, user_id?, session_id?, stream? }
+ *
+ * Streaming response: text/plain — plain text chunks appended in real time
+ * JSON fallback response: { "reply": "..." }
+ *
+ * max_tokens: 1000 for Riley (short conversational responses, stays within timeout)
+ * Model: claude-sonnet-4-6
+ */
+
+const { stream } = require("@netlify/functions");
 const { getSupabaseClient } = require("./supabase-client");
 
-// ── Base system prompt ────────────────────────────────────────────────────────
-// [USER_CONTEXT_PLACEHOLDER] is replaced at runtime with personalized user data.
+const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+
+// ── CORS headers (applied to every response) ──────────────────────────────────
+const CORS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Headers": "Content-Type, Accept",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+// ── System prompt ─────────────────────────────────────────────────────────────
+// [USER_CONTEXT_PLACEHOLDER] is replaced at runtime with personalised user data.
 const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for The 8:14 Project at eight14.us.
 
 RESPONSE STYLE — CRITICAL:
@@ -108,13 +134,7 @@ Never diagnose. Never prescribe. Never replace clinical care.
 
 [USER_CONTEXT_PLACEHOLDER]`;
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-// ── Build the user context block ──────────────────────────────────────────────
+// ── User context builder ──────────────────────────────────────────────────────
 function buildUserContext(profile) {
   if (!profile) return "USER CONTEXT:\nThis visitor is not logged in.";
 
@@ -123,231 +143,268 @@ function buildUserContext(profile) {
   if (profile.email)     lines.push(`Email: ${profile.email}`);
 
   if (profile.sobriety_date) {
-    const start = new Date(profile.sobriety_date);
-    const today = new Date();
-    const days  = Math.floor((today - start) / 86400000);
+    const days = Math.floor((Date.now() - new Date(profile.sobriety_date)) / 86400000);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
   }
 
-  if (profile.programs_purchased?.length) {
-    lines.push(`Programs purchased: ${profile.programs_purchased.join(", ")}`);
-  } else {
-    lines.push("Programs purchased: none yet");
-  }
-
+  lines.push(
+    profile.programs_purchased?.length
+      ? `Programs purchased: ${profile.programs_purchased.join(", ")}`
+      : "Programs purchased: none yet"
+  );
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
   lines.push("");
   lines.push("Use their name naturally (not every message). Reference their sobriety date when relevant.");
-  lines.push("If they have programs, you can reference what they're working on.");
   lines.push("If they have no programs yet, the free 7-Day Rebuild Reset is the right first suggestion.");
 
   return lines.join("\n");
 }
 
-// ── Fetch user profile by user_id (server-side, bypasses RLS) ────────────────
+// ── Supabase helpers ──────────────────────────────────────────────────────────
 async function getUserProfile(supabase, userId) {
   try {
-    const { data, error } = await supabase
-      .from("user_profiles")
-      .select("*")
-      .eq("id", userId)
-      .single();
-    if (error) return null;
-    return data;
-  } catch (e) {
-    console.warn("getUserProfile failed (non-fatal):", e.message);
-    return null;
-  }
+    const { data } = await supabase.from("user_profiles").select("*").eq("id", userId).single();
+    return data || null;
+  } catch { return null; }
 }
 
-// ── Fetch content context from Supabase (scout/echo/posts) ───────────────────
 async function getContentContext(supabase) {
   try {
     const [scoutRes, echoRes, postsRes] = await Promise.all([
-      supabase
-        .from("scout_history")
-        .select("top_theme, topics_covered")
-        .order("week_of", { ascending: false })
-        .limit(1),
-      supabase
-        .from("echo_scores")
-        .select("best_pillar")
-        .order("created_at", { ascending: false })
-        .limit(1),
-      supabase
-        .from("published_posts")
-        .select("caption_preview, post_type, platform")
-        .order("created_at", { ascending: false })
-        .limit(3),
+      supabase.from("scout_history").select("top_theme, topics_covered").order("week_of", { ascending: false }).limit(1),
+      supabase.from("echo_scores").select("best_pillar").order("created_at", { ascending: false }).limit(1),
+      supabase.from("published_posts").select("caption_preview, post_type, platform").order("created_at", { ascending: false }).limit(3),
     ]);
 
     const scout = scoutRes.data?.[0];
     const echo  = echoRes.data?.[0];
     const posts = postsRes.data || [];
-
     if (!scout && !echo && !posts.length) return "";
 
-    let context = "\n\nCURRENT CONTENT CONTEXT — updated weekly:";
-    if (scout?.top_theme)
-      context += `\nThis week's theme: ${scout.top_theme}`;
-    if (scout?.topics_covered?.length)
-      context += `\nTopics being covered: ${scout.topics_covered.slice(0, 5).join(", ")}`;
-    if (echo?.best_pillar)
-      context += `\nWhat resonates most with visitors: ${echo.best_pillar}`;
-    if (posts.length) {
-      context += "\nRecent content visitors may reference:";
-      posts.forEach((p) => {
-        if (p.caption_preview)
-          context += `\n- ${p.post_type || "Post"} (${p.platform || ""}): ${p.caption_preview.slice(0, 100)}`;
-      });
-    }
-    context += "\nReference this content naturally when it's relevant to what someone is asking.";
-    return context;
-  } catch (e) {
-    console.warn("getContentContext failed (non-fatal):", e.message);
-    return "";
-  }
+    let ctx = "\n\nCURRENT CONTENT CONTEXT — updated weekly:";
+    if (scout?.top_theme)           ctx += `\nThis week's theme: ${scout.top_theme}`;
+    if (scout?.topics_covered?.length) ctx += `\nTopics: ${scout.topics_covered.slice(0, 5).join(", ")}`;
+    if (echo?.best_pillar)          ctx += `\nWhat resonates most: ${echo.best_pillar}`;
+    posts.forEach((p) => {
+      if (p.caption_preview) ctx += `\n- ${p.post_type || "Post"} (${p.platform || ""}): ${p.caption_preview.slice(0, 100)}`;
+    });
+    ctx += "\nReference this naturally when relevant.";
+    return ctx;
+  } catch { return ""; }
 }
 
-// ── Build full system prompt ──────────────────────────────────────────────────
 async function buildSystemPrompt(supabase, userId) {
-  const [profile, contentContext] = await Promise.all([
+  const [profile, contentCtx] = await Promise.all([
     userId ? getUserProfile(supabase, userId) : Promise.resolve(null),
     getContentContext(supabase),
   ]);
-
-  const userContext = buildUserContext(profile);
-  return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", userContext) + contentContext;
+  return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile)) + contentCtx;
 }
 
-// ── Build conversation history array ─────────────────────────────────────────
+async function persistMessages(supabase, userId, sessionId, userMsg, assistantReply) {
+  if (!userId || !sessionId || !assistantReply) return;
+  try {
+    await supabase.from("riley_conversations").insert([
+      { user_id: userId, session_id: sessionId, role: "user",      content: userMsg },
+      { user_id: userId, session_id: sessionId, role: "assistant", content: assistantReply },
+    ]);
+  } catch (e) { console.warn("persistMessages failed (non-fatal):", e.message); }
+}
+
+// ── Conversation history builder ──────────────────────────────────────────────
 function buildConversationHistory(message, messages) {
   const MAX = 20;
-
-  if (messages && Array.isArray(messages) && messages.length > 0) {
+  if (messages?.length) {
     const valid = messages
-      .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
       .slice(-MAX);
-
-    if (message && (valid.length === 0 || valid[valid.length - 1].content !== message)) {
+    if (message && valid[valid.length - 1]?.content !== message)
       valid.push({ role: "user", content: message });
-    }
-    return valid.length > 0 ? valid : [{ role: "user", content: message || "" }];
+    return valid.length ? valid : [{ role: "user", content: message || "" }];
   }
-
   return [{ role: "user", content: message || "" }];
 }
 
-// ── Persist both sides of the exchange to riley_conversations ─────────────────
-async function persistMessages(supabase, userId, sessionId, userMessage, assistantReply) {
-  if (!userId || !sessionId) return;
+// ── Anthropic SSE parser: extracts plain text from event stream ───────────────
+async function* parseAnthropicStream(readableStream) {
+  const reader  = readableStream.getReader();
+  const decoder = new TextDecoder();
+  let buffer    = "";
+
   try {
-    await supabase.from("riley_conversations").insert([
-      { user_id: userId, session_id: sessionId, role: "user",      content: userMessage },
-      { user_id: userId, session_id: sessionId, role: "assistant", content: assistantReply },
-    ]);
-  } catch (e) {
-    console.warn("persistMessages failed (non-fatal):", e.message);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (!line.startsWith("data: ")) continue;
+        const dataStr = line.slice(6).trim();
+        if (!dataStr || dataStr === "[DONE]") continue;
+        try {
+          const evt = JSON.parse(dataStr);
+          if (evt.type === "content_block_delta" && evt.delta?.type === "text_delta" && evt.delta.text) {
+            yield evt.delta.text;
+          }
+        } catch { /* skip malformed lines */ }
+      }
+    }
+  } finally {
+    reader.releaseLock();
   }
 }
 
-// ── Handler ───────────────────────────────────────────────────────────────────
-exports.handler = async function (event) {
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers: CORS_HEADERS, body: "" };
-  }
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 405,
-      headers: CORS_HEADERS,
-      body: JSON.stringify({ error: "Method not allowed" }),
-    };
-  }
+// ── JSON fallback (for clients that don't support streaming) ──────────────────
+async function respondJSON(systemPrompt, conversationHistory, apiKey, userId, sessionId, supabase) {
+  const res = await fetch(ANTHROPIC_API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 1000, system: systemPrompt, messages: conversationHistory }),
+  });
 
-  try {
-    const body = JSON.parse(event.body || "{}");
-    const { message, messages, user_id, session_id } = body;
-
-    if (!message && (!messages || !messages.length)) {
-      return {
-        statusCode: 400,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "message or messages array is required" }),
-      };
-    }
-
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return {
-        statusCode: 500,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Server configuration error" }),
-      };
-    }
-
-    // Build context-aware system prompt (user profile + content context)
-    let systemPrompt = RILEY_BASE_PROMPT
-      .replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(null));
-    try {
-      const supabase = getSupabaseClient();
-      systemPrompt   = await buildSystemPrompt(supabase, user_id || null);
-    } catch (e) {
-      console.warn("Supabase init failed (non-fatal):", e.message);
-    }
-
-    // Build conversation history for Claude
-    const conversationHistory = buildConversationHistory(message, messages);
-
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4000,
-        system: systemPrompt,
-        messages: conversationHistory,
-      }),
+  if (!res.ok) {
+    const err = await res.text();
+    return new Response(JSON.stringify({ error: "Upstream API error", detail: err.slice(0, 200) }), {
+      status: 502,
+      headers: { ...CORS, "Content-Type": "application/json" },
     });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("Anthropic API error:", response.status, errorBody);
-      return {
-        statusCode: 502,
-        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Upstream API error" }),
-      };
-    }
-
-    const data  = await response.json();
-    const reply = data.content?.[0]?.text || "";
-
-    // Persist conversation to Supabase for logged-in users (non-blocking)
-    const latestUserMessage = message || conversationHistory[conversationHistory.length - 1]?.content || "";
-    if (user_id && session_id && reply) {
-      try {
-        const supabase = getSupabaseClient();
-        persistMessages(supabase, user_id, session_id, latestUserMessage, reply);
-      } catch (e) {
-        console.warn("Supabase persist init failed (non-fatal):", e.message);
-      }
-    }
-
-    return {
-      statusCode: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ reply }),
-    };
-  } catch (err) {
-    console.error("riley-chat error:", err);
-    return {
-      statusCode: 500,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Internal server error" }),
-    };
   }
-};
+
+  const data  = await res.json();
+  const reply = data.content?.[0]?.text || "";
+
+  if (supabase && userId && sessionId && reply) {
+    const userMsg = conversationHistory[conversationHistory.length - 1]?.content || "";
+    persistMessages(supabase, userId, sessionId, userMsg, reply);
+  }
+
+  return new Response(JSON.stringify({ reply }), {
+    status: 200,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
+// ── Main streaming handler ────────────────────────────────────────────────────
+exports.handler = stream(async (event) => {
+  // Handle CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS });
+  }
+
+  if (event.httpMethod !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  let body;
+  try {
+    body = JSON.parse(event.body || "{}");
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+      status: 400,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  const { message, messages, user_id, session_id } = body;
+  const wantsJson = body.stream === false ||
+    (event.headers?.accept || event.headers?.Accept || "").includes("application/json");
+
+  if (!message && (!messages?.length)) {
+    return new Response(JSON.stringify({ error: "message or messages array is required" }), {
+      status: 400,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "Server configuration error" }), {
+      status: 500,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Build system prompt + conversation history (Supabase context is non-fatal)
+  let systemPrompt = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(null));
+  let supabase     = null;
+  try {
+    supabase     = getSupabaseClient();
+    systemPrompt = await buildSystemPrompt(supabase, user_id || null);
+  } catch (e) {
+    console.warn("Supabase context failed (non-fatal):", e.message);
+  }
+
+  const conversationHistory = buildConversationHistory(message, messages);
+
+  // ── JSON fallback path ────────────────────────────────────────────────────
+  if (wantsJson) {
+    return respondJSON(systemPrompt, conversationHistory, apiKey, user_id, session_id, supabase);
+  }
+
+  // ── Streaming path ────────────────────────────────────────────────────────
+  const encoder = new TextEncoder();
+
+  return new Response(
+    new ReadableStream({
+      async start(controller) {
+        let fullText = "";
+        try {
+          const anthropicRes = await fetch(ANTHROPIC_API_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "anthropic-version": "2023-06-01",
+            },
+            body: JSON.stringify({
+              model:    "claude-sonnet-4-6",
+              max_tokens: 1000,
+              stream:   true,
+              system:   systemPrompt,
+              messages: conversationHistory,
+            }),
+          });
+
+          if (!anthropicRes.ok) {
+            const errText = await anthropicRes.text();
+            controller.enqueue(encoder.encode(`[Error ${anthropicRes.status}: ${errText.slice(0, 100)}]`));
+            controller.close();
+            return;
+          }
+
+          for await (const chunk of parseAnthropicStream(anthropicRes.body)) {
+            fullText += chunk;
+            controller.enqueue(encoder.encode(chunk));
+          }
+
+          // Save complete response to Supabase after stream finishes
+          if (supabase && user_id && session_id && fullText) {
+            const userMsg = message || conversationHistory[conversationHistory.length - 1]?.content || "";
+            persistMessages(supabase, user_id, session_id, userMsg, fullText);
+          }
+
+        } catch (err) {
+          console.error("riley-chat stream error:", err.message);
+          controller.enqueue(encoder.encode(`[Error: ${err.message}]`));
+        } finally {
+          controller.close();
+        }
+      },
+    }),
+    {
+      status: 200,
+      headers: {
+        ...CORS,
+        "Content-Type":           "text/plain; charset=utf-8",
+        "X-Content-Type-Options": "nosniff",
+        "Cache-Control":          "no-cache",
+      },
+    }
+  );
+});

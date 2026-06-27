@@ -10,10 +10,33 @@ Never use claude-opus-4-5 — use claude-sonnet-4-6 instead.
 When editing any file in netlify/functions/, always verify the model string is claude-sonnet-4-6 before committing.
 
 ## CRITICAL: max_tokens
-max_tokens is currently set to 2000 for all functions.
-Netlify free tier synchronous functions have a 10-second timeout.
-Scheduled functions (weekly-pipeline) run as background functions with up to 10 min timeout on free tier.
-Never set max_tokens above 2000 without testing for timeout first.
+- riley-chat.js (streaming): max_tokens = 1000 — short conversational replies, streams in real time
+- Agent functions (scout, sage, atlas, echo, pipeline): max_tokens = 2000
+- Never raise agent max_tokens above 2000 without testing for timeout first
+- Riley streaming bypasses the synchronous timeout — max_tokens 1000 comfortably finishes within 30s
+
+## CRITICAL: riley-chat.js is a STREAMING function
+riley-chat.js uses @netlify/functions stream() wrapper and returns text/plain chunks.
+All Riley widgets MUST use the streaming fetch pattern — NOT response.json():
+
+  const res    = await fetch('/.netlify/functions/riley-chat', { method: 'POST', ... });
+  const reader  = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText  = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    fullText += decoder.decode(value, { stream: true });
+    bubble.textContent = fullText; // update in real time
+  }
+
+Fallback to JSON: send body field stream: false OR header Accept: application/json.
+JSON fallback returns: { "reply": "..." }
+
+## CRITICAL: Scheduled pipeline is weekly-pipeline-background.js
+The cron schedule is on weekly-pipeline-background (not weekly-pipeline).
+weekly-pipeline.js is the manual HTTP trigger endpoint (callable from dashboard).
+weekly-pipeline-background.js runs every Sunday 12:00 UTC (6am MT) as a background function.
 
 ## Repo Structure
 - netlify/functions/ — 8 Netlify serverless functions
@@ -65,19 +88,21 @@ Run in order in Supabase SQL editor:
 - auth-handler.js — POST endpoint; actions: get_session, save_message, update_profile; uses SERVICE_KEY
 - buffer-publish.js — POST endpoint to schedule one post to Buffer API
 - pipeline-status.js — GET endpoint, returns pipeline_runs + echo_scores + published_posts for dashboard
-- weekly-pipeline.js — scheduled function, runs full pipeline autonomously every Sunday
+- weekly-pipeline.js — HTTP POST manual trigger; returns JSON status; callable from dashboard
+- weekly-pipeline-background.js — background function on cron schedule (Sunday 6am MT); no timeout; full pipeline
 
 ### Auth pages
 - login.html — Google OAuth sign-in page → redirects to /dashboard.html on success
 - riley-auth.html — Full Riley chat experience with Google auth, sobriety date, conversation history
 
 ## Scheduled Pipeline
-- weekly-pipeline runs every Sunday at 6am Mountain Time (12:00 UTC)
-- Configured in netlify.toml: schedule = "0 12 * * 0"
-- Scheduled functions run as background functions — longer timeout than synchronous functions
+- weekly-pipeline-background.js runs every Sunday at 6am Mountain Time (12:00 UTC)
+- Configured in netlify.toml: schedule = "0 12 * * 0" on the -background function
+- Background functions have no HTTP timeout — run until complete (10 min free / 15 min Pro)
 - Sequence: Echo data read → Scout → Sage → Atlas → Buffer publish → log to pipeline_runs
-- Each step is fault-tolerant; pipeline continues even if one step fails
+- Each step is individually fault-tolerant; pipeline logs partial status and continues
 - Status logged to pipeline_runs table (success / partial / failed)
+- weekly-pipeline.js remains as manual HTTP trigger from dashboard (returns JSON status)
 
 ## Google OAuth
 Google Client ID: 206086364002-clh43vor3dvrk0bv54e5pp5nfd79jvto.apps.googleusercontent.com

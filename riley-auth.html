@@ -199,6 +199,8 @@ header {
 .msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
 .msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
 .msg.riley.thinking { color: var(--muted2); font-style: italic; }
+.msg.riley.streaming::after { content: '▋'; color: var(--gold); animation: blink-cur .9s step-end infinite; }
+@keyframes blink-cur { 0%,100%{opacity:1} 50%{opacity:0} }
 
 /* Welcome / starters */
 .welcome {
@@ -559,8 +561,11 @@ async function send() {
   sendBtn.disabled = true;
   input.disabled   = true;
 
-  const thinking = addMsg('riley', 'Riley is thinking…');
-  thinking.classList.add('thinking');
+  // Create empty bubble — text streams in
+  const bubble = addMsg('riley', '');
+  bubble.classList.add('streaming');
+
+  let fullText = '';
 
   try {
     const payload = {
@@ -578,21 +583,35 @@ async function send() {
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
-    if (!res.ok || !data.reply) throw new Error(data.error || 'No reply');
+    if (!res.ok) {
+      const errText = await res.text();
+      let detail = errText;
+      try { detail = JSON.parse(errText).error || errText; } catch {}
+      throw new Error('HTTP ' + res.status + ': ' + detail);
+    }
 
-    thinking.textContent = data.reply;
-    thinking.classList.remove('thinking');
-    chatHistory.push({ role: 'assistant', content: data.reply });
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    const thread  = document.getElementById('messages');
 
-    // Cap client-side history
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullText += decoder.decode(value, { stream: true });
+      bubble.textContent = fullText;
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    if (!fullText) throw new Error('Empty reply from Riley');
+
+    chatHistory.push({ role: 'assistant', content: fullText });
     if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
 
   } catch (e) {
-    thinking.textContent = 'Something went wrong — ' + e.message;
-    thinking.classList.remove('thinking');
-    chatHistory.pop(); // remove failed user message
+    bubble.textContent = 'Something went wrong — ' + e.message;
+    chatHistory.pop();
   } finally {
+    bubble.classList.remove('streaming');
     sendBtn.disabled = false;
     input.disabled   = false;
     input.focus();

@@ -70,6 +70,32 @@ Run in order in Supabase SQL editor:
 - Each step is fault-tolerant; pipeline continues even if one step fails
 - Status logged to pipeline_runs table (success / partial / failed)
 
+## Riley Chat API — embed usage
+
+riley-chat.js accepts POST with JSON body. Two calling conventions:
+
+**Legacy (single message):**
+```json
+{ "message": "user text here" }
+```
+
+**Preferred (full conversation history):**
+```json
+{
+  "message": "latest user text",
+  "messages": [
+    { "role": "user",      "content": "first message" },
+    { "role": "assistant", "content": "riley reply" },
+    { "role": "user",      "content": "latest user text" }
+  ]
+}
+```
+
+Always send the full `messages` array so Riley remembers the conversation.
+The server caps history to the last 20 messages automatically.
+If both `message` and `messages` are sent, `messages` takes precedence and `message` is appended if not already the last entry.
+Response: `{ "reply": "Riley's response text" }`
+
 ## Self-Improvement Logic
 - Scout reads echo_scores.best_pillar and format_winner before every run
 - Scout reads last 4 weeks of scout_history to avoid repeating topics

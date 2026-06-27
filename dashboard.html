@@ -276,6 +276,32 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
 .agent-trigger-btn:disabled { opacity: .4; cursor: default; }
 .trigger-result { font-size: .75rem; margin-top: .5rem; min-height: 1.1em; color: var(--muted2); }
 
+/* ── Riley Chat ── */
+#screen-riley { flex-direction: column; max-width: 720px; margin: 0 auto; width: 100%; }
+.riley-header { padding: 1rem 1.25rem .75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+.riley-header-left h2 { font-size: .95rem; font-weight: 700; color: var(--gold); }
+.riley-header-left p { font-size: .72rem; color: var(--muted2); margin-top: .1rem; }
+.riley-clear-btn { padding: .3rem .7rem; background: transparent; border: 1px solid var(--border2); border-radius: 5px; color: var(--muted2); font-size: .7rem; cursor: pointer; transition: color .15s; }
+.riley-clear-btn:hover { color: var(--red); border-color: var(--red); }
+.riley-messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: .85rem; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
+.riley-msg { max-width: 82%; padding: .65rem .95rem; border-radius: 12px; font-size: .875rem; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+.riley-msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
+.riley-msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.riley-msg.riley.thinking { color: var(--muted2); font-style: italic; }
+.riley-input-row { display: flex; gap: .6rem; padding: .85rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
+.riley-input-row textarea { flex: 1; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: .875rem; padding: .65rem .85rem; resize: none; outline: none; line-height: 1.45; height: 42px; max-height: 120px; overflow-y: auto; transition: border-color .2s; font-family: inherit; }
+.riley-input-row textarea:focus { border-color: var(--gold); }
+.riley-send-btn { background: var(--gold); border: none; border-radius: 8px; color: #000; font-size: 1rem; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .2s; }
+.riley-send-btn:hover { opacity: .85; }
+.riley-send-btn:disabled { opacity: .35; cursor: default; }
+.riley-welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 2rem; text-align: center; }
+.riley-welcome .w-icon { font-size: 2.5rem; }
+.riley-welcome h3 { font-size: 1rem; font-weight: 700; color: var(--text); }
+.riley-welcome p { font-size: .82rem; color: var(--muted2); max-width: 340px; }
+.riley-starters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .25rem; }
+.starter-btn { padding: .45rem .85rem; background: var(--card2); border: 1px solid var(--border2); border-radius: 20px; color: var(--text); font-size: .78rem; cursor: pointer; transition: border-color .15s, color .15s; }
+.starter-btn:hover { border-color: var(--gold); color: var(--gold); }
+
 /* ── Mobile ── */
 @media (max-width: 700px) {
   #screen-home { flex-direction: column; }
@@ -312,6 +338,7 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
     <nav class="h-nav">
       <button class="h-nav-btn active" data-screen="home" onclick="goScreen('home',this)">Home</button>
       <button class="h-nav-btn" data-screen="pipeline" onclick="startNewWeek(this)">New Week</button>
+      <button class="h-nav-btn" data-screen="riley" onclick="goScreen('riley',this)">&#128172; Riley</button>
     </nav>
     <button class="h-gear" onclick="goScreen('settings',null)" title="Settings">&#9881;</button>
   </header>
@@ -491,6 +518,42 @@ header { background: #000; border-bottom: 1px solid var(--border); height: 52px;
         <button class="btn-approve-all" id="btn-approve-all" onclick="approveAndSchedule()">APPROVE &amp; SCHEDULE IN BUFFER &#8594;</button>
       </div>
       <button class="btn-draft" onclick="saveDraft()">Save Draft</button>
+    </div>
+  </div>
+
+  <!-- ══ RILEY CHAT ══ -->
+  <div class="screen" id="screen-riley">
+    <div class="riley-header">
+      <div class="riley-header-left">
+        <h2>&#128172; Riley</h2>
+        <p>AI wellness guide &mdash; sobriety, recovery, mental health, nutrition, fitness</p>
+      </div>
+      <button class="riley-clear-btn" onclick="clearRileyChat()">Clear chat</button>
+    </div>
+
+    <!-- Welcome state (shown when no messages) -->
+    <div class="riley-welcome" id="riley-welcome">
+      <div class="w-icon">&#128150;</div>
+      <h3>Hey. What's on your mind?</h3>
+      <p>Ask Riley anything about sobriety, recovery, anxiety, sleep, nutrition, grief &mdash; whatever you're working through right now.</p>
+      <div class="riley-starters">
+        <button class="starter-btn" onclick="rileyStarter(this)">I just had a bad day and I want a drink</button>
+        <button class="starter-btn" onclick="rileyStarter(this)">What happens in the first week sober?</button>
+        <button class="starter-btn" onclick="rileyStarter(this)">I can't sleep in early recovery</button>
+        <button class="starter-btn" onclick="rileyStarter(this)">My anxiety is getting worse sober</button>
+        <button class="starter-btn" onclick="rileyStarter(this)">How do I talk to my family about this?</button>
+        <button class="starter-btn" onclick="rileyStarter(this)">I relapsed. What do I do now?</button>
+      </div>
+    </div>
+
+    <!-- Message thread (shown once chat starts) -->
+    <div class="riley-messages" id="riley-messages" style="display:none"></div>
+
+    <div class="riley-input-row">
+      <textarea id="riley-input" placeholder="Message Riley&#8230;" rows="1"
+        onkeydown="rileyKeydown(event)"
+        oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="riley-send-btn" id="riley-send-btn" onclick="sendRiley()">&#9658;</button>
     </div>
   </div>
 
@@ -1337,6 +1400,101 @@ function extractSection(text, heading) {
   }
   const result = out.join('\n').trim();
   return result || null;
+}
+
+/* ─────────────────────────────────────────
+   RILEY CHAT — with conversation history
+───────────────────────────────────────── */
+var rileyHistory = []; // [{role:'user'|'assistant', content:string}]
+
+function rileyKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendRiley(); }
+}
+
+function rileyStarter(btn) {
+  document.getElementById('riley-input').value = btn.textContent;
+  sendRiley();
+}
+
+function clearRileyChat() {
+  rileyHistory = [];
+  document.getElementById('riley-messages').innerHTML = '';
+  document.getElementById('riley-messages').style.display = 'none';
+  document.getElementById('riley-welcome').style.display = 'flex';
+}
+
+function addRileyMsg(role, text) {
+  const welcome = document.getElementById('riley-welcome');
+  const thread  = document.getElementById('riley-messages');
+  welcome.style.display = 'none';
+  thread.style.display  = 'flex';
+
+  const div = document.createElement('div');
+  div.className = 'riley-msg ' + (role === 'user' ? 'user' : 'riley');
+  div.textContent = text;
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+  return div;
+}
+
+async function sendRiley() {
+  const input   = document.getElementById('riley-input');
+  const sendBtn = document.getElementById('riley-send-btn');
+  const text    = input.value.trim();
+  if (!text) return;
+
+  // Add user message to UI + history
+  input.value = '';
+  input.style.height = '42px';
+  addRileyMsg('user', text);
+  rileyHistory.push({ role: 'user', content: text });
+
+  // Disable input while waiting
+  sendBtn.disabled = true;
+  input.disabled   = true;
+
+  // Show thinking indicator
+  const thinking = addRileyMsg('riley', 'Riley is thinking…');
+  thinking.classList.add('thinking');
+
+  try {
+    const res = await fetch(BASE + '/riley-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Send full conversation history — server uses messages array, falls back to message
+      body: JSON.stringify({ message: text, messages: rileyHistory }),
+    });
+
+    const rawText = await res.text();
+    let data;
+    try { data = JSON.parse(rawText); } catch(e) { throw new Error('Bad response: ' + rawText.slice(0, 100)); }
+
+    if (!res.ok) throw new Error(data.error || 'HTTP ' + res.status);
+    if (!data.reply) throw new Error('Empty reply from Riley');
+
+    // Replace thinking bubble with real reply
+    thinking.textContent = data.reply;
+    thinking.classList.remove('thinking');
+
+    // Append assistant reply to history
+    rileyHistory.push({ role: 'assistant', content: data.reply });
+
+    // Cap history to last 20 exchanges (40 messages) to avoid bloat
+    if (rileyHistory.length > 40) rileyHistory = rileyHistory.slice(-40);
+
+  } catch(e) {
+    thinking.textContent = 'Sorry, something went wrong. (' + e.message + ')';
+    thinking.classList.remove('thinking');
+    // Remove failed user message from history so retry is clean
+    rileyHistory.pop();
+  } finally {
+    sendBtn.disabled = false;
+    input.disabled   = false;
+    input.focus();
+    // Scroll to bottom
+    const thread = document.getElementById('riley-messages');
+    thread.scrollTop = thread.scrollHeight;
+  }
 }
 
 function appendError(containerId, msg) {

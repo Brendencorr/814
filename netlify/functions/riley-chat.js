@@ -203,17 +203,30 @@ async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
 }
 
 // ── Conversation history builder ──────────────────────────────────────────────
+// Expects `messages` to be the full history array already including the current
+// user turn at the end (the frontend pushes before calling this function).
+// `message` is accepted for backward compatibility but never used to modify the
+// array — doing so was the source of duplicate-user-turn bugs.
 function buildConversationHistory(message, messages) {
   const MAX = 20;
+
   if (messages?.length) {
+    // Validate shape and enforce alternating roles
     const valid = messages
-      .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+      .filter((m) => (m.role === "user" || m.role === "assistant") && typeof m.content === "string" && m.content.trim())
       .slice(-MAX);
-    if (message && valid[valid.length - 1]?.content !== message)
-      valid.push({ role: "user", content: message });
-    return valid.length ? valid : [{ role: "user", content: message || "" }];
+
+    // Ensure the array ends with a user turn.
+    // If somehow it ends with assistant (e.g. loaded from DB), append the current message.
+    if (valid.length === 0 || valid[valid.length - 1].role === "assistant") {
+      if (message) valid.push({ role: "user", content: message });
+    }
+
+    if (valid.length > 0) return valid;
   }
-  return [{ role: "user", content: message || "" }];
+
+  // Fallback: just the current message
+  return message ? [{ role: "user", content: message }] : [];
 }
 
 // ── Handler — standard Lambda format (no streaming wrapper needed) ────────────
@@ -246,8 +259,14 @@ exports.handler = async function (event) {
     return {
       statusCode: 400,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "message or messages array is required" }),
+      body: JSON.stringify({ error: "messages array is required" }),
     };
+  }
+
+  // Log what we received so memory issues are diagnosable in Netlify function logs
+  console.log(`[riley-chat] messages.length=${messages?.length ?? 0} user_id=${user_id || "anon"}`);
+  if (messages?.length) {
+    console.log(`[riley-chat] history: ${messages.map(m => m.role).join(", ")}`);
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

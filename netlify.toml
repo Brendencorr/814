@@ -1,3 +1,7 @@
+[build.environment]
+  # Exclude CLAUDE.md from secrets scanning — it's documentation, not deployed code.
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md"
+
 [functions]
   directory = "netlify/functions"
 
@@ -27,6 +31,9 @@
 
 [functions."weekly-pipeline"]
   timeout = 26
+
+[functions."site-config"]
+  timeout = 10
 
 # Runs every Sunday 6am MT (12:00 UTC) as a background function
 # Scheduled functions automatically run as background functions — no -background suffix needed

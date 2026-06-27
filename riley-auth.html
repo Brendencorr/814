@@ -359,32 +359,46 @@ header {
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Configuration ─────────────────────────────────────────────────────────────
-// IMPORTANT: Replace SUPABASE_ANON_KEY_PLACEHOLDER with your actual anon key from:
-//   Supabase Dashboard → Settings → API → Project API keys → anon (public)
-// The anon key is safe to expose here — RLS policies protect all user data.
-const SUPABASE_URL      = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_PLACEHOLDER';
-const API_BASE          = '/.netlify/functions';
-
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ── Configuration loaded at runtime from /.netlify/functions/site-config ──────
+// No credentials are hardcoded here. Values come from Netlify environment variables.
+const API_BASE = '/.netlify/functions';
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let currentUser    = null;
-let userProfile    = null;
-let sessionId      = crypto.randomUUID();
-let chatHistory    = []; // [{role, content}]
+let sb          = null; // Supabase client, created after config loads
+let currentUser = null;
+let userProfile = null;
+let sessionId   = crypto.randomUUID();
+let chatHistory = []; // [{role, content}]
 
-// ── Auth init ─────────────────────────────────────────────────────────────────
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-    await onSignedIn(session);
-  } else {
-    currentUser = null;
+// ── Boot: fetch config then initialise Supabase ────────────────────────────────
+async function boot() {
+  let cfg;
+  try {
+    const res = await fetch(API_BASE + '/site-config');
+    cfg = await res.json();
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
+  } catch (e) {
+    console.error('site-config fetch failed:', e.message);
+    // Show sign-in screen with a configuration error
+    document.getElementById('signin-status').textContent = 'Configuration error — please try again later.';
     showSignIn();
+    return;
   }
-});
+
+  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+  // ── Auth state listener ────────────────────────────────────────────────────
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (session?.user) {
+      currentUser = session.user;
+      await onSignedIn(session);
+    } else {
+      currentUser = null;
+      showSignIn();
+    }
+  });
+}
+boot();
 
 async function onSignedIn(session) {
   // Show user pill in header
@@ -438,6 +452,7 @@ function showChat() {
 }
 
 async function signInWithGoogle() {
+  if (!sb) { document.getElementById('signin-status').textContent = 'Still loading — try again in a moment.'; return; }
   const btn = document.getElementById('google-btn');
   btn.disabled = true;
   document.getElementById('signin-status').textContent = 'Opening Google sign-in…';
@@ -454,6 +469,7 @@ async function signInWithGoogle() {
 }
 
 async function signOut() {
+  if (!sb) return;
   await sb.auth.signOut();
   chatHistory = [];
   userProfile = null;
@@ -492,7 +508,7 @@ function hideSobrietyBar() {
 
 async function saveSobrietyDate() {
   const val = document.getElementById('sobriety-date-input').value;
-  if (!val || !currentUser) return;
+  if (!val || !currentUser || !sb) return;
   try {
     const { data: { session } } = await sb.auth.getSession();
     const res = await fetch(API_BASE + '/auth-handler', {

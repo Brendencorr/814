@@ -116,7 +116,7 @@ html, body {
       Sign in to save your conversations with Riley, track your progress, and access your programs.
     </p>
 
-    <button class="google-btn" id="google-btn" onclick="signInWithGoogle()">
+    <button class="google-btn" id="google-btn" onclick="signInWithGoogle()" disabled>
       <!-- Google "G" SVG logo -->
       <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -140,36 +140,50 @@ html, body {
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ── Configuration ──────────────────────────────────────────────────────────
-  // SUPABASE_ANON_KEY is safe to expose in browser — RLS protects all data.
-  // Replace SUPABASE_ANON_KEY_PLACEHOLDER with your actual anon key from:
-  //   Supabase Dashboard → Settings → API → Project API keys → anon (public)
-  const SUPABASE_URL      = 'https://tglljvjixlolaguycvbb.supabase.co';
-  const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_PLACEHOLDER';
-  const REDIRECT_URL      = window.location.origin + '/dashboard.html';
+  // ── Configuration loaded at runtime from /.netlify/functions/site-config ───
+  // No credentials are hardcoded here. The site-config function reads
+  // SUPABASE_URL and SUPABASE_ANON_KEY from Netlify environment variables.
+  const REDIRECT_URL = window.location.origin + '/dashboard.html';
+  let supabase = null;
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // ── Boot: fetch config then initialise Supabase ────────────────────────────
+  async function boot() {
+    let cfg;
+    try {
+      const res = await fetch('/.netlify/functions/site-config');
+      cfg = await res.json();
+      if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
+    } catch (e) {
+      setStatus('Configuration error — please try again later.', 'error');
+      return;
+    }
 
-  // ── Check if already logged in ─────────────────────────────────────────────
-  async function checkSession() {
+    supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+
+    // Check if already logged in
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
       setStatus('Already signed in — redirecting…', '');
       setTimeout(() => window.location.href = REDIRECT_URL, 800);
+      return;
     }
-  }
-  checkSession();
 
-  // ── Handle OAuth return (hash-based session) ──────────────────────────────
-  supabase.auth.onAuthStateChange((event, session) => {
-    if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-      setStatus('Signed in! Redirecting…', 'success');
-      setTimeout(() => window.location.href = REDIRECT_URL, 800);
-    }
-  });
+    // Handle OAuth return (hash-based session)
+    supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+        setStatus('Signed in! Redirecting…', 'success');
+        setTimeout(() => window.location.href = REDIRECT_URL, 800);
+      }
+    });
+
+    // Enable sign-in button now that Supabase is ready
+    document.getElementById('google-btn').disabled = false;
+  }
+  boot();
 
   // ── Google OAuth ───────────────────────────────────────────────────────────
   async function signInWithGoogle() {
+    if (!supabase) return;
     const btn = document.getElementById('google-btn');
     btn.disabled = true;
     setStatus('Opening Google sign-in…', '');

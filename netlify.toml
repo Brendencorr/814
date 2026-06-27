@@ -39,3 +39,15 @@
 # Scheduled functions automatically run as background functions — no -background suffix needed
 [functions."weekly-pipeline-cron"]
   schedule = "0 12 * * 0"
+
+[[redirects]]
+  from = "https://login.eight14.us/*"
+  to = "/login.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "https://admin.eight14.us/*"
+  to = "/admin.html"
+  status = 200
+  force = true

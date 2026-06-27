@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Riley — 8:14</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:       #06090e;
+  --card:     #0a1018;
+  --card2:    #0d1520;
+  --border:   #1a2530;
+  --border2:  #243040;
+  --gold:     #c9a84c;
+  --gold-dim: #8a6e2a;
+  --sage:     #4a7c59;
+  --text:     #c8d4e0;
+  --muted:    #4a5a6a;
+  --muted2:   #6a7a8a;
+  --red:      #bf4a4a;
+  --green:    #3abf6a;
+}
+html, body {
+  height: 100%; height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  overflow: hidden;
+}
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── Shared layout ── */
+.page { display: flex; flex-direction: column; height: 100dvh; }
+
+/* ── Header ── */
+header {
+  background: #000;
+  border-bottom: 1px solid var(--border);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.logo { font-size: 1.4rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; }
+.user-pill {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .78rem;
+  color: var(--muted2);
+}
+.user-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.sign-out-btn {
+  padding: .3rem .7rem;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--muted2);
+  font-size: .7rem;
+  cursor: pointer;
+  transition: color .15s;
+}
+.sign-out-btn:hover { color: var(--red); border-color: var(--red); }
+
+/* ── Unauthenticated state ── */
+#sign-in-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.sign-in-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+.big-logo { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; margin-bottom: 4px; }
+.big-sub { font-size: .7rem; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 1.5rem; }
+.sign-in-desc { font-size: .85rem; color: var(--muted2); margin-bottom: 1.75rem; line-height: 1.55; }
+.google-btn {
+  display: flex; align-items: center; justify-content: center; gap: .75rem;
+  width: 100%; padding: .85rem 1.25rem;
+  background: #fff; border: none; border-radius: 10px;
+  color: #333; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: opacity .2s;
+  box-shadow: 0 1px 6px rgba(0,0,0,.4);
+}
+.google-btn:hover { opacity: .9; }
+.google-btn:disabled { opacity: .5; cursor: default; }
+.google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* ── Authenticated chat ── */
+#chat-screen { flex: 1; display: none; flex-direction: column; overflow: hidden; max-width: 720px; width: 100%; margin: 0 auto; }
+
+/* Sobriety date banner */
+#sobriety-banner {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: .6rem 1.25rem;
+  display: none;
+  align-items: center;
+  gap: .75rem;
+  flex-shrink: 0;
+}
+.sobriety-label { font-size: .72rem; color: var(--muted2); }
+.sobriety-value { font-size: .85rem; font-weight: 600; color: var(--gold); }
+.sobriety-edit-btn {
+  margin-left: auto;
+  padding: .25rem .6rem;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 5px;
+  color: var(--muted2);
+  font-size: .68rem;
+  cursor: pointer;
+  transition: color .15s;
+}
+.sobriety-edit-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+#sobriety-set-bar {
+  background: rgba(201,168,76,.06);
+  border-bottom: 1px solid rgba(201,168,76,.2);
+  padding: .65rem 1.25rem;
+  display: none;
+  align-items: center;
+  gap: .75rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#sobriety-set-bar label { font-size: .78rem; color: var(--gold); }
+#sobriety-date-input {
+  padding: .35rem .65rem;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: .82rem;
+  outline: none;
+}
+#sobriety-date-input:focus { border-color: var(--gold); }
+.save-sobriety-btn {
+  padding: .35rem .85rem;
+  background: var(--gold);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  font-size: .78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.save-sobriety-btn:hover { opacity: .85; }
+.skip-btn {
+  padding: .35rem .65rem;
+  background: transparent;
+  border: none;
+  color: var(--muted2);
+  font-size: .75rem;
+  cursor: pointer;
+}
+
+/* Chat messages */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+}
+.msg {
+  max-width: 82%;
+  padding: .65rem .95rem;
+  border-radius: 12px;
+  font-size: .9rem;
+  line-height: 1.6;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.msg.riley.thinking { color: var(--muted2); font-style: italic; }
+
+/* Welcome / starters */
+.welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  gap: .75rem;
+}
+.welcome h2 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.welcome p { font-size: .85rem; color: var(--muted2); max-width: 320px; }
+.starters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .5rem; }
+.starter {
+  padding: .45rem .85rem;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  color: var(--text);
+  font-size: .78rem;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.starter:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Input row */
+.input-row {
+  display: flex;
+  gap: .6rem;
+  padding: .85rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.input-row textarea {
+  flex: 1;
+  background: var(--card2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: .9rem;
+  padding: .65rem .85rem;
+  resize: none;
+  outline: none;
+  height: 42px;
+  max-height: 120px;
+  overflow-y: auto;
+  transition: border-color .2s;
+  font-family: inherit;
+  line-height: 1.45;
+}
+.input-row textarea:focus { border-color: var(--gold); }
+.send-btn {
+  width: 42px; height: 42px;
+  background: var(--gold);
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: opacity .2s;
+}
+.send-btn:hover { opacity: .85; }
+.send-btn:disabled { opacity: .35; cursor: default; }
+
+.status-line { font-size: .75rem; color: var(--muted); text-align: center; padding: .4rem; }
+
+@media (max-width: 480px) {
+  .messages { padding: .85rem; }
+  .msg { max-width: 92%; font-size: .85rem; }
+  .input-row { padding: .75rem .85rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="logo">8:14</div>
+    <span style="font-size:.78rem;color:var(--muted2)">Riley</span>
+    <div class="user-pill" id="user-pill" style="display:none">
+      <img id="user-avatar" class="user-avatar" src="" alt="">
+      <span id="user-name"></span>
+      <button class="sign-out-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <!-- ── Unauthenticated ── -->
+  <div id="sign-in-screen">
+    <div class="sign-in-card">
+      <div class="big-logo">8:14</div>
+      <div class="big-sub">The Rebuild Project</div>
+      <p class="sign-in-desc">
+        Sign in to talk with Riley, save your conversations, and track your rebuild.
+      </p>
+      <button class="google-btn" id="google-btn" onclick="signInWithGoogle()">
+        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="status-line" id="signin-status"></div>
+    </div>
+  </div>
+
+  <!-- ── Authenticated chat ── -->
+  <div id="chat-screen">
+    <!-- Sobriety date — shows after login if not set -->
+    <div id="sobriety-set-bar">
+      <label>When did you start your rebuild?</label>
+      <input type="date" id="sobriety-date-input" placeholder="Optional">
+      <button class="save-sobriety-btn" onclick="saveSobrietyDate()">Save</button>
+      <button class="skip-btn" onclick="hideSobrietyBar()">Skip for now</button>
+    </div>
+    <!-- Sobriety date — shows when already set -->
+    <div id="sobriety-banner">
+      <div>
+        <div class="sobriety-label">Your rebuild</div>
+        <div class="sobriety-value" id="sobriety-display"></div>
+      </div>
+      <button class="sobriety-edit-btn" onclick="showSobrietyBar()">Edit</button>
+    </div>
+
+    <!-- Welcome / message thread (toggled by JS) -->
+    <div class="welcome" id="chat-welcome">
+      <h2 id="welcome-heading">Hey. What's on your mind?</h2>
+      <p>Ask anything about sobriety, anxiety, sleep, grief, nutrition — whatever you're working through right now.</p>
+      <div class="starters">
+        <button class="starter" onclick="starter(this)">I just had a bad day and I want a drink</button>
+        <button class="starter" onclick="starter(this)">What happens in the first week sober?</button>
+        <button class="starter" onclick="starter(this)">I can't sleep in early recovery</button>
+        <button class="starter" onclick="starter(this)">My anxiety is getting worse sober</button>
+        <button class="starter" onclick="starter(this)">I relapsed. What do I do now?</button>
+        <button class="starter" onclick="starter(this)">How do I talk to my family about this?</button>
+      </div>
+    </div>
+    <div class="messages" id="messages" style="display:none"></div>
+
+    <div class="input-row">
+      <textarea id="msg-input" placeholder="Message Riley…" rows="1"
+        onkeydown="onKey(event)"
+        oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+      <button class="send-btn" id="send-btn" onclick="send()">&#9658;</button>
+    </div>
+  </div>
+</div>
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── Configuration ─────────────────────────────────────────────────────────────
+// IMPORTANT: Replace SUPABASE_ANON_KEY_PLACEHOLDER with your actual anon key from:
+//   Supabase Dashboard → Settings → API → Project API keys → anon (public)
+// The anon key is safe to expose here — RLS policies protect all user data.
+const SUPABASE_URL      = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_PLACEHOLDER';
+const API_BASE          = '/.netlify/functions';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let currentUser    = null;
+let userProfile    = null;
+let sessionId      = crypto.randomUUID();
+let chatHistory    = []; // [{role, content}]
+
+// ── Auth init ─────────────────────────────────────────────────────────────────
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    currentUser = session.user;
+    await onSignedIn(session);
+  } else {
+    currentUser = null;
+    showSignIn();
+  }
+});
+
+async function onSignedIn(session) {
+  // Show user pill in header
+  const pill   = document.getElementById('user-pill');
+  const avatar = document.getElementById('user-avatar');
+  const name   = document.getElementById('user-name');
+  pill.style.display = 'flex';
+  if (session.user.user_metadata?.picture || session.user.user_metadata?.avatar_url) {
+    avatar.src = session.user.user_metadata.picture || session.user.user_metadata.avatar_url;
+    avatar.style.display = 'block';
+  }
+  name.textContent = session.user.user_metadata?.name || session.user.email || '';
+
+  // Load profile + conversation history via auth-handler
+  try {
+    const res  = await fetch(API_BASE + '/auth-handler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_session', token: session.access_token, session_id: sessionId }),
+    });
+    const data = await res.json();
+    if (data.user) {
+      userProfile = data.user;
+      renderSobrietyInfo();
+    }
+    if (data.messages?.length) {
+      chatHistory = data.messages;
+      renderHistory(data.messages);
+    }
+  } catch (e) {
+    console.warn('auth-handler get_session failed:', e.message);
+  }
+
+  // Update welcome heading with first name
+  const firstName = (session.user.user_metadata?.given_name ||
+                     session.user.user_metadata?.name?.split(' ')[0] ||
+                     '');
+  if (firstName) document.getElementById('welcome-heading').textContent = `Hey ${firstName}. What's on your mind?`;
+
+  showChat();
+}
+
+function showSignIn() {
+  document.getElementById('sign-in-screen').style.display = 'flex';
+  document.getElementById('chat-screen').style.display = 'none';
+}
+
+function showChat() {
+  document.getElementById('sign-in-screen').style.display = 'none';
+  document.getElementById('chat-screen').style.display    = 'flex';
+}
+
+async function signInWithGoogle() {
+  const btn = document.getElementById('google-btn');
+  btn.disabled = true;
+  document.getElementById('signin-status').textContent = 'Opening Google sign-in…';
+  try {
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.href },
+    });
+    if (error) throw error;
+  } catch (err) {
+    document.getElementById('signin-status').textContent = 'Error: ' + err.message;
+    btn.disabled = false;
+  }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  chatHistory = [];
+  userProfile = null;
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('messages').style.display = 'none';
+  document.getElementById('chat-welcome').style.display = 'flex';
+  document.getElementById('user-pill').style.display = 'none';
+}
+
+// ── Sobriety date ─────────────────────────────────────────────────────────────
+function renderSobrietyInfo() {
+  if (!userProfile) return;
+  if (userProfile.sobriety_date) {
+    const d = new Date(userProfile.sobriety_date);
+    const days = Math.floor((Date.now() - d) / 86400000);
+    const months = Math.floor(days / 30);
+    const label = months >= 2 ? `${months} months sober` : `${days} day${days !== 1 ? 's' : ''} sober`;
+    document.getElementById('sobriety-display').textContent = label;
+    document.getElementById('sobriety-banner').style.display = 'flex';
+    document.getElementById('sobriety-set-bar').style.display = 'none';
+  } else {
+    // First login with no sobriety date — show the set bar
+    document.getElementById('sobriety-set-bar').style.display = 'flex';
+    document.getElementById('sobriety-banner').style.display = 'none';
+  }
+}
+
+function showSobrietyBar() {
+  document.getElementById('sobriety-set-bar').style.display = 'flex';
+  document.getElementById('sobriety-banner').style.display = 'none';
+}
+
+function hideSobrietyBar() {
+  document.getElementById('sobriety-set-bar').style.display = 'none';
+}
+
+async function saveSobrietyDate() {
+  const val = document.getElementById('sobriety-date-input').value;
+  if (!val || !currentUser) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(API_BASE + '/auth-handler', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_profile',
+        token: session.access_token,
+        user_id: currentUser.id,
+        sobriety_date: val,
+      }),
+    });
+    const data = await res.json();
+    if (data.profile) {
+      userProfile = data.profile;
+      renderSobrietyInfo();
+    }
+  } catch (e) {
+    console.warn('saveSobrietyDate failed:', e.message);
+  }
+}
+
+// ── Chat ──────────────────────────────────────────────────────────────────────
+function renderHistory(messages) {
+  if (!messages.length) return;
+  const thread = document.getElementById('messages');
+  document.getElementById('chat-welcome').style.display = 'none';
+  thread.style.display = 'flex';
+  messages.forEach(m => addMsg(m.role, m.content));
+}
+
+function addMsg(role, text) {
+  const thread = document.getElementById('messages');
+  document.getElementById('chat-welcome').style.display = 'none';
+  thread.style.display = 'flex';
+
+  const div = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'riley');
+  div.textContent = text;
+  thread.appendChild(div);
+  thread.scrollTop = thread.scrollHeight;
+  return div;
+}
+
+function starter(btn) {
+  document.getElementById('msg-input').value = btn.textContent;
+  send();
+}
+
+function onKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+async function send() {
+  const input   = document.getElementById('msg-input');
+  const sendBtn = document.getElementById('send-btn');
+  const text    = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = '42px';
+
+  addMsg('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  sendBtn.disabled = true;
+  input.disabled   = true;
+
+  const thinking = addMsg('riley', 'Riley is thinking…');
+  thinking.classList.add('thinking');
+
+  try {
+    const payload = {
+      message:  text,
+      messages: chatHistory,
+    };
+    if (currentUser) {
+      payload.user_id    = currentUser.id;
+      payload.session_id = sessionId;
+    }
+
+    const res = await fetch(API_BASE + '/riley-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.reply) throw new Error(data.error || 'No reply');
+
+    thinking.textContent = data.reply;
+    thinking.classList.remove('thinking');
+    chatHistory.push({ role: 'assistant', content: data.reply });
+
+    // Cap client-side history
+    if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
+
+  } catch (e) {
+    thinking.textContent = 'Something went wrong — ' + e.message;
+    thinking.classList.remove('thinking');
+    chatHistory.pop(); // remove failed user message
+  } finally {
+    sendBtn.disabled = false;
+    input.disabled   = false;
+    input.focus();
+    const thread = document.getElementById('messages');
+    thread.scrollTop = thread.scrollHeight;
+  }
+}
+</script>
+</body>
+</html>

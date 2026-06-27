@@ -42,11 +42,15 @@ All Supabase writes are non-blocking and non-fatal: if Supabase is unavailable, 
 - echo_scores — weekly performance metrics (format_winner, best_pillar, worst_pillar)
 - published_posts — record of every post sent through the pipeline (includes buffer_update_id)
 - pipeline_runs — log of every Sunday autonomous pipeline run
+- user_profiles — authenticated user data: name, email, sobriety_date, programs_purchased
+- riley_conversations — persistent Riley chat history per user and session
+- user_program_progress — program day tracking per user
 
 ### Migrations
 Run in order in Supabase SQL editor:
 1. supabase/migrations/001_initial.sql — creates scout_history, echo_scores, published_posts
 2. supabase/migrations/002_pipeline.sql — adds pipeline_runs table + format_winner/worst_pillar columns
+3. supabase/migrations/003_auth.sql — user_profiles, riley_conversations, user_program_progress with RLS
 
 ## Functions
 
@@ -55,12 +59,17 @@ Run in order in Supabase SQL editor:
 - sage.js — writer agent, injects format_winner + pillar performance before calling Claude
 - atlas.js — scheduler, calls buffer-publish for each post after Claude responds
 - echo.js — analytics agent, saves metrics to echo_scores after each run
-- riley-chat.js — public chatbot, reads scout/echo/posts context on every call
+- riley-chat.js — chatbot; accepts user_id + session_id for persistent memory; reads user profile for personalization
 
 ### Infrastructure functions
+- auth-handler.js — POST endpoint; actions: get_session, save_message, update_profile; uses SERVICE_KEY
 - buffer-publish.js — POST endpoint to schedule one post to Buffer API
 - pipeline-status.js — GET endpoint, returns pipeline_runs + echo_scores + published_posts for dashboard
 - weekly-pipeline.js — scheduled function, runs full pipeline autonomously every Sunday
+
+### Auth pages
+- login.html — Google OAuth sign-in page → redirects to /dashboard.html on success
+- riley-auth.html — Full Riley chat experience with Google auth, sobriety date, conversation history
 
 ## Scheduled Pipeline
 - weekly-pipeline runs every Sunday at 6am Mountain Time (12:00 UTC)
@@ -69,6 +78,17 @@ Run in order in Supabase SQL editor:
 - Sequence: Echo data read → Scout → Sage → Atlas → Buffer publish → log to pipeline_runs
 - Each step is fault-tolerant; pipeline continues even if one step fails
 - Status logged to pipeline_runs table (success / partial / failed)
+
+## Google OAuth
+Google Client ID: 206086364002-clh43vor3dvrk0bv54e5pp5nfd79jvto.apps.googleusercontent.com
+Configure in: Supabase Dashboard → Authentication → Providers → Google
+Add authorized redirect URI: https://tglljvjixlolaguycvbb.supabase.co/auth/v1/callback
+
+## Supabase Frontend Config
+URL: https://tglljvjixlolaguycvbb.supabase.co
+ANON KEY: get from Supabase Dashboard → Settings → API → anon (public)
+Replace SUPABASE_ANON_KEY_PLACEHOLDER in login.html and riley-auth.html with the actual anon key.
+The anon key is safe to expose in browser — RLS policies protect all user data.
 
 ## Riley Chat API — embed usage
 
@@ -95,6 +115,19 @@ Always send the full `messages` array so Riley remembers the conversation.
 The server caps history to the last 20 messages automatically.
 If both `message` and `messages` are sent, `messages` takes precedence and `message` is appended if not already the last entry.
 Response: `{ "reply": "Riley's response text" }`
+
+**With persistent memory (logged-in users):**
+```json
+{
+  "message": "latest user text",
+  "messages": [...history],
+  "user_id": "uuid-from-supabase-auth",
+  "session_id": "uuid-generated-per-browser-session"
+}
+```
+When user_id and session_id are provided:
+- Riley's system prompt is personalized with the user's profile (name, sobriety date, programs)
+- Both the user message and Riley's reply are saved to riley_conversations automatically
 
 ## Self-Improvement Logic
 - Scout reads echo_scores.best_pillar and format_winner before every run

@@ -22,5 +22,8 @@
 [functions."pipeline-status"]
   timeout = 26
 
+[functions."auth-handler"]
+  timeout = 26
+
 [functions."weekly-pipeline"]
   schedule = "0 12 * * 0"

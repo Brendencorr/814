@@ -592,6 +592,9 @@ async function send() {
       payload.session_id = sessionId;
     }
 
+    console.log('[riley] outboundMessages:', JSON.stringify(outboundMessages));
+    console.log('[riley] payload:', JSON.stringify(payload));
+
     const res = await fetch(API_BASE + '/riley-chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

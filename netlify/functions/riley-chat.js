@@ -273,10 +273,14 @@ exports.handler = async function (event) {
     };
   }
 
+  // Log the raw body first so we can see exactly what arrived
+  console.log("[riley-chat] raw event.body:", event.body?.slice(0, 500));
+
   let body;
   try {
     body = JSON.parse(event.body || "{}");
   } catch {
+    console.error("[riley-chat] JSON parse failed on:", event.body?.slice(0, 200));
     return {
       statusCode: 400,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
@@ -286,18 +290,16 @@ exports.handler = async function (event) {
 
   const { message, messages, user_id, session_id } = body;
 
+  // Log parsed fields
+  console.log(`[riley-chat] parsed — message="${message?.slice(0,50)}" messages.length=${messages?.length ?? "undefined"} user_id=${user_id || "anon"}`);
+
   if (!message && (!messages?.length)) {
+    console.error("[riley-chat] 400 — no message and no messages array. body keys:", Object.keys(body));
     return {
       statusCode: 400,
       headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "messages array is required" }),
+      body: JSON.stringify({ error: "messages array is required", received_keys: Object.keys(body) }),
     };
-  }
-
-  // Log what we received so memory issues are diagnosable in Netlify function logs
-  console.log(`[riley-chat] messages.length=${messages?.length ?? 0} user_id=${user_id || "anon"}`);
-  if (messages?.length) {
-    console.log(`[riley-chat] history: ${messages.map(m => m.role).join(", ")}`);
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;

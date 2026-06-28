@@ -3,54 +3,67 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard — Riley · The 8:14 Project</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap">
+  <title>Dashboard · Riley</title>
   <link rel="stylesheet" href="/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/dashboard-auth.js"></script>
 </head>
 <body>
 
 <div class="dash-layout">
+  <!-- Sidebar (inner HTML injected by renderSidebar) -->
   <aside class="sidebar" id="sidebar-mount"></aside>
 
   <main class="dash-main">
+
+    <!-- Topbar -->
     <div class="dash-topbar">
       <div>
-        <div class="topbar-title" id="greeting">Good morning.</div>
-        <div class="topbar-sub"  id="topbar-date"></div>
+        <div class="topbar-greeting" id="topbar-greeting">Good morning. ☀️</div>
+        <div class="topbar-date" id="topbar-date">Loading…</div>
       </div>
       <div class="topbar-actions">
-        <a href="/brief" class="btn btn-dark">← Back to Vision</a>
-        <a href="/brief" class="btn btn-gold">Open Today's Brief</a>
+        <button class="topbar-btn topbar-btn-gold" onclick="window.location.href='/brief.html'">Open Today's Brief</button>
       </div>
     </div>
 
     <div class="dash-content">
 
-      <!-- Brief card -->
+      <!-- ── BRIEF CARD ── -->
       <div class="briefing-card" id="brief-card">
         <div class="briefing-card-header">
           <div>
-            <div class="bc-label">Daily Intelligence Brief</div>
-            <div class="bc-title">Loading your brief…</div>
+            <div class="bc-label" id="bc-label">Daily Intelligence Brief</div>
+            <div class="bc-title" id="bc-title">Your Daily Blueprint</div>
+            <div class="bc-subtitle" id="bc-subtitle">Loading today's brief…</div>
           </div>
+          <div style="text-align:right;flex-shrink:0;padding-left:20px">
+            <div class="bc-progress-label" id="bc-progress-label">— / — complete</div>
+            <svg viewBox="0 0 56 56" width="56" height="56" id="bc-ring" style="transform:rotate(-90deg)">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+              <circle id="bc-ring-fill" cx="28" cy="28" r="22" fill="none" stroke="#c9a84c" stroke-width="4"
+                stroke-dasharray="138.2" stroke-dashoffset="138.2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="briefing-modules-grid" id="brief-modules">
+          <!-- Skeleton -->
+          <div class="bmod"><div class="bmod-icon">⏳</div><div class="bmod-label">Loading</div><div class="bmod-content">Fetching your brief…</div></div>
         </div>
       </div>
 
-      <!-- Metrics -->
+      <!-- ── STATS ── -->
       <div class="section-label">Your Metrics</div>
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-label">Day Streak</div>
           <div class="stat-value" id="stat-streak">—</div>
-          <div class="stat-sub">days with Riley</div>
+          <div class="stat-sub" id="stat-streak-sub">days with Riley</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Brief Completion</div>
           <div class="stat-value" id="stat-completion">—</div>
-          <div class="stat-sub" id="stat-completion-sub">this week</div>
+          <div class="stat-sub">avg completion rate</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">Sobriety</div>
@@ -60,320 +73,405 @@
         <div class="stat-card">
           <div class="stat-label">Weekly Goals</div>
           <div class="stat-value" id="stat-goals">—</div>
-          <div class="stat-sub">on track this week</div>
+          <div class="stat-sub" id="stat-goals-sub">on track this week</div>
         </div>
       </div>
 
-      <!-- Two-column lower -->
+      <!-- ── TWO-COL ── -->
       <div class="two-col">
 
-        <!-- Left -->
+        <!-- LEFT -->
         <div>
           <div class="section-label">Recent Conversations</div>
-          <div class="panel" id="conversations-panel">
-            <div class="loading-wrap" style="min-height:120px"><div class="spinner"></div></div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Riley Sessions</div>
+              <button class="panel-action" onclick="window.location.href='/conversations.html'">View all →</button>
+            </div>
+            <div id="conversations-list">
+              <div class="loading-wrap"><div class="spinner"></div> Loading…</div>
+            </div>
           </div>
 
           <div class="section-label">Program Enrollments</div>
-          <div class="panel" id="programs-panel">
-            <div class="loading-wrap" style="min-height:100px"><div class="spinner"></div></div>
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title">Active Programs</div>
+              <button class="panel-action" onclick="window.location.href='/programs.html'">Browse all →</button>
+            </div>
+            <div id="programs-list" style="padding:0 20px">
+              <div class="loading-wrap"><div class="spinner"></div> Loading…</div>
+            </div>
           </div>
         </div>
 
-        <!-- Right -->
+        <!-- RIGHT: Check-in panel -->
         <div class="checkin-panel">
           <div class="section-label" style="margin-top:0">Daily Check-In</div>
-          <div class="checkin-card" id="mood-card">
-            <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+
+          <!-- Mood -->
+          <div class="checkin-card">
+            <div class="checkin-label">How are you feeling?</div>
+            <div style="font-size:12px;color:var(--smoke);margin-bottom:10px">Riley adjusts today's brief based on your answer</div>
+            <div class="mood-scale" id="mood-scale">
+              <div class="mood-btn" data-val="1" onclick="pickMood(this)">😔</div>
+              <div class="mood-btn" data-val="2" onclick="pickMood(this)">😐</div>
+              <div class="mood-btn" data-val="3" onclick="pickMood(this)">🙂</div>
+              <div class="mood-btn" data-val="4" onclick="pickMood(this)">😊</div>
+              <div class="mood-btn" data-val="5" onclick="pickMood(this)">🔥</div>
+            </div>
           </div>
-          <div class="checkin-card" id="sobriety-card">
-            <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+
+          <!-- Sobriety streak -->
+          <div class="checkin-card">
+            <div class="checkin-label">Sobriety Streak</div>
+            <div class="streak-display">
+              <div class="streak-num" id="sobriety-num">—</div>
+              <div class="streak-unit">days</div>
+            </div>
+            <div style="font-size:12px;color:var(--smoke)" id="sobriety-label">Loading…</div>
+            <div class="streak-dots" id="streak-dots"></div>
+            <div style="font-size:10px;color:var(--smoke);margin-top:8px;font-family:'DM Mono',monospace">Last 7 days</div>
           </div>
-          <div class="checkin-card" id="priorities-card">
-            <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+
+          <!-- Today's Priorities (habits) -->
+          <div class="checkin-card">
+            <div class="checkin-label">Today's Priorities</div>
+            <div id="priorities-list" style="display:flex;flex-direction:column;gap:2px">
+              <div class="loading-wrap" style="min-height:60px"><div class="spinner"></div></div>
+            </div>
           </div>
-          <div class="checkin-card" id="goals-card">
-            <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+
+          <!-- Weekly Goals -->
+          <div class="checkin-card">
+            <div class="checkin-label">Weekly Goals</div>
+            <div id="goals-list">
+              <div class="loading-wrap" style="min-height:60px"><div class="spinner"></div></div>
+            </div>
           </div>
         </div>
 
-      </div>
-    </div>
+      </div><!-- /.two-col -->
+
+    </div><!-- /.dash-content -->
   </main>
 </div>
 
 <script>
-(async () => {
-  try {
-    const ctx = await initDashboard();
-    if (!ctx) {
-      document.getElementById('greeting').textContent = 'Session expired — redirecting…';
-      setTimeout(() => window.location.href = 'https://riley.eight14.us', 2000);
-      return;
-    }
-    const { user, client } = ctx;
+// ── Mood picker ──────────────────────────────────────────────
+let selectedMood = null;
 
-    // Sidebar
-    document.getElementById('sidebar-mount').innerHTML = renderSidebar('dashboard', user);
-
-    // Greeting
-    const h = new Date().getHours();
-    const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-    const firstName = (user.user_metadata?.full_name || user.user_metadata?.name || user.email || '').split(' ')[0];
-    document.getElementById('greeting').textContent = greet + ', ' + firstName + '. ☀️';
-    document.getElementById('topbar-date').textContent =
-      new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) +
-      ' \xB7 Your brief is ready';
-
-    // Parallel data fetch
-    const today = new Date().toISOString().slice(0, 10);
-    const [briefR, sobrietyR, checkinsR, goalsR, habitsR, habitDoneR, convsR, progressR] =
-      await Promise.allSettled([
-        client.from('daily_briefs').select('*').eq('user_id', user.id).eq('brief_date', today).maybeSingle(),
-        client.from('sobriety_tracker').select('*').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
-        client.from('daily_checkins').select('checkin_date, mood').eq('user_id', user.id)
-              .gte('checkin_date', dAgo(30)).order('checkin_date', {ascending:false}),
-        client.from('user_goals').select('*').eq('user_id', user.id).eq('is_active', true)
-              .order('sort_order').limit(5),
-        client.from('habits').select('*').eq('user_id', user.id).eq('is_active', true)
-              .order('sort_order').limit(6),
-        client.from('habit_completions').select('habit_id').eq('user_id', user.id).eq('completed_date', today),
-        client.from('riley_conversations').select('id, title, preview, updated_at, tags')
-              .eq('user_id', user.id).order('updated_at', {ascending:false}).limit(4),
-        client.from('user_program_progress').select('*, programs(title, emoji, duration_days)')
-              .eq('user_id', user.id).order('enrolled_at', {ascending:false}).limit(4)
-      ]);
-
-    const g = r => r.status === 'fulfilled' ? r.value?.data : null;
-    const brief     = g(briefR);
-    const sobriety  = g(sobrietyR);
-    const checkins  = g(checkinsR)  || [];
-    const goals     = g(goalsR)     || [];
-    const habits    = g(habitsR)    || [];
-    const habitDone = (g(habitDoneR)||[]).map(x => x.habit_id);
-    const convs     = g(convsR)     || [];
-    const enrolls   = g(progressR)  || [];
-    const todayCI   = checkins.find(c => c.checkin_date === today);
-    const sobrietyDays = sobriety ? calcSobrietyDays(sobriety.start_date) : 0;
-
-    // ── BRIEF CARD ────────────────────────────────────────────
-    const briefCard = document.getElementById('brief-card');
-    if (brief && brief.modules && Object.keys(brief.modules).length) {
-      const mods = brief.modules, done = brief.completion || {};
-      const order = ['mindset','meditation','hydration','workout','nutrition','reading','linkedin','calendar'];
-      const icons = {mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚',linkedin:'🎥',calendar:'📅',podcast:'🎧'};
-      const total = brief.total_modules || Object.keys(mods).length;
-      const comp  = brief.completed_modules || Object.values(done).filter(Boolean).length;
-      const circ  = 138.2, offset = (circ * (1 - comp / Math.max(1, total))).toFixed(1);
-      briefCard.innerHTML =
-        '<div class="briefing-card-header">' +
-          '<div><div class="bc-label">Daily Intelligence Brief \xB7 ' +
-          new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'}) + '</div>' +
-          '<div class="bc-title">Your ' + new Date().toLocaleDateString('en-US',{weekday:'long'}) + ' Blueprint</div>' +
-          '<div class="bc-subtitle">Riley has assembled today\'s brief based on your goals and schedule.</div></div>' +
-          '<div style="text-align:right;flex-shrink:0;padding-left:20px">' +
-          '<div class="bc-progress-label">' + comp + ' / ' + total + ' complete</div>' +
-          '<svg viewBox="0 0 56 56" width="56" height="56" style="transform:rotate(-90deg)">' +
-          '<circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>' +
-          '<circle cx="28" cy="28" r="22" fill="none" stroke="var(--gold)" stroke-width="4" ' +
-          'stroke-dasharray="' + circ + '" stroke-dashoffset="' + offset + '" stroke-linecap="round"/>' +
-          '</svg></div></div>' +
-          '<div class="briefing-modules-grid">' +
-          [...order.filter(k=>mods[k]),...Object.keys(mods).filter(k=>!order.includes(k))].map(k =>
-            '<div class="bmod' + (done[k] ? ' done' : '') + '" onclick="location.href=\'/brief\'">' +
-            '<div class="bmod-icon">' + (icons[k]||'•') + '</div>' +
-            '<div class="bmod-label">' + k + '</div>' +
-            '<div class="bmod-content">' + esc(String(mods[k]).slice(0,80)) + (String(mods[k]).length>80?'&hellip;':'') + '</div>' +
-            '</div>').join('') +
-          '</div>' +
-          '<div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,0.07)">' +
-          '<a href="/brief" class="btn btn-gold" style="font-size:12px">Open Full Brief &rarr;</a></div>';
-    } else {
-      briefCard.innerHTML =
-        '<div class="briefing-card-header">' +
-        '<div><div class="bc-label">Daily Intelligence Brief</div>' +
-        '<div class="bc-title">Your brief isn\'t ready yet</div>' +
-        '<div class="bc-subtitle">Briefs are delivered at 6:00 AM each morning. Set up your brief preferences now.</div></div></div>' +
-        '<div style="padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07)">' +
-        '<a href="/brief" class="btn btn-gold" style="font-size:12px">Set Up Your Brief &rarr;</a></div>';
-    }
-
-    // ── STATS ─────────────────────────────────────────────────
-    document.getElementById('stat-sobriety').textContent = sobrietyDays || '—';
-    if (sobrietyDays > 0) document.getElementById('stat-sobriety-sub').textContent =
-      sobrietyDays >= 90 ? 'days \xB7 personal best' : 'days strong';
-    document.getElementById('stat-streak').textContent = calcStreak(checkins.map(c=>c.checkin_date)) || '—';
-    if (brief) {
-      document.getElementById('stat-completion').textContent =
-        Math.round(((brief.completed_modules||0) / Math.max(1, brief.total_modules||1)) * 100) + '%';
-      document.getElementById('stat-completion-sub').textContent = 'completion today';
-    }
-    const onTrack = goals.filter(g => g.target_value > 0 && g.current_value/g.target_value >= 0.5).length;
-    document.getElementById('stat-goals').textContent = goals.length ? onTrack + '/' + goals.length : '—';
-
-    // ── CONVERSATIONS ─────────────────────────────────────────
-    const cp = document.getElementById('conversations-panel');
-    cp.innerHTML = !convs.length ?
-      '<div class="panel-header"><div class="panel-title">Riley Sessions</div></div>' +
-      '<div class="empty-state"><div class="empty-state-icon">💬</div>' +
-      '<div class="empty-state-title">No conversations yet</div>' +
-      '<div class="empty-state-sub">Start a session with Riley and it\'ll appear here.</div>' +
-      '<div style="margin-top:14px"><a href="https://riley.eight14.us" class="btn btn-dark" style="font-size:12px">Talk to Riley</a></div></div>'
-      :
-      '<div class="panel-header"><div class="panel-title">Riley Sessions</div>' +
-      '<a href="/conversations" class="panel-action">View all &rarr;</a></div>' +
-      convs.map(c =>
-        '<a href="/conversations?id=' + c.id + '" class="conv-item">' +
-        '<div><div class="conv-title">' + esc(c.title || 'Riley Session') + '</div>' +
-        (c.preview ? '<div class="conv-preview">' + esc(c.preview.slice(0,100)) + '</div>' : '') +
-        (c.tags||[]).slice(0,2).map(t => '<span class="conv-tag">' + esc(t) + '</span>').join(' ') +
-        '</div><div class="conv-date">' + formatDate(c.updated_at) + '<br>' + formatTime(c.updated_at) + '</div></a>'
-      ).join('');
-
-    // ── PROGRAMS ──────────────────────────────────────────────
-    const pp = document.getElementById('programs-panel');
-    pp.innerHTML = !enrolls.length ?
-      '<div class="panel-header"><div class="panel-title">Active Programs</div>' +
-      '<a href="/programs" class="panel-action">Browse all &rarr;</a></div>' +
-      '<div class="empty-state"><div class="empty-state-icon">🎯</div>' +
-      '<div class="empty-state-title">No programs yet</div>' +
-      '<div class="empty-state-sub">Browse programs and enroll to track your progress.</div>' +
-      '<div style="margin-top:14px"><a href="/programs" class="btn btn-gold" style="font-size:12px">Browse Programs</a></div></div>'
-      :
-      '<div class="panel-header"><div class="panel-title">Active Programs</div>' +
-      '<a href="/programs" class="panel-action">Browse all &rarr;</a></div>' +
-      '<div style="padding:0 20px">' +
-      enrolls.map(e => {
-        const pr = e.programs || {};
-        const d  = e.days_completed || e.day_completed || 0;
-        const t  = pr.duration_days || 1;
-        const pct = Math.min(100, Math.round(d/t*100));
-        const fin = pct >= 100;
-        return '<div class="prog-item">' +
-          '<div class="prog-icon">' + (pr.emoji||'🎯') + '</div>' +
-          '<div><div class="prog-name">' + esc(pr.title || e.program_name || 'Program') + '</div>' +
-          '<div class="prog-status">Day ' + d + ' of ' + t + ' \xB7 ' + (fin?'Complete':'Active') + '</div></div>' +
-          '<div class="prog-progress"><div class="prog-pct"' + (fin?' style="color:var(--green)"':'') + '>' + (fin?'✓':pct+'%') + '</div>' +
-          '<div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:' + pct + '%' + (fin?';background:var(--green)':'') + '"></div></div></div>' +
-          '</div>';
-      }).join('') + '</div>';
-
-    // ── MOOD CHECK-IN ─────────────────────────────────────────
-    const mc = document.getElementById('mood-card');
-    mc.innerHTML = '<div class="checkin-label">How are you feeling?</div>' +
-      (todayCI && todayCI.mood ? '' : '<div style="font-size:12px;color:var(--smoke);margin-bottom:10px">Riley adjusts today\'s brief based on your answer</div>') +
-      '<div class="mood-scale">' +
-      [1,2,3,4,5].map(n => '<button class="mood-btn' + (todayCI && todayCI.mood===n ? ' selected' : '') +
-        '" ' + (todayCI ? '' : 'onclick="saveMood(' + n + ',this)"') + '>' +
-        ['😔','😐','🙂','😊','🔥'][n-1] + '</button>').join('') + '</div>' +
-      (todayCI ? '<div style="font-size:11px;color:var(--smoke);margin-top:10px;font-family:\'DM Mono\',monospace">✓ Checked in today</div>' : '');
-
-    // ── SOBRIETY ──────────────────────────────────────────────
-    const sc = document.getElementById('sobriety-card');
-    if (!sobriety) {
-      sc.innerHTML = '<div class="checkin-label">Sobriety Streak</div>' +
-        '<div style="font-size:13px;color:var(--smoke);margin-bottom:12px">Track your sober days.</div>' +
-        '<a href="/tracker" class="btn btn-gold" style="font-size:12px">Set Start Date &rarr;</a>';
-    } else {
-      const recentSet = new Set(checkins.filter(c=>c.checkin_date>=dAgo(6)).map(c=>c.checkin_date));
-      const dots = Array.from({length:7},(_,i)=>{
-        const d = new Date(); d.setDate(d.getDate()-(6-i));
-        const ds = d.toISOString().slice(0,10);
-        return '<div class="streak-dot' + (ds===today?' today':recentSet.has(ds)?' done':'') + '"></div>';
-      }).join('');
-      const pb = sobrietyDays>=90?'Personal best. Keep going.':sobrietyDays>=30?'A month strong. 🔥':sobrietyDays>=7?'One week down.':'Every day counts.';
-      sc.innerHTML = '<div class="checkin-label">Sobriety Streak</div>' +
-        '<div class="streak-display"><div class="streak-num">' + sobrietyDays + '</div><div class="streak-unit">days</div></div>' +
-        '<div style="font-size:12px;color:var(--smoke)">' + pb + '</div>' +
-        '<div class="streak-dots">' + dots + '</div>' +
-        '<div style="font-size:10px;color:var(--smoke);margin-top:6px;font-family:\'DM Mono\',monospace">Last 7 days</div>';
-    }
-
-    // ── HABITS ────────────────────────────────────────────────
-    const hc = document.getElementById('priorities-card');
-    hc.innerHTML = '<div class="checkin-label">Today\'s Priorities</div>' +
-      (!habits.length ?
-        '<div style="font-size:13px;color:var(--smoke);margin-bottom:12px">Add habits to track daily.</div>' +
-        '<a href="/tracker" class="btn btn-dark" style="font-size:12px">Add Habits &rarr;</a>'
-        :
-        habits.map(h => {
-          const done = habitDone.includes(h.id);
-          return '<div class="todo-item" onclick="toggleHabit(\'' + h.id + '\',this)" style="cursor:pointer">' +
-            '<div class="todo-check' + (done?' done':'') + '">' + (done?'✓':'') + '</div>' +
-            '<div class="todo-text' + (done?' done':'') + '">' + (h.emoji?h.emoji+' ':'') + esc(h.title) + '</div></div>';
-        }).join('')
-      );
-
-    // ── GOALS ─────────────────────────────────────────────────
-    const gc = document.getElementById('goals-card');
-    gc.innerHTML = '<div class="checkin-label">Weekly Goals</div>' +
-      (!goals.length ?
-        '<div style="font-size:13px;color:var(--smoke);margin-bottom:12px">Set goals to track your week.</div>' +
-        '<a href="/tracker" class="btn btn-dark" style="font-size:12px">Add Goals &rarr;</a>'
-        :
-        goals.map(g => {
-          const pct = g.target_value>0 ? Math.min(100,Math.round(g.current_value/g.target_value*100)) : 0;
-          const fin = pct>=100;
-          return '<div class="goal-row">' +
-            '<div class="goal-top"><span class="goal-name">' + esc(g.title) + '</span>' +
-            '<span class="goal-val"' + (fin?' style="color:var(--green)"':'') + '>' +
-            (g.current_value||0).toLocaleString() + ' / ' + (g.target_value||0).toLocaleString() +
-            ' ' + (g.unit||'') + (fin?' ✓':'') + '</span></div>' +
-            '<div class="goal-bar"><div class="goal-fill" style="width:' + pct + '%' + (fin?';background:var(--green)':'') + '"></div></div>' +
-            '</div>';
-        }).join('')
-      );
-
-    // ── INTERACTIVE HANDLERS ──────────────────────────────────
-    window.saveMood = async (n, btn) => {
-      document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-      await client.from('daily_checkins').upsert(
-        {user_id:user.id, checkin_date:today, mood:n, sobriety_day:sobrietyDays>0},
-        {onConflict:'user_id,checkin_date'}
-      );
-      const existing = document.getElementById('mood-saved');
-      if (!existing) {
-        const el = document.createElement('div');
-        el.id = 'mood-saved';
-        el.style.cssText = 'font-size:11px;color:var(--smoke);margin-top:10px;font-family:DM Mono,monospace';
-        el.textContent = '✓ Check-in saved';
-        document.getElementById('mood-card').appendChild(el);
-      }
-    };
-
-    window.toggleHabit = async (id, row) => {
-      const ck = row.querySelector('.todo-check');
-      const tx = row.querySelector('.todo-text');
-      const was = ck.classList.contains('done');
-      if (was) {
-        await client.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',today).eq('user_id',user.id);
-        ck.classList.remove('done'); ck.textContent=''; tx.classList.remove('done');
-      } else {
-        await client.from('habit_completions').upsert({habit_id:id,user_id:user.id,completed_date:today},{onConflict:'habit_id,completed_date'});
-        ck.classList.add('done'); ck.textContent='✓'; tx.classList.add('done');
-      }
-    };
-
-  } catch (err) {
-    console.error('[Dashboard] Fatal:', err);
-    const b = document.createElement('div');
-    b.style.cssText='position:fixed;bottom:16px;right:16px;background:#8b3a3a;color:#fff;padding:12px 18px;border-radius:4px;font-size:13px;z-index:9999;max-width:360px';
-    b.textContent='Dashboard error: '+err.message;
-    document.body.appendChild(b);
-  }
-})();
-
-function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
-function calcStreak(dates){
-  if(!dates.length)return 0;
-  const s=[...dates].sort((a,b)=>b.localeCompare(a));
-  const t=new Date().toISOString().slice(0,10);
-  let streak=0,exp=t;
-  for(const d of s){if(d===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else break;}
-  return streak;
+function pickMood(el) {
+  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMood = parseInt(el.dataset.val, 10);
+  saveMood(selectedMood);
 }
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+async function saveMood(val) {
+  if (!supabase || !currentUser) return;
+  const today = new Date().toISOString().split('T')[0];
+  await supabase.from('daily_checkins').upsert({
+    user_id: currentUser.id,
+    checkin_date: today,
+    mood: val
+  }, { onConflict: 'user_id,checkin_date', ignoreDuplicates: false });
+}
+
+// ── Topbar ───────────────────────────────────────────────────
+function setTopbar(name) {
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const icon = h < 12 ? '☀️' : h < 17 ? '🌤️' : '🌙';
+  document.getElementById('topbar-greeting').textContent = `${greeting}, ${name}. ${icon}`;
+
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric'
+  });
+  document.getElementById('topbar-date').textContent = `${dateStr} · Your brief is ready`;
+}
+
+// ── Brief card ───────────────────────────────────────────────
+function renderBriefCard(brief) {
+  if (!brief) {
+    document.getElementById('bc-title').textContent = 'No brief today yet';
+    document.getElementById('bc-subtitle').textContent = 'Check back after 6 AM when Riley prepares your daily package.';
+    document.getElementById('brief-modules').innerHTML = '';
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  const dow = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+
+  document.getElementById('bc-label').textContent = `Daily Intelligence Brief · ${today}`;
+  document.getElementById('bc-title').textContent = `Your ${dow} Blueprint`;
+  document.getElementById('bc-subtitle').textContent = brief.subtitle || '';
+
+  const completed = brief.completed_modules ?? 0;
+  const total     = brief.total_modules ?? 0;
+  document.getElementById('bc-progress-label').textContent = `${completed} / ${total} complete`;
+
+  // Progress ring
+  const circumference = 138.2;
+  const pct = total > 0 ? completed / total : 0;
+  document.getElementById('bc-ring-fill').setAttribute('stroke-dashoffset', circumference - pct * circumference);
+
+  // Modules grid
+  const modules = Array.isArray(brief.modules) ? brief.modules : [];
+  const completion = brief.completion || {};
+
+  const iconMap = {
+    mindset: '🧠', meditation: '🙏', hydration: '💧', movement: '🏋️',
+    nutrition: '🍳', reading: '📚', linkedin: '🎥', calendar: '📅',
+    workout: '🏋️', podcast: '🎧', journal: '✍️', goals: '🎯'
+  };
+
+  if (modules.length === 0) {
+    document.getElementById('brief-modules').innerHTML = '<div class="bmod" style="grid-column:1/-1;text-align:center;padding:32px;color:var(--smoke)">No modules in today\'s brief yet.</div>';
+    return;
+  }
+
+  document.getElementById('brief-modules').innerHTML = modules.map(mod => {
+    const key = (mod.key || mod.type || '').toLowerCase();
+    const done = completion[key] || mod.done || false;
+    const icon = mod.icon || iconMap[key] || '📋';
+    return `<div class="bmod ${done ? 'done' : ''}">
+      <div class="bmod-icon">${icon}</div>
+      <div class="bmod-label">${mod.label || mod.type || key}</div>
+      <div class="bmod-content">${mod.content || mod.preview || ''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Stats ────────────────────────────────────────────────────
+function renderStats(sobrietyDays, briefs, goals) {
+  // Sobriety
+  document.getElementById('stat-sobriety').textContent = sobrietyDays ?? '—';
+  if (sobrietyDays !== null) {
+    document.getElementById('stat-sobriety-sub').innerHTML = 'days <span class="stat-trend">personal best</span>';
+  }
+
+  // Day streak (how many days with briefs / check-ins)
+  if (briefs && briefs.length > 0) {
+    document.getElementById('stat-streak').textContent = briefs.length;
+  }
+
+  // Brief completion avg
+  if (briefs && briefs.length > 0) {
+    const completedBriefs = briefs.filter(b => b.total_modules > 0);
+    if (completedBriefs.length > 0) {
+      const avg = completedBriefs.reduce((sum, b) => sum + (b.completed_modules / b.total_modules), 0) / completedBriefs.length;
+      document.getElementById('stat-completion').textContent = Math.round(avg * 100) + '%';
+    }
+  }
+
+  // Weekly goals
+  if (goals && goals.length > 0) {
+    const met = goals.filter(g => g.current_value >= g.target_value).length;
+    document.getElementById('stat-goals').textContent = `${met}/${goals.length}`;
+    document.getElementById('stat-goals-sub').textContent = 'on track this week';
+  }
+}
+
+// ── Conversations ────────────────────────────────────────────
+function renderConversations(convs) {
+  const el = document.getElementById('conversations-list');
+  if (!convs || convs.length === 0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">💬</div><div class="empty-state-title">No conversations yet</div><div class="empty-state-sub">Start chatting with Riley to see your sessions here.</div></div>';
+    return;
+  }
+  el.innerHTML = convs.slice(0, 4).map(c => {
+    const dateObj = c.updated_at ? new Date(c.updated_at) : null;
+    const dateStr = dateObj ? dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    const timeStr = dateObj ? dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '';
+    const tags = Array.isArray(c.tags) ? c.tags : [];
+    return `<div class="conv-item">
+      <div>
+        <div class="conv-title">${escHtml(c.title || 'Untitled conversation')}</div>
+        <div class="conv-preview">${escHtml(c.preview || '')}</div>
+        ${tags.length ? `<span class="conv-tag">${escHtml(tags[0])}</span>` : ''}
+      </div>
+      <div class="conv-date">${dateStr}<br>${timeStr}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Programs ─────────────────────────────────────────────────
+function renderPrograms(progs) {
+  const el = document.getElementById('programs-list');
+  if (!progs || progs.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-state-sub">No active programs.</div></div>';
+    return;
+  }
+  el.innerHTML = progs.map(p => {
+    const prog = p.programs || {};
+    const pct = prog.duration_days > 0 ? Math.round((p.days_completed / prog.duration_days) * 100) : 0;
+    const isComplete = pct >= 100;
+    return `<div class="prog-item">
+      <div class="prog-icon">${prog.emoji || '🎯'}</div>
+      <div>
+        <div class="prog-name">${escHtml(prog.title || 'Program')}</div>
+        <div class="prog-status">Day ${p.days_completed} · ${isComplete ? 'Completed' : 'Active'}</div>
+      </div>
+      <div class="prog-progress">
+        <div class="prog-pct" style="${isComplete ? 'color:var(--green)' : ''}">${isComplete ? '✓' : pct + '%'}</div>
+        <div class="prog-bar-wrap">
+          <div class="prog-bar-fill" style="width:${Math.min(pct,100)}%;${isComplete ? 'background:var(--green)' : ''}"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Priorities (habits) ──────────────────────────────────────
+function renderPriorities(habits, completions) {
+  const el = document.getElementById('priorities-list');
+  if (!habits || habits.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--smoke);padding:8px 0">No habits set up yet.</div>';
+    return;
+  }
+  const todayStr = new Date().toISOString().split('T')[0];
+  const doneIds = new Set((completions || []).filter(c => c.completed_date === todayStr).map(c => c.habit_id));
+
+  el.innerHTML = habits.map(h => {
+    const done = doneIds.has(h.id);
+    return `<div class="todo-item">
+      <div class="todo-check ${done ? 'done' : ''}">${done ? '✓' : ''}</div>
+      <div class="todo-text ${done ? 'done' : ''}">${escHtml(h.title)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Weekly Goals ─────────────────────────────────────────────
+function renderGoals(goals) {
+  const el = document.getElementById('goals-list');
+  if (!goals || goals.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--smoke)">No goals set up yet.</div>';
+    return;
+  }
+  el.innerHTML = goals.map(g => {
+    const pct = g.target_value > 0 ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0;
+    const done = pct >= 100;
+    return `<div class="goal-row">
+      <div class="goal-top">
+        <span class="goal-name">${escHtml(g.title)}</span>
+        <span class="goal-val" style="${done ? 'color:var(--green)' : ''}">
+          ${g.current_value} / ${g.target_value}${g.unit ? ' ' + escHtml(g.unit) : ''}${done ? ' ✓' : ''}
+        </span>
+      </div>
+      <div class="goal-bar">
+        <div class="goal-fill" style="width:${pct}%;${done ? 'background:var(--green)' : ''}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Sobriety streak card ─────────────────────────────────────
+function renderSobrietyCard(days, checkins) {
+  document.getElementById('sobriety-num').textContent = days ?? '—';
+  if (days !== null && days !== undefined) {
+    document.getElementById('sobriety-label').textContent =
+      days === 0 ? 'Starting your journey.' : days >= 100 ? 'Personal best. Keep going.' : 'Keep it up.';
+  }
+
+  // Last 7 days dots from checkins
+  const dotEl = document.getElementById('streak-dots');
+  const dots = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const ds = d.toISOString().split('T')[0];
+    const checkin = (checkins || []).find(c => c.checkin_date === ds);
+    const isToday = i === 0;
+    const hasSobriety = checkin && checkin.sobriety_day > 0;
+    dots.push(`<div class="streak-dot ${isToday ? 'today' : hasSobriety ? 'done' : ''}"></div>`);
+  }
+  dotEl.innerHTML = dots.join('');
+}
+
+// ── Mood pre-select ──────────────────────────────────────────
+function preselectMood(checkins) {
+  const todayStr = new Date().toISOString().split('T')[0];
+  const today = (checkins || []).find(c => c.checkin_date === todayStr);
+  if (today && today.mood) {
+    const btn = document.querySelector(`.mood-btn[data-val="${today.mood}"]`);
+    if (btn) btn.classList.add('selected');
+  }
+}
+
+// ── Utility ──────────────────────────────────────────────────
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── MAIN ─────────────────────────────────────────────────────
+(async function main() {
+  const auth = await initDashboard();
+  if (!auth) return; // redirected to login
+
+  const { user, client } = auth;
+
+  // Sidebar
+  renderSidebar('dashboard', user);
+
+  // Topbar
+  const firstName = (user.user_metadata?.full_name || user.email || 'there').split(' ')[0];
+  setTopbar(firstName);
+
+  const uid = user.id;
+  const today = new Date().toISOString().split('T')[0];
+
+  // ── Parallel data fetch with Promise.allSettled ──────────────
+  const [
+    briefRes,
+    sobrietyRes,
+    checkinsRes,
+    convsRes,
+    progsRes,
+    habitsRes,
+    habitCompRes,
+    goalsRes,
+    briefHistRes,
+  ] = await Promise.allSettled([
+    client.from('daily_briefs').select('*').eq('user_id', uid).eq('brief_date', today).maybeSingle(),
+    client.from('sobriety_tracker').select('start_date,is_active').eq('user_id', uid).eq('is_active', true).maybeSingle(),
+    client.from('daily_checkins').select('checkin_date,mood,sobriety_day').eq('user_id', uid).order('checkin_date', { ascending: false }).limit(14),
+    client.from('riley_conversations').select('id,title,preview,updated_at,tags').eq('user_id', uid).order('updated_at', { ascending: false }).limit(4),
+    client.from('user_program_progress').select('days_completed,enrolled_at,programs(title,emoji,duration_days)').eq('user_id', uid),
+    client.from('habits').select('id,title,emoji').eq('user_id', uid).eq('is_active', true).order('sort_order'),
+    client.from('habit_completions').select('habit_id,completed_date').eq('user_id', uid).gte('completed_date', today),
+    client.from('user_goals').select('title,current_value,target_value,unit').eq('user_id', uid).eq('is_active', true).order('sort_order'),
+    client.from('daily_briefs').select('completed_modules,total_modules,brief_date').eq('user_id', uid).order('brief_date', { ascending: false }).limit(30),
+  ]);
+
+  // Extract data safely
+  const brief         = briefRes.status === 'fulfilled'      ? briefRes.value.data       : null;
+  const sobriety      = sobrietyRes.status === 'fulfilled'   ? sobrietyRes.value.data    : null;
+  const checkins      = checkinsRes.status === 'fulfilled'   ? checkinsRes.value.data    : [];
+  const convs         = convsRes.status === 'fulfilled'      ? convsRes.value.data       : [];
+  const progs         = progsRes.status === 'fulfilled'      ? progsRes.value.data       : [];
+  const habits        = habitsRes.status === 'fulfilled'     ? habitsRes.value.data      : [];
+  const habitComps    = habitCompRes.status === 'fulfilled'  ? habitCompRes.value.data   : [];
+  const goals         = goalsRes.status === 'fulfilled'      ? goalsRes.value.data       : [];
+  const briefHistory  = briefHistRes.status === 'fulfilled'  ? briefHistRes.value.data   : [];
+
+  const sobrietyDays = sobriety ? calcSobrietyDays(sobriety.start_date) : null;
+
+  // ── Render all sections ──────────────────────────────────────
+  renderBriefCard(brief);
+  renderStats(sobrietyDays, briefHistory, goals);
+  renderConversations(convs);
+  renderPrograms(progs);
+  renderPriorities(habits, habitComps);
+  renderGoals(goals);
+  renderSobrietyCard(sobrietyDays, checkins);
+  preselectMood(checkins);
+})();
 </script>
 </body>
 </html>

@@ -13,6 +13,10 @@ create table if not exists user_profiles (
 
 alter table user_profiles enable row level security;
 
+drop policy if exists "Users can view own profile"   on user_profiles;
+drop policy if exists "Users can insert own profile" on user_profiles;
+drop policy if exists "Users can update own profile" on user_profiles;
+
 create policy "Users can view own profile"
   on user_profiles for select
   using (auth.uid() = id);
@@ -36,6 +40,9 @@ create table if not exists riley_conversations (
 );
 
 alter table riley_conversations enable row level security;
+
+drop policy if exists "Users can view own conversations"   on riley_conversations;
+drop policy if exists "Users can insert own conversations" on riley_conversations;
 
 create policy "Users can view own conversations"
   on riley_conversations for select
@@ -61,6 +68,10 @@ create table if not exists user_program_progress (
 
 alter table user_program_progress enable row level security;
 
+drop policy if exists "Users can view own progress"   on user_program_progress;
+drop policy if exists "Users can insert own progress" on user_program_progress;
+drop policy if exists "Users can update own progress" on user_program_progress;
+
 create policy "Users can view own progress"
   on user_program_progress for select
   using (auth.uid() = user_id);
@@ -81,6 +92,8 @@ begin
   return new;
 end;
 $$;
+
+drop trigger if exists user_profiles_updated_at on user_profiles;
 
 create trigger user_profiles_updated_at
   before update on user_profiles

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Programs — Riley · The 8:14 Project</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dashboard-auth.js"></script>
+  <style>
+    .program-card {
+      border: 1px solid var(--mist);
+      border-radius: 2px;
+      overflow: hidden;
+      background: white;
+      transition: border-color 0.15s;
+    }
+    .program-card:hover { border-color: var(--gold); }
+
+    .program-card.enrolled {
+      border-color: var(--gold);
+    }
+
+    .program-header {
+      padding: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .program-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--ink);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .program-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--ink);
+      margin-bottom: 4px;
+    }
+
+    .program-desc {
+      font-size: 13px;
+      color: var(--smoke);
+      line-height: 1.5;
+    }
+
+    .program-meta {
+      padding: 0 24px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .program-progress-section {
+      padding: 16px 24px;
+      background: var(--warm-white);
+      border-top: 1px solid var(--mist);
+    }
+
+    .program-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--mist);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .programs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* Enrollment complete banner */
+    .enrolled-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--gold-dim);
+      border-radius: 1px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+    }
+
+    /* Stats row for enrolled programs */
+    .prog-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--mist);
+      margin-top: 12px;
+      border: 1px solid var(--mist);
+    }
+
+    .prog-stat {
+      background: white;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .prog-stat-val {
+      font-family: 'DM Mono', monospace;
+      font-size: 18px;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .prog-stat-label {
+      font-size: 10px;
+      color: var(--smoke);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dash-layout">
+  <div id="sidebar-mount"></div>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-title">Programs</div>
+        <div class="topbar-sub">Your enrollments and available programs</div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <!-- Active enrollments -->
+      <div class="section-label">Your Active Programs</div>
+      <div id="active-programs">
+        <div class="loading-wrap"><div class="spinner"></div> Loading your programs…</div>
+      </div>
+
+      <!-- Available programs -->
+      <div class="section-label">All Programs</div>
+      <div class="programs-grid" id="all-programs">
+        <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+(async () => {
+  const ctx = await initDashboard();
+  if (!ctx) return;
+  const { user, client } = ctx;
+
+  document.getElementById('sidebar-mount').innerHTML = renderSidebar('programs', user);
+
+  const [enrollmentsRes, programsRes] = await Promise.all([
+    client.from('user_program_progress')
+      .select('*, programs(id, slug, title, description, emoji, duration_days, price_cents)')
+      .eq('user_id', user.id)
+      .order('enrolled_at', { ascending: false }),
+    client.from('programs').select('*').eq('is_active', true).order('sort_order')
+  ]);
+
+  const enrollments = enrollmentsRes.data || [];
+  const programs = programsRes.data || [];
+  const enrolledProgramIds = new Set(enrollments.map(e => e.program_id));
+
+  // ── Active enrollments ──────────────────────────────────────
+  const activeEl = document.getElementById('active-programs');
+  const activeEnrollments = enrollments.filter(e => e.status !== 'completed');
+
+  if (activeEnrollments.length === 0) {
+    activeEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <div class="empty-state-title">No active programs</div>
+        <div class="empty-state-sub">Enroll in a program below to get started.</div>
+      </div>`;
+  } else {
+    activeEl.innerHTML = `<div class="programs-grid">
+      ${activeEnrollments.map(e => {
+        const prog = e.programs || {};
+        const days = e.days_completed || 0;
+        const total = prog.duration_days || 1;
+        const pct = Math.min(100, Math.round((days / total) * 100));
+        const enrolled = new Date(e.enrolled_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        const daysLeft = Math.max(0, total - days);
+
+        return `
+          <div class="program-card enrolled">
+            <div class="program-header">
+              <div class="program-icon">${prog.emoji || '🎯'}</div>
+              <div>
+                <div class="program-name">${escHtml(prog.title || 'Program')}</div>
+                <div class="program-desc">${escHtml(prog.description || '')}</div>
+              </div>
+            </div>
+            <div class="program-meta">
+              <div class="enrolled-badge">✓ Enrolled</div>
+              <span class="tag tag-smoke">${prog.duration_days || '?'} days</span>
+            </div>
+            <div class="program-progress-section">
+              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:12px;color:var(--ink);font-weight:500">Progress</span>
+                <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">${pct}%</span>
+              </div>
+              <div class="progress-bar-wrap" style="height:6px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+              <div class="prog-stats">
+                <div class="prog-stat">
+                  <div class="prog-stat-val">${days}</div>
+                  <div class="prog-stat-label">Days Done</div>
+                </div>
+                <div class="prog-stat">
+                  <div class="prog-stat-val">${daysLeft}</div>
+                  <div class="prog-stat-label">Days Left</div>
+                </div>
+                <div class="prog-stat">
+                  <div class="prog-stat-val">${total}</div>
+                  <div class="prog-stat-label">Total Days</div>
+                </div>
+              </div>
+            </div>
+            <div class="program-footer">
+              <span style="font-size:11px;color:var(--smoke)">Enrolled ${enrolled}</span>
+              <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px" onclick="markDayComplete('${e.id}', ${days})">Mark Day Complete</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // ── All programs ────────────────────────────────────────────
+  const allEl = document.getElementById('all-programs');
+  if (programs.length === 0) {
+    allEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-title">No programs available yet</div></div>`;
+  } else {
+    allEl.innerHTML = programs.map(prog => {
+      const isEnrolled = enrolledProgramIds.has(prog.id);
+      return `
+        <div class="program-card ${isEnrolled ? 'enrolled' : ''}">
+          <div class="program-header">
+            <div class="program-icon">${prog.emoji || '🎯'}</div>
+            <div>
+              <div class="program-name">${escHtml(prog.title)}</div>
+              <div class="program-desc">${escHtml(prog.description || '')}</div>
+            </div>
+          </div>
+          <div class="program-meta">
+            ${isEnrolled ? '<div class="enrolled-badge">✓ Enrolled</div>' : ''}
+            ${prog.duration_days ? `<span class="tag tag-smoke">${prog.duration_days} days</span>` : ''}
+            ${prog.price_cents > 0 ? `<span class="tag tag-gold">$${(prog.price_cents/100).toFixed(0)}</span>` : '<span class="tag tag-green">Included</span>'}
+          </div>
+          <div class="program-footer">
+            ${isEnrolled
+              ? `<span style="font-size:13px;color:var(--smoke)">Already enrolled</span>`
+              : `<button class="btn btn-gold" style="font-size:12px;padding:8px 16px" onclick="enroll('${prog.id}')">Enroll Now →</button>`}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window._client = client;
+  window._userId = user.id;
+})();
+
+async function enroll(programId) {
+  const { error } = await _client.from('user_program_progress').insert({
+    user_id: _userId,
+    program_id: programId,
+    status: 'active',
+    days_completed: 0,
+    enrolled_at: new Date().toISOString()
+  });
+  if (!error) location.reload();
+  else alert('Enrollment error: ' + error.message);
+}
+
+async function markDayComplete(enrollmentId, currentDays) {
+  const { error } = await _client.from('user_program_progress')
+    .update({
+      days_completed: currentDays + 1,
+      last_activity_at: new Date().toISOString()
+    })
+    .eq('id', enrollmentId)
+    .eq('user_id', _userId);
+  if (!error) location.reload();
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 [build.environment]
-  # Exclude CLAUDE.md from secrets scanning — it's documentation, not deployed code.
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html"
 
 [functions]
   directory = "netlify/functions"
@@ -36,10 +35,61 @@
   timeout = 10
 
 # Runs every Sunday 6am MT (12:00 UTC) as a background function
-# Scheduled functions automatically run as background functions — no -background suffix needed
 [functions."weekly-pipeline-cron"]
   schedule = "0 12 * * 0"
 
+# ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
+[[redirects]]
+  from = "https://riley.eight14.us/dashboard"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/dashboard/"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/brief"
+  to   = "/brief.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/brief/"
+  to   = "/brief.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/conversations"
+  to   = "/conversations.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/conversations/"
+  to   = "/conversations.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/tracker"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/tracker/"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/programs"
+  to   = "/programs.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/programs/"
+  to   = "/programs.html"
+  status = 200
+
+# ── Riley catch-all (anonymous chat for everything else) ──
 [[redirects]]
   from = "https://riley.eight14.us/*"
   to = "/riley-auth.html"

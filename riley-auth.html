@@ -409,8 +409,21 @@ async function boot() {
     return; // Chat still works — just no auth features
   }
 
+  // ── Dashboard redirect for authenticated users ──────────────
+  // Check if already signed in on page load → go straight to dashboard
+  const { data: { session: existingSession } } = await sb.auth.getSession();
+  if (existingSession) {
+    window.location.href = '/dashboard.html';
+    return;
+  }
+
   // Listen for auth state changes (handles OAuth callback return)
   sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session) {
+      // Redirect authenticated users to the dashboard
+      window.location.href = '/dashboard.html';
+      return;
+    }
     if (session?.user) {
       currentUser = session.user;
       await onSignedIn(session);

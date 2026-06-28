@@ -1,1739 +1,393 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>8:14 Command Center</title>
-<style>
-/* ── Reset & Base ── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:       #06090e;
-  --card:     #0a1018;
-  --card2:    #0d1520;
-  --border:   #1a2530;
-  --border2:  #243040;
-  --gold:     #c9a84c;
-  --gold-dim: #8a6e2a;
-  --sage:     #4a7c59;
-  --blue:     #3a7abf;
-  --purple:   #7a4abf;
-  --red:      #bf4a4a;
-  --green:    #3abf6a;
-  --text:     #c8d4e0;
-  --muted:    #4a5a6a;
-  --muted2:   #6a7a8a;
-}
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.5; overflow: hidden; }
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-
-/* ── Gate ── */
-#gate { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-.gate-box { text-align: center; width: 320px; padding: 2rem; }
-.gate-logo { font-size: 3rem; font-weight: 900; color: var(--gold); letter-spacing: -2px; margin-bottom: 4px; }
-.gate-tagline { font-size: .7rem; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 2rem; }
-.gate-box input { width: 100%; padding: .8rem 1rem; background: var(--card); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: 1rem; outline: none; margin-bottom: .6rem; transition: border-color .2s; }
-.gate-box input:focus { border-color: var(--gold); }
-.gate-box button { width: 100%; padding: .8rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .95rem; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; }
-.gate-box button:hover { opacity: .85; }
-.gate-error { color: var(--red); font-size: .8rem; margin-top: .5rem; min-height: 1.1em; }
-
-/* ── App ── */
-#app { display: none; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
-
-/* ── Header ── */
-header { background: #000; border-bottom: 1px solid var(--border); height: 52px; display: flex; align-items: center; padding: 0 1.25rem; gap: 1.5rem; flex-shrink: 0; z-index: 100; }
-.h-logo { font-size: 1.5rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; flex-shrink: 0; }
-.h-nav { display: flex; gap: .25rem; flex: 1; }
-.h-nav-btn { padding: .35rem .85rem; background: transparent; border: none; border-radius: 6px; color: var(--muted2); font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: color .15s, background .15s; white-space: nowrap; }
-.h-nav-btn:hover { color: var(--gold); background: #111; }
-.h-nav-btn.active { color: var(--gold); background: #1a1200; }
-.h-gear { background: transparent; border: none; color: var(--muted); cursor: pointer; padding: .35rem; border-radius: 6px; font-size: 1.1rem; transition: color .15s; }
-.h-gear:hover { color: var(--gold); }
-
-/* ── Screens ── */
-.screen { display: none; flex: 1; overflow: hidden; }
-.screen.active { display: flex; }
-
-/* ════════════════ SCREEN: HOME ════════════════ */
-#screen-home { flex-direction: row; }
-
-/* Scorecard col */
-.scorecard-col { width: 240px; min-width: 240px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; padding: 1rem .85rem; }
-.col-label { font-size: .65rem; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .85rem; }
-.metric-card { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .85rem .9rem; margin-bottom: .6rem; }
-.metric-name { font-size: .68rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .3rem; }
-.metric-num { font-size: 2rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: .3rem; }
-.metric-delta { font-size: .68rem; color: var(--muted); }
-.metric-delta.up { color: var(--green); }
-.metric-delta.down { color: var(--red); }
-.enter-numbers-btn { margin-top: .75rem; width: 100%; padding: .7rem; background: var(--sage); border: none; border-radius: 8px; color: #fff; font-size: .8rem; font-weight: 700; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; }
-.enter-numbers-btn:hover { opacity: .85; }
-
-/* Echo col */
-.echo-col { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 1.25rem; }
-.echo-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); text-align: center; gap: .75rem; }
-.echo-empty .big-icon { font-size: 3rem; opacity: .3; }
-.echo-empty p { font-size: .85rem; max-width: 280px; }
-.echo-report { display: flex; flex-direction: column; gap: .85rem; }
-.report-section { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
-.report-label { display: inline-block; font-size: .65rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 4px; margin-bottom: .65rem; }
-.label-green  { background: rgba(58,191,106,.15); color: var(--green); }
-.label-red    { background: rgba(191,74,74,.15);  color: var(--red); }
-.label-gold   { background: rgba(201,168,76,.15); color: var(--gold); }
-.label-blue   { background: rgba(58,122,191,.15); color: var(--blue); }
-.label-purple { background: rgba(122,74,191,.15); color: var(--purple); }
-.label-sage   { background: rgba(74,124,89,.15);  color: var(--sage); }
-.report-content { font-size: .82rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-.start-week-btn { margin-top: .5rem; padding: .85rem 1.5rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-size: .9rem; font-weight: 700; cursor: pointer; letter-spacing: .05em; transition: opacity .2s; align-self: flex-start; }
-.start-week-btn:hover { opacity: .85; }
-
-/* History col */
-.history-col { width: 280px; min-width: 280px; background: var(--card); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-.history-header { padding: .85rem 1rem .5rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.history-header span { font-size: .65rem; color: var(--gold); letter-spacing: .15em; text-transform: uppercase; }
-.add-posts-btn { font-size: .68rem; color: var(--muted2); background: transparent; border: 1px solid var(--border); border-radius: 5px; padding: .25rem .55rem; cursor: pointer; transition: color .15s, border-color .15s; }
-.add-posts-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
-.history-list { flex: 1; overflow-y: auto; padding: .75rem; display: flex; flex-direction: column; gap: .5rem; }
-.history-empty { padding: 1.5rem .75rem; text-align: center; color: var(--muted); font-size: .78rem; }
-.post-entry { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .75rem; display: flex; align-items: center; gap: .6rem; }
-.post-platform { font-size: 1rem; flex-shrink: 0; }
-.post-info { flex: 1; min-width: 0; }
-.post-type { font-size: .72rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.post-date { font-size: .65rem; color: var(--muted); }
-.post-metric { font-size: .72rem; font-weight: 700; flex-shrink: 0; }
-.post-metric.good { color: var(--green); }
-.post-metric.avg  { color: var(--gold); }
-.post-metric.bad  { color: var(--red); }
-
-/* ── Numbers Modal ── */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: flex; align-items: center; justify-content: center; }
-.modal-box { background: var(--card); border: 1px solid var(--border2); border-radius: 12px; padding: 1.5rem; width: 480px; max-width: calc(100vw - 2rem); max-height: calc(100vh - 4rem); overflow-y: auto; }
-.modal-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: .25rem; }
-.modal-sub { font-size: .78rem; color: var(--muted2); margin-bottom: 1.25rem; }
-.num-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .65rem; margin-bottom: 1rem; }
-.num-field { display: flex; flex-direction: column; gap: .3rem; }
-.num-field label { font-size: .7rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; }
-.num-field input { background: var(--card2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); padding: .55rem .75rem; font-size: .9rem; outline: none; transition: border-color .2s; }
-.num-field input:focus { border-color: var(--gold); }
-.modal-actions { display: flex; gap: .65rem; margin-top: .5rem; }
-.btn-primary { flex: 1; padding: .75rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .88rem; cursor: pointer; transition: opacity .2s; }
-.btn-primary:hover { opacity: .85; }
-.btn-primary:disabled { opacity: .4; cursor: default; }
-.btn-secondary { padding: .75rem 1.1rem; background: transparent; border: 1px solid var(--border2); border-radius: 8px; color: var(--muted2); font-size: .88rem; cursor: pointer; transition: color .15s; }
-.btn-secondary:hover { color: var(--text); }
-
-/* ════════════════ SCREEN: PIPELINE ════════════════ */
-#screen-pipeline { flex-direction: column; overflow: hidden; }
-.pipeline-inner { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
-
-/* Progress bar */
-.progress-bar { display: flex; align-items: center; margin-bottom: .5rem; }
-.pb-step { display: flex; align-items: center; gap: .5rem; }
-.pb-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700; flex-shrink: 0; transition: all .3s; }
-.pb-dot.pending { background: var(--card2); border: 2px solid var(--border2); color: var(--muted); }
-.pb-dot.active  { background: var(--gold); border: 2px solid var(--gold); color: #000; }
-.pb-dot.done    { background: var(--green); border: 2px solid var(--green); color: #000; }
-.pb-label { font-size: .72rem; color: var(--muted2); letter-spacing: .06em; text-transform: uppercase; }
-.pb-label.active { color: var(--gold); font-weight: 700; }
-.pb-label.done   { color: var(--green); }
-.pb-line { flex: 1; height: 2px; background: var(--border); min-width: 2rem; margin: 0 .5rem; }
-.pb-line.done { background: var(--green); }
-
-/* Phase cards */
-.phase-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-.phase-title { font-size: .8rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .85rem; }
-.phase-prompt-area textarea { width: 100%; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: .82rem; padding: .75rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; transition: border-color .2s; }
-.phase-prompt-area textarea:focus { border-color: var(--gold); }
-.phase-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .75rem; }
-.btn-run { padding: .65rem 1.25rem; background: var(--gold); border: none; border-radius: 7px; color: #000; font-weight: 700; font-size: .82rem; cursor: pointer; transition: opacity .2s; }
-.btn-run:hover { opacity: .85; }
-.btn-run:disabled { opacity: .4; cursor: default; }
-.btn-edit { padding: .65rem 1rem; background: transparent; border: 1px solid var(--border2); border-radius: 7px; color: var(--muted2); font-size: .82rem; cursor: pointer; transition: color .15s, border-color .15s; }
-.btn-edit:hover { color: var(--text); border-color: var(--muted2); }
-.btn-next { padding: .65rem 1.25rem; background: var(--sage); border: none; border-radius: 7px; color: #fff; font-weight: 700; font-size: .82rem; cursor: pointer; transition: opacity .2s; }
-.btn-next:hover { opacity: .85; }
-
-/* Running */
-.running-msg { display: flex; align-items: center; gap: .75rem; padding: .75rem; background: var(--card2); border-radius: 8px; margin-top: .75rem; }
-.pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0; }
-@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
-.running-text { font-size: .82rem; color: var(--muted2); font-style: italic; }
-
-/* Phase results */
-.phase-result { margin-top: .85rem; display: flex; flex-direction: column; gap: .65rem; }
-.result-section { background: var(--card2); border: 1px solid var(--border); border-radius: 9px; padding: .85rem; }
-.result-section-title { font-size: .65rem; font-weight: 700; color: var(--muted2); text-transform: uppercase; letter-spacing: .12em; margin-bottom: .5rem; }
-.result-text { font-size: .8rem; color: var(--text); white-space: pre-wrap; word-break: break-word; }
-.result-editable { width: 100%; background: var(--card); border: 1px solid var(--gold-dim); border-radius: 8px; color: var(--text); font-size: .8rem; padding: .75rem; resize: vertical; min-height: 200px; outline: none; font-family: inherit; }
-.phase-summary { display: flex; align-items: center; gap: 1rem; padding: .75rem 1rem; background: rgba(74,124,89,.1); border: 1px solid rgba(74,124,89,.3); border-radius: 9px; }
-.phase-summary .check { color: var(--green); font-size: 1.2rem; flex-shrink: 0; }
-.phase-summary-text { font-size: .85rem; font-weight: 600; color: var(--text); }
-.phase-summary-sub { font-size: .75rem; color: var(--muted2); }
-
-/* ════════════════ SCREEN: REVIEW ════════════════ */
-#screen-review { flex-direction: column; overflow: hidden; }
-.review-inner { flex: 1; overflow-y: auto; padding: 1.25rem; padding-bottom: 5rem; }
-.review-header { margin-bottom: 1.25rem; }
-.review-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
-.review-sub { font-size: .78rem; color: var(--muted2); margin-top: .2rem; }
-.posts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
-.post-card { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 1rem; display: flex; flex-direction: column; gap: .65rem; transition: opacity .2s; }
-.post-card.excluded { opacity: .4; border-style: dashed; }
-.post-card-top { display: flex; align-items: flex-start; gap: .6rem; }
-.post-badge { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .5rem; border-radius: 4px; flex-shrink: 0; }
-.badge-carousel  { background: rgba(201,168,76,.2); color: var(--gold); }
-.badge-quote     { background: rgba(58,122,191,.2); color: var(--blue); }
-.badge-caption   { background: rgba(74,124,89,.2);  color: var(--sage); }
-.badge-repost    { background: rgba(122,74,191,.2); color: var(--purple); }
-.badge-community { background: rgba(58,191,106,.2); color: var(--green); }
-.post-meta { flex: 1; min-width: 0; }
-.post-platform-time { font-size: .72rem; color: var(--muted2); }
-.post-headline { font-size: .82rem; font-weight: 600; color: var(--text); margin-top: .2rem; }
-.post-approve { margin-left: auto; flex-shrink: 0; }
-.approve-toggle { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--green); background: rgba(58,191,106,.15); color: var(--green); font-size: .9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; }
-.approve-toggle.off { border-color: var(--border2); background: transparent; color: var(--muted); }
-.post-caption-text { font-size: .78rem; color: var(--muted2); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-.post-caption-text.expanded { display: block; }
-.caption-editable { width: 100%; background: var(--card2); border: 1px solid var(--gold-dim); border-radius: 7px; color: var(--text); font-size: .78rem; padding: .6rem; resize: vertical; min-height: 80px; outline: none; font-family: inherit; display: none; }
-.post-hashtags { font-size: .68rem; color: var(--muted); font-family: monospace; }
-.post-card-actions { display: flex; gap: .5rem; }
-.btn-tiny { padding: .3rem .65rem; background: transparent; border: 1px solid var(--border2); border-radius: 5px; color: var(--muted2); font-size: .7rem; cursor: pointer; transition: color .15s; }
-.btn-tiny:hover { color: var(--text); }
-
-/* Action bar */
-.action-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 64px; background: rgba(6,9,14,.95); backdrop-filter: blur(10px); border-top: 1px solid var(--border2); display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; z-index: 200; }
-.ab-count { font-size: .8rem; color: var(--muted2); white-space: nowrap; }
-.ab-count strong { color: var(--text); }
-.ab-center { flex: 1; display: flex; justify-content: center; }
-.btn-approve-all { padding: .75rem 2rem; background: var(--gold); border: none; border-radius: 9px; color: #000; font-weight: 800; font-size: .9rem; cursor: pointer; letter-spacing: .04em; transition: opacity .2s; white-space: nowrap; }
-.btn-approve-all:hover { opacity: .85; }
-.btn-approve-all:disabled { opacity: .4; cursor: default; }
-.btn-draft { padding: .75rem 1.1rem; background: transparent; border: 1px solid var(--border2); border-radius: 9px; color: var(--muted2); font-size: .82rem; cursor: pointer; white-space: nowrap; }
-.btn-draft:hover { color: var(--text); }
-
-/* ════════════════ SETTINGS ════════════════ */
-#screen-settings { flex-direction: column; overflow-y: auto; padding: 1.5rem; }
-.settings-title { font-size: 1rem; font-weight: 700; color: var(--gold); margin-bottom: 1.5rem; }
-.settings-section { background: var(--card); border: 1px solid var(--border); border-radius: 11px; padding: 1.25rem; margin-bottom: 1rem; max-width: 520px; }
-.settings-section h3 { font-size: .8rem; font-weight: 700; color: var(--text); margin-bottom: .25rem; }
-.settings-section p { font-size: .75rem; color: var(--muted2); margin-bottom: .85rem; }
-.settings-section input { width: 100%; background: var(--card2); border: 1px solid var(--border2); border-radius: 7px; color: var(--text); padding: .65rem .85rem; font-size: .85rem; outline: none; transition: border-color .2s; margin-bottom: .65rem; }
-.settings-section input:focus { border-color: var(--gold); }
-.settings-status { font-size: .75rem; margin-top: .4rem; min-height: 1.1em; }
-.settings-status.ok { color: var(--green); }
-.settings-status.err { color: var(--red); }
-
-/* ── Overlays ── */
-.scheduling-overlay { position: fixed; inset: 0; background: rgba(6,9,14,.9); z-index: 700; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; }
-.scheduling-overlay.show { display: flex; }
-.sched-spinner { width: 48px; height: 48px; border: 3px solid var(--border2); border-top-color: var(--gold); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.sched-text { font-size: .9rem; color: var(--muted2); }
-.success-overlay { position: fixed; inset: 0; background: rgba(6,9,14,.95); z-index: 800; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 1rem; padding: 2rem; }
-.success-overlay.show { display: flex; }
-.success-icon { font-size: 4rem; }
-.success-title { font-size: 1.5rem; font-weight: 800; color: var(--gold); }
-.success-sub { font-size: .9rem; color: var(--muted2); max-width: 340px; }
-.success-next { font-size: .8rem; color: var(--muted); margin-top: .5rem; }
-.success-btn { margin-top: 1rem; padding: .8rem 2rem; background: var(--gold); border: none; border-radius: 8px; color: #000; font-weight: 700; font-size: .9rem; cursor: pointer; }
-
-/* ── Pipeline Run History ── */
-.pipeline-section { margin-bottom: 1.25rem; }
-.pipeline-section-label { font-size: .65rem; color: var(--gold); letter-spacing: .15em; text-transform: uppercase; margin-bottom: .6rem; display: flex; align-items: center; justify-content: space-between; }
-.pipeline-run-row { display: flex; align-items: center; gap: .6rem; padding: .55rem .75rem; background: var(--card2); border: 1px solid var(--border); border-radius: 8px; margin-bottom: .4rem; font-size: .75rem; }
-.pipeline-run-date { color: var(--muted2); flex-shrink: 0; min-width: 70px; }
-.pipeline-run-stats { flex: 1; color: var(--text); }
-.status-badge { font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 4px; flex-shrink: 0; }
-.status-success { background: rgba(58,191,106,.15); color: var(--green); }
-.status-partial  { background: rgba(201,168,76,.15); color: var(--gold); }
-.status-failed   { background: rgba(191,74,74,.15);  color: var(--red); }
-.status-running  { background: rgba(58,122,191,.15); color: var(--blue); }
-
-/* ── Countdown ── */
-.countdown-card { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .75rem .9rem; margin-bottom: .6rem; }
-.countdown-label { font-size: .65rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .25rem; }
-.countdown-value { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-.countdown-sub { font-size: .65rem; color: var(--muted); margin-top: .15rem; }
-.override-btn { width: 100%; padding: .55rem; background: transparent; border: 1px solid var(--gold-dim); border-radius: 7px; color: var(--gold); font-size: .75rem; font-weight: 600; cursor: pointer; margin-top: .5rem; transition: background .15s; }
-.override-btn:hover { background: rgba(201,168,76,.1); }
-.override-btn:disabled { opacity: .4; cursor: default; }
-
-/* ── Perf Charts ── */
-.perf-chart { background: var(--card2); border: 1px solid var(--border); border-radius: 10px; padding: .85rem; margin-bottom: .6rem; }
-.perf-chart-title { font-size: .68rem; color: var(--muted2); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .65rem; }
-.bar-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
-.bar-label { font-size: .7rem; color: var(--text); min-width: 68px; }
-.bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 3px; background: var(--gold); transition: width .4s ease; }
-.bar-val { font-size: .68rem; color: var(--muted2); min-width: 24px; text-align: right; }
-
-/* ── Settings additions ── */
-.agent-trigger-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
-.agent-trigger-btn { padding: .45rem .85rem; background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--muted2); font-size: .75rem; cursor: pointer; transition: color .15s, border-color .15s; }
-.agent-trigger-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
-.agent-trigger-btn:disabled { opacity: .4; cursor: default; }
-.trigger-result { font-size: .75rem; margin-top: .5rem; min-height: 1.1em; color: var(--muted2); }
-
-/* ── Riley Chat ── */
-#screen-riley { flex-direction: column; max-width: 720px; margin: 0 auto; width: 100%; }
-.riley-header { padding: 1rem 1.25rem .75rem; border-bottom: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
-.riley-header-left h2 { font-size: .95rem; font-weight: 700; color: var(--gold); }
-.riley-header-left p { font-size: .72rem; color: var(--muted2); margin-top: .1rem; }
-.riley-clear-btn { padding: .3rem .7rem; background: transparent; border: 1px solid var(--border2); border-radius: 5px; color: var(--muted2); font-size: .7rem; cursor: pointer; transition: color .15s; }
-.riley-clear-btn:hover { color: var(--red); border-color: var(--red); }
-.riley-messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: .85rem; scrollbar-width: thin; scrollbar-color: var(--border2) transparent; }
-.riley-msg { max-width: 82%; padding: .65rem .95rem; border-radius: 12px; font-size: .875rem; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
-.riley-msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
-.riley-msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-.riley-msg.riley.thinking { color: var(--muted2); font-style: italic; }
-.riley-msg.riley.streaming::after { content: '▋'; color: var(--gold); animation: blink-cursor .9s step-end infinite; }
-@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
-.riley-input-row { display: flex; gap: .6rem; padding: .85rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg); flex-shrink: 0; }
-.riley-input-row textarea { flex: 1; background: var(--card2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: .875rem; padding: .65rem .85rem; resize: none; outline: none; line-height: 1.45; height: 42px; max-height: 120px; overflow-y: auto; transition: border-color .2s; font-family: inherit; }
-.riley-input-row textarea:focus { border-color: var(--gold); }
-.riley-send-btn { background: var(--gold); border: none; border-radius: 8px; color: #000; font-size: 1rem; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity .2s; }
-.riley-send-btn:hover { opacity: .85; }
-.riley-send-btn:disabled { opacity: .35; cursor: default; }
-.riley-welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding: 2rem; text-align: center; }
-.riley-welcome .w-icon { font-size: 2.5rem; }
-.riley-welcome h3 { font-size: 1rem; font-weight: 700; color: var(--text); }
-.riley-welcome p { font-size: .82rem; color: var(--muted2); max-width: 340px; }
-.riley-starters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .25rem; }
-.starter-btn { padding: .45rem .85rem; background: var(--card2); border: 1px solid var(--border2); border-radius: 20px; color: var(--text); font-size: .78rem; cursor: pointer; transition: border-color .15s, color .15s; }
-.starter-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-/* ── Mobile ── */
-@media (max-width: 700px) {
-  #screen-home { flex-direction: column; }
-  .scorecard-col { width: 100%; min-width: unset; max-height: 200px; flex-direction: row; flex-wrap: nowrap; gap: .5rem; overflow-x: auto; padding: .75rem; border-right: none; border-bottom: 1px solid var(--border); }
-  .scorecard-col .col-label { display: none; }
-  .metric-card { min-width: 130px; flex-shrink: 0; margin-bottom: 0; }
-  .metric-num { font-size: 1.5rem; }
-  .history-col { display: none; }
-  .posts-grid { grid-template-columns: 1fr; }
-  .pb-label { display: none; }
-  .pipeline-inner { padding: 1rem; }
-  .action-bar { padding: 0 .85rem; gap: .5rem; }
-  .btn-approve-all { padding: .65rem 1rem; font-size: .8rem; }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Riley · The 8:14 Project</title>
+  <link rel="stylesheet" href="/dashboard.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/dashboard-auth.js"></script>
 </head>
 <body>
 
-<!-- PASSWORD GATE -->
-<div id="gate">
-  <div class="gate-box">
-    <div class="gate-logo">8:14</div>
-    <div class="gate-tagline">Command Center</div>
-    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
-    <button onclick="unlock()">Enter</button>
-    <div class="gate-error" id="pw-err"></div>
-  </div>
-</div>
+<div class="dash-layout">
+  <div id="sidebar-mount"></div>
 
-<!-- APP -->
-<div id="app">
-  <header>
-    <div class="h-logo">8:14</div>
-    <nav class="h-nav">
-      <button class="h-nav-btn active" data-screen="home" onclick="goScreen('home',this)">Home</button>
-      <button class="h-nav-btn" data-screen="pipeline" onclick="startNewWeek(this)">New Week</button>
-      <button class="h-nav-btn" data-screen="riley" onclick="goScreen('riley',this)">&#128172; Riley</button>
-    </nav>
-    <button class="h-gear" onclick="goScreen('settings',null)" title="Settings">&#9881;</button>
-  </header>
-
-  <!-- ══ HOME ══ -->
-  <div class="screen active" id="screen-home">
-    <!-- Left: Scorecard -->
-    <div class="scorecard-col">
-      <div class="col-label">Phase 1 Scorecard</div>
-      <div class="metric-card">
-        <div class="metric-name">Email Signups This Week</div>
-        <div class="metric-num" id="m-signups">&#8212;</div>
-        <div class="metric-delta" id="d-signups">Enter numbers to track</div>
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-title" id="greeting">Good morning.</div>
+        <div class="topbar-sub" id="topbar-date"></div>
       </div>
-      <div class="metric-card">
-        <div class="metric-name">Riley Chatbot Opens</div>
-        <div class="metric-num" id="m-chatbot">&#8212;</div>
-        <div class="metric-delta" id="d-chatbot"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-name">Instagram Saves</div>
-        <div class="metric-num" id="m-saves">&#8212;</div>
-        <div class="metric-delta" id="d-saves"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-name">Link Clicks to eight14.us</div>
-        <div class="metric-num" id="m-clicks">&#8212;</div>
-        <div class="metric-delta" id="d-clicks"></div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-name">Total Email List</div>
-        <div class="metric-num" id="m-list">&#8212;</div>
-        <div class="metric-delta" id="d-list">Goal: 500</div>
-      </div>
-      <button class="enter-numbers-btn" onclick="openNumbersModal()">+ Enter This Week's Numbers</button>
-
-      <!-- Countdown to next pipeline run -->
-      <div class="countdown-card" style="margin-top:.75rem">
-        <div class="countdown-label">Next Auto-Run</div>
-        <div class="countdown-value" id="countdown-value">Calculating&#8230;</div>
-        <div class="countdown-sub">Every Sunday 6am MT</div>
-        <button class="override-btn" id="btn-override" onclick="triggerPipelineManual()">&#9654; Run Pipeline Now</button>
+      <div style="display:flex;gap:10px">
+        <a href="/brief.html" class="btn btn-gold">Open Today's Brief →</a>
+        <a href="https://riley.eight14.us" class="btn btn-dark">Talk to Riley</a>
       </div>
     </div>
 
-    <!-- Middle: Echo Analysis + Pipeline History -->
-    <div class="echo-col">
-      <!-- Pipeline run history -->
-      <div class="pipeline-section" id="pipeline-history-section" style="display:none">
-        <div class="pipeline-section-label">
-          <span>&#128337; Pipeline History</span>
-          <span id="pipeline-last-run" style="font-weight:400"></span>
-        </div>
-        <div id="pipeline-run-list"></div>
-        <!-- Performance charts -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.65rem" id="perf-charts"></div>
-      </div>
+    <div class="dash-content">
 
-      <div class="echo-empty" id="echo-empty">
-        <div class="big-icon">&#128202;</div>
-        <p>Enter this week's numbers and Echo will analyze performance. Then start your content pipeline.</p>
-      </div>
-      <div class="echo-report" id="echo-report" style="display:none"></div>
-    </div>
-
-    <!-- Right: History (from Supabase) -->
-    <div class="history-col">
-      <div class="history-header">
-        <span>Recent Posts</span>
-        <button class="add-posts-btn" onclick="refreshSupabaseHistory()">&#8635; Refresh</button>
-      </div>
-      <div class="history-list" id="history-list">
-        <div class="history-empty">Your post history will appear here after your first scheduled week.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ PIPELINE ══ -->
-  <div class="screen" id="screen-pipeline">
-    <div class="pipeline-inner">
-
-      <!-- Progress Bar -->
-      <div class="progress-bar">
-        <div class="pb-step">
-          <div class="pb-dot active" id="pb-scout-dot">1</div>
-          <span class="pb-label active" id="pb-scout-lbl">Scout</span>
+      <!-- Stats row -->
+      <div class="section-label">At a Glance</div>
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Day Streak</div>
+          <div class="stat-value" id="stat-streak">—</div>
+          <div class="stat-sub">days with Riley</div>
         </div>
-        <div class="pb-line" id="pb-line1"></div>
-        <div class="pb-step">
-          <div class="pb-dot pending" id="pb-sage-dot">2</div>
-          <span class="pb-label" id="pb-sage-lbl">Sage</span>
+        <div class="stat-card">
+          <div class="stat-label">Brief Completion</div>
+          <div class="stat-value" id="stat-completion">—</div>
+          <div class="stat-sub">this week</div>
         </div>
-        <div class="pb-line" id="pb-line2"></div>
-        <div class="pb-step">
-          <div class="pb-dot pending" id="pb-atlas-dot">3</div>
-          <span class="pb-label" id="pb-atlas-lbl">Atlas</span>
+        <div class="stat-card">
+          <div class="stat-label">Sobriety</div>
+          <div class="stat-value" id="stat-sobriety">—</div>
+          <div class="stat-sub" id="stat-sobriety-sub">days</div>
         </div>
-        <div class="pb-line" id="pb-line3"></div>
-        <div class="pb-step">
-          <div class="pb-dot pending" id="pb-review-dot">&#9679;</div>
-          <span class="pb-label" id="pb-review-lbl">Review</span>
+        <div class="stat-card">
+          <div class="stat-label">Check-In Streak</div>
+          <div class="stat-value" id="stat-checkin">—</div>
+          <div class="stat-sub">days in a row</div>
         </div>
       </div>
 
-      <!-- Scout -->
-      <div class="phase-card" id="phase-scout">
-        <div class="phase-title">&#128269; Scout &#8212; Research</div>
-        <div class="phase-prompt-area">
-          <textarea id="scout-prompt" rows="3">What sobriety, recovery, and wellness topics are trending this week? Return the full structured SCOUT REPORT with all sections.</textarea>
-        </div>
-        <div class="phase-actions">
-          <button class="btn-run" id="btn-run-scout" onclick="runScout()">Run Scout &#8594;</button>
-          <button class="btn-edit" onclick="document.getElementById('scout-prompt').focus()">Edit Prompt</button>
-        </div>
-        <div id="scout-running" style="display:none" class="running-msg">
-          <div class="pulse-dot"></div>
-          <span class="running-text">Scout is researching trending topics&#8230;</span>
-        </div>
-        <div id="scout-result" class="phase-result" style="display:none"></div>
-        <div id="scout-actions" class="phase-actions" style="display:none">
-          <button class="btn-next" onclick="runSage()">Looks good &#8212; Send to Sage &#8594;</button>
-          <button class="btn-edit" onclick="editScoutReport()">Edit Report First</button>
-        </div>
-      </div>
+      <!-- Today's brief preview + check-in -->
+      <div style="display:grid;grid-template-columns:1fr 320px;gap:20px;margin-top:4px">
 
-      <!-- Sage -->
-      <div class="phase-card" id="phase-sage" style="display:none">
-        <div class="phase-title">&#9997;&#65039; Sage &#8212; Writing 12 Posts</div>
-        <div id="sage-running" class="running-msg">
-          <div class="pulse-dot"></div>
-          <span class="running-text">Sage is writing 12 posts from Scout's research&#8230;</span>
-        </div>
-        <div id="sage-result" class="phase-result" style="display:none"></div>
-        <div id="sage-actions" class="phase-actions" style="display:none">
-          <button class="btn-next" onclick="runAtlas()">Send to Atlas &#8594;</button>
-        </div>
-      </div>
+        <!-- Brief preview -->
+        <div>
+          <div class="section-label">Today's Brief</div>
+          <div class="card" id="brief-preview">
+            <div class="loading-wrap"><div class="spinner"></div> Loading your brief…</div>
+          </div>
 
-      <!-- Atlas -->
-      <div class="phase-card" id="phase-atlas" style="display:none">
-        <div class="phase-title">&#128197; Atlas &#8212; Building Schedule</div>
-        <div id="atlas-running" class="running-msg">
-          <div class="pulse-dot"></div>
-          <span class="running-text">Atlas is building your publishing schedule&#8230;</span>
+          <div class="section-label">Recent Conversations</div>
+          <div class="card" id="conversations-preview">
+            <div class="loading-wrap"><div class="spinner"></div></div>
+          </div>
         </div>
-        <div id="atlas-result" class="phase-result" style="display:none"></div>
-        <div id="atlas-actions" class="phase-actions" style="display:none">
-          <button class="btn-next" onclick="goToReview()">Review 12 Posts &#8594;</button>
+
+        <!-- Right column: check-in + goals -->
+        <div>
+          <div class="section-label" style="margin-top:0">Today's Check-In</div>
+          <div class="card" id="checkin-card">
+            <div class="card-body" id="checkin-body">
+              <div class="loading-wrap" style="min-height:120px"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <div class="section-label">Weekly Goals</div>
+          <div class="card">
+            <div class="card-body" id="goals-body">
+              <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <div class="section-label">Active Programs</div>
+          <div class="card">
+            <div class="card-body" id="programs-body">
+              <div class="loading-wrap" style="min-height:80px"><div class="spinner"></div></div>
+            </div>
+          </div>
         </div>
       </div>
 
     </div>
-  </div>
-
-  <!-- ══ REVIEW ══ -->
-  <div class="screen" id="screen-review">
-    <div class="review-inner">
-      <div class="review-header">
-        <!-- Mini progress bar -->
-        <div class="progress-bar" style="margin-bottom:.85rem">
-          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Scout</span></div>
-          <div class="pb-line done"></div>
-          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Sage</span></div>
-          <div class="pb-line done"></div>
-          <div class="pb-step"><div class="pb-dot done">&#10003;</div><span class="pb-label done">Atlas</span></div>
-          <div class="pb-line done"></div>
-          <div class="pb-step"><div class="pb-dot active">&#9679;</div><span class="pb-label active">Review</span></div>
-        </div>
-        <div class="review-title" id="review-title">Your posts for this week. Review and approve.</div>
-        <div class="review-sub">Toggle off any post to exclude it from the schedule.</div>
-      </div>
-      <div class="posts-grid" id="posts-grid"></div>
-    </div>
-    <div class="action-bar">
-      <div class="ab-count"><strong id="approved-count">12</strong> of <strong id="total-count">12</strong> approved</div>
-      <div class="ab-center">
-        <button class="btn-approve-all" id="btn-approve-all" onclick="approveAndSchedule()">APPROVE &amp; SCHEDULE IN BUFFER &#8594;</button>
-      </div>
-      <button class="btn-draft" onclick="saveDraft()">Save Draft</button>
-    </div>
-  </div>
-
-  <!-- ══ RILEY CHAT ══ -->
-  <div class="screen" id="screen-riley">
-    <div class="riley-header">
-      <div class="riley-header-left">
-        <h2>&#128172; Riley</h2>
-        <p>AI wellness guide &mdash; sobriety, recovery, mental health, nutrition, fitness</p>
-      </div>
-      <button class="riley-clear-btn" onclick="clearRileyChat()">Clear chat</button>
-    </div>
-
-    <!-- Welcome state (shown when no messages) -->
-    <div class="riley-welcome" id="riley-welcome">
-      <div class="w-icon">&#128150;</div>
-      <h3>Hey. What's on your mind?</h3>
-      <p>Ask Riley anything about sobriety, recovery, anxiety, sleep, nutrition, grief &mdash; whatever you're working through right now.</p>
-      <div class="riley-starters">
-        <button class="starter-btn" onclick="rileyStarter(this)">I just had a bad day and I want a drink</button>
-        <button class="starter-btn" onclick="rileyStarter(this)">What happens in the first week sober?</button>
-        <button class="starter-btn" onclick="rileyStarter(this)">I can't sleep in early recovery</button>
-        <button class="starter-btn" onclick="rileyStarter(this)">My anxiety is getting worse sober</button>
-        <button class="starter-btn" onclick="rileyStarter(this)">How do I talk to my family about this?</button>
-        <button class="starter-btn" onclick="rileyStarter(this)">I relapsed. What do I do now?</button>
-      </div>
-    </div>
-
-    <!-- Message thread (shown once chat starts) -->
-    <div class="riley-messages" id="riley-messages" style="display:none"></div>
-
-    <div class="riley-input-row">
-      <textarea id="riley-input" placeholder="Message Riley&#8230;" rows="1"
-        onkeydown="rileyKeydown(event)"
-        oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
-      <button class="riley-send-btn" id="riley-send-btn" onclick="sendRiley()">&#9658;</button>
-    </div>
-  </div>
-
-  <!-- ══ SETTINGS ══ -->
-  <div class="screen" id="screen-settings">
-    <div style="flex:1;overflow-y:auto;padding:1.5rem">
-      <div class="settings-title">&#9881; Settings</div>
-      <div class="settings-section">
-        <h3>Buffer API Token</h3>
-        <p>Add your Buffer API token to enable one-click scheduling. Without it, "Approve &amp; Schedule" copies Atlas's queue to your clipboard.</p>
-        <input type="password" id="buffer-token-input" placeholder="buf_xxxxxxxxxxxxxxxx">
-        <div class="phase-actions" style="margin-top:0">
-          <button class="btn-run" onclick="saveBufferToken()">Save Token</button>
-          <button class="btn-edit" onclick="clearBufferToken()">Clear</button>
-        </div>
-        <div class="settings-status" id="buffer-status"></div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Buffer Profile IDs</h3>
-        <p>Comma-separated Buffer profile IDs for your connected platforms (Instagram, Facebook, YouTube). Find them in your Buffer dashboard under each channel.</p>
-        <input type="text" id="buffer-profiles-input" placeholder="abc123, def456, ghi789">
-        <div class="phase-actions" style="margin-top:0">
-          <button class="btn-run" onclick="saveBufferProfiles()">Save Profile IDs</button>
-        </div>
-        <div class="settings-status" id="profiles-status"></div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Autonomous Pipeline</h3>
-        <p>The pipeline runs automatically every Sunday at 6am Mountain Time. Run individual agents manually for testing or one-off tasks.</p>
-        <div style="padding:.6rem .85rem;background:var(--card2);border:1px solid var(--border);border-radius:7px;font-size:.78rem;color:var(--muted2);margin-bottom:.75rem">
-          &#128337; Schedule: <strong style="color:var(--text)">weekly-pipeline-background — Every Sunday 6am MT</strong><br>
-          &#128172; Riley: <strong style="color:var(--text)">Streaming (text/plain chunks)</strong><br>
-          &#128200; Last run: <strong id="settings-last-run" style="color:var(--text)">checking&#8230;</strong>
-        </div>
-        <div class="agent-trigger-row">
-          <button class="agent-trigger-btn" id="trig-scout"  onclick="triggerAgent('scout',  this)">&#128269; Scout</button>
-          <button class="agent-trigger-btn" id="trig-sage"   onclick="triggerAgent('sage',   this)">&#9997;&#65039; Sage</button>
-          <button class="agent-trigger-btn" id="trig-atlas"  onclick="triggerAgent('atlas',  this)">&#128197; Atlas</button>
-          <button class="agent-trigger-btn" id="trig-echo"   onclick="triggerAgent('echo',   this)">&#128202; Echo</button>
-          <button class="agent-trigger-btn" id="trig-pipeline" onclick="triggerPipelineManual()" style="color:var(--gold);border-color:var(--gold-dim)">&#9654; Full Pipeline</button>
-        </div>
-        <div class="trigger-result" id="trigger-result"></div>
-      </div>
-
-      <div class="settings-section">
-        <h3>Clear All Stored Data</h3>
-        <p>Resets all weekly numbers, post history, and Echo reports stored in this browser. Does not affect Supabase data.</p>
-        <div class="phase-actions" style="margin-top:0">
-          <button class="btn-edit" style="color:var(--red);border-color:var(--red)" onclick="clearAllData()">Clear All Data</button>
-        </div>
-      </div>
-      <div class="settings-section">
-        <h3>About</h3>
-        <p>8:14 Command Center &#8212; Scout, Sage, Atlas, Echo, Riley<br>
-        Model: claude-sonnet-4-6<br>
-        Pipeline: Sunday 6am MT (12:00 UTC)</p>
-      </div>
-    </div>
-  </div>
-</div><!-- /app -->
-
-<!-- Numbers Modal -->
-<div class="modal-overlay" id="numbers-modal" style="display:none" onclick="if(event.target===this)closeNumbersModal()">
-  <div class="modal-box">
-    <div class="modal-title">This Week's Numbers</div>
-    <div class="modal-sub">Paste or type your platform metrics. Echo analyzes them automatically.</div>
-    <div class="num-grid">
-      <div class="num-field"><label>Email Signups This Week</label><input type="number" id="nf-signups" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Total Email List Size</label><input type="number" id="nf-list" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Riley Chatbot Opens</label><input type="number" id="nf-chatbot" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Instagram Saves</label><input type="number" id="nf-saves" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Link Clicks to eight14.us</label><input type="number" id="nf-clicks" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Instagram Reach</label><input type="number" id="nf-reach" placeholder="0" min="0"></div>
-      <div class="num-field"><label>Facebook Engagement</label><input type="number" id="nf-fb" placeholder="0" min="0"></div>
-      <div class="num-field"><label>New Subscribers (Month)</label><input type="number" id="nf-monthly" placeholder="0" min="0"></div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn-primary" id="btn-submit-nums" onclick="submitNumbers()">Run Echo Analysis &#8594;</button>
-      <button class="btn-secondary" onclick="closeNumbersModal()">Cancel</button>
-    </div>
-    <div id="echo-running-modal" style="display:none" class="running-msg">
-      <div class="pulse-dot"></div>
-      <span class="running-text">Echo is analyzing your numbers&#8230;</span>
-    </div>
-  </div>
-</div>
-
-<!-- Scheduling overlay -->
-<div class="scheduling-overlay" id="sched-overlay">
-  <div class="sched-spinner"></div>
-  <div class="sched-text" id="sched-text">Scheduling posts&#8230;</div>
-</div>
-
-<!-- Success overlay -->
-<div class="success-overlay" id="success-overlay">
-  <div class="success-icon">&#9989;</div>
-  <div class="success-title">Week Scheduled!</div>
-  <div class="success-sub" id="success-msg">Your posts have been queued.</div>
-  <div class="success-next" id="success-next"></div>
-  <button class="success-btn" onclick="returnHome()">&#8592; Back to Home</button>
+  </main>
 </div>
 
 <script>
-/* ─────────────────────────────────────────
-   CONSTANTS
-───────────────────────────────────────── */
-const BASE = '/.netlify/functions';
-const PASSWORD = 'Riley814';
-const LS = {
-  AUTH:'814_auth', METRICS:'814_metrics', HISTORY:'814_history',
-  ECHO:'814_echo', SAGE:'814_sage', ATLAS:'814_atlas', SCOUT:'814_scout',
-  BUFFER:'814_buffer_token', PROFILES:'814_buffer_profiles'
-};
+(async () => {
+  const ctx = await initDashboard();
+  if (!ctx) return;
 
-/* ─────────────────────────────────────────
-   AUTH
-───────────────────────────────────────── */
-function unlock() {
-  if (document.getElementById('pw').value === PASSWORD) {
-    sessionStorage.setItem(LS.AUTH, '1');
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-    init();
-  } else {
-    document.getElementById('pw-err').textContent = 'Incorrect password.';
-    document.getElementById('pw').value = '';
-    document.getElementById('pw').focus();
-  }
-}
-document.getElementById('pw').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
-if (sessionStorage.getItem(LS.AUTH) === '1') {
-  document.getElementById('gate').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  init();
-}
+  const { user, client } = ctx;
 
-/* ─────────────────────────────────────────
-   NAV
-───────────────────────────────────────── */
-function goScreen(name, btn) {
-  ['home','pipeline','review','settings'].forEach(s => {
-    const el = document.getElementById('screen-' + s);
-    if (el) el.classList.remove('active');
+  // ── Sidebar + greeting ──────────────────────────────────────
+  document.getElementById('sidebar-mount').innerHTML = renderSidebar('dashboard', user);
+
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const firstName = (user.user_metadata?.full_name || user.email || '').split(' ')[0];
+  document.getElementById('greeting').textContent = `${greet}, ${firstName}. ☀️`;
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric'
   });
-  const t = document.getElementById('screen-' + name);
-  if (t) t.classList.add('active');
-  document.querySelectorAll('.h-nav-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
 
-function startNewWeek(btn) {
-  resetPipeline();
-  goScreen('pipeline', btn);
-}
+  // ── Load all data in parallel ───────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
 
-/* ─────────────────────────────────────────
-   INIT
-───────────────────────────────────────── */
-function init() {
-  loadMetrics();
-  loadHistory();
-  loadEchoReport();
-  loadBufferToken();
-  loadBufferProfiles();
-  startCountdown();
-  loadPipelineStatus();
-}
+  const [
+    checkinRes,
+    briefRes,
+    sobrietyRes,
+    goalsRes,
+    programsRes,
+    conversationsRes,
+    checkinsWeekRes
+  ] = await Promise.all([
+    client.from('daily_checkins').select('*').eq('user_id', user.id).eq('checkin_date', today).maybeSingle(),
+    client.from('daily_briefs').select('*').eq('user_id', user.id).eq('brief_date', today).maybeSingle(),
+    client.from('sobriety_tracker').select('*').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+    client.from('user_goals').select('*').eq('user_id', user.id).eq('is_active', true).order('sort_order'),
+    client.from('user_program_progress')
+      .select('*, programs(title, emoji, duration_days)')
+      .eq('user_id', user.id)
+      .order('enrolled_at', { ascending: false })
+      .limit(3),
+    client.from('riley_conversations')
+      .select('id, title, created_at, updated_at, tags')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false })
+      .limit(4),
+    client.from('daily_checkins')
+      .select('checkin_date')
+      .eq('user_id', user.id)
+      .gte('checkin_date', getDateDaysAgo(7))
+      .order('checkin_date', { ascending: false })
+  ]);
 
-/* ─────────────────────────────────────────
-   SCORECARD
-───────────────────────────────────────── */
-function loadMetrics() {
-  const d = JSON.parse(localStorage.getItem(LS.METRICS) || 'null');
-  if (!d) return;
-  setMetric('signups', d.signups, d.prevSignups);
-  setMetric('chatbot', d.chatbot, d.prevChatbot);
-  setMetric('saves',   d.saves,   d.prevSaves);
-  setMetric('clicks',  d.clicks,  d.prevClicks);
-  const pct = d.list ? Math.round(d.list / 500 * 100) : 0;
-  document.getElementById('m-list').textContent = d.list != null ? d.list.toLocaleString() : '—';
-  document.getElementById('d-list').textContent = 'Goal: 500 — ' + pct + '% there';
-}
+  // ── Stats ───────────────────────────────────────────────────
 
-function setMetric(key, val, prev) {
-  const numEl = document.getElementById('m-' + key);
-  const delEl = document.getElementById('d-' + key);
-  if (!numEl) return;
-  numEl.textContent = val != null ? val.toLocaleString() : '—';
-  if (prev != null && val != null) {
-    const diff = val - prev;
-    const pct  = prev > 0 ? Math.round(diff / prev * 100) : null;
-    delEl.textContent = (diff >= 0 ? '+' : '') + diff + (pct !== null ? ' (' + (diff >= 0 ? '+' : '') + pct + '%)' : '');
-    delEl.className = 'metric-delta ' + (diff >= 0 ? 'up' : 'down');
-  } else {
-    delEl.textContent = '';
-    delEl.className = 'metric-delta';
+  // Sobriety
+  const sobrietyDays = sobrietyRes.data ? calcSobrietyDays(sobrietyRes.data.start_date) : 0;
+  document.getElementById('stat-sobriety').textContent = sobrietyDays || '—';
+  if (sobrietyDays > 0) {
+    document.getElementById('stat-sobriety-sub').textContent =
+      sobrietyDays === 1 ? 'day — keep going' : 'days strong';
   }
-}
 
-/* ─────────────────────────────────────────
-   NUMBERS MODAL
-───────────────────────────────────────── */
-function openNumbersModal() {
-  const d = JSON.parse(localStorage.getItem(LS.METRICS) || '{}');
-  ['signups','list','chatbot','saves','clicks'].forEach(k => {
-    const el = document.getElementById('nf-' + k);
-    if (el && d[k] != null) el.value = d[k];
-  });
-  document.getElementById('numbers-modal').style.display = 'flex';
-}
+  // Check-in streak
+  const checkinDates = (checkinsWeekRes.data || []).map(r => r.checkin_date);
+  const checkinStreak = calcStreak(checkinDates);
+  document.getElementById('stat-checkin').textContent = checkinStreak;
 
-function closeNumbersModal() {
-  document.getElementById('numbers-modal').style.display = 'none';
-  document.getElementById('echo-running-modal').style.display = 'none';
-  document.getElementById('btn-submit-nums').disabled = false;
-}
+  // Brief completion this week
+  const brief = briefRes.data;
+  if (brief) {
+    const pct = brief.total_modules > 0
+      ? Math.round((brief.completed_modules / brief.total_modules) * 100)
+      : 0;
+    document.getElementById('stat-completion').textContent = pct + '%';
+  } else {
+    document.getElementById('stat-completion').textContent = 'New';
+  }
 
-async function submitNumbers() {
-  const prev = JSON.parse(localStorage.getItem(LS.METRICS) || '{}');
-  const cur = {
-    signups: nv('nf-signups'), list:    nv('nf-list'),
-    chatbot: nv('nf-chatbot'), saves:   nv('nf-saves'),
-    clicks:  nv('nf-clicks'),  reach:   nv('nf-reach'),
-    fb:      nv('nf-fb'),      monthly: nv('nf-monthly'),
-    prevSignups: prev.signups, prevChatbot: prev.chatbot,
-    prevSaves: prev.saves,     prevClicks:  prev.clicks,
+  // Riley streak (days since first conversation or first checkin, whichever)
+  document.getElementById('stat-streak').textContent = checkinDates.length || '—';
+
+  // ── Today's brief preview ───────────────────────────────────
+  const briefEl = document.getElementById('brief-preview');
+  if (brief && brief.modules && Object.keys(brief.modules).length > 0) {
+    const modules = brief.modules;
+    const completion = brief.completion || {};
+    const moduleOrder = ['mindset','workout','nutrition','linkedin','reading','podcast','meditation','calendar'];
+    const icons = { mindset:'🧠', workout:'🏋️', nutrition:'🍳', linkedin:'🎥', reading:'📚', podcast:'🎧', meditation:'🙏', calendar:'📅' };
+
+    briefEl.innerHTML = `
+      <div style="background:var(--ink);color:var(--parchment)">
+        <div style="padding:20px 24px;background:linear-gradient(135deg,rgba(201,168,76,0.12) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px">Daily Brief · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div>
+            <div style="font-family:'DM Serif Display',serif;font-size:20px">Today's Blueprint</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--smoke)">${brief.completed_modules} / ${brief.total_modules} done</div>
+            <div style="margin-top:6px;height:3px;width:80px;background:rgba(255,255,255,0.1);border-radius:2px;margin-left:auto">
+              <div style="height:100%;width:${brief.total_modules > 0 ? (brief.completed_modules/brief.total_modules*100) : 0}%;background:var(--gold);border-radius:2px"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05)">
+          ${moduleOrder.filter(k => modules[k]).map(k => `
+            <div style="background:rgba(15,14,13,.97);padding:16px 18px;position:relative;cursor:pointer" onclick="window.location='/brief.html'">
+              ${completion[k] ? '<span style="position:absolute;top:10px;right:12px;font-size:10px;color:var(--green);font-weight:700">✓</span>' : ''}
+              <div style="font-size:18px;margin-bottom:6px">${icons[k] || '•'}</div>
+              <div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${k}</div>
+              <div style="font-size:12px;color:var(--parchment);line-height:1.4;opacity:.8">${String(modules[k]).slice(0, 60)}${String(modules[k]).length > 60 ? '…' : ''}</div>
+            </div>`).join('')}
+        </div>
+        <div style="padding:14px 24px;border-top:1px solid rgba(255,255,255,0.07)">
+          <a href="/brief.html" class="btn btn-gold" style="font-size:12px;padding:8px 18px">Open Full Brief →</a>
+        </div>
+      </div>`;
+  } else {
+    briefEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🌅</div>
+        <div class="empty-state-title">Your brief isn't ready yet</div>
+        <div class="empty-state-sub">Briefs are delivered at 6:00 AM each morning.<br>Check back tomorrow — or set up your brief now.</div>
+        <div style="margin-top:16px">
+          <a href="/brief.html" class="btn btn-gold">Set Up Your Brief</a>
+        </div>
+      </div>`;
+  }
+
+  // ── Recent conversations ────────────────────────────────────
+  const convEl = document.getElementById('conversations-preview');
+  const convs = conversationsRes.data || [];
+  if (convs.length === 0) {
+    convEl.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-title">No conversations yet</div>
+        <div class="empty-state-sub">Start a session with Riley and it'll appear here.</div>
+        <div style="margin-top:16px"><a href="https://riley.eight14.us" class="btn btn-dark">Talk to Riley</a></div>
+      </div>`;
+  } else {
+    convEl.innerHTML = `
+      <div class="card-header">
+        <span class="card-title">Recent Conversations</span>
+        <a href="/conversations.html" class="card-action">View all →</a>
+      </div>
+      ${convs.map(c => `
+        <a href="/conversations.html?id=${c.id}" style="display:grid;grid-template-columns:1fr auto;gap:12px;padding:14px 20px;border-bottom:1px solid var(--mist);text-decoration:none;transition:background .12s" onmouseover="this.style.background='var(--warm-white)'" onmouseout="this.style.background='white'">
+          <div>
+            <div style="font-size:13px;color:var(--ink);font-weight:500;margin-bottom:3px">${escHtml(c.title || 'Riley Session')}</div>
+            <div style="margin-top:4px">${(c.tags || []).slice(0,2).map(t => `<span class="tag tag-gold">${escHtml(t)}</span>`).join(' ')}</div>
+          </div>
+          <div style="font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap">${formatDate(c.updated_at)}<br>${formatTime(c.updated_at)}</div>
+        </a>`).join('')}`;
+  }
+
+  // ── Check-in ────────────────────────────────────────────────
+  const checkin = checkinRes.data;
+  const checkinBody = document.getElementById('checkin-body');
+
+  if (checkin && checkin.mood) {
+    checkinBody.innerHTML = `
+      <div style="font-size:12px;color:var(--smoke);margin-bottom:12px">Today's check-in is complete ✓</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        ${[1,2,3,4,5].map(n => `
+          <div style="flex:1;padding:8px;background:${n===checkin.mood?'var(--gold-dim)':'var(--warm-white)'};border:1.5px solid ${n===checkin.mood?'var(--gold)':'var(--mist)'};border-radius:2px;text-align:center;font-size:18px">
+            ${['😔','😐','🙂','😊','🔥'][n-1]}
+          </div>`).join('')}
+      </div>
+      ${checkin.notes ? `<div style="font-size:12px;color:var(--smoke);font-style:italic">"${escHtml(checkin.notes)}"</div>` : ''}
+      <div style="margin-top:12px;display:flex;gap:16px;font-size:12px;color:var(--smoke)">
+        ${checkin.water_oz ? `<span>💧 ${checkin.water_oz}oz water</span>` : ''}
+        ${checkin.sleep_hours ? `<span>😴 ${checkin.sleep_hours}h sleep</span>` : ''}
+      </div>`;
+  } else {
+    checkinBody.innerHTML = `
+      <div style="font-size:12px;color:var(--smoke);margin-bottom:12px">How are you feeling today?</div>
+      <div class="mood-scale" id="mood-scale">
+        ${[1,2,3,4,5].map(n => `<button class="mood-btn" data-mood="${n}" onclick="selectMood(${n})">${['😔','😐','🙂','😊','🔥'][n-1]}</button>`).join('')}
+      </div>
+      <div id="checkin-extra" style="display:none;margin-top:16px">
+        <textarea id="checkin-notes" placeholder="Anything on your mind? (optional)" style="width:100%;padding:10px;border:1px solid var(--mist);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;min-height:60px;background:var(--warm-white)"></textarea>
+        <button class="btn btn-gold" style="margin-top:10px;width:100%;justify-content:center" onclick="submitCheckin()">Save Check-In</button>
+      </div>`;
+  }
+
+  // ── Goals ───────────────────────────────────────────────────
+  const goalsBody = document.getElementById('goals-body');
+  const goals = goalsRes.data || [];
+  if (goals.length === 0) {
+    goalsBody.innerHTML = `<div style="font-size:13px;color:var(--smoke);text-align:center;padding:20px 0">No goals set yet — <a href="/tracker.html" style="color:var(--gold)">add your first goal</a></div>`;
+  } else {
+    goalsBody.innerHTML = goals.slice(0,4).map(g => {
+      const pct = g.target_value > 0 ? Math.min(100, Math.round((g.current_value / g.target_value) * 100)) : 0;
+      const done = pct >= 100;
+      return `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+            <span style="font-size:12px;color:var(--ink)">${escHtml(g.title)}</span>
+            <span style="font-family:'DM Mono',monospace;font-size:11px;color:${done?'var(--green)':'var(--gold)'}">${g.current_value.toLocaleString()} / ${g.target_value?.toLocaleString()} ${g.unit||''} ${done?'✓':''}</span>
+          </div>
+          <div class="progress-bar-wrap"><div class="progress-bar-fill ${done?'green':''}" style="width:${pct}%"></div></div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Programs ────────────────────────────────────────────────
+  const programsBody = document.getElementById('programs-body');
+  const enrollments = programsRes.data || [];
+  if (enrollments.length === 0) {
+    programsBody.innerHTML = `<div style="font-size:13px;color:var(--smoke);text-align:center;padding:20px 0">No programs yet — <a href="/programs.html" style="color:var(--gold)">browse programs</a></div>`;
+  } else {
+    programsBody.innerHTML = enrollments.map(e => {
+      const prog = e.programs || {};
+      const pct = prog.duration_days > 0
+        ? Math.min(100, Math.round(((e.days_completed || 0) / prog.duration_days) * 100))
+        : 0;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--mist)">
+          <div style="width:34px;height:34px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;border-radius:2px;flex-shrink:0">${prog.emoji||'🎯'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;color:var(--ink);font-weight:500">${escHtml(prog.title||'Program')}</div>
+            <div style="font-size:11px;color:var(--smoke);margin-top:2px">Day ${e.days_completed||0} of ${prog.duration_days||'?'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--gold);font-weight:500">${pct}%</div>
+            <div style="width:50px;height:3px;background:var(--mist);border-radius:2px;margin-top:4px;margin-left:auto"><div style="height:100%;width:${pct}%;background:var(--gold);border-radius:2px"></div></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────
+  let selectedMood = null;
+
+  window.selectMood = function(n) {
+    selectedMood = n;
+    document.querySelectorAll('.mood-btn').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.mood) === n);
+    });
+    document.getElementById('checkin-extra').style.display = 'block';
   };
-  localStorage.setItem(LS.METRICS, JSON.stringify(cur));
-  loadMetrics();
 
-  const today = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-  const msg =
-    'Please analyze this week\'s performance data for The 8:14 Project and return your full structured ECHO REPORT.\n\n' +
-    'WEEK OF: ' + today + '\n' +
-    'Email signups this week: ' + (cur.signups ?? 'not provided') + '\n' +
-    'Total email list size: '   + (cur.list    ?? 'not provided') + '\n' +
-    'Riley chatbot opens: '     + (cur.chatbot ?? 'not provided') + '\n' +
-    'Instagram saves: '         + (cur.saves   ?? 'not provided') + '\n' +
-    'Link clicks to eight14.us: ' + (cur.clicks ?? 'not provided') + '\n' +
-    'Instagram reach: '         + (cur.reach   ?? 'not provided') + '\n' +
-    'Facebook engagement: '     + (cur.fb      ?? 'not provided') + '\n' +
-    'New subscribers this month: ' + (cur.monthly ?? 'not provided') + '\n' +
-    (prev.signups != null
-      ? 'vs last week — signups: ' + prev.signups + ', saves: ' + (prev.saves ?? '?') + ', clicks: ' + (prev.clicks ?? '?')
-      : '(no prior week data for comparison)');
+  window.submitCheckin = async function() {
+    if (!selectedMood) return;
+    const notes = document.getElementById('checkin-notes')?.value || '';
+    const { error } = await client.from('daily_checkins').upsert({
+      user_id: user.id,
+      checkin_date: today,
+      mood: selectedMood,
+      notes: notes || null,
+      sobriety_day: sobrietyDays > 0
+    }, { onConflict: 'user_id,checkin_date' });
 
-  document.getElementById('echo-running-modal').style.display = 'flex';
-  document.getElementById('btn-submit-nums').disabled = true;
-
-  try {
-    const reply = await callAgent('echo', msg);
-    localStorage.setItem(LS.ECHO, JSON.stringify({ report: reply, date: today }));
-    closeNumbersModal();
-    renderEchoReport(reply);
-    showStartWeekBtn();
-  } catch(e) {
-    document.getElementById('echo-running-modal').style.display = 'none';
-    document.getElementById('btn-submit-nums').disabled = false;
-    alert('Echo error: ' + e.message);
-  }
-}
-
-function nv(id) {
-  const v = document.getElementById(id)?.value;
-  return (v === '' || v == null) ? null : Number(v);
-}
-
-/* ─────────────────────────────────────────
-   ECHO REPORT
-───────────────────────────────────────── */
-function loadEchoReport() {
-  const stored = JSON.parse(localStorage.getItem(LS.ECHO) || 'null');
-  if (stored && stored.report) { renderEchoReport(stored.report); showStartWeekBtn(); }
-}
-
-function renderEchoReport(text) {
-  document.getElementById('echo-empty').style.display = 'none';
-  const c = document.getElementById('echo-report');
-  c.style.display = 'flex';
-  c.innerHTML = '';
-
-  const sections = [
-    { key:'PHASE 1 SCORECARD',         label:'Phase 1 Scorecard', cls:'label-blue'   },
-    { key:'WHAT WORKED',               label:'What Worked',       cls:'label-green'  },
-    { key:"WHAT DIDN'T WORK",          label:"What Didn't Work",  cls:'label-red'    },
-    { key:'THE SINGLE BIGGEST LEVER',  label:'Biggest Lever',     cls:'label-gold'   },
-    { key:'SCOUT BRIEF FOR NEXT WEEK', label:'Scout Brief',       cls:'label-sage'   },
-    { key:'ATLAS BRIEF FOR NEXT WEEK', label:'Atlas Brief',       cls:'label-blue'   },
-    { key:"A/B TEST FOR NEXT WEEK",    label:'A/B Test',          cls:'label-purple' },
-    { key:'GROWTH TRAJECTORY',         label:'Growth Trajectory', cls:'label-gold'   },
-  ];
-
-  let hit = false;
-  sections.forEach(s => {
-    const content = extractSection(text, s.key);
-    if (!content) return;
-    hit = true;
-    const el = document.createElement('div');
-    el.className = 'report-section';
-    el.innerHTML = '<span class="report-label ' + s.cls + '">' + esc(s.label) + '</span>' +
-                   '<div class="report-content">' + esc(content.trim()) + '</div>';
-    c.appendChild(el);
-  });
-
-  if (!hit) {
-    const el = document.createElement('div');
-    el.className = 'report-section';
-    el.innerHTML = '<span class="report-label label-gold">Echo Report</span>' +
-                   '<div class="report-content">' + esc(text) + '</div>';
-    c.appendChild(el);
-  }
-}
-
-function showStartWeekBtn() {
-  const existing = document.getElementById('start-week-btn');
-  if (existing) existing.remove();
-  const btn = document.createElement('button');
-  btn.className = 'start-week-btn';
-  btn.id = 'start-week-btn';
-  btn.textContent = 'START THIS WEEK\'S CONTENT →';
-  btn.onclick = () => startNewWeek(document.querySelector('[data-screen="pipeline"]'));
-  document.getElementById('echo-report').appendChild(btn);
-}
-
-/* ─────────────────────────────────────────
-   HISTORY
-───────────────────────────────────────── */
-function loadHistory() {
-  const history = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
-  if (!history.length) return;
-  const list = document.getElementById('history-list');
-  list.innerHTML = '';
-  history.slice(-20).reverse().forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'post-entry';
-    const perf = p.metric > (p.avg * 1.2) ? 'good' : p.metric < (p.avg * .8) ? 'bad' : 'avg';
-    div.innerHTML =
-      '<div class="post-platform">' + platformIcon(p.platform) + '</div>' +
-      '<div class="post-info"><div class="post-type">' + esc(p.type) + '</div><div class="post-date">' + esc(p.date) + '</div></div>' +
-      '<div class="post-metric ' + perf + '">' + p.metric + '</div>';
-    list.appendChild(div);
-  });
-}
-
-function platformIcon(p) {
-  const m = { instagram:'&#128247;', facebook:'&#128309;', youtube:'&#9654;&#65039;', email:'&#128231;' };
-  return m[(p||'').toLowerCase()] || '&#128196;';
-}
-
-/* ─────────────────────────────────────────
-   PIPELINE STATE
-───────────────────────────────────────── */
-var P = { scoutReport:'', sageOutput:'', atlasOutput:'' };
-
-function resetPipeline() {
-  P = { scoutReport:'', sageOutput:'', atlasOutput:'' };
-
-  setPb('scout','active'); setPb('sage','pending'); setPb('atlas','pending'); setPb('review','pending');
-  ['pb-line1','pb-line2','pb-line3'].forEach(id => document.getElementById(id).classList.remove('done'));
-
-  show('phase-scout'); hide('phase-sage'); hide('phase-atlas');
-  hide('scout-running'); hide('scout-result'); hide('scout-actions');
-  document.getElementById('scout-result').innerHTML = '';
-  document.getElementById('btn-run-scout').disabled = false;
-  document.getElementById('scout-prompt').value = 'What sobriety, recovery, and wellness topics are trending this week? Return the full structured SCOUT REPORT with all sections.';
-}
-
-function setPb(name, state) {
-  const dot = document.getElementById('pb-' + name + '-dot');
-  const lbl = document.getElementById('pb-' + name + '-lbl');
-  dot.className = 'pb-dot ' + state;
-  lbl.className = 'pb-label' + (state !== 'pending' ? ' ' + state : '');
-  if (state === 'done') dot.innerHTML = '&#10003;';
-  else dot.textContent = { scout:'1', sage:'2', atlas:'3', review:'' }[name] || '';
-}
-
-function show(id) { const el = document.getElementById(id); if(el) el.style.display = ''; }
-function hide(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
-
-/* ─────────────────────────────────────────
-   SCOUT
-───────────────────────────────────────── */
-async function runScout() {
-  const prompt = document.getElementById('scout-prompt').value.trim();
-  if (!prompt) return;
-  document.getElementById('btn-run-scout').disabled = true;
-  show('scout-running'); hide('scout-result'); hide('scout-actions');
-
-  try {
-    const reply = await callAgent('scout', prompt);
-    P.scoutReport = reply;
-    localStorage.setItem(LS.SCOUT, reply);
-    hide('scout-running');
-    renderScoutResult(reply);
-    show('scout-result'); show('scout-actions');
-  } catch(e) {
-    hide('scout-running');
-    document.getElementById('btn-run-scout').disabled = false;
-    appendError('scout-result', e.message);
-    show('scout-result');
-  }
-}
-
-function renderScoutResult(text) {
-  const c = document.getElementById('scout-result');
-  c.innerHTML = '';
-  const headings = [
-    'TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS',
-    'CONTENT GAPS THIS WEEK','REPOST SOURCES THIS WEEK',
-    'SAGE BRIEF — POST 1','SAGE BRIEF — POST 2','SAGE BRIEF — POST 3','REPOST BRIEF'
-  ];
-  // Also try dash variants
-  const rawHeadings = [
-    'TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS',
-    'CONTENT GAPS THIS WEEK','REPOST SOURCES THIS WEEK',
-    'SAGE BRIEF','REPOST BRIEF'
-  ];
-  let hit = false;
-  rawHeadings.forEach(h => {
-    const content = extractSection(text, h);
-    if (!content) return;
-    hit = true;
-    const sec = document.createElement('div');
-    sec.className = 'result-section';
-    sec.innerHTML = '<div class="result-section-title">' + esc(h) + '</div><div class="result-text">' + esc(content) + '</div>';
-    c.appendChild(sec);
-  });
-  if (!hit) {
-    const sec = document.createElement('div');
-    sec.className = 'result-section';
-    sec.innerHTML = '<div class="result-text">' + esc(text) + '</div>';
-    c.appendChild(sec);
-  }
-}
-
-function editScoutReport() {
-  const c = document.getElementById('scout-result');
-  c.innerHTML = '';
-  const ta = document.createElement('textarea');
-  ta.className = 'result-editable';
-  ta.value = P.scoutReport;
-  ta.oninput = () => { P.scoutReport = ta.value; };
-  c.appendChild(ta);
-  const acts = document.getElementById('scout-actions');
-  acts.innerHTML = '<button class="btn-next" onclick="runSage()">Send to Sage →</button>';
-}
-
-/* ─────────────────────────────────────────
-   SAGE
-───────────────────────────────────────── */
-async function runSage() {
-  setPb('scout','done');
-  document.getElementById('pb-line1').classList.add('done');
-  setPb('sage','active');
-
-  show('phase-sage');
-  show('sage-running'); hide('sage-result'); hide('sage-actions');
-  document.getElementById('phase-sage').scrollIntoView({ behavior:'smooth', block:'start' });
-
-  const msg = "Here is Scout's research report for this week. Please produce all 12 posts in the full SAGE OUTPUT format.\n\n" + P.scoutReport;
-
-  try {
-    const reply = await callAgent('sage', msg);
-    P.sageOutput = reply;
-    localStorage.setItem(LS.SAGE, reply);
-    hide('sage-running');
-
-    const res = document.getElementById('sage-result');
-    res.style.display = 'flex';
-    const sum = document.createElement('div');
-    sum.className = 'phase-summary';
-    const lines = extractPostHeadlines(reply);
-    sum.innerHTML = '<div class="check">&#10003;</div><div>' +
-      '<div class="phase-summary-text">12 posts written successfully</div>' +
-      '<div class="phase-summary-sub">' + esc(lines.join(' · ')) + '</div></div>';
-    res.appendChild(sum);
-
-    show('sage-actions');
-    runAtlas();
-  } catch(e) {
-    hide('sage-running');
-    appendError('sage-result', e.message);
-    show('sage-result'); show('sage-actions');
-  }
-}
-
-function extractPostHeadlines(text) {
-  const lines = text.split('\n');
-  const out = [];
-  for (const l of lines) {
-    const t = l.trim();
-    if (/^POST [123] /.test(t)) out.push(t.replace(/^POST \d+ — /, '').replace(/^POST \d+ - /, ''));
-    if (out.length >= 3) break;
-  }
-  return out.length ? out : ['Educational Carousel','Quote Graphic','Facebook Caption'];
-}
-
-/* ─────────────────────────────────────────
-   ATLAS
-───────────────────────────────────────── */
-async function runAtlas() {
-  setPb('sage','done');
-  document.getElementById('pb-line2').classList.add('done');
-  setPb('atlas','active');
-
-  show('phase-atlas');
-  show('atlas-running'); hide('atlas-result'); hide('atlas-actions');
-  document.getElementById('phase-atlas').scrollIntoView({ behavior:'smooth', block:'start' });
-
-  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-  const msg = "Here is Sage's content output for the week of " + today + ". Please build the full ATLAS REPORT with the weekly calendar and Buffer queue.\n\n" + P.sageOutput;
-
-  try {
-    const reply = await callAgent('atlas', msg);
-    P.atlasOutput = reply;
-    localStorage.setItem(LS.ATLAS, reply);
-    hide('atlas-running');
-
-    const res = document.getElementById('atlas-result');
-    res.style.display = 'flex';
-    const cal = extractSection(reply, 'WEEKLY CALENDAR');
-    const sec = document.createElement('div');
-    sec.className = 'result-section';
-    if (cal) {
-      sec.innerHTML = '<div class="result-section-title">Weekly Calendar</div><div class="result-text">' + esc(cal) + '</div>';
-    } else {
-      sec.innerHTML = '<div class="result-section-title">Atlas Report</div><div class="result-text">' + esc(reply.slice(0,600)) + '…</div>';
+    if (!error) {
+      document.getElementById('checkin-body').innerHTML = `
+        <div style="text-align:center;padding:16px 0">
+          <div style="font-size:32px;margin-bottom:8px">${['😔','😐','🙂','😊','🔥'][selectedMood-1]}</div>
+          <div style="font-size:13px;color:var(--green);font-weight:500">Check-in saved ✓</div>
+          <div style="font-size:12px;color:var(--smoke);margin-top:4px">Riley will use this in tomorrow's brief.</div>
+        </div>`;
+      document.getElementById('stat-checkin').textContent = checkinStreak + 1;
     }
-    res.appendChild(sec);
+  };
 
-    show('atlas-actions');
-    setPb('atlas','done');
-    document.getElementById('pb-line3').classList.add('done');
-    setPb('review','active');
-  } catch(e) {
-    hide('atlas-running');
-    appendError('atlas-result', e.message);
-    show('atlas-result'); show('atlas-actions');
-  }
-}
+})();
 
-/* ─────────────────────────────────────────
-   REVIEW
-───────────────────────────────────────── */
-var reviewPosts = [];
-
-function goToReview() {
-  buildReviewPosts();
-  goScreen('review', null);
-}
-
-function buildReviewPosts() {
-  const text = P.sageOutput || localStorage.getItem(LS.SAGE) || '';
-  reviewPosts = parseSagePosts(text);
-
-  const today = new Date().toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
-  document.getElementById('review-title').textContent =
-    'Your ' + reviewPosts.length + ' posts for the week of ' + today + '. Review and approve.';
-
-  renderPostCards();
-  updateApproveCount();
-}
-
-function parseSagePosts(text) {
-  if (!text) return defaultPosts();
-  const blocks = text.split(/\n(?=POST \d+\s*[—-])/);
-  const posts = [];
-  blocks.forEach((block, i) => {
-    if (!block.trim()) return;
-    const titleM   = block.match(/^POST (\d+)\s*[—-]+\s*(.+)/m);
-    const captionM = block.match(/CAPTION:\s*\n([\s\S]*?)(?=\nHASHTAGS:|\nSLIDE |\n---|\nPOST \d|$)/);
-    const hashM    = block.match(/HASHTAGS:\s*\n?([\s\S]*?)(?=\n\n|\n---|\nPOST \d|$)/);
-    const slide1M  = block.match(/SLIDE 1[^:]*:\s*\n?(.*)/);
-    const platM    = block.match(/Platform:\s*(.+)/);
-    const dtM      = block.match(/Day\/Time:\s*(.+)/);
-    const num      = titleM ? titleM[1] : String(i + 1);
-    const typeRaw  = titleM ? titleM[2].trim() : 'Post ' + num;
-    posts.push({
-      num, typeRaw,
-      type:      classifyType(typeRaw),
-      headline:  slide1M ? slide1M[1].trim() : typeRaw,
-      caption:   captionM ? captionM[1].trim() : '',
-      hashtags:  hashM ? hashM[1].trim() : '',
-      platform:  platM ? platM[1].trim() : 'Instagram',
-      dayTime:   dtM   ? dtM[1].trim()   : '',
-      approved:  true,
-    });
-  });
-  return posts.length >= 3 ? posts : defaultPosts();
-}
-
-function classifyType(s) {
-  const u = s.toUpperCase();
-  if (u.includes('CAROUSEL')) return 'carousel';
-  if (u.includes('QUOTE'))    return 'quote';
-  if (u.includes('REPOST'))   return 'repost';
-  if (u.includes('COMMUNITY') || u.includes('CHECK-IN') || u.includes('GROUP')) return 'community';
-  return 'caption';
-}
-
-function defaultPosts() {
-  return [
-    { num:'1',  type:'carousel',  typeRaw:'Instagram Carousel (Educational)',     platform:'Instagram Feed',    dayTime:'Monday 8am MT',     headline:'Educational Carousel',    caption:'', hashtags:'', approved:true },
-    { num:'2',  type:'quote',     typeRaw:'Instagram Quote Graphic',              platform:'Instagram Feed',    dayTime:'Monday 6pm MT',     headline:'Quote Graphic',           caption:'', hashtags:'', approved:true },
-    { num:'3',  type:'caption',   typeRaw:'Facebook Page Caption Post',           platform:'Facebook Page',     dayTime:'Tuesday 10am MT',   headline:'Facebook Caption Post',   caption:'', hashtags:'', approved:true },
-    { num:'4',  type:'carousel',  typeRaw:'Instagram Carousel (Tool or Method)',  platform:'Instagram Feed',    dayTime:'Wednesday 8am MT',  headline:'Tool/Method Carousel',    caption:'', hashtags:'', approved:true },
-    { num:'5',  type:'repost',    typeRaw:'Instagram Stories Repost',             platform:'Instagram Stories', dayTime:'Wednesday 12pm MT', headline:'Stories Repost',          caption:'', hashtags:'', approved:true },
-    { num:'6',  type:'community', typeRaw:'Facebook Group Check-In',              platform:'Facebook Group',    dayTime:'Wednesday 6pm MT',  headline:'Group Check-In',          caption:'', hashtags:'', approved:true },
-    { num:'7',  type:'community', typeRaw:'YouTube Community Post',               platform:'YouTube Community', dayTime:'Thursday 9am MT',   headline:'YouTube Community Post',  caption:'', hashtags:'', approved:true },
-    { num:'8',  type:'carousel',  typeRaw:'Instagram Carousel (Story Arc)',       platform:'Instagram Feed',    dayTime:'Thursday 6pm MT',   headline:'Story Arc Carousel',      caption:'', hashtags:'', approved:true },
-    { num:'9',  type:'repost',    typeRaw:'Facebook Page Repost',                 platform:'Facebook Page',     dayTime:'Friday 10am MT',    headline:'Facebook Repost',         caption:'', hashtags:'', approved:true },
-    { num:'10', type:'caption',   typeRaw:'Instagram Caption Post',               platform:'Instagram Feed',    dayTime:'Friday 6pm MT',     headline:'Weekend Reflection',      caption:'', hashtags:'', approved:true },
-    { num:'11', type:'carousel',  typeRaw:'Instagram Carousel (Myth vs Reality)', platform:'Instagram Feed',    dayTime:'Saturday 9am MT',   headline:'Myth vs Reality Carousel',caption:'', hashtags:'', approved:true },
-    { num:'12', type:'community', typeRaw:'Facebook Group Weekly Check-In',       platform:'Facebook Group',    dayTime:'Sunday 8am MT',     headline:'Weekly Check-In',         caption:'', hashtags:'', approved:true },
-  ];
-}
-
-function renderPostCards() {
-  const grid = document.getElementById('posts-grid');
-  grid.innerHTML = '';
-  reviewPosts.forEach((p, i) => {
-    const card = document.createElement('div');
-    card.className = 'post-card' + (p.approved ? '' : ' excluded');
-    card.id = 'pc-' + i;
-    const pi = platIcon2(p.platform);
-    card.innerHTML =
-      '<div class="post-card-top">' +
-        '<span class="post-badge badge-' + p.type + '">' + badgeLabel(p.type) + '</span>' +
-        '<div class="post-meta">' +
-          '<div class="post-platform-time">' + pi + ' ' + esc(p.platform) + ' &middot; ' + esc(p.dayTime) + '</div>' +
-          '<div class="post-headline">' + esc(p.headline) + '</div>' +
-        '</div>' +
-        '<button class="approve-toggle' + (p.approved ? '' : ' off') + '" id="tog-' + i + '" onclick="toggleApprove(' + i + ')">' + (p.approved ? '&#10003;' : '&#9675;') + '</button>' +
-      '</div>' +
-      '<div class="post-caption-text" id="ct-' + i + '">' + esc(p.caption || '(Run pipeline to generate copy.)') + '</div>' +
-      '<textarea class="caption-editable" id="ce-' + i + '" onchange="updateCaption(' + i + ',this.value)">' + esc(p.caption) + '</textarea>' +
-      (p.hashtags ? '<div class="post-hashtags">' + esc(p.hashtags) + '</div>' : '') +
-      '<div class="post-card-actions">' +
-        '<button class="btn-tiny" onclick="toggleExpand(' + i + ')">Expand</button>' +
-        '<button class="btn-tiny" onclick="toggleEdit(' + i + ')">✏ Edit</button>' +
-      '</div>';
-    grid.appendChild(card);
-  });
-  document.getElementById('total-count').textContent = reviewPosts.length;
-}
-
-function badgeLabel(t) {
-  return { carousel:'Carousel', quote:'Quote', caption:'Caption', repost:'Repost', community:'Community' }[t] || t;
-}
-
-function platIcon2(p) {
-  const s = (p||'').toLowerCase();
-  if (s.includes('instagram')) return '&#128247;';
-  if (s.includes('facebook'))  return '&#128309;';
-  if (s.includes('youtube'))   return '&#9654;&#65039;';
-  return '&#128196;';
-}
-
-function toggleApprove(i) {
-  reviewPosts[i].approved = !reviewPosts[i].approved;
-  document.getElementById('pc-' + i).classList.toggle('excluded', !reviewPosts[i].approved);
-  const t = document.getElementById('tog-' + i);
-  t.classList.toggle('off', !reviewPosts[i].approved);
-  t.innerHTML = reviewPosts[i].approved ? '&#10003;' : '&#9675;';
-  updateApproveCount();
-}
-
-function toggleExpand(i) { document.getElementById('ct-' + i).classList.toggle('expanded'); }
-
-function toggleEdit(i) {
-  const ct = document.getElementById('ct-' + i);
-  const ce = document.getElementById('ce-' + i);
-  const editing = ce.style.display !== 'block';
-  ct.style.display = editing ? 'none' : '';
-  ce.style.display = editing ? 'block' : 'none';
-}
-
-function updateCaption(i, val) {
-  reviewPosts[i].caption = val;
-  const ct = document.getElementById('ct-' + i);
-  if (ct) ct.textContent = val;
-}
-
-function updateApproveCount() {
-  const n = reviewPosts.filter(p => p.approved).length;
-  document.getElementById('approved-count').textContent = n;
-  document.getElementById('btn-approve-all').disabled = n === 0;
-}
-
-/* ─────────────────────────────────────────
-   SCHEDULE
-───────────────────────────────────────── */
-async function approveAndSchedule() {
-  const approved = reviewPosts.filter(p => p.approved);
-  const token = localStorage.getItem(LS.BUFFER);
-  const overlay = document.getElementById('sched-overlay');
-  overlay.classList.add('show');
-  document.getElementById('sched-text').textContent =
-    (token ? 'Scheduling ' : 'Copying ') + approved.length + ' posts' + (token ? ' in Buffer…' : ' to clipboard…');
-
-  if (!token) {
-    const dump = approved.map(p =>
-      '=== POST ' + p.num + ' — ' + p.typeRaw + ' ===\nPlatform: ' + p.platform +
-      '\nDay/Time: ' + p.dayTime + '\n\nCAPTION:\n' + p.caption +
-      (p.hashtags ? '\n\n' + p.hashtags : '')
-    ).join('\n\n');
-    const atlas = P.atlasOutput || localStorage.getItem(LS.ATLAS) || '';
-    try { await navigator.clipboard.writeText(dump + '\n\n---ATLAS BUFFER QUEUE---\n' + atlas); } catch(e) {}
-  }
-
-  await new Promise(r => setTimeout(r, 1400 + approved.length * 60));
-  overlay.classList.remove('show');
-  saveToHistory(approved);
-
-  document.getElementById('success-msg').textContent =
-    token
-      ? approved.length + ' posts queued in Buffer across Instagram, Facebook, and YouTube.'
-      : approved.length + ' posts copied to clipboard. Paste into Buffer to schedule.';
-  document.getElementById('success-next').textContent = 'Next Sunday workflow: ' + nextSunday();
-  document.getElementById('success-overlay').classList.add('show');
-}
-
-function saveToHistory(posts) {
-  const h = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
-  const today = new Date().toLocaleDateString('en-US', { month:'short', day:'numeric' });
-  posts.forEach(p => h.push({ type:p.typeRaw, platform:p.platform.toLowerCase(), date:today, metric:0, avg:20 }));
-  localStorage.setItem(LS.HISTORY, JSON.stringify(h.slice(-100)));
-}
-
-function saveDraft() {
-  localStorage.setItem('814_draft', JSON.stringify({ posts:reviewPosts, date:new Date().toISOString() }));
-  alert('Draft saved.');
-}
-
-function returnHome() {
-  document.getElementById('success-overlay').classList.remove('show');
-  goScreen('home', document.querySelector('[data-screen="home"]'));
-  loadHistory();
-}
-
-function nextSunday() {
+function getDateDaysAgo(n) {
   const d = new Date();
-  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
-  return d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  d.setDate(d.getDate() - n);
+  return d.toISOString().split('T')[0];
 }
 
-/* ─────────────────────────────────────────
-   SETTINGS
-───────────────────────────────────────── */
-function loadBufferToken() {
-  const t = localStorage.getItem(LS.BUFFER);
-  if (t) {
-    document.getElementById('buffer-token-input').value = t;
-    setBufferStatus('&#10003; Token saved — one-click scheduling enabled.', 'ok');
+function calcStreak(dateStrings) {
+  if (!dateStrings.length) return 0;
+  const sorted = [...dateStrings].sort((a,b) => b.localeCompare(a));
+  const today = new Date().toISOString().split('T')[0];
+  let streak = 0;
+  let expected = today;
+  for (const d of sorted) {
+    if (d === expected) {
+      streak++;
+      const prev = new Date(expected);
+      prev.setDate(prev.getDate() - 1);
+      expected = prev.toISOString().split('T')[0];
+    } else break;
   }
+  return streak;
 }
 
-function saveBufferToken() {
-  const v = document.getElementById('buffer-token-input').value.trim();
-  if (!v) { clearBufferToken(); return; }
-  localStorage.setItem(LS.BUFFER, v);
-  setBufferStatus('&#10003; Buffer token saved — scheduling enabled.', 'ok');
-}
-
-function clearBufferToken() {
-  localStorage.removeItem(LS.BUFFER);
-  document.getElementById('buffer-token-input').value = '';
-  setBufferStatus('"Approve &amp; Schedule" will copy posts to clipboard.', '');
-}
-
-function setBufferStatus(msg, cls) {
-  const el = document.getElementById('buffer-status');
-  el.innerHTML = msg;
-  el.className = 'settings-status' + (cls ? ' ' + cls : '');
-}
-
-function clearAllData() {
-  if (!confirm('Clear all stored data? This cannot be undone.')) return;
-  Object.values(LS).forEach(k => localStorage.removeItem(k));
-  localStorage.removeItem('814_draft');
-  location.reload();
-}
-
-/* ─────────────────────────────────────────
-   API
-───────────────────────────────────────── */
-async function callAgent(agent, message) {
-  const url = BASE + '/' + agent;
-  const body = JSON.stringify({ message });
-  console.log('[8:14] callAgent →', agent);
-  console.log('[8:14] URL:', url);
-  console.log('[8:14] Body:', body);
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body,
-  });
-
-  // Always read as text first so we never lose the error body
-  const rawText = await res.text();
-  console.log('[8:14] Response status:', res.status);
-  console.log('[8:14] Response body:', rawText);
-
-  if (!res.ok) {
-    let detail = rawText;
-    try { const d = JSON.parse(rawText); detail = d.error || rawText; } catch(e) {}
-    throw new Error('HTTP ' + res.status + ' from ' + agent + ': ' + detail);
-  }
-
-  let data;
-  try { data = JSON.parse(rawText); } catch(e) {
-    throw new Error('Invalid JSON from ' + agent + ': ' + rawText.slice(0, 200));
-  }
-  if (!data.reply) throw new Error('Empty reply from ' + agent + '. Raw: ' + rawText.slice(0, 200));
-  return data.reply;
-}
-
-/* ─────────────────────────────────────────
-   UTILS
-───────────────────────────────────────── */
-function esc(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function extractSection(text, heading) {
-  // Try "HEADING:" and "HEADING\n"
-  let idx = text.indexOf(heading + ':');
-  let start = idx >= 0 ? idx + heading.length + 1 : -1;
-  if (start < 0) {
-    idx = text.indexOf(heading + '\n');
-    start = idx >= 0 ? idx + heading.length + 1 : -1;
-  }
-  if (start < 0) return null;
-  const after = text.slice(start);
-  const lines = after.split('\n');
-  const out = [];
-  for (const line of lines) {
-    const t = line.trim();
-    if (out.length > 0 && (/^[A-Z][A-Z &'\/—-]{4,}:/.test(t) || /^---/.test(t))) break;
-    out.push(line);
-  }
-  const result = out.join('\n').trim();
-  return result || null;
-}
-
-/* ─────────────────────────────────────────
-   RILEY CHAT — with conversation history
-───────────────────────────────────────── */
-var rileyHistory = []; // [{role:'user'|'assistant', content:string}]
-
-function rileyKeydown(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendRiley(); }
-}
-
-function rileyStarter(btn) {
-  document.getElementById('riley-input').value = btn.textContent;
-  sendRiley();
-}
-
-function clearRileyChat() {
-  rileyHistory = [];
-  document.getElementById('riley-messages').innerHTML = '';
-  document.getElementById('riley-messages').style.display = 'none';
-  document.getElementById('riley-welcome').style.display = 'flex';
-}
-
-function addRileyMsg(role, text) {
-  const welcome = document.getElementById('riley-welcome');
-  const thread  = document.getElementById('riley-messages');
-  welcome.style.display = 'none';
-  thread.style.display  = 'flex';
-
-  const div = document.createElement('div');
-  div.className = 'riley-msg ' + (role === 'user' ? 'user' : 'riley');
-  div.textContent = text;
-  thread.appendChild(div);
-  thread.scrollTop = thread.scrollHeight;
-  return div;
-}
-
-async function sendRiley() {
-  const input   = document.getElementById('riley-input');
-  const sendBtn = document.getElementById('riley-send-btn');
-  const text    = input.value.trim();
-  if (!text) return;
-
-  input.value = '';
-  input.style.height = '42px';
-  addRileyMsg('user', text);
-
-  // Build the outbound messages array as a snapshot BEFORE touching rileyHistory.
-  // This guarantees the fetch sees the correct array regardless of any prior
-  // async slice/reassignment of rileyHistory.
-  const userMsg = { role: 'user', content: text };
-  const outboundMessages = [...rileyHistory, userMsg];
-
-  sendBtn.disabled = true;
-  input.disabled   = true;
-
-  const bubble = addRileyMsg('riley', '');
-  bubble.classList.add('streaming');
-
-  let fullText = '';
-
-  try {
-    const res = await fetch(BASE + '/riley-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: outboundMessages }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      let detail = errText;
-      try { detail = JSON.parse(errText).error || errText; } catch {}
-      throw new Error('HTTP ' + res.status + ': ' + detail);
-    }
-
-    const reader  = res.body.getReader();
-    const decoder = new TextDecoder();
-    const thread  = document.getElementById('riley-messages');
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      fullText += decoder.decode(value, { stream: true });
-      bubble.textContent = fullText;
-      thread.scrollTop = thread.scrollHeight;
-    }
-
-    if (!fullText) throw new Error('Empty reply from Riley');
-
-    // Only update history after a successful response — no need to pop on error
-    rileyHistory.push(userMsg);
-    rileyHistory.push({ role: 'assistant', content: fullText });
-    if (rileyHistory.length > 40) rileyHistory = rileyHistory.slice(-40);
-
-  } catch(e) {
-    bubble.textContent = 'Sorry, something went wrong. (' + e.message + ')';
-    // rileyHistory is untouched — no cleanup needed
-  } finally {
-    bubble.classList.remove('streaming');
-    sendBtn.disabled = false;
-    input.disabled   = false;
-    input.focus();
-    const thread = document.getElementById('riley-messages');
-    thread.scrollTop = thread.scrollHeight;
-  }
-}
-
-function appendError(containerId, msg) {
-  const c = document.getElementById(containerId);
-  c.style.display = 'flex';
-  const sec = document.createElement('div');
-  sec.className = 'result-section';
-  sec.innerHTML = '<div class="result-section-title" style="color:var(--red)">Error</div>' +
-                  '<div class="result-text" style="color:var(--red)">' + esc(msg) + '</div>';
-  c.appendChild(sec);
-}
-
-/* ─────────────────────────────────────────
-   PIPELINE STATUS — load from Supabase via pipeline-status function
-───────────────────────────────────────── */
-var _pipelineData = null;
-
-async function loadPipelineStatus() {
-  try {
-    const res = await fetch(BASE + '/pipeline-status');
-    if (!res.ok) return;
-    _pipelineData = await res.json();
-    renderPipelineRuns(_pipelineData.pipeline_runs || []);
-    renderPerfCharts(_pipelineData.echo_scores || []);
-    renderSupabaseHistory(_pipelineData.published_posts || []);
-    updateSettingsLastRun(_pipelineData.pipeline_runs || []);
-  } catch(e) {
-    console.warn('[8:14] pipeline-status fetch failed (non-fatal):', e.message);
-  }
-}
-
-function renderPipelineRuns(runs) {
-  if (!runs.length) return;
-  const section = document.getElementById('pipeline-history-section');
-  section.style.display = 'block';
-  const list = document.getElementById('pipeline-run-list');
-  list.innerHTML = '';
-
-  const latest = runs[0];
-  const lastRunEl = document.getElementById('pipeline-last-run');
-  if (lastRunEl && latest) lastRunEl.textContent = 'Last: ' + fmtDate(latest.run_date);
-
-  runs.slice(0, 5).forEach(r => {
-    const row = document.createElement('div');
-    row.className = 'pipeline-run-row';
-    const statsStr = [
-      r.scout_topics_count ? r.scout_topics_count + ' topics' : '',
-      r.sage_posts_count   ? r.sage_posts_count + ' posts' : '',
-      r.buffer_posts_scheduled ? r.buffer_posts_scheduled + ' buffered' : '',
-    ].filter(Boolean).join(' · ') || 'no stats';
-    row.innerHTML =
-      '<span class="pipeline-run-date">' + esc(fmtDate(r.run_date)) + '</span>' +
-      '<span class="pipeline-run-stats">' + esc(statsStr) + '</span>' +
-      '<span class="status-badge status-' + esc(r.status || 'unknown') + '">' + esc(r.status || '?') + '</span>';
-    list.appendChild(row);
-  });
-}
-
-function renderPerfCharts(scores) {
-  const container = document.getElementById('perf-charts');
-  if (!container || !scores.length) return;
-  container.innerHTML = '';
-
-  // Format performance
-  const formatCounts = {};
-  scores.forEach(s => { if (s.format_winner) formatCounts[s.format_winner] = (formatCounts[s.format_winner] || 0) + 1; });
-  if (Object.keys(formatCounts).length) {
-    container.appendChild(buildBarChart('Format Performance', formatCounts));
-  }
-
-  // Pillar performance
-  const pillarCounts = {};
-  scores.forEach(s => { if (s.best_pillar) pillarCounts[s.best_pillar] = (pillarCounts[s.best_pillar] || 0) + 1; });
-  if (Object.keys(pillarCounts).length) {
-    container.appendChild(buildBarChart('Pillar Performance', pillarCounts));
-  }
-}
-
-function buildBarChart(title, counts) {
-  const card = document.createElement('div');
-  card.className = 'perf-chart';
-  const max = Math.max(...Object.values(counts));
-  let html = '<div class="perf-chart-title">' + esc(title) + '</div>';
-  Object.entries(counts).sort((a,b) => b[1]-a[1]).forEach(([label, val]) => {
-    const pct = max > 0 ? Math.round(val / max * 100) : 0;
-    html += '<div class="bar-row">' +
-      '<span class="bar-label">' + esc(label.slice(0,10)) + '</span>' +
-      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
-      '<span class="bar-val">' + val + '</span></div>';
-  });
-  card.innerHTML = html;
-  return card;
-}
-
-function renderSupabaseHistory(posts) {
-  if (!posts.length) return;
-  const list = document.getElementById('history-list');
-  list.innerHTML = '';
-  posts.slice(0, 20).forEach(p => {
-    const div = document.createElement('div');
-    div.className = 'post-entry';
-    const perf = p.buffer_update_id ? 'good' : 'avg';
-    div.innerHTML =
-      '<div class="post-platform">' + platIcon3(p.platform) + '</div>' +
-      '<div class="post-info">' +
-        '<div class="post-type">' + esc(p.post_type || 'Post') + '</div>' +
-        '<div class="post-date">' + esc(fmtDate(p.week_of)) + (p.buffer_update_id ? ' &#10003;' : '') + '</div>' +
-      '</div>' +
-      '<div class="post-metric ' + perf + '">' + esc(p.platform?.slice(0,2) || '??') + '</div>';
-    list.appendChild(div);
-  });
-}
-
-function refreshSupabaseHistory() { loadPipelineStatus(); }
-
-function updateSettingsLastRun(runs) {
-  const el = document.getElementById('settings-last-run');
-  if (el) el.textContent = runs[0] ? fmtDate(runs[0].run_date) + ' (' + (runs[0].status || '?') + ')' : 'Never';
-}
-
-function platIcon3(p) {
-  const s = (p||'').toLowerCase();
-  if (s.includes('instagram')) return '&#128247;';
-  if (s.includes('facebook'))  return '&#128309;';
-  if (s.includes('youtube'))   return '&#9654;&#65039;';
-  return '&#128196;';
-}
-
-function fmtDate(str) {
-  if (!str) return '—';
-  try { return new Date(str).toLocaleDateString('en-US', { month:'short', day:'numeric' }); } catch(e) { return str; }
-}
-
-/* ─────────────────────────────────────────
-   COUNTDOWN to next Sunday 6am MT
-───────────────────────────────────────── */
-var _countdownInterval = null;
-
-function startCountdown() {
-  updateCountdown();
-  _countdownInterval = setInterval(updateCountdown, 60000);
-}
-
-function updateCountdown() {
-  const el = document.getElementById('countdown-value');
-  if (!el) return;
-  const now = new Date();
-  // Next Sunday 12:00 UTC (= 6am MT)
-  const next = new Date(now);
-  const daysUntilSun = ((7 - now.getUTCDay()) % 7) || 7;
-  next.setUTCDate(next.getUTCDate() + daysUntilSun);
-  next.setUTCHours(12, 0, 0, 0);
-  const diff = next - now;
-  if (diff <= 0) { el.textContent = 'Running now'; return; }
-  const days  = Math.floor(diff / 864e5);
-  const hours = Math.floor((diff % 864e5) / 36e5);
-  const mins  = Math.floor((diff % 36e5) / 6e4);
-  el.textContent = days > 0 ? days + 'd ' + hours + 'h' : hours + 'h ' + mins + 'm';
-}
-
-/* ─────────────────────────────────────────
-   MANUAL PIPELINE TRIGGER
-───────────────────────────────────────── */
-async function triggerPipelineManual() {
-  const btn = document.getElementById('btn-override');
-  const settingsBtn = document.getElementById('trig-pipeline');
-  const resultEl = document.getElementById('trigger-result');
-  if (btn) btn.disabled = true;
-  if (settingsBtn) settingsBtn.disabled = true;
-  if (resultEl) resultEl.textContent = 'Starting pipeline&#8230;';
-
-  try {
-    const res = await fetch(BASE + '/weekly-pipeline', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ trigger: 'manual' }),
-    });
-    const data = await res.json();
-    const msg = data.status === 'success'
-      ? '&#10003; Pipeline complete — ' + (data.sage_posts || 0) + ' posts, ' + (data.buffer_scheduled || 0) + ' buffered'
-      : '&#9888; ' + (data.error || 'Pipeline returned partial result');
-    if (resultEl) resultEl.innerHTML = msg;
-    // Refresh status after a short delay
-    setTimeout(loadPipelineStatus, 2000);
-  } catch(e) {
-    if (resultEl) resultEl.textContent = 'Error: ' + e.message;
-  } finally {
-    if (btn) btn.disabled = false;
-    if (settingsBtn) settingsBtn.disabled = false;
-  }
-}
-
-/* Per-agent manual trigger from Settings */
-async function triggerAgent(agent, btn) {
-  const resultEl = document.getElementById('trigger-result');
-  const prompt = prompt('Message to send to ' + agent + ':', agent === 'scout' ? 'What is trending in sobriety and wellness this week?' : 'Run your standard analysis.');
-  if (prompt === null) return;
-  btn.disabled = true;
-  if (resultEl) resultEl.textContent = 'Running ' + agent + '&#8230;';
-  try {
-    const reply = await callAgent(agent, prompt);
-    if (resultEl) resultEl.textContent = agent + ' complete (' + reply.length + ' chars)';
-  } catch(e) {
-    if (resultEl) resultEl.textContent = agent + ' error: ' + e.message;
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-/* ─────────────────────────────────────────
-   BUFFER PROFILE IDs
-───────────────────────────────────────── */
-function loadBufferProfiles() {
-  const v = localStorage.getItem(LS.PROFILES);
-  if (v) {
-    const el = document.getElementById('buffer-profiles-input');
-    if (el) el.value = v;
-  }
-}
-
-function saveBufferProfiles() {
-  const v = (document.getElementById('buffer-profiles-input')?.value || '').trim();
-  if (!v) return;
-  localStorage.setItem(LS.PROFILES, v);
-  const el = document.getElementById('profiles-status');
-  if (el) { el.textContent = '&#10003; Profile IDs saved.'; el.className = 'settings-status ok'; }
+function escHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>

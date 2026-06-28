@@ -1,0 +1,457 @@
+/* ============================================================
+   dashboard.css
+   Shared styles for all Riley Life Coach dashboard pages.
+   Every dashboard HTML file links this stylesheet.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink:        #0f0e0d;
+  --parchment:  #f5f0e8;
+  --warm-white: #faf8f4;
+  --gold:       #c9a84c;
+  --gold-dim:   rgba(201,168,76,0.15);
+  --mist:       #e8e4dc;
+  --smoke:      #8a8578;
+  --green:      #4a7c59;
+  --red:        #8b3a3a;
+  --blue:       #2a4a6e;
+  --sidebar-w:  240px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--warm-white);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+
+.dash-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+
+.dash-main {
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+.dash-content {
+  padding: 32px;
+  max-width: 1100px;
+}
+
+/* ─── SIDEBAR ────────────────────────────────────────────── */
+
+.sidebar {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 28px 24px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 8px;
+}
+
+.sidebar-logo-mark {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--parchment);
+}
+
+.sidebar-logo-mark span { color: var(--gold); }
+
+.sidebar-logo-sub {
+  font-size: 11px;
+  color: var(--smoke);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.sidebar-nav { padding: 8px 0; }
+
+.sidebar-section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  color: var(--smoke);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 16px 24px 6px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  font-size: 13px;
+  color: var(--smoke);
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+  border-left: 2px solid transparent;
+}
+
+.sidebar-nav-item:hover {
+  color: var(--parchment);
+  background: rgba(255,255,255,0.04);
+}
+
+.sidebar-nav-item.active {
+  color: var(--parchment);
+  background: rgba(255,255,255,0.04);
+  border-left-color: var(--gold);
+}
+
+.nav-icon { font-size: 15px; }
+
+.sidebar-spacer { flex: 1; }
+
+.sidebar-user {
+  padding: 16px 24px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.user-info { flex: 1; min-width: 0; }
+
+.user-name {
+  font-size: 12px;
+  color: var(--parchment);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-plan { font-size: 10px; color: var(--gold); }
+
+.sign-out-btn {
+  background: none;
+  border: none;
+  color: var(--smoke);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.sign-out-btn:hover { color: var(--parchment); }
+
+/* ─── TOPBAR ─────────────────────────────────────────────── */
+
+.dash-topbar {
+  padding: 20px 32px;
+  background: white;
+  border-bottom: 1px solid var(--mist);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topbar-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.topbar-sub {
+  font-size: 12px;
+  color: var(--smoke);
+  margin-top: 2px;
+}
+
+/* ─── SECTION LABELS ─────────────────────────────────────── */
+
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: var(--smoke);
+  text-transform: uppercase;
+  margin: 28px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--mist);
+}
+
+/* ─── CARDS ──────────────────────────────────────────────── */
+
+.card {
+  background: white;
+  border: 1px solid var(--mist);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--mist);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.card-action {
+  font-size: 12px;
+  color: var(--blue);
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  text-decoration: none;
+}
+
+.card-body { padding: 20px; }
+
+/* ─── STAT CARDS ─────────────────────────────────────────── */
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--mist);
+  padding: 20px;
+  border-radius: 2px;
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--smoke);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: 'DM Serif Display', serif;
+  font-size: 32px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.stat-sub {
+  font-size: 11px;
+  color: var(--smoke);
+  margin-top: 4px;
+}
+
+.stat-trend {
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  border-radius: 1px;
+  transition: opacity 0.15s, background 0.15s;
+  text-decoration: none;
+}
+
+.btn-gold  { background: var(--gold); color: var(--ink); }
+.btn-dark  { background: var(--ink); color: var(--parchment); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1px solid var(--mist); }
+
+.btn:hover { opacity: 0.85; }
+
+/* ─── PROGRESS BARS ──────────────────────────────────────── */
+
+.progress-bar-wrap {
+  height: 4px;
+  background: var(--mist);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.progress-bar-fill.green { background: var(--green); }
+
+/* ─── MOOD SELECTOR ──────────────────────────────────────── */
+
+.mood-scale {
+  display: flex;
+  gap: 8px;
+}
+
+.mood-btn {
+  flex: 1;
+  padding: 10px 6px;
+  background: var(--warm-white);
+  border: 1.5px solid var(--mist);
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 20px;
+  text-align: center;
+  transition: border-color 0.12s, transform 0.1s;
+}
+
+.mood-btn:hover     { border-color: var(--gold); transform: scale(1.08); }
+.mood-btn.selected  { border-color: var(--gold); background: var(--gold-dim); }
+
+/* ─── STREAK DOTS ────────────────────────────────────────── */
+
+.streak-dots {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.streak-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mist);
+}
+.streak-dot.done  { background: var(--gold); }
+.streak-dot.today { background: var(--green); }
+.streak-dot.miss  { background: var(--red); opacity: 0.4; }
+
+/* ─── EMPTY STATE ────────────────────────────────────────── */
+
+.empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--smoke);
+}
+
+.empty-state-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.empty-state-sub {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ─── LOADING SPINNER ────────────────────────────────────── */
+
+.loading-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--smoke);
+  font-size: 13px;
+  gap: 10px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--mist);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ─── BADGE / TAG ────────────────────────────────────────── */
+
+.tag {
+  display: inline-block;
+  font-size: 9px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 1px;
+}
+
+.tag-gold  { background: var(--gold-dim); color: var(--gold); }
+.tag-green { background: rgba(74,124,89,0.12); color: var(--green); }
+.tag-smoke { background: rgba(138,133,120,0.12); color: var(--smoke); }
+
+/* ─── SCROLLBAR ──────────────────────────────────────────── */
+
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .dash-layout { grid-template-columns: 1fr; }
+  .sidebar     { display: none; }
+  .stats-row   { grid-template-columns: 1fr 1fr; }
+  .dash-content { padding: 20px 16px; }
+}

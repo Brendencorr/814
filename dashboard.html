@@ -11,7 +11,7 @@
 <body>
 
 <div class="dash-layout">
-  <div id="sidebar-mount"></div>
+  <aside class="sidebar" id="sidebar-mount"></aside>
 
   <main class="dash-main">
     <div class="dash-topbar">
@@ -105,7 +105,12 @@
   const { user, client } = ctx;
 
   // ── Sidebar + greeting ──────────────────────────────────────
-  document.getElementById('sidebar-mount').innerHTML = renderSidebar('dashboard', user);
+  const _sidebarHtml = renderSidebar('dashboard', user);
+  // renderSidebar returns a full <aside> — extract its inner HTML since sidebar-mount IS the aside
+  const _tmp = document.createElement('div');
+  _tmp.innerHTML = _sidebarHtml;
+  const _aside = _tmp.querySelector('aside') || _tmp;
+  document.getElementById('sidebar-mount').innerHTML = _aside.innerHTML;
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -118,7 +123,9 @@
   // ── Load all data in parallel ───────────────────────────────
   const today = new Date().toISOString().split('T')[0];
 
-  const [
+  let checkinRes, briefRes, sobrietyRes, goalsRes, programsRes, conversationsRes, checkinsWeekRes;
+  try {
+  [
     checkinRes,
     briefRes,
     sobrietyRes,
@@ -147,6 +154,12 @@
       .gte('checkin_date', getDateDaysAgo(7))
       .order('checkin_date', { ascending: false })
   ]);
+  } catch (err) {
+    console.error('Dashboard data load error:', err);
+    // Provide safe empty defaults so page renders instead of freezing
+    checkinRes = briefRes = sobrietyRes = { data: null, error: err };
+    goalsRes = programsRes = conversationsRes = checkinsWeekRes = { data: [], error: err };
+  }
 
   // ── Stats ───────────────────────────────────────────────────
 
@@ -303,7 +316,7 @@
 
   // ── Programs ────────────────────────────────────────────────
   const programsBody = document.getElementById('programs-body');
-  const enrollments = programsRes.data || [];
+  const enrollments = (programsRes.data || []).filter(e => !programsRes.error);
   if (enrollments.length === 0) {
     programsBody.innerHTML = `<div style="font-size:13px;color:var(--smoke);text-align:center;padding:20px 0">No programs yet — <a href="/programs.html" style="color:var(--gold)">browse programs</a></div>`;
   } else {

@@ -89,6 +89,38 @@
   to   = "/programs.html"
   status = 200
 
+
+# ── Direct .html paths — force override needed since catch-all has force=true ──
+[[redirects]]
+  from   = "https://riley.eight14.us/dashboard.html"
+  to     = "/dashboard.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "https://riley.eight14.us/brief.html"
+  to     = "/brief.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "https://riley.eight14.us/conversations.html"
+  to     = "/conversations.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "https://riley.eight14.us/tracker.html"
+  to     = "/tracker.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "https://riley.eight14.us/programs.html"
+  to     = "/programs.html"
+  status = 200
+  force  = true
+
 # ── Riley catch-all (anonymous chat for everything else) ──
 [[redirects]]
   from = "https://riley.eight14.us/*"

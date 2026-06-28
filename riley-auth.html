@@ -413,7 +413,7 @@ async function boot() {
   // Check if already signed in on page load → go straight to dashboard
   const { data: { session: existingSession } } = await sb.auth.getSession();
   if (existingSession) {
-    window.location.href = '/dashboard.html';
+    window.location.href = '/dashboard';
     return;
   }
 
@@ -421,7 +421,7 @@ async function boot() {
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
       // Redirect authenticated users to the dashboard
-      window.location.href = '/dashboard.html';
+      window.location.href = '/dashboard';
       return;
     }
     if (session?.user) {

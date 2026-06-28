@@ -99,8 +99,13 @@
 
 <script>
 (async () => {
+  try {
   const ctx = await initDashboard();
-  if (!ctx) return;
+  if (!ctx) {
+    document.getElementById('greeting').textContent = 'Session expired — please sign in again.';
+    setTimeout(() => window.location.href = 'https://riley.eight14.us', 2000);
+    return;
+  }
 
   const { user, client } = ctx;
 
@@ -373,6 +378,13 @@
     }
   };
 
+  } catch (err) {
+    console.error('[Dashboard] Fatal error:', err);
+    const errBanner = document.createElement('div');
+    errBanner.style.cssText = 'position:fixed;bottom:16px;right:16px;background:#8b3a3a;color:#fff;padding:12px 18px;border-radius:4px;font-size:13px;z-index:9999;max-width:360px;line-height:1.4';
+    errBanner.textContent = 'Dashboard error: ' + err.message + ' — check the console for details.';
+    document.body.appendChild(errBanner);
+  }
 })();
 
 function getDateDaysAgo(n) {

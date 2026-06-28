@@ -20,6 +20,7 @@ let currentUser = null;
 // Redirects to riley.eight14.us if not authenticated.
 
 async function initDashboard() {
+  try {
   // 1. Wait for site config
   const config = await getSiteConfig();
 
@@ -49,6 +50,10 @@ async function initDashboard() {
     }, { onConflict: 'id', ignoreDuplicates: false });
 
   return { user: currentUser, client: supabase };
+  } catch (err) {
+    console.error('[dashboard-auth] initDashboard error:', err.message);
+    return null;
+  }
 }
 
 // ─── SIGN OUT ────────────────────────────────────────────────
@@ -66,11 +71,21 @@ async function getSiteConfig() {
   const cached = sessionStorage.getItem('siteConfig');
   if (cached) return JSON.parse(cached);
 
-  const res = await fetch('/.netlify/functions/site-config');
-  if (!res.ok) throw new Error('Failed to load site config');
-  const config = await res.json();
-  sessionStorage.setItem('siteConfig', JSON.stringify(config));
-  return config;
+  try {
+    const res = await fetch('/.netlify/functions/site-config');
+    if (!res.ok) throw new Error('site-config returned ' + res.status);
+    const config = await res.json();
+    if (!config.supabaseUrl || !config.supabaseAnonKey) throw new Error('Incomplete config');
+    sessionStorage.setItem('siteConfig', JSON.stringify(config));
+    return config;
+  } catch (e) {
+    console.warn('[dashboard-auth] site-config failed, using fallback:', e.message);
+    // Public keys — safe to embed as fallback
+    return {
+      supabaseUrl:     'https://tglljvjixlolaguycvbb.supabase.co',
+      supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+    };
+  }
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────

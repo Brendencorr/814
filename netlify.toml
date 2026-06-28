@@ -122,11 +122,12 @@
   force  = true
 
 # ── Riley catch-all (anonymous chat for everything else) ──
+# No force=true here — lets actual files (CSS, JS, HTML) be served directly.
+# Only applies to paths that don't match an existing file.
 [[redirects]]
   from = "https://riley.eight14.us/*"
   to = "/riley-auth.html"
   status = 200
-  force = true
 
 [[redirects]]
   from = "https://login.eight14.us/*"

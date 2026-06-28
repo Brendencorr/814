@@ -2,7 +2,6 @@
 // dashboard-auth.js
 // Shared auth + Supabase client for all dashboard pages.
 // Every dashboard HTML file loads this first via:
-//   <script src="/dashboard-auth.js"></script>
 // ============================================================
 
 // ─── FALLBACK CONFIG ─────────────────────────────────────────

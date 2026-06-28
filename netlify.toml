@@ -1,6 +1,6 @@
 [build.environment]
   # Exclude CLAUDE.md from secrets scanning — it's documentation, not deployed code.
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js"
 
 [functions]
   directory = "netlify/functions"

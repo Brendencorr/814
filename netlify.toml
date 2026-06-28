@@ -41,6 +41,12 @@
   schedule = "0 12 * * 0"
 
 [[redirects]]
+  from = "https://riley.eight14.us/*"
+  to = "/riley-auth.html"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "https://login.eight14.us/*"
   to = "/login.html"
   status = 200

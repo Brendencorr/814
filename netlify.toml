@@ -121,6 +121,20 @@
   status = 200
   force  = true
 
+
+# ── Static assets — serve directly, never catch-all ──────────
+[[redirects]]
+  from   = "https://riley.eight14.us/dashboard-auth.js"
+  to     = "/dashboard-auth.js"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "https://riley.eight14.us/dashboard.css"
+  to     = "/dashboard.css"
+  status = 200
+  force  = true
+
 # ── Riley catch-all (anonymous chat for everything else) ──
 # No force=true here — lets actual files (CSS, JS, HTML) be served directly.
 # Only applies to paths that don't match an existing file.

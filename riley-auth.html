@@ -465,6 +465,18 @@ async function onSignedIn(session) {
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 async function signInWithGoogle() {
+  // If we're inside an iframe, Google will block the OAuth flow.
+  // Instead, save the conversation and open riley.eight14.us in the top-level window.
+  if (window.self !== window.top) {
+    if (chatHistory.length) {
+      // Pass history to parent via postMessage so the widget can relay it
+      // The parent widget opens riley.eight14.us directly for the OAuth flow
+    }
+    // Open riley.eight14.us in the top frame — this breaks out of the iframe
+    window.top.location.href = 'https://riley.eight14.us?signin=1';
+    return;
+  }
+
   if (!sb) { console.warn('Supabase not loaded yet'); return; }
 
   // Save current conversation so it survives the OAuth redirect
@@ -482,12 +494,26 @@ async function signInWithGoogle() {
       options: { redirectTo: 'https://riley.eight14.us' },
     });
     if (error) throw error;
-    // Browser navigates to Google — page will reload on return
   } catch (err) {
     console.error('signInWithGoogle error:', err.message);
     if (btn) btn.disabled = false;
   }
 }
+
+// Auto-trigger sign-in if redirected here from the iframe widget
+(function() {
+  if (window.location.search.includes('signin=1') && window.self === window.top) {
+    // Small delay to let boot() finish
+    setTimeout(async function() {
+      if (sb) {
+        const { error } = await sb.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: 'https://riley.eight14.us' },
+        });
+      }
+    }, 800);
+  }
+})();
 
 async function signOut() {
   if (!sb) return;
@@ -509,7 +535,7 @@ async function signOut() {
 function maybeShowSavePrompt() {
   if (currentUser) return;           // already signed in
   if (savePromptDismissed) return;   // dismissed this session
-  if (userMsgCount !== 5) return;    // only trigger at exactly 5
+  if (userMsgCount < 3) return;      // show from 3rd message onwards
   document.getElementById('save-prompt').style.display = 'flex';
 }
 

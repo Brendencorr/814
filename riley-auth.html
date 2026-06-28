@@ -32,7 +32,6 @@ html, body {
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
 
-/* ── Shared layout ── */
 .page { display: flex; flex-direction: column; height: 100dvh; }
 
 /* ── Header ── */
@@ -47,9 +46,10 @@ header {
   flex-shrink: 0;
 }
 .logo { font-size: 1.4rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; }
+.header-label { font-size: .78rem; color: var(--muted2); }
 .user-pill {
   margin-left: auto;
-  display: flex;
+  display: none;
   align-items: center;
   gap: .5rem;
   font-size: .78rem;
@@ -62,6 +62,7 @@ header {
   border: 1px solid var(--border);
   object-fit: cover;
   flex-shrink: 0;
+  display: none;
 }
 .sign-out-btn {
   padding: .3rem .7rem;
@@ -75,43 +76,18 @@ header {
 }
 .sign-out-btn:hover { color: var(--red); border-color: var(--red); }
 
-/* ── Unauthenticated state ── */
-#sign-in-screen {
+/* ── Chat (always visible) ── */
+#chat-screen {
   flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-.sign-in-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
+  overflow: hidden;
+  max-width: 720px;
   width: 100%;
-  max-width: 380px;
-  text-align: center;
+  margin: 0 auto;
 }
-.big-logo { font-size: 2.5rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; margin-bottom: 4px; }
-.big-sub { font-size: .7rem; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 1.5rem; }
-.sign-in-desc { font-size: .85rem; color: var(--muted2); margin-bottom: 1.75rem; line-height: 1.55; }
-.google-btn {
-  display: flex; align-items: center; justify-content: center; gap: .75rem;
-  width: 100%; padding: .85rem 1.25rem;
-  background: #fff; border: none; border-radius: 10px;
-  color: #333; font-size: .9rem; font-weight: 600;
-  cursor: pointer; transition: opacity .2s;
-  box-shadow: 0 1px 6px rgba(0,0,0,.4);
-}
-.google-btn:hover { opacity: .9; }
-.google-btn:disabled { opacity: .5; cursor: default; }
-.google-icon { width: 20px; height: 20px; flex-shrink: 0; }
 
-/* ── Authenticated chat ── */
-#chat-screen { flex: 1; display: none; flex-direction: column; overflow: hidden; max-width: 720px; width: 100%; margin: 0 auto; }
-
-/* Sobriety date banner */
+/* ── Sobriety bars (signed-in only) ── */
 #sobriety-banner {
   background: var(--card);
   border-bottom: 1px solid var(--border);
@@ -132,10 +108,8 @@ header {
   color: var(--muted2);
   font-size: .68rem;
   cursor: pointer;
-  transition: color .15s;
 }
 .sobriety-edit-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
-
 #sobriety-set-bar {
   background: rgba(201,168,76,.06);
   border-bottom: 1px solid rgba(201,168,76,.2);
@@ -166,9 +140,7 @@ header {
   font-size: .78rem;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity .2s;
 }
-.save-sobriety-btn:hover { opacity: .85; }
 .skip-btn {
   padding: .35rem .65rem;
   background: transparent;
@@ -178,7 +150,7 @@ header {
   cursor: pointer;
 }
 
-/* Chat messages */
+/* ── Messages ── */
 .messages {
   flex: 1;
   overflow-y: auto;
@@ -196,13 +168,12 @@ header {
   word-break: break-word;
   white-space: pre-wrap;
 }
-.msg.user { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
+.msg.user  { background: var(--gold); color: #000; font-weight: 500; align-self: flex-end; border-bottom-right-radius: 4px; }
 .msg.riley { background: var(--card2); color: var(--text); align-self: flex-start; border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-.msg.riley.thinking { color: var(--muted2); font-style: italic; }
 .msg.riley.streaming::after { content: '▋'; color: var(--gold); animation: blink-cur .9s step-end infinite; }
 @keyframes blink-cur { 0%,100%{opacity:1} 50%{opacity:0} }
 
-/* Welcome / starters */
+/* ── Welcome / starters ── */
 .welcome {
   flex: 1;
   display: flex;
@@ -214,7 +185,7 @@ header {
   gap: .75rem;
 }
 .welcome h2 { font-size: 1.1rem; font-weight: 700; color: var(--text); }
-.welcome p { font-size: .85rem; color: var(--muted2); max-width: 320px; }
+.welcome p  { font-size: .85rem; color: var(--muted2); max-width: 320px; }
 .starters { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; margin-top: .5rem; }
 .starter {
   padding: .45rem .85rem;
@@ -228,7 +199,55 @@ header {
 }
 .starter:hover { border-color: var(--gold); color: var(--gold); }
 
-/* Input row */
+/* ── Save prompt banner ── */
+#save-prompt {
+  display: none;
+  align-items: center;
+  gap: .85rem;
+  padding: .75rem 1.25rem;
+  background: var(--card);
+  border-top: 1px solid var(--border2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+#save-prompt p {
+  flex: 1;
+  font-size: .82rem;
+  color: var(--text);
+  min-width: 180px;
+}
+.save-prompt-google {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .9rem;
+  background: #fff;
+  border: none;
+  border-radius: 7px;
+  color: #333;
+  font-size: .78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity .15s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.save-prompt-google:hover { opacity: .9; }
+.save-prompt-google:disabled { opacity: .5; cursor: default; }
+.save-prompt-google svg { width: 16px; height: 16px; flex-shrink: 0; }
+.save-prompt-dismiss {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: .2rem .4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.save-prompt-dismiss:hover { color: var(--text); }
+
+/* ── Input row ── */
 .input-row {
   display: flex;
   gap: .6rem;
@@ -272,12 +291,11 @@ header {
 .send-btn:hover { opacity: .85; }
 .send-btn:disabled { opacity: .35; cursor: default; }
 
-.status-line { font-size: .75rem; color: var(--muted); text-align: center; padding: .4rem; }
-
 @media (max-width: 480px) {
   .messages { padding: .85rem; }
   .msg { max-width: 92%; font-size: .85rem; }
   .input-row { padding: .75rem .85rem; }
+  #save-prompt { padding: .65rem .85rem; }
 }
 </style>
 </head>
@@ -285,45 +303,24 @@ header {
 <div class="page">
   <header>
     <div class="logo">8:14</div>
-    <span style="font-size:.78rem;color:var(--muted2)">Riley</span>
-    <div class="user-pill" id="user-pill" style="display:none">
+    <span class="header-label">Riley</span>
+    <div class="user-pill" id="user-pill">
       <img id="user-avatar" class="user-avatar" src="" alt="">
       <span id="user-name"></span>
       <button class="sign-out-btn" onclick="signOut()">Sign out</button>
     </div>
   </header>
 
-  <!-- ── Unauthenticated ── -->
-  <div id="sign-in-screen">
-    <div class="sign-in-card">
-      <div class="big-logo">8:14</div>
-      <div class="big-sub">The Rebuild Project</div>
-      <p class="sign-in-desc">
-        Sign in to talk with Riley, save your conversations, and track your rebuild.
-      </p>
-      <button class="google-btn" id="google-btn" onclick="signInWithGoogle()">
-        <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-        </svg>
-        Continue with Google
-      </button>
-      <div class="status-line" id="signin-status"></div>
-    </div>
-  </div>
-
-  <!-- ── Authenticated chat ── -->
+  <!-- Chat is always visible — no login gate -->
   <div id="chat-screen">
-    <!-- Sobriety date — shows after login if not set -->
+
+    <!-- Sobriety date (signed-in users only) -->
     <div id="sobriety-set-bar">
       <label>When did you start your rebuild?</label>
-      <input type="date" id="sobriety-date-input" placeholder="Optional">
+      <input type="date" id="sobriety-date-input">
       <button class="save-sobriety-btn" onclick="saveSobrietyDate()">Save</button>
       <button class="skip-btn" onclick="hideSobrietyBar()">Skip for now</button>
     </div>
-    <!-- Sobriety date — shows when already set -->
     <div id="sobriety-banner">
       <div>
         <div class="sobriety-label">Your rebuild</div>
@@ -332,7 +329,7 @@ header {
       <button class="sobriety-edit-btn" onclick="showSobrietyBar()">Edit</button>
     </div>
 
-    <!-- Welcome / message thread (toggled by JS) -->
+    <!-- Welcome screen -->
     <div class="welcome" id="chat-welcome">
       <h2 id="welcome-heading">Hey. What's on your mind?</h2>
       <p>Ask anything about sobriety, anxiety, sleep, grief, nutrition — whatever you're working through right now.</p>
@@ -345,7 +342,24 @@ header {
         <button class="starter" onclick="starter(this)">How do I talk to my family about this?</button>
       </div>
     </div>
+
+    <!-- Message thread -->
     <div class="messages" id="messages" style="display:none"></div>
+
+    <!-- Save prompt — appears after 5th message, non-blocking -->
+    <div id="save-prompt">
+      <p>Want to save this conversation and track your rebuild?</p>
+      <button class="save-prompt-google" id="save-prompt-btn" onclick="signInWithGoogle()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Sign in with Google
+      </button>
+      <button class="save-prompt-dismiss" onclick="dismissSavePrompt()" title="Dismiss">&#215;</button>
+    </div>
 
     <div class="input-row">
       <textarea id="msg-input" placeholder="Message Riley…" rows="1"
@@ -356,63 +370,78 @@ header {
   </div>
 </div>
 
-<!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ── Configuration loaded at runtime from /.netlify/functions/site-config ──────
-// No credentials are hardcoded here. Values come from Netlify environment variables.
 const API_BASE = '/.netlify/functions';
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let sb          = null; // Supabase client, created after config loads
-let currentUser = null;
-let userProfile = null;
-let sessionId   = crypto.randomUUID();
-let chatHistory = []; // [{role, content}]
+let sb            = null;
+let currentUser   = null;
+let userProfile   = null;
+let sessionId     = crypto.randomUUID();
+let chatHistory   = [];
+let userMsgCount  = 0;   // counts user messages sent this session
+let savePromptDismissed = false;
 
-// ── Boot: fetch config then initialise Supabase ────────────────────────────────
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// Load immediately — chat is open to everyone. Auth is optional.
 async function boot() {
-  let cfg;
-  try {
-    const res = await fetch(API_BASE + '/site-config');
-    cfg = await res.json();
-    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
-  } catch (e) {
-    console.error('site-config fetch failed:', e.message);
-    // Show sign-in screen with a configuration error
-    document.getElementById('signin-status').textContent = 'Configuration error — please try again later.';
-    showSignIn();
-    return;
+  // Restore conversation from sessionStorage if user is returning from OAuth redirect
+  const savedHistory = sessionStorage.getItem('riley_pre_auth_history');
+  if (savedHistory) {
+    try {
+      chatHistory = JSON.parse(savedHistory);
+      userMsgCount = parseInt(sessionStorage.getItem('riley_pre_auth_msg_count') || '0', 10);
+    } catch {}
+    sessionStorage.removeItem('riley_pre_auth_history');
+    sessionStorage.removeItem('riley_pre_auth_msg_count');
+    if (chatHistory.length) renderHistory(chatHistory);
   }
 
-  sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  // Load Supabase config
+  try {
+    const res = await fetch(API_BASE + '/site-config');
+    const cfg = await res.json();
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
+    sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  } catch (e) {
+    console.warn('site-config failed (chat still works without auth):', e.message);
+    return; // Chat still works — just no auth features
+  }
 
-  // ── Auth state listener ────────────────────────────────────────────────────
+  // Listen for auth state changes (handles OAuth callback return)
   sb.auth.onAuthStateChange(async (event, session) => {
     if (session?.user) {
       currentUser = session.user;
       await onSignedIn(session);
     } else {
       currentUser = null;
-      showSignIn();
+      // Not signed in — chat still works, no action needed
     }
   });
 }
 boot();
 
+// ── Signed-in state ───────────────────────────────────────────────────────────
 async function onSignedIn(session) {
-  // Show user pill in header
-  const pill   = document.getElementById('user-pill');
-  const avatar = document.getElementById('user-avatar');
-  const name   = document.getElementById('user-name');
-  pill.style.display = 'flex';
-  if (session.user.user_metadata?.picture || session.user.user_metadata?.avatar_url) {
-    avatar.src = session.user.user_metadata.picture || session.user.user_metadata.avatar_url;
-    avatar.style.display = 'block';
-  }
-  name.textContent = session.user.user_metadata?.name || session.user.email || '';
+  // Hide the save prompt — they just signed in
+  hideSavePrompt();
 
-  // Load profile + conversation history via auth-handler
+  // Show user pill in header
+  const pill = document.getElementById('user-pill');
+  const avatar = document.getElementById('user-avatar');
+  const nameEl = document.getElementById('user-name');
+  pill.style.display = 'flex';
+  const pic = session.user.user_metadata?.picture || session.user.user_metadata?.avatar_url;
+  if (pic) { avatar.src = pic; avatar.style.display = 'block'; }
+  nameEl.textContent = session.user.user_metadata?.name || session.user.email || '';
+
+  // Personalise welcome heading
+  const firstName = session.user.user_metadata?.given_name ||
+                    session.user.user_metadata?.name?.split(' ')[0] || '';
+  if (firstName) document.getElementById('welcome-heading').textContent = `Hey ${firstName}. What's on your mind?`;
+
+  // Load profile and past conversation from auth-handler
   try {
     const res  = await fetch(API_BASE + '/auth-handler', {
       method: 'POST',
@@ -424,88 +453,97 @@ async function onSignedIn(session) {
       userProfile = data.user;
       renderSobrietyInfo();
     }
-    if (data.messages?.length) {
+    // Only load past messages if the current conversation is empty
+    if (!chatHistory.length && data.messages?.length) {
       chatHistory = data.messages;
       renderHistory(data.messages);
     }
   } catch (e) {
     console.warn('auth-handler get_session failed:', e.message);
   }
-
-  // Update welcome heading with first name
-  const firstName = (session.user.user_metadata?.given_name ||
-                     session.user.user_metadata?.name?.split(' ')[0] ||
-                     '');
-  if (firstName) document.getElementById('welcome-heading').textContent = `Hey ${firstName}. What's on your mind?`;
-
-  showChat();
 }
 
-function showSignIn() {
-  document.getElementById('sign-in-screen').style.display = 'flex';
-  document.getElementById('chat-screen').style.display = 'none';
-}
-
-function showChat() {
-  document.getElementById('sign-in-screen').style.display = 'none';
-  document.getElementById('chat-screen').style.display    = 'flex';
-}
-
+// ── Google OAuth ──────────────────────────────────────────────────────────────
 async function signInWithGoogle() {
-  if (!sb) { document.getElementById('signin-status').textContent = 'Still loading — try again in a moment.'; return; }
-  const btn = document.getElementById('google-btn');
-  btn.disabled = true;
-  document.getElementById('signin-status').textContent = 'Opening Google sign-in…';
+  if (!sb) { console.warn('Supabase not loaded yet'); return; }
+
+  // Save current conversation so it survives the OAuth redirect
+  if (chatHistory.length) {
+    sessionStorage.setItem('riley_pre_auth_history', JSON.stringify(chatHistory));
+    sessionStorage.setItem('riley_pre_auth_msg_count', String(userMsgCount));
+  }
+
+  const btn = document.getElementById('save-prompt-btn');
+  if (btn) btn.disabled = true;
+
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: 'https://riley.eight14.us' },
     });
     if (error) throw error;
+    // Browser navigates to Google — page will reload on return
   } catch (err) {
-    document.getElementById('signin-status').textContent = 'Error: ' + err.message;
-    btn.disabled = false;
+    console.error('signInWithGoogle error:', err.message);
+    if (btn) btn.disabled = false;
   }
 }
 
 async function signOut() {
   if (!sb) return;
   await sb.auth.signOut();
-  chatHistory = [];
+  currentUser = null;
   userProfile = null;
+  chatHistory = [];
+  userMsgCount = 0;
+  document.getElementById('user-pill').style.display = 'none';
+  document.getElementById('user-avatar').style.display = 'none';
   document.getElementById('messages').innerHTML = '';
   document.getElementById('messages').style.display = 'none';
   document.getElementById('chat-welcome').style.display = 'flex';
-  document.getElementById('user-pill').style.display = 'none';
+  hideSobrietyBar();
+  document.getElementById('sobriety-banner').style.display = 'none';
+}
+
+// ── Save prompt ───────────────────────────────────────────────────────────────
+function maybeShowSavePrompt() {
+  if (currentUser) return;           // already signed in
+  if (savePromptDismissed) return;   // dismissed this session
+  if (userMsgCount !== 5) return;    // only trigger at exactly 5
+  document.getElementById('save-prompt').style.display = 'flex';
+}
+
+function dismissSavePrompt() {
+  savePromptDismissed = true;
+  hideSavePrompt();
+}
+
+function hideSavePrompt() {
+  document.getElementById('save-prompt').style.display = 'none';
 }
 
 // ── Sobriety date ─────────────────────────────────────────────────────────────
 function renderSobrietyInfo() {
   if (!userProfile) return;
   if (userProfile.sobriety_date) {
-    const d = new Date(userProfile.sobriety_date);
-    const days = Math.floor((Date.now() - d) / 86400000);
+    const days = Math.floor((Date.now() - new Date(userProfile.sobriety_date)) / 86400000);
     const months = Math.floor(days / 30);
-    const label = months >= 2 ? `${months} months sober` : `${days} day${days !== 1 ? 's' : ''} sober`;
-    document.getElementById('sobriety-display').textContent = label;
+    document.getElementById('sobriety-display').textContent =
+      months >= 2 ? `${months} months sober` : `${days} day${days !== 1 ? 's' : ''} sober`;
     document.getElementById('sobriety-banner').style.display = 'flex';
     document.getElementById('sobriety-set-bar').style.display = 'none';
   } else {
-    // First login with no sobriety date — show the set bar
     document.getElementById('sobriety-set-bar').style.display = 'flex';
     document.getElementById('sobriety-banner').style.display = 'none';
   }
 }
-
 function showSobrietyBar() {
   document.getElementById('sobriety-set-bar').style.display = 'flex';
   document.getElementById('sobriety-banner').style.display = 'none';
 }
-
 function hideSobrietyBar() {
   document.getElementById('sobriety-set-bar').style.display = 'none';
 }
-
 async function saveSobrietyDate() {
   const val = document.getElementById('sobriety-date-input').value;
   if (!val || !currentUser || !sb) return;
@@ -515,20 +553,13 @@ async function saveSobrietyDate() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'update_profile',
-        token: session.access_token,
-        user_id: currentUser.id,
-        sobriety_date: val,
+        action: 'update_profile', token: session.access_token,
+        user_id: currentUser.id, sobriety_date: val,
       }),
     });
     const data = await res.json();
-    if (data.profile) {
-      userProfile = data.profile;
-      renderSobrietyInfo();
-    }
-  } catch (e) {
-    console.warn('saveSobrietyDate failed:', e.message);
-  }
+    if (data.profile) { userProfile = data.profile; renderSobrietyInfo(); }
+  } catch (e) { console.warn('saveSobrietyDate failed:', e.message); }
 }
 
 // ── Chat ──────────────────────────────────────────────────────────────────────
@@ -537,6 +568,7 @@ function renderHistory(messages) {
   const thread = document.getElementById('messages');
   document.getElementById('chat-welcome').style.display = 'none';
   thread.style.display = 'flex';
+  thread.innerHTML = '';
   messages.forEach(m => addMsg(m.role, m.content));
 }
 
@@ -544,7 +576,6 @@ function addMsg(role, text) {
   const thread = document.getElementById('messages');
   document.getElementById('chat-welcome').style.display = 'none';
   thread.style.display = 'flex';
-
   const div = document.createElement('div');
   div.className = 'msg ' + (role === 'user' ? 'user' : 'riley');
   div.textContent = text;
@@ -577,6 +608,10 @@ async function send() {
   const userMsg = { role: 'user', content: text };
   const outboundMessages = [...chatHistory, userMsg];
 
+  // Increment user message count and maybe show save prompt
+  userMsgCount++;
+  maybeShowSavePrompt();
+
   sendBtn.disabled = true;
   input.disabled   = true;
 
@@ -587,13 +622,11 @@ async function send() {
 
   try {
     const payload = { messages: outboundMessages };
+    // Include user_id for signed-in users; omit for anon (server handles null gracefully)
     if (currentUser) {
       payload.user_id    = currentUser.id;
       payload.session_id = sessionId;
     }
-
-    console.log('[riley] outboundMessages:', JSON.stringify(outboundMessages));
-    console.log('[riley] payload:', JSON.stringify(payload));
 
     const res = await fetch(API_BASE + '/riley-chat', {
       method: 'POST',
@@ -622,21 +655,18 @@ async function send() {
 
     if (!fullText) throw new Error('Empty reply from Riley');
 
-    // Only update history after success
     chatHistory.push(userMsg);
     chatHistory.push({ role: 'assistant', content: fullText });
     if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
 
   } catch (e) {
     bubble.textContent = 'Something went wrong — ' + e.message;
-    // chatHistory is untouched — no cleanup needed
   } finally {
     bubble.classList.remove('streaming');
     sendBtn.disabled = false;
     input.disabled   = false;
     input.focus();
-    const thread = document.getElementById('messages');
-    thread.scrollTop = thread.scrollHeight;
+    document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
   }
 }
 </script>

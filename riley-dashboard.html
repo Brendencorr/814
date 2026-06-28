@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8:14 Dashboard</title>
+<style>
+/* ── Reset & Base ──────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --gold: #c9a84c;
+  --gold-dim: #181400;
+  --bg: #0a0a0a;
+  --surface: #111;
+  --surface2: #161616;
+  --border: #1e1e1e;
+  --border2: #2a2a2a;
+  --text: #e0e0e0;
+  --muted: #555;
+  --danger: #e05c5c;
+  --success: #4caf7d;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── Loading Screen ────────────────────────────────────────────────── */
+#loading {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem; z-index: 999;
+}
+.spinner {
+  width: 36px; height: 36px; border: 3px solid var(--border2);
+  border-top-color: var(--gold); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-logo { font-size: 2rem; font-weight: 800; color: var(--gold); }
+
+/* ── App Shell ─────────────────────────────────────────────────────── */
+#app { display: none; flex-direction: column; height: 100dvh; }
+
+header {
+  background: #000;
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: 52px;
+  flex-shrink: 0;
+}
+.logo { font-size: 1.4rem; font-weight: 800; color: var(--gold); letter-spacing: -0.5px; flex-shrink: 0; }
+nav {
+  display: flex; gap: 0.2rem; flex: 1;
+  overflow-x: auto; scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 0.4rem 0.85rem; background: transparent;
+  border: none; border-radius: 6px; color: var(--muted);
+  font-size: 0.8rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; letter-spacing: 0.05em;
+  text-transform: uppercase; transition: color 0.15s, background 0.15s;
+}
+.tab-btn:hover { color: var(--gold); background: #111; }
+.tab-btn.active { color: var(--gold); background: var(--gold-dim); }
+
+.user-chip {
+  display: flex; align-items: center; gap: 0.5rem;
+  flex-shrink: 0; cursor: pointer;
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--gold-dim); border: 1px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; color: var(--gold);
+  overflow: hidden;
+}
+.user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.logout-btn {
+  padding: 0.3rem 0.7rem; background: transparent;
+  border: 1px solid var(--border2); border-radius: 6px;
+  color: var(--muted); font-size: 0.72rem; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.logout-btn:hover { color: var(--danger); border-color: var(--danger); }
+
+/* ── Tab Panels ────────────────────────────────────────────────────── */
+.tab-panel { display: none; flex: 1; overflow: hidden; }
+.tab-panel.active { display: flex; }
+
+/* ── CHAT TAB ──────────────────────────────────────────────────────── */
+#panel-chat { flex-direction: row; }
+
+.chat-sidebar {
+  width: 260px; flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  background: var(--surface);
+}
+.sidebar-head {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+.sidebar-title { font-size: 0.8rem; font-weight: 700; color: var(--gold); letter-spacing: 0.08em; text-transform: uppercase; }
+.new-chat-btn {
+  padding: 0.35rem 0.75rem;
+  background: var(--gold); border: none; border-radius: 6px;
+  color: #000; font-size: 0.75rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.new-chat-btn:hover { opacity: 0.85; }
+
+.session-list {
+  flex: 1; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: #222 transparent;
+  padding: 0.5rem 0;
+}
+.session-list::-webkit-scrollbar { width: 3px; }
+.session-list::-webkit-scrollbar-thumb { background: #2a2a2a; }
+
+.session-item {
+  padding: 0.75rem 1rem; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.session-item:hover { background: var(--surface2); }
+.session-item.active { background: var(--gold-dim); border-left-color: var(--gold); }
+.session-date { font-size: 0.7rem; color: var(--muted); margin-bottom: 0.2rem; }
+.session-preview {
+  font-size: 0.8rem; color: var(--text);
+  white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-empty {
+  padding: 2rem 1rem; text-align: center;
+  font-size: 0.8rem; color: var(--muted); line-height: 1.6;
+}
+
+.chat-main {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+.chat-top-bar {
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.chat-top-bar .agent-name {
+  font-size: 0.9rem; font-weight: 700; color: var(--gold);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.chat-top-bar .agent-desc { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; }
+
+.messages {
+  flex: 1; overflow-y: auto; padding: 1rem 1.25rem;
+  display: flex; flex-direction: column; gap: 0.85rem;
+  scrollbar-width: thin; scrollbar-color: #222 transparent;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 4px; }
+.msg {
+  max-width: 78%; padding: 0.7rem 0.95rem;
+  border-radius: 12px; font-size: 0.875rem;
+  line-height: 1.55; word-break: break-word; white-space: pre-wrap;
+}
+.msg.user {
+  background: var(--gold); color: #000; font-weight: 500;
+  align-self: flex-end; border-bottom-right-radius: 4px;
+}
+.msg.assistant {
+  background: var(--surface2); color: #ddd;
+  align-self: flex-start; border: 1px solid #222;
+  border-bottom-left-radius: 4px;
+}
+.msg.thinking { color: var(--muted); font-style: italic; border-color: #1a1a1a; }
+
+.chat-empty {
+  flex: 1; display: flex; align-items: center;
+  justify-content: center; flex-direction: column; gap: 0.75rem;
+}
+.chat-empty-icon { font-size: 2.5rem; }
+.chat-empty-text { font-size: 0.9rem; color: var(--muted); text-align: center; line-height: 1.6; }
+
+.input-row {
+  display: flex; gap: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg); flex-shrink: 0;
+}
+.input-row textarea {
+  flex: 1; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 8px;
+  color: var(--text); font-size: 0.875rem;
+  padding: 0.65rem 0.85rem; resize: none; outline: none;
+  line-height: 1.4; height: 42px; max-height: 120px;
+  overflow-y: auto; transition: border-color 0.2s; font-family: inherit;
+}
+.input-row textarea:focus { border-color: var(--gold); }
+.send-btn {
+  background: var(--gold); border: none; border-radius: 8px;
+  color: #000; font-size: 1.1rem; width: 42px; height: 42px;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0; transition: opacity 0.2s;
+}
+.send-btn:hover { opacity: 0.85; }
+.send-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ── PROGRAMS TAB ──────────────────────────────────────────────────── */
+#panel-programs { flex-direction: column; overflow-y: auto; padding: 1.5rem; gap: 1.25rem; }
+.section-title {
+  font-size: 0.72rem; font-weight: 700; color: var(--muted);
+  letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.75rem;
+}
+.cards-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem;
+}
+.card-title { font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 0.3rem; }
+.card-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.5; }
+.badge {
+  display: inline-block; padding: 0.2rem 0.6rem;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.badge-gold { background: var(--gold-dim); color: var(--gold); border: 1px solid #3a2e00; }
+.badge-green { background: #0a2416; color: var(--success); border: 1px solid #1a4a2e; }
+.badge-grey { background: #1a1a1a; color: var(--muted); border: 1px solid var(--border2); }
+.progress-bar-bg {
+  background: var(--border2); border-radius: 4px;
+  height: 6px; margin-top: 0.75rem; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: var(--gold);
+  border-radius: 4px; transition: width 0.4s ease;
+}
+.progress-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; }
+.empty-state {
+  text-align: center; padding: 3rem 1rem;
+  color: var(--muted); font-size: 0.875rem; line-height: 1.7;
+}
+.empty-state a { color: var(--gold); text-decoration: none; }
+
+/* ── SOBRIETY TAB ──────────────────────────────────────────────────── */
+#panel-sobriety {
+  flex-direction: column; align-items: center;
+  justify-content: flex-start; overflow-y: auto;
+  padding: 2.5rem 1.5rem; gap: 1.5rem;
+}
+.sobriety-counter {
+  text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 2.5rem 3rem; max-width: 400px; width: 100%;
+}
+.days-number { font-size: 5rem; font-weight: 800; color: var(--gold); line-height: 1; }
+.days-label { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 0.35rem; }
+.since-date { font-size: 0.8rem; color: #444; margin-top: 1.25rem; }
+.since-date span { color: var(--muted); }
+
+.checkin-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem; max-width: 400px; width: 100%;
+  text-align: center;
+}
+.checkin-title { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.checkin-sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.25rem; line-height: 1.5; }
+.checkin-btn {
+  width: 100%; padding: 0.85rem;
+  background: var(--gold); border: none; border-radius: 8px;
+  color: #000; font-size: 0.95rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.checkin-btn:hover { opacity: 0.85; }
+.checkin-btn:disabled { opacity: 0.4; cursor: default; }
+.checkin-done {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0.5rem; font-size: 0.9rem; color: var(--success); font-weight: 600;
+}
+.streak-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 0.4rem; max-width: 400px; width: 100%;
+}
+.streak-dot {
+  aspect-ratio: 1; border-radius: 4px;
+  background: var(--border2);
+}
+.streak-dot.filled { background: var(--gold); }
+.streak-dot.today { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+
+.sobriety-nodate {
+  text-align: center; padding: 3rem 1rem; color: var(--muted);
+  font-size: 0.875rem; line-height: 1.7; max-width: 380px;
+}
+
+/* ── FITNESS TAB ───────────────────────────────────────────────────── */
+#panel-fitness { flex-direction: column; overflow-y: auto; padding: 1.5rem; gap: 1.5rem; }
+
+/* ── NUTRITION TAB ─────────────────────────────────────────────────── */
+#panel-nutrition { flex-direction: column; overflow-y: auto; padding: 1.5rem; gap: 1.5rem; }
+
+/* ── Shared Form Styles ────────────────────────────────────────────── */
+.form-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem; max-width: 520px;
+}
+.form-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 140px; }
+.form-group label { font-size: 0.72rem; font-weight: 600; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--text); font-size: 0.875rem;
+  padding: 0.6rem 0.8rem; outline: none;
+  transition: border-color 0.2s; font-family: inherit;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--gold); }
+.form-group select option { background: var(--surface2); }
+.form-group textarea { resize: vertical; min-height: 72px; }
+.form-submit {
+  margin-top: 1rem; padding: 0.75rem 1.5rem;
+  background: var(--gold); border: none; border-radius: 8px;
+  color: #000; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.form-submit:hover { opacity: 0.85; }
+.form-submit:disabled { opacity: 0.4; cursor: default; }
+
+/* Log list */
+.log-list { display: flex; flex-direction: column; gap: 0.6rem; max-width: 520px; }
+.log-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0.85rem 1rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.log-left {}
+.log-type { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.log-meta { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+.log-date { font-size: 0.72rem; color: #444; flex-shrink: 0; }
+
+/* Macro pills */
+.macro-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.macro-pill {
+  padding: 0.15rem 0.55rem; border-radius: 20px;
+  font-size: 0.7rem; font-weight: 600; background: var(--surface2);
+  border: 1px solid var(--border2); color: var(--muted);
+}
+.macro-pill span { color: var(--text); }
+
+/* ── Today's nutrition summary ─────────────────────────────────────── */
+.today-summary {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem; max-width: 520px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+}
+.summary-stat { text-align: center; }
+.summary-val { font-size: 1.5rem; font-weight: 800; color: var(--gold); }
+.summary-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 0.15rem; }
+
+/* ── Mobile ────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  header { padding: 0 0.85rem; }
+  .logo { font-size: 1.2rem; }
+  .tab-btn { padding: 0.38rem 0.65rem; font-size: 0.75rem; }
+  .logout-btn span { display: none; }
+
+  /* Chat: hide sidebar by default on mobile, toggle via button */
+  .chat-sidebar {
+    position: absolute; inset-block: 52px 0; left: 0;
+    width: 80%; max-width: 300px; z-index: 50;
+    transform: translateX(-105%); transition: transform 0.25s ease;
+    border-right: 1px solid var(--border);
+  }
+  .chat-sidebar.open { transform: translateX(0); }
+  .sidebar-overlay {
+    display: none; position: absolute; inset: 52px 0 0 0;
+    background: rgba(0,0,0,0.6); z-index: 49;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  .chat-main { width: 100%; }
+  .messages { padding: 0.85rem; }
+  .msg { max-width: 90%; font-size: 0.84rem; }
+  .input-row { padding: 0.75rem 0.85rem; }
+
+  #panel-programs, #panel-fitness, #panel-nutrition { padding: 1rem; }
+  #panel-sobriety { padding: 1.5rem 1rem; }
+  .days-number { font-size: 4rem; }
+  .today-summary { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="loading-logo">8:14</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <div class="logo">8:14</div>
+    <nav id="main-nav">
+      <button class="tab-btn active" data-tab="chat"      onclick="switchTab('chat',this)">Riley</button>
+      <button class="tab-btn"        data-tab="programs"  onclick="switchTab('programs',this)">Programs</button>
+      <button class="tab-btn"        data-tab="sobriety"  onclick="switchTab('sobriety',this)">Sobriety</button>
+      <button class="tab-btn"        data-tab="fitness"   onclick="switchTab('fitness',this)">Fitness</button>
+      <button class="tab-btn"        data-tab="nutrition" onclick="switchTab('nutrition',this)">Nutrition</button>
+    </nav>
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar"></div>
+      <button class="logout-btn" onclick="signOut()">Sign out</button>
+    </div>
+  </header>
+
+  <!-- ─── CHAT TAB ───────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="panel-chat">
+    <!-- Mobile overlay (close sidebar when tapping outside) -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar(false)"></div>
+
+    <div class="chat-sidebar" id="chat-sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-title">Conversations</div>
+        <button class="new-chat-btn" onclick="startNewChat()">+ New</button>
+      </div>
+      <div class="session-list" id="session-list">
+        <div class="session-empty">No conversations yet.<br>Start one below ↓</div>
+      </div>
+    </div>
+
+    <div class="chat-main">
+      <div class="chat-top-bar">
+        <div>
+          <!-- Mobile hamburger -->
+          <button onclick="toggleSidebar(true)" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;margin-right:0.5rem;display:none" id="sidebar-toggle">☰</button>
+          <div class="agent-name">Riley</div>
+          <div class="agent-desc">Your personal coach — recovery, fitness & accountability</div>
+        </div>
+      </div>
+
+      <div class="messages" id="chat-messages">
+        <div class="chat-empty" id="chat-empty">
+          <div class="chat-empty-icon">💬</div>
+          <div class="chat-empty-text">Start a conversation with Riley<br>or select one from the left panel.</div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <textarea id="chat-input" placeholder="Message Riley…" rows="1"
+          onkeydown="handleChatKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="send-btn" id="chat-send" onclick="sendMessage()">&#9658;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PROGRAMS TAB ──────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-programs">
+    <div class="section-title">Your Programs</div>
+    <div class="cards-grid" id="programs-grid">
+      <div class="empty-state">Loading programs…</div>
+    </div>
+    <div class="section-title" style="margin-top:0.5rem">Progress Log</div>
+    <div class="cards-grid" id="progress-grid">
+      <div class="empty-state">Loading progress…</div>
+    </div>
+  </div>
+
+  <!-- ─── SOBRIETY TAB ──────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-sobriety">
+    <div class="sobriety-counter" id="sobriety-counter">
+      <div class="days-number" id="days-count">–</div>
+      <div class="days-label">Days Sober</div>
+      <div class="since-date" id="since-date"></div>
+    </div>
+
+    <!-- Last 28 days dot grid -->
+    <div class="streak-grid" id="streak-grid"></div>
+
+    <div class="checkin-card">
+      <div class="checkin-title">Daily Check-In</div>
+      <div class="checkin-sub">Mark today as another day of showing up.<br>Every day counts.</div>
+      <div id="checkin-area">
+        <button class="checkin-btn" id="checkin-btn" onclick="doCheckIn()">✓ Check In Today</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── FITNESS TAB ───────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-fitness">
+    <div class="section-title">Log Activity</div>
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Activity</label>
+          <select id="fit-type">
+            <option value="Run">Run</option>
+            <option value="Lift">Lift</option>
+            <option value="Bike">Bike</option>
+            <option value="Walk">Walk</option>
+            <option value="Swim">Swim</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="fit-date" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:0.75rem">
+        <div class="form-group">
+          <label>Duration (min)</label>
+          <input type="number" id="fit-duration" placeholder="45" min="1" />
+        </div>
+        <div class="form-group">
+          <label>Distance (mi)</label>
+          <input type="number" id="fit-distance" placeholder="3.1" step="0.01" min="0" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem">
+        <label>Notes</label>
+        <textarea id="fit-notes" placeholder="How'd it go?"></textarea>
+      </div>
+      <button class="form-submit" id="fit-submit" onclick="logFitness()">Log Activity</button>
+    </div>
+
+    <div class="section-title">Recent Activity</div>
+    <div class="log-list" id="fitness-log-list">
+      <div class="empty-state">No activity logged yet.</div>
+    </div>
+  </div>
+
+  <!-- ─── NUTRITION TAB ─────────────────────────────────────────── -->
+  <div class="tab-panel" id="panel-nutrition">
+    <div class="section-title">Today's Summary</div>
+    <div class="today-summary" id="nutrition-summary">
+      <div class="summary-stat"><div class="summary-val" id="sum-cal">–</div><div class="summary-label">Calories</div></div>
+      <div class="summary-stat"><div class="summary-val" id="sum-pro">–</div><div class="summary-label">Protein (g)</div></div>
+      <div class="summary-stat"><div class="summary-val" id="sum-carb">–</div><div class="summary-label">Carbs (g)</div></div>
+      <div class="summary-stat"><div class="summary-val" id="sum-fat">–</div><div class="summary-label">Fat (g)</div></div>
+    </div>
+
+    <div class="section-title">Log Nutrition</div>
+    <div class="form-card">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="nut-date" />
+        </div>
+        <div class="form-group">
+          <label>Meal / Label</label>
+          <input type="text" id="nut-label" placeholder="Breakfast, lunch…" />
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:0.75rem">
+        <div class="form-group">
+          <label>Calories</label>
+          <input type="number" id="nut-cal" placeholder="500" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Protein (g)</label>
+          <input type="number" id="nut-pro" placeholder="40" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Carbs (g)</label>
+          <input type="number" id="nut-carb" placeholder="60" min="0" />
+        </div>
+        <div class="form-group">
+          <label>Fat (g)</label>
+          <input type="number" id="nut-fat" placeholder="15" min="0" />
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:0.75rem">
+        <label>Notes</label>
+        <textarea id="nut-notes" placeholder="Optional notes…"></textarea>
+      </div>
+      <button class="form-submit" id="nut-submit" onclick="logNutrition()">Log Nutrition</button>
+    </div>
+
+    <div class="section-title">Recent Entries</div>
+    <div class="log-list" id="nutrition-log-list">
+      <div class="empty-state">No nutrition logged yet.</div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Supabase + RileyChat -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="riley-chat.js"></script>
+
+<script>
+// ── Config ───────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State ─────────────────────────────────────────────────────────────────
+let currentUser    = null;
+let currentProfile = null;
+let activeSession  = null;   // current chat session_id
+let checkedInToday = false;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  const { data: { session }, error } = await db.auth.getSession();
+  if (!session) { window.location.href = 'riley-auth.html'; return; }
+
+  currentUser = session.user;
+
+  // Upsert profile (creates on first login)
+  const meta = currentUser.user_metadata || {};
+  await db.from('user_profiles').upsert({
+    id:         currentUser.id,
+    email:      currentUser.email,
+    full_name:  meta.full_name  || meta.name || '',
+    avatar_url: meta.avatar_url || meta.picture || ''
+  }, { onConflict: 'id', ignoreDuplicates: true });
+
+  const { data: profile } = await db
+    .from('user_profiles').select('*')
+    .eq('id', currentUser.id).single();
+  currentProfile = profile || {};
+
+  // Update avatar
+  const avatarEl = document.getElementById('user-avatar');
+  if (currentProfile.avatar_url) {
+    avatarEl.innerHTML = `<img src="${currentProfile.avatar_url}" alt="avatar">`;
+  } else {
+    const initials = (currentProfile.full_name || currentUser.email || '?')
+      .split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    avatarEl.textContent = initials;
+  }
+
+  // Init RileyChat
+  RileyChat.init(db, currentUser.id);
+
+  // Set today's date on forms
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('fit-date').value  = today;
+  document.getElementById('nut-date').value  = today;
+
+  // Show app
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  // Responsive: show hamburger on mobile
+  if (window.innerWidth <= 600) {
+    document.getElementById('sidebar-toggle').style.display = 'inline';
+  }
+
+  // Load default tab content
+  loadChat();
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+async function signOut() {
+  await db.auth.signOut();
+  window.location.href = 'riley-auth.html';
+}
+
+// ── Tab Switching ─────────────────────────────────────────────────────────
+const tabLoaders = {
+  chat:      loadChat,
+  programs:  loadPrograms,
+  sobriety:  loadSobriety,
+  fitness:   loadFitness,
+  nutrition: loadNutrition
+};
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (tabLoaders[name]) tabLoaders[name]();
+}
+
+// ── Sidebar (mobile) ──────────────────────────────────────────────────────
+function toggleSidebar(open) {
+  document.getElementById('chat-sidebar').classList.toggle('open', open);
+  document.getElementById('sidebar-overlay').classList.toggle('open', open);
+}
+
+// ── CHAT ──────────────────────────────────────────────────────────────────
+async function loadChat() {
+  const list = document.getElementById('session-list');
+  list.innerHTML = '<div class="session-empty">Loading…</div>';
+  try {
+    const sessions = await RileyChat.getSessions();
+    if (!sessions.length) {
+      list.innerHTML = '<div class="session-empty">No conversations yet.<br>Start one below ↓</div>';
+      return;
+    }
+    list.innerHTML = '';
+    sessions.forEach(s => {
+      const el = document.createElement('div');
+      el.className = 'session-item' + (s.session_id === activeSession ? ' active' : '');
+      el.dataset.sid = s.session_id;
+      el.innerHTML = `
+        <div class="session-date">${formatDate(s.created_at)}</div>
+        <div class="session-preview">${escHtml(s.preview || 'Conversation')}</div>
+      `;
+      el.onclick = () => openSession(s.session_id, el);
+      list.appendChild(el);
+    });
+  } catch (e) {
+    list.innerHTML = `<div class="session-empty">Error loading sessions.</div>`;
+  }
+}
+
+async function openSession(sessionId, el) {
+  // Highlight sidebar item
+  document.querySelectorAll('.session-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  activeSession = sessionId;
+  toggleSidebar(false);
+
+  const msgBox = document.getElementById('chat-messages');
+  document.getElementById('chat-empty').style.display = 'none';
+  msgBox.innerHTML = '<div class="msg thinking">Loading…</div>';
+
+  try {
+    const msgs = await RileyChat.loadSession(sessionId);
+    msgBox.innerHTML = '';
+    msgs.forEach(m => appendMsg(m.role, m.content));
+    msgBox.scrollTop = msgBox.scrollHeight;
+  } catch (e) {
+    msgBox.innerHTML = '<div class="msg thinking">Error loading messages.</div>';
+  }
+}
+
+function startNewChat() {
+  activeSession = RileyChat.newSessionId();
+  document.querySelectorAll('.session-item').forEach(i => i.classList.remove('active'));
+  const msgBox = document.getElementById('chat-messages');
+  msgBox.innerHTML = '';
+  document.getElementById('chat-empty').style.display = 'flex';
+  document.getElementById('chat-empty').style.flexDirection = 'column';
+  toggleSidebar(false);
+  document.getElementById('chat-input').focus();
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  autoGrow(e.target);
+}
+
+function autoGrow(el) {
+  el.style.height = '42px';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function appendMsg(role, text) {
+  const msgBox = document.getElementById('chat-messages');
+  const div    = document.createElement('div');
+  div.className = 'msg ' + (role === 'user' ? 'user' : 'assistant');
+  div.textContent = text;
+  msgBox.appendChild(div);
+  msgBox.scrollTop = msgBox.scrollHeight;
+  return div;
+}
+
+async function sendMessage() {
+  const input   = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('chat-send');
+  const text    = input.value.trim();
+  if (!text) return;
+
+  // Ensure we have a session
+  if (!activeSession) activeSession = RileyChat.newSessionId();
+
+  // Hide empty state, show user message
+  document.getElementById('chat-empty').style.display = 'none';
+  appendMsg('user', text);
+  input.value = '';
+  input.style.height = '42px';
+  sendBtn.disabled = true;
+
+  // Thinking bubble
+  const msgBox    = document.getElementById('chat-messages');
+  const thinkDiv  = document.createElement('div');
+  thinkDiv.className = 'msg assistant thinking';
+  thinkDiv.textContent = 'Riley is thinking…';
+  msgBox.appendChild(thinkDiv);
+  msgBox.scrollTop = msgBox.scrollHeight;
+
+  let fullText = '';
+  await RileyChat.send(activeSession, text, (chunk) => {
+    fullText += chunk;
+    thinkDiv.textContent = fullText;
+    thinkDiv.classList.remove('thinking');
+    msgBox.scrollTop = msgBox.scrollHeight;
+  });
+
+  sendBtn.disabled = false;
+  input.focus();
+
+  // Refresh session list to show new session at top
+  loadChat();
+}
+
+// ── PROGRAMS ──────────────────────────────────────────────────────────────
+async function loadPrograms() {
+  const grid     = document.getElementById('programs-grid');
+  const progGrid = document.getElementById('progress-grid');
+
+  const purchased = currentProfile.programs_purchased || [];
+  if (!purchased.length) {
+    grid.innerHTML = `<div class="empty-state">No programs purchased yet.<br><a href="https://eight14.us" target="_blank">Browse programs →</a></div>`;
+  } else {
+    grid.innerHTML = '';
+    purchased.forEach(name => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-title">${escHtml(name)}</div>
+        <div class="card-sub">Enrolled program</div>
+        <span class="badge badge-gold">Enrolled</span>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  // Load progress entries
+  const { data: progress, error } = await db
+    .from('user_program_progress')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('last_activity', { ascending: false });
+
+  if (error || !progress?.length) {
+    progGrid.innerHTML = '<div class="empty-state">No progress logged yet.</div>';
+    return;
+  }
+
+  progGrid.innerHTML = '';
+  progress.forEach(p => {
+    const pct = Math.min(100, Math.round((p.day_completed / 30) * 100)); // assume 30-day programs
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-title">${escHtml(p.program_name)}</div>
+      <div class="card-sub">Last active: ${formatDate(p.last_activity)}</div>
+      <span class="badge badge-green">Day ${p.day_completed}</span>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="progress-label">${pct}% complete</div>
+    `;
+    progGrid.appendChild(card);
+  });
+}
+
+// ── SOBRIETY ──────────────────────────────────────────────────────────────
+async function loadSobriety() {
+  const sobrietyDate = currentProfile.sobriety_date;
+
+  if (!sobrietyDate) {
+    document.getElementById('sobriety-counter').innerHTML = `
+      <div class="sobriety-nodate">
+        No sobriety date set yet.<br>
+        Contact Riley to update your start date.
+      </div>`;
+    document.getElementById('checkin-area').innerHTML =
+      '<div class="checkin-done">Set your sobriety date to enable check-ins.</div>';
+    return;
+  }
+
+  const start = new Date(sobrietyDate + 'T00:00:00');
+  const now   = new Date();
+  const days  = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+
+  document.getElementById('days-count').textContent = days;
+  document.getElementById('since-date').innerHTML =
+    `Since <span>${start.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</span>`;
+
+  // Check-in status
+  const today = now.toISOString().slice(0, 10);
+  const { data: checkins } = await db
+    .from('sobriety_checkins')
+    .select('check_in_date')
+    .eq('user_id', currentUser.id)
+    .gte('check_in_date', new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10))
+    .order('check_in_date', { ascending: false });
+
+  const checkinDates = new Set((checkins || []).map(c => c.check_in_date));
+  checkedInToday = checkinDates.has(today);
+
+  // Update check-in button
+  const area = document.getElementById('checkin-area');
+  if (checkedInToday) {
+    area.innerHTML = '<div class="checkin-done">✓ Checked in today — keep going.</div>';
+  } else {
+    document.getElementById('checkin-btn').disabled = false;
+  }
+
+  // 28-day dot grid
+  const grid = document.getElementById('streak-grid');
+  grid.innerHTML = '';
+  for (let i = 27; i >= 0; i--) {
+    const d   = new Date(Date.now() - i * 86400000);
+    const ds  = d.toISOString().slice(0, 10);
+    const dot = document.createElement('div');
+    dot.className = 'streak-dot' +
+      (ds === today           ? ' today'  :
+       checkinDates.has(ds)   ? ' filled' : '');
+    dot.title = ds;
+    grid.appendChild(dot);
+  }
+}
+
+async function doCheckIn() {
+  const btn   = document.getElementById('checkin-btn');
+  const today = new Date().toISOString().slice(0, 10);
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  const { error } = await db
+    .from('sobriety_checkins')
+    .upsert({ user_id: currentUser.id, check_in_date: today }, { onConflict: 'user_id,check_in_date' });
+
+  if (error) {
+    btn.textContent = 'Error — try again';
+    btn.disabled    = false;
+  } else {
+    document.getElementById('checkin-area').innerHTML =
+      '<div class="checkin-done">✓ Checked in today — keep going.</div>';
+    loadSobriety(); // refresh dots
+  }
+}
+
+// ── FITNESS ───────────────────────────────────────────────────────────────
+async function loadFitness() {
+  const list = document.getElementById('fitness-log-list');
+  list.innerHTML = '<div class="empty-state">Loading…</div>';
+
+  const { data, error } = await db
+    .from('fitness_logs')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('logged_date', { ascending: false })
+    .limit(20);
+
+  if (error) { list.innerHTML = '<div class="empty-state">Could not load fitness data.</div>'; return; }
+  if (!data?.length) { list.innerHTML = '<div class="empty-state">No activity logged yet. Add your first workout above!</div>'; return; }
+
+  list.innerHTML = '';
+  data.forEach(r => {
+    const meta = [
+      r.duration_minutes ? `${r.duration_minutes} min` : null,
+      r.distance_miles   ? `${r.distance_miles} mi`    : null,
+      r.notes            ? r.notes                      : null
+    ].filter(Boolean).join(' · ');
+
+    const el = document.createElement('div');
+    el.className = 'log-item';
+    el.innerHTML = `
+      <div class="log-left">
+        <div class="log-type">${escHtml(r.activity_type)}</div>
+        ${meta ? `<div class="log-meta">${escHtml(meta)}</div>` : ''}
+      </div>
+      <div class="log-date">${r.logged_date}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+async function logFitness() {
+  const btn = document.getElementById('fit-submit');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const { error } = await db.from('fitness_logs').insert({
+    user_id:          currentUser.id,
+    logged_date:      document.getElementById('fit-date').value,
+    activity_type:    document.getElementById('fit-type').value,
+    duration_minutes: parseInt(document.getElementById('fit-duration').value) || null,
+    distance_miles:   parseFloat(document.getElementById('fit-distance').value) || null,
+    notes:            document.getElementById('fit-notes').value.trim() || null
+  });
+
+  btn.disabled = false; btn.textContent = 'Log Activity';
+
+  if (error) { alert('Error saving: ' + error.message); return; }
+
+  // Clear form
+  document.getElementById('fit-duration').value = '';
+  document.getElementById('fit-distance').value = '';
+  document.getElementById('fit-notes').value    = '';
+
+  loadFitness();
+}
+
+// ── NUTRITION ─────────────────────────────────────────────────────────────
+async function loadNutrition() {
+  const list = document.getElementById('nutrition-log-list');
+  list.innerHTML = '<div class="empty-state">Loading…</div>';
+
+  const { data, error } = await db
+    .from('nutrition_logs')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('logged_date', { ascending: false })
+    .limit(20);
+
+  if (error) { list.innerHTML = '<div class="empty-state">Could not load nutrition data.</div>'; return; }
+
+  // Today's summary
+  const today      = new Date().toISOString().slice(0, 10);
+  const todayLogs  = (data || []).filter(r => r.logged_date === today);
+  const sum = todayLogs.reduce((acc, r) => ({
+    cal:  acc.cal  + (r.calories  || 0),
+    pro:  acc.pro  + (r.protein_g || 0),
+    carb: acc.carb + (r.carbs_g   || 0),
+    fat:  acc.fat  + (r.fat_g     || 0)
+  }), { cal: 0, pro: 0, carb: 0, fat: 0 });
+
+  document.getElementById('sum-cal').textContent  = todayLogs.length ? sum.cal  : '–';
+  document.getElementById('sum-pro').textContent  = todayLogs.length ? sum.pro  : '–';
+  document.getElementById('sum-carb').textContent = todayLogs.length ? sum.carb : '–';
+  document.getElementById('sum-fat').textContent  = todayLogs.length ? sum.fat  : '–';
+
+  if (!data?.length) { list.innerHTML = '<div class="empty-state">No nutrition logged yet. Start tracking above!</div>'; return; }
+
+  list.innerHTML = '';
+  data.forEach(r => {
+    const el = document.createElement('div');
+    el.className = 'log-item';
+    el.innerHTML = `
+      <div class="log-left">
+        <div class="log-type">${escHtml(r.label || 'Entry')}</div>
+        <div class="macro-row">
+          ${r.calories  != null ? `<div class="macro-pill"><span>${r.calories}</span> kcal</div>` : ''}
+          ${r.protein_g != null ? `<div class="macro-pill"><span>${r.protein_g}g</span> protein</div>` : ''}
+          ${r.carbs_g   != null ? `<div class="macro-pill"><span>${r.carbs_g}g</span> carbs</div>` : ''}
+          ${r.fat_g     != null ? `<div class="macro-pill"><span>${r.fat_g}g</span> fat</div>` : ''}
+        </div>
+        ${r.notes ? `<div class="log-meta">${escHtml(r.notes)}</div>` : ''}
+      </div>
+      <div class="log-date">${r.logged_date}</div>
+    `;
+    list.appendChild(el);
+  });
+}
+
+async function logNutrition() {
+  const btn = document.getElementById('nut-submit');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const { error } = await db.from('nutrition_logs').insert({
+    user_id:    currentUser.id,
+    logged_date: document.getElementById('nut-date').value,
+    label:      document.getElementById('nut-label').value.trim() || null,
+    calories:   parseInt(document.getElementById('nut-cal').value)  || null,
+    protein_g:  parseInt(document.getElementById('nut-pro').value)  || null,
+    carbs_g:    parseInt(document.getElementById('nut-carb').value) || null,
+    fat_g:      parseInt(document.getElementById('nut-fat').value)  || null,
+    notes:      document.getElementById('nut-notes').value.trim()   || null
+  });
+
+  btn.disabled = false; btn.textContent = 'Log Nutrition';
+
+  if (error) { alert('Error saving: ' + error.message); return; }
+
+  // Clear fields
+  ['nut-label','nut-cal','nut-pro','nut-carb','nut-fat','nut-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+
+  loadNutrition();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

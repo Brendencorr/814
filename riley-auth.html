@@ -331,14 +331,14 @@ header {
 
     <!-- Welcome screen -->
     <div class="welcome" id="chat-welcome">
-      <h2 id="welcome-heading">Hey. What's on your mind?</h2>
-      <p>Ask anything about sobriety, anxiety, sleep, grief, nutrition — whatever you're working through right now.</p>
+      <h2 id="welcome-heading">Hi. I'm Riley. I'm glad you're here.</h2>
+      <p>Whatever's weighing on you — recovery, grief, sleep, anxiety, a hard day — I'm listening. You don't have to have it figured out.</p>
       <div class="starters">
-        <button class="starter" onclick="starter(this)">I just had a bad day and I want a drink</button>
+        <button class="starter" onclick="starter(this)">I had a bad day and I want to drink</button>
+        <button class="starter" onclick="starter(this)">I relapsed. What do I do now?</button>
         <button class="starter" onclick="starter(this)">What happens in the first week sober?</button>
         <button class="starter" onclick="starter(this)">I can't sleep in early recovery</button>
-        <button class="starter" onclick="starter(this)">My anxiety is getting worse sober</button>
-        <button class="starter" onclick="starter(this)">I relapsed. What do I do now?</button>
+        <button class="starter" onclick="starter(this)">I'm grieving and I don't know where to start</button>
         <button class="starter" onclick="starter(this)">How do I talk to my family about this?</button>
       </div>
     </div>
@@ -452,7 +452,7 @@ async function onSignedIn(session) {
   // Personalise welcome heading
   const firstName = session.user.user_metadata?.given_name ||
                     session.user.user_metadata?.name?.split(' ')[0] || '';
-  if (firstName) document.getElementById('welcome-heading').textContent = `Hey ${firstName}. What's on your mind?`;
+  if (firstName) document.getElementById('welcome-heading').textContent = `${firstName}. I'm glad you're here.`;
 
   // Load profile and past conversation from auth-handler
   try {

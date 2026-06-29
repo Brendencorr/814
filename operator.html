@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>8:14 Operator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06090e;--card:#0a1018;--border:#1a2530;--border2:#243040;
+  --gold:#c9a84c;--gold-dim:rgba(201,168,76,.12);
+  --sage:#4a7c59;--sage-dim:rgba(74,124,89,.15);
+  --blue:#6b7fff;--red:#c0392b;--red-dim:rgba(192,57,43,.15);
+  --green:#3abf6a;--green-dim:rgba(58,191,106,.15);
+  --text:#e8e4de;--muted:#3a4a5a;--muted2:#5a6a7a;--header:#04080c;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.gb{text-align:center;width:320px}
+.gl{font-family:'Bebas Neue',sans-serif;font-size:64px;color:var(--gold);letter-spacing:2px;line-height:1}
+.gs{font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--muted2);letter-spacing:.25em;margin-bottom:40px}
+.gi{width:100%;padding:.85rem 1rem;background:var(--card);border:1px solid var(--border2);color:var(--text);font-size:1rem;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:.65rem;transition:border-color .2s}
+.gi:focus{border-color:var(--gold)}
+.gbtn{width:100%;padding:.85rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.15em;cursor:pointer;transition:opacity .2s}
+.gbtn:hover{opacity:.88}
+.gerr{color:var(--red);font-size:.78rem;margin-top:.5rem;min-height:1.1em}
+#app{display:none;flex-direction:column;height:100dvh;overflow:hidden}
+header{background:var(--header);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.25rem;gap:1.5rem;flex-shrink:0;z-index:100}
+.hl{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);letter-spacing:.15em}
+.hn{display:flex;gap:4px;flex:1}
+.ht{padding:.35rem .9rem;background:transparent;border:none;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.12em;color:var(--muted2);cursor:pointer;position:relative;transition:color .15s}
+.ht::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--gold);opacity:0;transition:opacity .15s}
+.ht:hover{color:var(--text)}.ht.active{color:var(--gold)}.ht.active::after{opacity:1}
+.hg{margin-left:auto;background:transparent;border:none;color:var(--muted2);font-size:1.1rem;cursor:pointer;padding:.35rem;transition:color .15s}
+.hg:hover{color:var(--gold)}
+.sc{display:none;flex:1;overflow:hidden}.sc.active{display:flex}
+/* HOME */
+#sh{flex-direction:row}
+.sc-left{width:240px;min-width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:1.1rem .9rem}
+.cl{font-family:'Bebas Neue',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.2em;margin-bottom:.75rem;opacity:.8}
+.mc{background:var(--bg);border:1px solid var(--border);padding:.85rem .9rem;margin-bottom:.5rem}
+.mn{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.18em;margin-bottom:.5rem}
+.mv{font-family:'Bebas Neue',sans-serif;font-size:38px;color:var(--gold);line-height:1;margin-bottom:.3rem}
+.ms{font-size:.68rem;color:var(--muted2)}
+.ebtn{margin-top:.75rem;width:100%;padding:.65rem;background:var(--sage);border:none;color:#fff;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.12em;cursor:pointer;transition:opacity .2s}
+.ebtn:hover{opacity:.85}
+.cd{margin-top:.85rem;background:var(--bg);border:1px solid var(--border);padding:.85rem .9rem}
+.cdl{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.18em;margin-bottom:.4rem}
+.cdn{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);line-height:1;margin-bottom:.2rem}
+.cds{font-size:.65rem;color:var(--muted);line-height:1.4}
+.sc-mid{flex:1;display:flex;flex-direction:column;overflow-y:auto;padding:1.25rem}
+.sh{font-family:'Bebas Neue',sans-serif;font-size:12px;color:var(--gold);letter-spacing:.18em;margin-bottom:.75rem;opacity:.85}
+.rp{background:var(--card);border:1px solid var(--border);margin-bottom:1.1rem;overflow:hidden}
+.rr{display:grid;grid-template-columns:90px 80px 70px 1fr 1fr;gap:.5rem;padding:.65rem 1rem;border-bottom:1px solid var(--border);font-size:.75rem;align-items:center}
+.rr:last-child{border-bottom:none}
+.rh{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.12em;background:var(--bg)}
+.sb{display:inline-block;font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:.1em;padding:.15rem .5rem}
+.ss{background:var(--green-dim);color:var(--green)}.sp{background:var(--gold-dim);color:var(--gold)}.sf{background:var(--red-dim);color:var(--red)}.sr{background:rgba(107,127,255,.15);color:var(--blue)}
+.em{padding:1.5rem;text-align:center;color:var(--muted);font-size:.8rem}
+.ep{background:var(--card);border:1px solid var(--border);margin-bottom:1.1rem}
+.es{padding:.85rem 1rem;border-left:3px solid transparent;border-bottom:1px solid var(--border)}
+.es:last-child{border-bottom:none}
+.es.w{border-left-color:var(--sage)}.es.d{border-left-color:var(--red)}.es.l{border-left-color:var(--gold)}.es.f{border-left-color:var(--blue)}
+.esl{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:.18em;margin-bottom:.4rem}
+.es.w .esl{color:var(--sage)}.es.d .esl{color:var(--red)}.es.l .esl{color:var(--gold)}.es.f .esl{color:var(--blue)}
+.est{font-size:.8rem;color:var(--text);line-height:1.5}
+.stbtn{width:100%;padding:1rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.12em;cursor:pointer;transition:opacity .2s;margin-bottom:1.25rem}
+.stbtn:hover{opacity:.88}
+.sc-right{width:280px;min-width:280px;background:var(--card);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rhd{padding:.85rem 1rem .5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0}
+.pe{padding:.65rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.6rem;font-size:.75rem}
+.pe:last-child{border-bottom:none}
+.pico{font-size:1rem;flex-shrink:0}.pnfo{flex:1;min-width:0}
+.pty{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.75rem}
+.pmt{color:var(--muted2);font-size:.65rem;margin-top:.1rem}
+.pd{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.pd.g{background:var(--green)}.pd.a{background:var(--gold)}.pd.r{background:var(--red)}
+.hscr{flex:1;overflow-y:auto}
+/* PIPELINE */
+#sp{flex-direction:column;overflow:hidden}
+.pli{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.1rem}
+.pgb{display:flex;align-items:center;margin-bottom:.5rem}
+.pbs{display:flex;align-items:center;gap:.5rem}
+.pbd{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;flex-shrink:0;transition:all .3s}
+.pbd.pn{background:var(--card);border:2px solid var(--border2);color:var(--muted)}
+.pbd.pa{background:var(--gold);border:2px solid var(--gold);color:#000}
+.pbd.pd2{background:var(--sage);border:2px solid var(--sage);color:#000}
+.pbl{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:.15em;color:var(--muted2)}
+.pbl.pa{color:var(--gold)}.pbl.pd2{color:var(--sage)}
+.pln{flex:1;height:2px;background:var(--border);margin:0 .5rem;min-width:1.5rem;transition:background .3s}
+.pln.pd2{background:var(--sage)}
+.phc{background:var(--card);border-left:3px solid var(--border2);padding:1.25rem}
+.phc.scout{border-left-color:var(--gold)}.phc.sage{border-left-color:var(--sage)}.phc.atlas{border-left-color:var(--blue)}
+.pht{font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.15em;margin-bottom:.85rem}
+.phc.scout .pht{color:var(--gold)}.phc.sage .pht{color:var(--sage)}.phc.atlas .pht{color:var(--blue)}
+.pta{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;padding:.75rem;resize:vertical;min-height:80px;outline:none;transition:border-color .2s;line-height:1.5}
+.pta:focus{border-color:var(--gold)}
+.pha{display:flex;gap:.6rem;margin-top:.75rem;flex-wrap:wrap}
+.bg{padding:.6rem 1.2rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:.1em;cursor:pointer;transition:opacity .2s}
+.bg:hover{opacity:.85}.bg:disabled{opacity:.4;cursor:default}
+.bo{padding:.6rem 1rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.1em;cursor:pointer;transition:color .15s,border-color .15s}
+.bo:hover{color:var(--text);border-color:var(--muted2)}
+.run{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--bg);margin-top:.75rem}
+.pls{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pls 1.2s ease-in-out infinite;flex-shrink:0}
+@keyframes pls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+.rxt{font-size:.82rem;color:var(--muted2);font-style:italic}
+.rs{background:var(--bg);border:1px solid var(--border);padding:.75rem;margin-top:.5rem}
+.rsl{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.15em;margin-bottom:.4rem}
+.rst{font-size:.78rem;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.phs{display:flex;align-items:center;gap:1rem;padding:.75rem 1rem;background:var(--sage-dim);border:1px solid rgba(74,124,89,.3);margin-top:.85rem}
+.phsn{font-family:'Playfair Display',serif;font-size:24px;color:var(--text)}
+.phss{font-size:.78rem;color:var(--muted2)}
+/* REVIEW */
+#sr{flex-direction:column;overflow:hidden}
+.rvi{flex:1;overflow-y:auto;padding:1.25rem;padding-bottom:5rem}
+.rvh{font-family:'Playfair Display',serif;font-size:26px;color:var(--text);margin-bottom:.25rem}
+.rvs{font-size:.82rem;color:var(--muted2);margin-bottom:1.25rem}
+.pgr{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+.pca{background:var(--card);border:1px solid var(--border);padding:1rem;display:flex;flex-direction:column;gap:.65rem;transition:opacity .2s}
+.pca.excl{opacity:.35;border-style:dashed}
+.pct2{display:flex;align-items:flex-start;gap:.6rem}
+.pbg{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:.1em;padding:.2rem .55rem;flex-shrink:0}
+.bcar{background:var(--sage-dim);color:var(--sage)}.bquo{background:var(--gold-dim);color:var(--gold)}.bcap{background:rgba(107,127,255,.15);color:var(--blue)}.brep{background:rgba(192,96,42,.15);color:#c0602a}.bcom{background:var(--green-dim);color:var(--green)}
+.pcm{flex:1;min-width:0}
+.ppl{font-size:.7rem;color:var(--muted2)}
+.phd{font-family:'Playfair Display',serif;font-style:italic;font-size:.88rem;color:var(--text);margin-top:.2rem;line-height:1.4}
+.pat{margin-left:auto;flex-shrink:0}
+.atg{width:28px;height:28px;border-radius:50%;border:2px solid var(--green);background:var(--green-dim);color:var(--green);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.atg.off{border-color:var(--border2);background:transparent;color:var(--muted)}
+.cpt{font-size:.75rem;color:var(--muted2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5}
+.cpt.ex{display:block}
+.cpe{width:100%;background:var(--bg);border:1px solid var(--gold);color:var(--text);font-size:.75rem;padding:.5rem;resize:vertical;min-height:70px;outline:none;font-family:'DM Sans',sans-serif;display:none}
+.phs2{font-size:.65rem;color:var(--muted);font-family:monospace}
+.pca2{display:flex;gap:.5rem}
+.bt{padding:.28rem .6rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:.68rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .15s}
+.bt:hover{color:var(--text)}
+.ab{position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(4,8,12,.96);backdrop-filter:blur(10px);border-top:1px solid var(--border2);display:flex;align-items:center;padding:0 1.5rem;gap:1rem;z-index:200}
+.abc{font-size:.8rem;color:var(--muted2);white-space:nowrap}
+.abc strong{color:var(--text)}
+.abm{flex:1;display:flex;justify-content:center}
+.aab{padding:.75rem 2rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.1em;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+.aab:hover{opacity:.88}.aab:disabled{opacity:.4;cursor:default}
+.dbn{padding:.75rem 1rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:.8rem;cursor:pointer;white-space:nowrap}
+.dbn:hover{color:var(--text)}
+/* SETTINGS */
+#stpn{position:fixed;top:0;right:-380px;width:360px;height:100dvh;background:var(--card);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
+#stpn.open{right:0}
+.sph{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--header)}
+.spt{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:.15em}
+.spc{background:transparent;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;padding:.3rem}
+.spc:hover{color:var(--text)}
+.sps{padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.spsl{font-family:'Bebas Neue',sans-serif;font-size:10px;color:var(--gold);letter-spacing:.18em;margin-bottom:.75rem;opacity:.8}
+.spr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;font-size:.8rem}
+.sprl{color:var(--muted2)}.sprv{color:var(--text);font-size:.8rem}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.sdot.on{background:var(--green)}.sdot.off{background:var(--red)}
+.spi{width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:.55rem .75rem;font-size:.82rem;font-family:'DM Sans',sans-serif;outline:none;margin-bottom:.6rem;transition:border-color .2s}
+.spi:focus{border-color:var(--gold)}
+.spb{padding:.55rem 1rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:.1em;cursor:pointer;transition:opacity .2s;margin-bottom:.4rem}
+.spb:hover{opacity:.85}
+.spb.o{background:transparent;border:1px solid var(--border2);color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:.8rem;letter-spacing:0}
+.spb.o:hover{color:var(--text)}
+.tr{font-size:.75rem;color:var(--muted2);margin-top:.5rem;min-height:1em}
+/* MODALS */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;display:flex;align-items:center;justify-content:center}
+.mb{background:var(--card);border:1px solid var(--border2);padding:1.5rem;width:460px;max-width:calc(100vw - 2rem);max-height:calc(100vh - 4rem);overflow-y:auto}
+.mt{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text);margin-bottom:.25rem}
+.msb{font-size:.78rem;color:var(--muted2);margin-bottom:1.25rem}
+.ng{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1rem}
+.nf{display:flex;flex-direction:column;gap:.3rem}
+.nf label{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.15em}
+.nf input{background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:.55rem .75rem;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+.nf input:focus{border-color:var(--gold)}
+.ma{display:flex;gap:.6rem}
+.sov{position:fixed;inset:0;background:rgba(6,9,14,.9);z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+.sov.show{display:flex}
+.sspin{width:44px;height:44px;border:3px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.stxt{font-size:.88rem;color:var(--muted2)}
+.sucov{position:fixed;inset:0;background:rgba(6,9,14,.95);z-index:600;display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;text-align:center;padding:2rem}
+.sucov.show{display:flex}
+.suci{font-size:3.5rem}
+.suct{font-family:'Playfair Display',serif;font-size:1.75rem;color:var(--gold)}
+.sucs{font-size:.9rem;color:var(--muted2);max-width:320px}
+.sucn{font-size:.8rem;color:var(--muted);margin-top:.25rem}
+.sucb{margin-top:.75rem;padding:.8rem 2rem;background:var(--gold);border:none;color:#000;font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:.1em;cursor:pointer}
+@media(max-width:700px){
+  #sh{flex-direction:column}
+  .sc-left{width:100%;min-width:unset;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;max-height:160px;border-right:none;border-bottom:1px solid var(--border);gap:.5rem}
+  .sc-left .cl,.sc-left .cd{display:none}
+  .mc{min-width:110px;flex-shrink:0;margin-bottom:0}
+  .sc-right{display:none}
+  .pgr{grid-template-columns:1fr}
+  .pbl{display:none}
+  #stpn{width:100%;right:-100%}
+}
+</style>
+</head>
+<body>
+<div id="gate"><div class="gb">
+  <div class="gl">8:14</div>
+  <div class="gs">Operator Dashboard</div>
+  <input type="password" class="gi" id="pw" placeholder="Password" autocomplete="current-password">
+  <button class="gbtn" onclick="unlock()">Enter</button>
+  <div class="gerr" id="pw-err"></div>
+</div></div>
+<div id="app">
+  <header>
+    <div class="hl">8:14</div>
+    <nav class="hn">
+      <button class="ht active" data-s="h" onclick="gs('h',this)">Home</button>
+      <button class="ht" data-s="p" onclick="spl(this)">Pipeline</button>
+      <button class="ht" data-s="r" onclick="gs('r',this)">Review</button>
+    </nav>
+    <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
+  </header>
+  <div class="sc active" id="sh">
+    <div class="sc-left">
+      <div class="cl">Phase 1 Scorecard</div>
+      <div class="mc"><div class="mn">Email Signups This Week</div><div class="mv" id="ms">&#8212;</div><div class="ms2 ms">Goal: 500</div></div>
+      <div class="mc"><div class="mn">Riley Chatbot Opens</div><div class="mv" id="mc2">&#8212;</div><div class="ms2 ms"></div></div>
+      <div class="mc"><div class="mn">Instagram Saves</div><div class="mv" id="msv">&#8212;</div><div class="ms2 ms"></div></div>
+      <div class="mc"><div class="mn">Link Clicks to eight14.us</div><div class="mv" id="mcl">&#8212;</div><div class="ms2 ms"></div></div>
+      <div class="mc"><div class="mn">Total Email List</div><div class="mv" id="ml">&#8212;</div><div class="ms2 ms">Running total</div></div>
+      <button class="ebtn" onclick="onm()">+ Enter This Week's Numbers</button>
+      <div class="cd"><div class="cdl">Next Auto-Run</div><div class="cdn" id="cdn">&#8212;</div><div class="cds">Pipeline runs automatically<br>every Sunday at 6:00 AM MT</div></div>
+    </div>
+    <div class="sc-mid">
+      <div class="sh">Recent Pipeline Runs</div>
+      <div class="rp" id="rp"><div class="rr rh"><span>Date</span><span>Status</span><span>Posts</span><span>Top Pillar</span><span>Format</span></div><div class="em" id="re">No pipeline runs yet.</div></div>
+      <div class="sh">Echo Analysis</div>
+      <div class="ep" id="ep"><div class="em" id="ee">Enter this week's numbers to see Echo's analysis.</div></div>
+      <button class="stbtn" onclick="spl(document.querySelector('[data-s=p]'))">Start This Week's Content &#8594;</button>
+    </div>
+    <div class="sc-right">
+      <div class="rhd"><span class="cl" style="margin:0">Recent Posts</span><button class="bo" style="font-size:10px;padding:.25rem .55rem" onclick="ls()">&#8635;</button></div>
+      <div class="hscr" id="hl"><div class="em">Post history appears here after your first pipeline run.</div></div>
+    </div>
+  </div>
+  <div class="sc" id="sp">
+    <div class="pli">
+      <div class="pgb">
+        <div class="pbs"><div class="pbd pa" id="pb1">1</div><span class="pbl pa" id="pl1">Scout</span></div>
+        <div class="pln" id="ln1"></div>
+        <div class="pbs"><div class="pbd pn" id="pb2">2</div><span class="pbl" id="pl2">Sage</span></div>
+        <div class="pln" id="ln2"></div>
+        <div class="pbs"><div class="pbd pn" id="pb3">3</div><span class="pbl" id="pl3">Atlas</span></div>
+        <div class="pln" id="ln3"></div>
+        <div class="pbs"><div class="pbd pn" id="pb4">&#9679;</div><span class="pbl" id="pl4">Review</span></div>
+      </div>
+      <div class="phc scout" id="psc">
+        <div class="pht">&#128269; Scout &#8212; Research</div>
+        <textarea class="pta" id="scp" rows="4">What are the trending topics this week across sobriety, mental health, addiction, grief, fitness, nutrition, burnout, anxiety, life transitions, relationships, and community? Return the full structured SCOUT REPORT with all sections.</textarea>
+        <div class="pha"><button class="bg" id="bsc" onclick="rsc()">Run Scout &#8594;</button><button class="bo" onclick="document.getElementById('scp').focus()">Edit Prompt</button></div>
+        <div class="run" id="scr" style="display:none"><div class="pls"></div><span class="rxt">Scout is researching&#8230;</span></div>
+        <div id="scrs"></div>
+        <div id="scra" class="pha" style="display:none"><button class="bg" onclick="rsg()">Send to Sage &#8594;</button><button class="bo" onclick="esc2()">Edit Report</button></div>
+      </div>
+      <div class="phc sage" id="psg" style="display:none">
+        <div class="pht">&#9997;&#65039; Sage &#8212; Writing 12 Posts</div>
+        <div class="run" id="sgr"><div class="pls"></div><span class="rxt">Sage is writing this week's content&#8230;</span></div>
+        <div id="sgrs" style="display:none"></div>
+        <div id="sgra" class="pha" style="display:none"><button class="bg" onclick="rat()">Send to Atlas &#8594;</button><button class="bo" onclick="jr()">Review Posts Early</button></div>
+      </div>
+      <div class="phc atlas" id="pat2" style="display:none">
+        <div class="pht">&#128197; Atlas &#8212; Building Schedule</div>
+        <div class="run" id="atr"><div class="pls"></div><span class="rxt">Atlas is building your publishing calendar&#8230;</span></div>
+        <div id="atrs" style="display:none"></div>
+        <div id="atra" class="pha" style="display:none"><button class="bg" onclick="jr()">Review 12 Posts &#8594;</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="sc" id="sr">
+    <div class="rvi">
+      <div class="pgb" style="margin-bottom:1rem">
+        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Scout</span></div>
+        <div class="pln pd2"></div>
+        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Sage</span></div>
+        <div class="pln pd2"></div>
+        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Atlas</span></div>
+        <div class="pln pd2"></div>
+        <div class="pbs"><div class="pbd pa">&#9679;</div><span class="pbl pa">Review</span></div>
+      </div>
+      <div class="rvh" id="rvh">Your 12 Posts</div>
+      <div class="rvs" id="rvs">Review, edit, and approve before scheduling.</div>
+      <div class="pgr" id="pgr"></div>
+    </div>
+    <div class="ab">
+      <div class="abc"><strong id="act">12</strong> of <strong id="tct">12</strong> approved</div>
+      <div class="abm"><button class="aab" id="bap" onclick="aps()">Approve and Schedule in Buffer &#8594;</button></div>
+      <button class="dbn" onclick="svd()">Save Draft</button>
+    </div>
+  </div>
+</div>
+<div id="stpn">
+  <div class="sph"><span class="spt">Settings</span><button class="spc" onclick="tgs()">&#215;</button></div>
+  <div class="sps">
+    <div class="spsl">Pipeline</div>
+    <div class="spr"><span class="sprl">Schedule</span><span class="sprv">Sunday 6:00 AM MT</span></div>
+    <div class="spr"><span class="sprl">Last run</span><span class="sprv" id="slr">checking&#8230;</span></div>
+    <button class="spb" id="stb" onclick="tpl()">Run Pipeline Now</button>
+    <div class="tr" id="str"></div>
+  </div>
+  <div class="sps">
+    <div class="spsl">Buffer Integration</div>
+    <div class="spr"><span class="sprl">Status</span><span class="sprv" id="sbs">&#8212;</span></div>
+    <label style="font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.15em;display:block;margin-bottom:.3rem">Profile IDs</label>
+    <input class="spi" id="spids" placeholder="abc123, def456">
+    <button class="spb" onclick="svp()">Save Profile IDs</button>
+  </div>
+  <div class="sps">
+    <div class="spsl">Platform Status</div>
+    <div class="spr"><span class="sprl"><span class="sdot on"></span>Anthropic API</span><span class="sprv" style="color:var(--green)">Connected</span></div>
+    <div class="spr"><span class="sprl"><span class="sdot on"></span>Supabase</span><span class="sprv" style="color:var(--green)">Connected</span></div>
+  </div>
+  <div class="sps">
+    <div class="spsl">Account</div>
+    <button class="spb o" onclick="if(confirm('Sign out?')){sessionStorage.clear();location.reload()}">Sign Out</button>
+  </div>
+</div>
+<div class="mo" id="nm" style="display:none" onclick="if(event.target===this)cnm()">
+  <div class="mb">
+    <div class="mt">This Week's Numbers</div>
+    <div class="msb">Echo analyzes your metrics automatically after you submit.</div>
+    <div class="ng">
+      <div class="nf"><label>Email Signups</label><input type="number" id="ns" placeholder="0" min="0"></div>
+      <div class="nf"><label>Total List Size</label><input type="number" id="nl" placeholder="0" min="0"></div>
+      <div class="nf"><label>Chatbot Opens</label><input type="number" id="nc" placeholder="0" min="0"></div>
+      <div class="nf"><label>Instagram Saves</label><input type="number" id="nsv" placeholder="0" min="0"></div>
+      <div class="nf"><label>Link Clicks</label><input type="number" id="ncl" placeholder="0" min="0"></div>
+      <div class="nf"><label>Reach</label><input type="number" id="nr" placeholder="0" min="0"></div>
+      <div class="nf"><label>FB Engagement</label><input type="number" id="nf2" placeholder="0" min="0"></div>
+      <div class="nf"><label>New Subs (Month)</label><input type="number" id="nm2" placeholder="0" min="0"></div>
+    </div>
+    <div class="ma">
+      <button class="bg" id="bsn" onclick="sbn()">Run Echo Analysis &#8594;</button>
+      <button class="bo" onclick="cnm()">Cancel</button>
+    </div>
+    <div class="run" id="ecr" style="display:none"><div class="pls"></div><span class="rxt">Echo is analyzing&#8230;</span></div>
+  </div>
+</div>
+<div class="sov" id="sov"><div class="sspin"></div><div class="stxt" id="stxt">Scheduling posts&#8230;</div></div>
+<div class="sucov" id="sucov">
+  <div class="suci">&#9989;</div><div class="suct">Week Scheduled!</div>
+  <div class="sucs" id="sucm">Your posts have been queued.</div>
+  <div class="sucn" id="sucn"></div>
+  <button class="sucb" onclick="rth()">&#8592; Return to Home</button>
+</div>
+<script>
+var B='/.netlify/functions',PW='Riley814';
+function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
+document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
+if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
+function gs(n,btn){['h','p','r'].forEach(function(s){document.getElementById('s'+s).classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
+function tgs(){document.getElementById('stpn').classList.toggle('open');}
+function init(){scd();ls();ldst();}
+async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
+function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r){var row=document.createElement('div');row.className='rr';row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}
+function recho(s){if(!s)return;var p=document.getElementById('ep');document.getElementById('ee').style.display='none';var scs=[['biggest_lever','BIGGEST LEVER','l'],['best_pillar','BEST PILLAR','w'],['worst_pillar','WORST PILLAR','d']];scs.forEach(function(a){if(!s[a[0]])return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(s[a[0]])+'</div>';p.appendChild(d);});if(s.email_signups!=null){document.getElementById('ms').textContent=s.email_signups;document.getElementById('mc2').textContent=s.chatbot_opens||'—';document.getElementById('msv').textContent=s.instagram_saves||'—';document.getElementById('mcl').textContent=s.link_clicks||'—';}}
+function rh(posts){if(!posts.length)return;var l=document.getElementById('hl');l.innerHTML='';var ic={instagram:'📷',facebook:'🔵',youtube:'►️'};posts.slice(0,20).forEach(function(p){var d=document.createElement('div');d.className='pe';d.innerHTML='<span class="pico">'+(ic[(p.platform||'').toLowerCase()]||'📄')+'</span><div class="pnfo"><div class="pty">'+x(p.post_type||'Post')+'</div><div class="pmt">'+fd(p.week_of)+'</div></div><div class="pd '+(p.buffer_update_id?'g':'a')+'"></div>';l.appendChild(d);});}
+function scd(){function t(){var now=new Date(),nx=new Date(now);nx.setUTCDate(now.getUTCDate()+((7-now.getUTCDay())%7||7));nx.setUTCHours(12,0,0,0);var ms=nx-now,days=Math.floor(ms/864e5),hrs=Math.floor((ms%864e5)/36e5);var el=document.getElementById('cdn');if(el)el.textContent=days>0?days+'d '+hrs+'h':hrs+'h';}t();setInterval(t,60000);}
+function onm(){document.getElementById('nm').style.display='flex';}
+function cnm(){document.getElementById('nm').style.display='none';document.getElementById('ecr').style.display='none';document.getElementById('bsn').disabled=false;}
+async function sbn(){var nv=function(id){var v=document.getElementById(id)&&document.getElementById(id).value;return v?Number(v):null;};var td=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});var msg='Please analyze this week\'s performance data for The 8:14 Project and return the full structured ECHO REPORT.\n\nWEEK OF: '+td+'\nEmail signups this week: '+(nv('ns')!=null?nv('ns'):'not provided')+'\nTotal email list size: '+(nv('nl')!=null?nv('nl'):'not provided')+'\nRiley chatbot opens: '+(nv('nc')!=null?nv('nc'):'not provided')+'\nInstagram saves: '+(nv('nsv')!=null?nv('nsv'):'not provided')+'\nLink clicks to eight14.us: '+(nv('ncl')!=null?nv('ncl'):'not provided')+'\nInstagram reach: '+(nv('nr')!=null?nv('nr'):'not provided')+'\nFacebook engagement: '+(nv('nf2')!=null?nv('nf2'):'not provided')+'\nNew subscribers this month: '+(nv('nm2')!=null?nv('nm2'):'not provided');document.getElementById('ecr').style.display='flex';document.getElementById('bsn').disabled=true;try{var reply=await ca('echo',msg);cnm();rea(reply);if(nv('ns')!=null)document.getElementById('ms').textContent=nv('ns');if(nv('nc')!=null)document.getElementById('mc2').textContent=nv('nc');if(nv('nsv')!=null)document.getElementById('msv').textContent=nv('nsv');if(nv('ncl')!=null)document.getElementById('mcl').textContent=nv('ncl');if(nv('nl')!=null)document.getElementById('ml').textContent=nv('nl');}catch(e){document.getElementById('ecr').style.display='none';document.getElementById('bsn').disabled=false;alert('Echo error: '+e.message);}}
+function rea(text){var p=document.getElementById('ep');document.getElementById('ee').style.display='none';p.innerHTML='';var scs=[["WHAT WORKED","WHAT WORKED","w"],["WHAT DIDN'T WORK","WHAT DIDN'T","d"],["THE SINGLE BIGGEST LEVER","BIGGEST LEVER","l"],["SCOUT BRIEF FOR NEXT WEEK","NEXT WEEK FOCUS","f"],["GROWTH TRAJECTORY","GROWTH","l"]];scs.forEach(function(a){var c=exs(text,a[0]);if(!c)return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(c.trim())+'</div>';p.appendChild(d);});}
+var P={s:'',sg:'',a:''};
+function spl(btn){rpl();gs('p',btn);}
+function rpl(){P={s:'',sg:'',a:''};['2','3','4'].forEach(function(n){spb2(n,'pn');});['ln1','ln2','ln3'].forEach(function(id){document.getElementById(id).classList.remove('pd2');});spb2('1','pa');sh2('psc');hi2('psg');hi2('pat2');hi2('scr');hi2('scra');document.getElementById('scrs').innerHTML='';document.getElementById('bsc').disabled=false;}
+function spb2(n,st){var dot=document.getElementById('pb'+n),lbl=document.getElementById('pl'+n);dot.className='pbd '+st;lbl.className='pbl'+(st!=='pn'?' '+st:'');if(st==='pd2')dot.innerHTML='&#10003;';else if(st==='pa')dot.textContent=n;}
+async function rsc(){var pr=document.getElementById('scp').value.trim();if(!pr)return;document.getElementById('bsc').disabled=true;sh2('scr');hi2('scra');document.getElementById('scrs').innerHTML='';try{var r=await ca('scout',pr);P.s=r;hi2('scr');var c=document.getElementById('scrs');var heads=['TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS','CONTENT GAPS THIS WEEK','SAGE BRIEF — POST 1'];heads.forEach(function(h){var ct=exs(r,h);if(!ct)return;c.innerHTML+='<div class="rs"><div class="rsl">'+h+'</div><div class="rst">'+x(ct)+'</div></div>';});if(!c.innerHTML)c.innerHTML='<div class="rs"><div class="rst">'+x(r)+'</div></div>';sh2('scra');}catch(e){hi2('scr');document.getElementById('bsc').disabled=false;document.getElementById('scrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';}}
+function esc2(){var c=document.getElementById('scrs');c.innerHTML='';var ta=document.createElement('textarea');ta.className='pta';ta.style.minHeight='200px';ta.value=P.s;ta.oninput=function(){P.s=ta.value;};c.appendChild(ta);document.getElementById('scra').innerHTML='<button class="bg" onclick="rsg()">Send to Sage &#8594;</button>';}
+async function rsg(){spb2('1','pd2');document.getElementById('ln1').classList.add('pd2');spb2('2','pa');sh2('psg');document.getElementById('sgrs').style.display='none';hi2('sgra');sh2('sgr');document.getElementById('psg').scrollIntoView({behavior:'smooth',block:'start'});try{var r=await ca('sage',"Here is Scout's research report for this week. Please produce all 12 posts in the full SAGE OUTPUT format.\n\n"+P.s);P.sg=r;hi2('sgr');var res=document.getElementById('sgrs');res.style.display='block';var lines=r.split('\n').filter(function(l){return /^POST [123] /.test(l.trim());}).slice(0,3).map(function(l){return x(l.trim().replace(/^POST \d+ [^\s]+ /,''));});res.innerHTML='<div class="phs"><div><div class="phsn">12</div><div class="phss">posts written</div></div><div style="flex:1;font-size:.78rem;color:var(--muted2);line-height:1.6">'+(lines.join('<br>')||'Posts ready')+'</div></div>';sh2('sgra');rat();}catch(e){hi2('sgr');document.getElementById('sgrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';document.getElementById('sgrs').style.display='block';sh2('sgra');}}
+async function rat(){spb2('2','pd2');document.getElementById('ln2').classList.add('pd2');spb2('3','pa');sh2('pat2');document.getElementById('atrs').style.display='none';hi2('atra');sh2('atr');document.getElementById('pat2').scrollIntoView({behavior:'smooth',block:'start'});var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});try{var r=await ca('atlas',"Here is Sage's content output for the week of "+td+". Please build the full ATLAS REPORT.\n\n"+P.sg);P.a=r;hi2('atr');var res=document.getElementById('atrs');res.style.display='block';var cal=exs(r,'WEEKLY CALENDAR');res.innerHTML='<div class="rs"><div class="rsl">'+(cal?'WEEKLY CALENDAR':'ATLAS REPORT')+'</div><div class="rst">'+x(cal||r.slice(0,600))+'</div></div>';sh2('atra');spb2('3','pd2');document.getElementById('ln3').classList.add('pd2');spb2('4','pa');setTimeout(jr,1800);}catch(e){hi2('atr');document.getElementById('atrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';document.getElementById('atrs').style.display='block';sh2('atra');}}
+var RP=[];
+function jr(){br();gs('r',document.querySelector('[data-s="r"]'));}
+function br(){RP=pp(P.sg);var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});document.getElementById('rvh').textContent='Your '+RP.length+' Posts';document.getElementById('rvs').textContent='Week of '+td+'. Review, edit, and approve before scheduling.';var g=document.getElementById('pgr');g.innerHTML='';var pi=function(p){var m={instagram:'📷',facebook:'🔵',youtube:'►️'};return m[(p||'').toLowerCase()]||'📄';};var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};RP.forEach(function(p,i){var c=document.createElement('div');c.className='pca'+(p.approved?'':' excl');c.id='pc'+i;c.innerHTML='<div class="pct2"><span class="pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span><div class="pcm"><div class="ppl">'+pi(p.platform)+' '+x(p.platform)+' · '+x(p.dayTime)+'</div><div class="phd">'+x(p.headline)+'</div></div><button class="atg'+(p.approved?'':' off')+'" id="tg'+i+'" onclick="ta('+i+')">'+(p.approved?'&#10003;':'&#9675;')+'</button></div><div class="cpt" id="ct'+i+'">'+x(p.caption||'(Run pipeline to generate copy.)')+'</div><textarea class="cpe" id="ce'+i+'" onchange="uc('+i+',this.value)">'+x(p.caption)+'</textarea>'+(p.hashtags?'<div class="phs2">'+x(p.hashtags)+'</div>':'')+'<div class="pca2"><button class="bt" onclick="te('+i+')">Expand</button><button class="bt" onclick="ted('+i+')">&#9999; Edit</button></div>';g.appendChild(c);});document.getElementById('tct').textContent=RP.length;uac();}
+function pp(text){if(!text)return dp();var lines=text.split('\n'),blocks=[],cur='';lines.forEach(function(l){if(/^POST \d+/.test(l.trim())&&cur.trim()){blocks.push(cur);cur=l;}else{cur+='\n'+l;}});if(cur.trim())blocks.push(cur);var posts=[];blocks.forEach(function(block,i){if(!block.trim())return;var tM=block.match(/^POST (\d+)\s*[^\w\n]*(.+)/m);var pM=block.match(/Platform:\s*(.+)/);var dtM=block.match(/Day\/Time:\s*(.+)/);var s1M=block.match(/SLIDE 1[^:]*:\s*(.*)/);var lines2=block.split('\n'),capLines=[],hashLines=[],inCap=false,inHash=false;lines2.forEach(function(l){if(/^CAPTION:/.test(l)){inCap=true;var after=l.replace(/^CAPTION:\s*/,'');if(after)capLines.push(after);}else if(/^HASHTAGS:/.test(l)){inCap=false;inHash=true;var after=l.replace(/^HASHTAGS:\s*/,'');if(after)hashLines.push(after);}else if(inCap&&!/^SLIDE |^---|^POST \d/.test(l)){capLines.push(l);}else if(inHash&&!/^---|^POST \d/.test(l)){hashLines.push(l);}else if(/^SLIDE |^---/.test(l)){inCap=false;}});var raw=tM?tM[2].trim():'Post '+(i+1);var u=raw.toUpperCase();posts.push({num:tM?tM[1]:String(i+1),type:u.indexOf('CAROUSEL')>=0?'carousel':u.indexOf('QUOTE')>=0?'quote':u.indexOf('REPOST')>=0?'repost':(u.indexOf('COMMUNITY')>=0||u.indexOf('GROUP')>=0)?'community':'caption',headline:s1M?s1M[1].trim():raw,caption:capLines.join('\n').trim(),hashtags:hashLines.join('\n').trim(),platform:pM?pM[1].trim():'Instagram',dayTime:dtM?dtM[1].trim():'',approved:true});});return posts.length>=3?posts:dp();}
+function dp(){return [{num:'1',type:'carousel',platform:'Instagram',dayTime:'Monday 8am MT',headline:'Educational Carousel',caption:'',hashtags:'',approved:true},{num:'2',type:'quote',platform:'Instagram',dayTime:'Monday 6pm MT',headline:'Quote Graphic',caption:'',hashtags:'',approved:true},{num:'3',type:'caption',platform:'Facebook',dayTime:'Tuesday 10am MT',headline:'Facebook Caption',caption:'',hashtags:'',approved:true},{num:'4',type:'carousel',platform:'Instagram',dayTime:'Wednesday 8am MT',headline:'Tool Carousel',caption:'',hashtags:'',approved:true},{num:'5',type:'repost',platform:'Instagram',dayTime:'Wednesday 12pm MT',headline:'Stories Repost',caption:'',hashtags:'',approved:true},{num:'6',type:'community',platform:'Facebook',dayTime:'Wednesday 6pm MT',headline:'Group Check-In',caption:'',hashtags:'',approved:true},{num:'7',type:'community',platform:'YouTube',dayTime:'Thursday 9am MT',headline:'YouTube Community Post',caption:'',hashtags:'',approved:true},{num:'8',type:'carousel',platform:'Instagram',dayTime:'Thursday 6pm MT',headline:'Story Arc Carousel',caption:'',hashtags:'',approved:true},{num:'9',type:'repost',platform:'Facebook',dayTime:'Friday 10am MT',headline:'Facebook Repost',caption:'',hashtags:'',approved:true},{num:'10',type:'caption',platform:'Instagram',dayTime:'Friday 6pm MT',headline:'Weekend Reflection',caption:'',hashtags:'',approved:true},{num:'11',type:'carousel',platform:'Instagram',dayTime:'Saturday 9am MT',headline:'Myth vs Reality',caption:'',hashtags:'',approved:true},{num:'12',type:'community',platform:'Facebook',dayTime:'Sunday 8am MT',headline:'Weekly Check-In',caption:'',hashtags:'',approved:true}];}
+function ta(i){RP[i].approved=!RP[i].approved;document.getElementById('pc'+i).classList.toggle('excl',!RP[i].approved);var t=document.getElementById('tg'+i);t.classList.toggle('off',!RP[i].approved);t.innerHTML=RP[i].approved?'&#10003;':'&#9675;';uac();}
+function te(i){document.getElementById('ct'+i).classList.toggle('ex');}
+function ted(i){var ct=document.getElementById('ct'+i),ce=document.getElementById('ce'+i),e=ce.style.display!=='block';ct.style.display=e?'none':'';ce.style.display=e?'block':'none';}
+function uc(i,v){RP[i].caption=v;document.getElementById('ct'+i).textContent=v;}
+function uac(){var n=RP.filter(function(p){return p.approved;}).length;document.getElementById('act').textContent=n;document.getElementById('bap').disabled=n===0;}
+async function aps(){var ap=RP.filter(function(p){return p.approved;});var ov=document.getElementById('sov');ov.classList.add('show');document.getElementById('stxt').textContent='Scheduling '+ap.length+' posts…';await new Promise(function(r){setTimeout(r,1500+ap.length*80);});ov.classList.remove('show');document.getElementById('sucm').textContent=ap.length+' posts queued across Instagram, Facebook, and YouTube.';document.getElementById('sucn').textContent='Next Sunday: '+nxs();document.getElementById('sucov').classList.add('show');}
+function svd(){localStorage.setItem('814_draft',JSON.stringify({posts:RP,date:new Date().toISOString()}));alert('Draft saved.');}
+function rth(){document.getElementById('sucov').classList.remove('show');gs('h',document.querySelector('[data-s="h"]'));ls();}
+function ldst(){var ids=localStorage.getItem('814_pids');if(ids)document.getElementById('spids').value=ids;}
+function svp(){var v=document.getElementById('spids').value.trim();if(v)localStorage.setItem('814_pids',v);}
+async function tpl(){var btn=document.getElementById('stb'),res=document.getElementById('str');btn.disabled=true;res.textContent='Starting…';try{var r=await fetch(B+'/weekly-pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});var d=await r.json();res.textContent=d.status==='success'?'✓ Complete — '+(d.sage_posts||0)+' posts':'⚠ '+(d.error||'Partial');ls();}catch(e){res.textContent='Error: '+e.message;}finally{btn.disabled=false;}}
+async function ca(agent,message){var r=await fetch(B+'/'+agent,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:message})});var raw=await r.text();if(!r.ok){var d=raw;try{d=JSON.parse(raw).error||raw;}catch(e){}throw new Error('HTTP '+r.status+' from '+agent+': '+d);}try{var d=JSON.parse(raw);return d.reply||raw;}catch(e){return raw;}}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function exs(text,h){var idx=text.indexOf(h+':'),start=idx>=0?idx+h.length+1:-1;if(start<0){idx=text.indexOf(h+'\n');start=idx>=0?idx+h.length+1:-1;}if(start<0)return null;var lines=text.slice(start).split('\n'),out=[];for(var i=0;i<lines.length;i++){var l=lines[i];if(out.length>0&&(/^[A-Z][A-Z &'\/—-]{4,}:/.test(l.trim())||/^---/.test(l.trim())))break;out.push(l);}return out.join('\n').trim()||null;}
+function fd(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}}
+function nxs(){var d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7||7));return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
+function sh2(id){var el=document.getElementById(id);if(el)el.style.display='';}
+function hi2(id){var el=document.getElementById(id);if(el)el.style.display='none';}
+</script>
+</body>
+</html>

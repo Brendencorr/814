@@ -279,11 +279,11 @@
 
 [[redirects]]
   from = "https://admin.eight14.us/*"
-  to = "/dashboard.html"
+  to = "/operator.html"
   status = 200
   force = true
 
 [[redirects]]
   from = "/"
-  to = "/dashboard.html"
+  to = "/operator.html"
   status = 200

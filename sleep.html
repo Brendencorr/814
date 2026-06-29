@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni active"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni active"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="snl">COMMUNITY</div><a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">Sleep</div><div class="tb-sub" id="tb-date"></div></div>
@@ -90,11 +90,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
+<!-- Narrative sleep story -->
+<div id="sl-story" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.65;padding:0 2px;margin-bottom:18px;min-height:26px"></div>
+
 <div class="stat-row">
-  <div class="stat"><div class="sv" id="sl-avg">—</div><div class="sl">14-Day Avg</div></div>
-  <div class="stat"><div class="sv" id="sl-goal">8h</div><div class="sl">Tonight's Goal</div></div>
+  <div class="stat"><div class="sv" id="sl-avg">—</div><div class="sl">14-Day Average</div></div>
+  <div class="stat"><div class="sv" id="sl-goal">8h</div><div class="sl">Your Goal</div></div>
   <div class="stat"><div class="sv" id="sl-last">—</div><div class="sl">Last Night</div></div>
-  <div class="stat"><div class="sv" id="sl-str">—</div><div class="sl">On-Goal Streak</div></div>
+  <div class="stat"><div class="sv" id="sl-str">—</div><div class="sl">Nights On Goal</div></div>
 </div>
 <div class="card">
   <div id="sl-chart" style="height:80px;margin-bottom:4px"></div>
@@ -173,6 +176,23 @@ async function loadSleep(){
   if(ws.length)document.getElementById('sl-last').textContent=ws[0].sleep_hours+'h';
   let streak=0;for(const l of ws){if(l.sleep_hours>=goalHrs)streak++;else break;}
   document.getElementById('sl-str').textContent=streak||'—';
+
+  // Narrative story line
+  const storyEl=document.getElementById('sl-story');
+  if(storyEl&&ws.length){
+    const last3=ws.slice(0,3).map(l=>l.sleep_hours);
+    const last3avg=last3.reduce((a,b)=>a+b,0)/last3.length;
+    const improving=ws.length>=4&&last3avg>ws.slice(3,6).reduce((a,b)=>a+b,0)/Math.max(1,ws.slice(3,6).length);
+    let story='';
+    if(streak>=5){story=`${streak} nights at your goal. <span style="color:var(--smoke)">Your body is finding its rhythm. That extra rest is paying forward.</span>`;}
+    else if(streak>=3){story=`Three nights on goal. <span style="color:var(--smoke)">Sleep consistency like this changes how everything else feels.</span>`;}
+    else if(improving&&avg>=7){story=`You\'ve been sleeping better this week. <span style="color:var(--smoke)">Whatever you changed — keep doing it.</span>`;}
+    else if(avg&&avg>=7.5){story=`Your mind is rested. <span style="color:var(--smoke)">Seven-plus hours gave your clarity room to recharge.</span>`;}
+    else if(avg&&avg<6){story=`Running a little short lately. <span style="color:var(--smoke)">Even thirty more minutes tonight would help. Slower is still forward.</span>`;}
+    else if(ws[0].sleep_hours>=goalHrs){story=`You slept well last night. <span style="color:var(--smoke)">That rest carries into today.</span>`;}
+    else{story=`${ws[0].sleep_hours}h last night. <span style="color:var(--smoke)">Log consistently and Riley will start to see your patterns.</span>`;}
+    storyEl.innerHTML=story;
+  }
   // Chart
   const last14=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toISOString().slice(0,10));}
   const lm=Object.fromEntries(ws.map(l=>[l.checkin_date,l.sleep_hours]));

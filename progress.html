@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni active"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni active"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="snl">COMMUNITY</div><a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">My Story</div><div class="tb-sub" id="tb-date"></div></div>
@@ -90,11 +90,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
+<!-- Narrative story line -->
+<div id="pr-story" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.65;padding:0 2px;margin-bottom:18px;min-height:26px"></div>
+
 <div class="stat-row">
   <div class="stat"><div class="sv" id="pr-sober">—</div><div class="sl">Days Sober</div></div>
-  <div class="stat"><div class="sv" id="pr-streak">—</div><div class="sl">Check-In Streak</div></div>
-  <div class="stat"><div class="sv" id="pr-habits">—</div><div class="sl">Habits This Week</div></div>
-  <div class="stat"><div class="sv" id="pr-goals">—</div><div class="sl">Goals On Track</div></div>
+  <div class="stat"><div class="sv" id="pr-streak">—</div><div class="sl">Days Showing Up</div></div>
+  <div class="stat"><div class="sv" id="pr-habits">—</div><div class="sl">Habit Rhythm</div></div>
+  <div class="stat"><div class="sv" id="pr-goals">—</div><div class="sl">Goals Moving</div></div>
 </div>
 <div class="two-col">
 <div>
@@ -164,10 +167,29 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   ]);
   const g=r=>r.status==='fulfilled'?r.value?.data:null;
   const sober=g(sR),checkins=g(cR)||[],habits=g(hR)||[],done14=g(hdR)||[],goals=g(gR)||[],workouts=g(wR)||[],progs=g(pR)||[];
-  if(sober){const days=Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000));document.getElementById('pr-sober').textContent=days;}
+  const soberDays=sober?Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000)):0;
+  if(sober){document.getElementById('pr-sober').textContent=soberDays;}
   const sorted=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));
   let streak=0,exp=TODAY;for(const d of sorted){if(d.checkin_date===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else break;}
   document.getElementById('pr-streak').textContent=streak||'—';
+
+  // Narrative story line — numbers support, stories inspire
+  const storyEl=document.getElementById('pr-story');
+  if(storyEl){
+    const habPct=habits.length?Math.round(done14.filter(d=>d.completed_date>=dAgo(6)).length/(habits.length*7)*100):0;
+    const recentMoods=checkins.filter(c=>c.mood).slice(0,5).map(c=>c.mood);
+    const avgMood=recentMoods.length?recentMoods.reduce((a,b)=>a+b,0)/recentMoods.length:0;
+    let story='';
+    if(soberDays>=365){const yrs=Math.floor(soberDays/365);story=`${yrs} year${yrs>1?'s':''} sober. <span style="color:var(--smoke)">That\'s not a streak. That\'s a rebuilt life.</span>`;}
+    else if(soberDays>=90){story=`${soberDays} days sober. <span style="color:var(--smoke)">You\'re in the territory where identity begins to shift.</span>`;}
+    else if(soberDays>=30){story=`${soberDays} days. <span style="color:var(--smoke)">A full month of choosing this. That foundation holds.</span>`;}
+    else if(streak>=7){story=`${streak} days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>`;}
+    else if(habPct>=80){story=`Your habits are strong this week. <span style="color:var(--smoke)">That kind of consistency compounds.</span>`;}
+    else if(avgMood>=4){story=`There\'s some lightness in your recent days. <span style="color:var(--smoke)">Whatever\'s feeding it — protect it.</span>`;}
+    else if(soberDays>0){story=`${soberDays} days sober. <span style="color:var(--smoke)">Every single one of them counted.</span>`;}
+    else{story=`You\'re here. <span style="color:var(--smoke)">That\'s the whole thing. Start with one habit in Reflection.</span>`;}
+    storyEl.innerHTML=story;
+  }
   const dSet=new Set(done14.map(d=>d.habit_id+'|'+d.completed_date));
   const possible=habits.length*7;
   document.getElementById('pr-habits').textContent=possible?Math.round(done14.filter(d=>d.completed_date>=dAgo(6)).length/possible*100)+'%':'—';

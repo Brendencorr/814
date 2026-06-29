@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni active"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni active"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="snl">COMMUNITY</div><a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">Reflection</div><div class="tb-sub" id="tb-date"></div></div>
@@ -94,7 +94,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <div>
   <!-- SOBRIETY -->
   <div class="card">
-    <div class="card-title">Sobriety Tracker</div>
+    <div class="card-title">Recovery Journey</div>
     <div class="card-sub">Riley tracks your streak and celebrates every milestone with you.</div>
     <div id="sob-display" style="display:none">
       <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
@@ -270,7 +270,7 @@ function pickMood(n,btn){
 async function saveCheckin(){
   setBtn('ci-btn',true,'Save Check-In');
   try{
-    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:MOOD||null,water_oz:parseInt(document.getElementById('ci-water').value)||null,sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||null,screen_time_min:parseInt(document.getElementById('ci-screen').value)||null,notes:document.getElementById('ci-notes').value.trim()||null,sobriety_day:true},{onConflict:'user_id,checkin_date'});
+    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:MOOD||null,water_oz:parseInt(document.getElementById('ci-water').value)||null,sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||null,screen_time_min:parseInt(document.getElementById('ci-screen').value)||null,notes:document.getElementById('ci-notes').value.trim()||null},{onConflict:'user_id,checkin_date'});
     if(error)throw error;A('ci-alert','✓ Check-in saved! Riley will use this in your brief.',true);
   }catch(e){A('ci-alert','Error: '+e.message,false);}finally{setBtn('ci-btn',false,'Save Check-In');}
 }

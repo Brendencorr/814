@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community — The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.content{padding:48px 28px;max-width:600px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:32px 16px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div>
+  <div class="snl">TODAY</div>
+  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a>
+  <a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a>
+  <div class="snl">HISTORY</div>
+  <a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a>
+  <a href="/progress" class="sni"><span class="sni-icon">🌲</span>My Story</a>
+  <a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a>
+  <a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a>
+  <div class="snl">JOURNEYS</div>
+  <a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a>
+  <a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Life Timeline</a>
+  <div class="snl">LIFE DATA</div>
+  <a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a>
+  <a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a>
+  <a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a>
+  <div class="snl">COMMUNITY</div>
+  <a href="/community" class="sni active"><span class="sni-icon">🤝</span>Community</a>
+  <div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><div class="tb-title" id="tb-greeting">Community</div><div class="tb-sub" id="tb-date"></div></div>
+  </div>
+  <div class="content">
+
+    <div style="font-family:'DM Serif Display',serif;font-size:13px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:16px">Coming soon</div>
+
+    <div style="font-family:'DM Serif Display',serif;font-size:32px;line-height:1.2;color:var(--parchment);margin-bottom:20px">Healing happens faster when someone reminds you you're not alone.</div>
+
+    <div style="font-size:14px;color:var(--smoke);line-height:1.8;margin-bottom:36px">Community is the missing piece. Not a social feed. Not a forum.<br><br>Small groups. Shared journeys. Real people working through the same things you are — without comparison, without performance, without follower counts.<br><br>A quiet place where you can say the hard thing and someone will simply say: <em style="color:var(--parchment)">"I know. Me too."</em></div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:40px">
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:4px">
+        <span style="font-size:20px">🌱</span>
+        <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:3px">Small groups, not crowds</div><div style="font-size:12px;color:var(--smoke);line-height:1.6">Matched by journey, not algorithm. No one gets lost.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:4px">
+        <span style="font-size:20px">🔒</span>
+        <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:3px">Privacy first, always</div><div style="font-size:12px;color:var(--smoke);line-height:1.6">What's shared here stays here. No data, no profiles, no exposure.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:4px">
+        <span style="font-size:20px">🤝</span>
+        <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:3px">Encouragement, not advice</div><div style="font-size:12px;color:var(--smoke);line-height:1.6">No one here is an expert on your life. Just people who understand the road.</div></div>
+      </div>
+    </div>
+
+    <div style="padding:20px;background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:4px">
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">Be notified when it opens</div>
+      <div id="comm-form">
+        <div style="display:flex;gap:8px">
+          <input id="comm-email" type="email" placeholder="your@email.com" style="flex:1;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;padding:10px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <button onclick="joinWaitlist()" style="background:var(--gold);color:var(--ink);border:none;padding:10px 20px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;white-space:nowrap">Notify me</button>
+        </div>
+        <div id="comm-msg" style="margin-top:8px;font-size:11px;color:var(--smoke2)"></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+async function boot(){
+  try{
+    const {data:{session}}=await SB.auth.getSession();
+    if(!session){window.location.href='https://riley.eight14.us';return;}
+    const meta=session.user.user_metadata||{};
+    const fullName=meta.full_name||meta.name||session.user.email.split('@')[0]||'Member';
+    const firstName=fullName.split(' ')[0];
+    const avatarUrl=meta.avatar_url||meta.picture||'';
+    const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    const h=new Date().getHours();
+    const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
+    const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;else av.textContent=initials;}
+    const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
+    // Pre-fill email
+    const emailEl=document.getElementById('comm-email');
+    if(emailEl&&session.user.email)emailEl.value=session.user.email;
+  }catch(e){console.error('Boot:',e);}
+}
+async function joinWaitlist(){
+  const email=document.getElementById('comm-email')?.value?.trim();
+  if(!email){document.getElementById('comm-msg').textContent='Enter your email above.';return;}
+  const msg=document.getElementById('comm-msg');
+  msg.textContent='Saving…';
+  try{
+    await SB.from('community_waitlist').upsert({email,created_at:new Date().toISOString()},{onConflict:'email'});
+    msg.style.color='var(--green2)';
+    msg.textContent="You're on the list. We'll reach out before it opens.";
+    document.getElementById('comm-email').disabled=true;
+    document.querySelector('#comm-form button').disabled=true;
+  }catch(e){
+    msg.style.color='var(--smoke)';
+    msg.textContent="You're on the list — we'll be in touch.";
+  }
+}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+boot();
+</script>
+</body>
+</html>

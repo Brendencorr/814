@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni active"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni active"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="snl">COMMUNITY</div><a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">Roadmap</div><div class="tb-sub" id="tb-date"></div></div>
@@ -90,17 +90,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
+<!-- Life Timeline header -->
+<div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);margin-bottom:4px">Your Life Timeline</div>
+<div style="font-size:12px;color:var(--smoke);margin-bottom:24px;line-height:1.5">Not streaks. A timeline. Every step forward, in order.</div>
+
 <div class="two-col">
 <div>
-  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Active Program Timelines</div>
+  <!-- Life Timeline -->
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:16px">Your Journey So Far</div>
+  <div id="rm-timeline" style="position:relative;padding-left:24px">
+    <div style="position:absolute;left:7px;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.06);border-radius:1px"></div>
+  </div>
+  <!-- Active programs below timeline -->
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin:24px 0 12px">Active Journeys</div>
   <div id="rm-timelines"></div>
-  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin:20px 0 12px">Sobriety Milestones</div>
-  <div id="rm-sober" class="card"></div>
 </div>
 <div>
-  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Upcoming Milestones</div>
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Coming Up</div>
   <div id="rm-upcoming" class="card" style="margin-bottom:16px"></div>
-  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Available Programs</div>
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Available Journeys</div>
   <div id="rm-avail"></div>
 </div>
 </div>
@@ -157,6 +165,46 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   const progs=(pR.status==='fulfilled'?pR.value?.data:null)||[];
   const sober=(sR.status==='fulfilled'?sR.value?.data:null);
   const all=(aR.status==='fulfilled'?aR.value?.data:null)||[];
+
+  // ── LIFE TIMELINE ──────────────────────────────────────────────────────────
+  const tlEl=document.getElementById('rm-timeline');
+  const events=[];
+  if(sober?.start_date){
+    const soberDays=Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000));
+    events.push({date:sober.start_date,icon:'🌅',title:'Journey began',sub:'Day one.',color:'var(--gold)'});
+    const ms=[{d:7,l:'One week sober',i:'🌱'},{d:30,l:'One month sober',i:'⭐'},{d:60,l:'Two months',i:'🔥'},{d:90,l:'90 days',i:'💫'},{d:180,l:'Six months',i:'🏆'},{d:365,l:'One year',i:'🎯'},{d:730,l:'Two years',i:'🌟'},{d:1095,l:'Three years',i:'💎'},{d:1825,l:'Five years',i:'✨'},{d:2190,l:'Six years',i:'🌺'},{d:2555,l:'Seven years',i:'💎'}];
+    ms.filter(m=>soberDays>=m.d).forEach(m=>{
+      const d=new Date(sober.start_date);d.setDate(d.getDate()+m.d);
+      events.push({date:d.toISOString().slice(0,10),icon:m.i,title:m.l,sub:'Look how far you\'ve come.',color:'var(--green2)'});
+    });
+  }
+  progs.filter(p=>p.status==='completed').forEach(p=>{
+    const pr=p.programs||{};
+    events.push({date:p.enrolled_at?.slice(0,10)||TODAY,icon:pr.emoji||'🎯',title:'Completed '+esc(pr.title||p.program_name||'a Journey'),sub:'Every step counted.',color:'var(--gold)'});
+  });
+  progs.filter(p=>p.status==='active'&&(p.days_completed||0)>0).forEach(p=>{
+    const pr=p.programs||{};
+    events.push({date:p.enrolled_at?.slice(0,10)||TODAY,icon:pr.emoji||'🎯',title:'Started '+esc(pr.title||p.program_name||'a Journey'),sub:'Day '+(p.days_completed||1)+' of '+(pr.duration_days||30)+'.',color:'var(--smoke)'});
+  });
+  events.sort((a,b)=>a.date.localeCompare(b.date));
+
+  if(!events.length){
+    tlEl.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0;line-height:1.7">Your timeline is waiting to be written.<br>Set your sobriety date in <a href="/tracker" style="color:var(--gold)">Reflection</a> to begin.</div>';
+  } else {
+    tlEl.innerHTML=events.map((e,i)=>{
+      const isLast=i===events.length-1;
+      const d=new Date(e.date+'T12:00:00');
+      const yr=d.getFullYear(),mo=d.toLocaleDateString('en-US',{month:'short'}),dy=d.getDate();
+      return`<div style="position:relative;margin-bottom:${isLast?8:20}px">
+        <div style="position:absolute;left:-21px;top:2px;width:14px;height:14px;border-radius:50%;background:${e.color};border:2px solid var(--ink2);box-shadow:0 0 0 2px ${e.color}30"></div>
+        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.08em;margin-bottom:3px">${mo} ${dy}, ${yr}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:16px">${e.icon}</span>
+          <div><div style="font-size:13px;color:var(--parchment);font-weight:500">${e.title}</div><div style="font-size:11px;color:var(--smoke);font-style:italic">${e.sub}</div></div>
+        </div>
+      </div>`;
+    }).join('')+'<div style="position:relative;margin-top:8px"><div style="position:absolute;left:-21px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--gold);border:2px solid var(--ink2);animation:pulse 2s infinite"></div><div style="font-size:9px;font-family:\'DM Mono\',monospace;color:var(--smoke2);letter-spacing:0.08em;margin-bottom:3px">Today</div><div style="font-size:12px;color:var(--gold);font-style:italic">Still writing this chapter.</div></div>';
+  }
   const eIds=new Set(progs.map(p=>p.programs?.id||p.program_id).filter(Boolean));
   const active=progs.filter(p=>p.status==='active');
   const tEl=document.getElementById('rm-timelines');

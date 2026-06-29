@@ -223,6 +223,16 @@
   status = 200
 
 [[redirects]]
+  from = "https://riley.eight14.us/community"
+  to   = "/community.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/community/"
+  to   = "/community.html"
+  status = 200
+
+[[redirects]]
   from   = "https://riley.eight14.us/calendar.html"
   to     = "/calendar.html"
   status = 200

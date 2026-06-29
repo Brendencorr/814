@@ -236,8 +236,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <a href="/sleep" class="sni"><span class="sni-ico">🌙</span>Rest</a>
   <a href="/finance" class="sni"><span class="sni-ico">🎯</span>Goals</a>
   <a href="/calendar" class="sni"><span class="sni-ico">📅</span>Calendar</a>
-  <div class="sb-spacer"></div>
-  <div class="sb-user"><div class="sb-av" id="av">?</div><div><div class="sb-name" id="uname">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+  <div class="snl">Community</div><a href="/community" class="sni"><span class="sni-ico">🤝</span>Community</a><div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="av">?</div><div><div class="sb-name" id="uname">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
 </aside>
 
 <main class="main">
@@ -321,8 +321,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:4px" id="sober-mile"></div><div style="font-size:11px;color:var(--smoke);line-height:1.5" id="sober-msg">Set your date in Tracker</div><div class="sober-dots" id="sober-dots"></div></div>
           </div>
         </div></div>
-        <div class="panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Tracker →</a></div></div></div></div>
-        <div class="panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Tracker →</a></div></div></div></div>
+        <div class="panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
+        <div class="panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
         <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs — <a href="/programs">enroll</a></div></div></div>
       </div>
     </div>
@@ -414,9 +414,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(sleepLast)pills.push({t:sleepLast+'h sleep',c:sleepLast>=7?'pill-green':'pill-gold'});
     if(moodToday)pills.push({t:['','Low','Off','OK','Good','Great'][moodToday]+' mood',c:moodToday>=4?'pill-green':'pill-gold'});
     if(habitsTotal)pills.push({t:habitsDoneToday+'/'+habitsTotal+' habits',c:habitsDoneToday>=habitsTotal*0.5?'pill-green':'pill-gold'});
-    document.getElementById('hero-title').textContent=score>=80?'Optimal clarity today.':score>=60?'Strong readiness today.':score>=40?'Building momentum.':score>0?'Room to grow today.':'Let\'s set up your tracker.';
-    document.getElementById('hero-msg').textContent=score>=80?'Recovery, sleep, and habits are aligned. Riley recommends pushing hard today — body and mind are ready.':score>=60?'Solid foundation. One or two more inputs pushes you into optimal range. Log your mood and check your habits.':score>=40?'You\'re showing up. The more Riley knows, the sharper your brief gets. Keep adding data.':score>0?'Add your sobriety date, log sleep, and check in daily. Riley sharpens with every data point.':'Head to Tracker to set up your sobriety date, habits, and goals.';
-    document.getElementById('hero-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('')+(score<100?'<a href="/tracker" class="pill pill-add">+ Add data</a>':'');
+    document.getElementById('hero-title').textContent=score>=80?'You\'re in a great rhythm.':score>=60?'You\'re building momentum.':score>=40?'One step at a time.':score>0?'You\'re rebuilding.':'Every day counts.';
+    document.getElementById('hero-msg').textContent=score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Add your sobriety date and a few habits in Reflection — Riley will take it from there.';
+    document.getElementById('hero-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('')+(score<100?'<a href="/tracker" class="pill pill-add">+ Add to your day</a>':'');
 
     // Hero breakdown bars
     document.getElementById('hero-breakdown').innerHTML=factors.map(f=>`<div class="hb-row"><span class="hb-label">${f.key}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:${f.color}" data-w="${Math.round(f.val*100)}"></div></div><span class="hb-val">${Math.round(f.val*100)}</span></div>`).join('');
@@ -533,7 +533,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
-async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:true},{onConflict:'user_id,checkin_date'});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
+async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}catch(e){ck.classList.toggle('done',was);console.error(e);}}
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 </script>

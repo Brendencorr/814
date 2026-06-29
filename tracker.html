@@ -172,6 +172,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
       <div class="alert" id="g-alert"></div>
     </div>
   </div>
+  <!-- LIFE CONTEXT -->
+  <div class="card">
+    <div class="card-title">Tell Riley About Your Life</div>
+    <div class="card-sub">Dates that carry weight, or something you're going through. Riley holds these gently and adjusts how she shows up.</div>
+
+    <div class="mini-head">A date that matters</div>
+    <div class="field"><label>What is it?</label><input type="text" id="d-label" placeholder="Mom's birthday, sobriety anniversary…"></div>
+    <div class="fr" style="margin-top:10px">
+      <div class="field"><label>Type</label><select id="d-type"><option value="birthday">Birthday</option><option value="anniversary">Anniversary</option><option value="loss">Loss / remembrance</option><option value="sobriety">Sobriety date</option><option value="custom">Other</option></select></div>
+      <div class="field"><label>Month</label><input type="number" id="d-month" min="1" max="12" placeholder="6"></div>
+      <div class="field"><label>Day</label><input type="number" id="d-day" min="1" max="31" placeholder="14"></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;color:var(--smoke);cursor:pointer"><input type="checkbox" id="d-sensitive" style="width:auto"> This is a tender date — soften things around it</label>
+    <button class="btn btn-gold" id="d-btn" onclick="addDate()">Add Date</button>
+    <div class="alert" id="d-alert"></div>
+
+    <div class="divider">
+      <div class="mini-head">Something I'm going through</div>
+      <div class="field"><label>What's happening?</label><select id="le-type"><option value="">Choose…</option><option value="loss">A loss</option><option value="divorce">Divorce / separation</option><option value="breakup">A breakup</option><option value="job_loss">Job loss</option><option value="new_job">New job</option><option value="moving">Moving</option><option value="health_issue">A health issue</option><option value="parenthood">New parenthood</option><option value="retirement">Retirement</option><option value="other">Something else</option></select></div>
+      <div class="field" style="margin-top:10px"><label>Anything you want Riley to know (optional)</label><textarea id="le-notes" rows="2" placeholder="Only if you want to share."></textarea></div>
+      <button class="btn btn-gold" id="le-btn" onclick="addLifeEvent()">Share with Riley</button>
+      <div class="alert" id="le-alert"></div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -316,6 +340,32 @@ async function addGoal(){
   catch(e){A('g-alert','Error: '+e.message,false);}finally{setBtn('g-btn',false,'Add Goal');}
 }
 async function deleteGoal(id){try{await SB.from('user_goals').update({is_active:false}).eq('id',id);await loadGoals();}catch(e){console.error(e);}}
+async function addDate(){
+  const label=document.getElementById('d-label').value.trim();
+  const type=document.getElementById('d-type').value;
+  const m=parseInt(document.getElementById('d-month').value);
+  const d=parseInt(document.getElementById('d-day').value);
+  if(!label)return A('d-alert','What is the date?',false);
+  if(!m||m<1||m>12||!d||d<1||d>31)return A('d-alert','Enter a valid month and day',false);
+  setBtn('d-btn',true,'Add Date');
+  try{
+    const {error}=await SB.from('important_dates').insert({user_id:UID,label,date_type:type,event_month:m,event_day:d,is_sensitive:document.getElementById('d-sensitive').checked,emotional_weight:document.getElementById('d-sensitive').checked?4:3});
+    if(error)throw error;
+    ['d-label','d-month','d-day'].forEach(i=>document.getElementById(i).value='');document.getElementById('d-sensitive').checked=false;
+    A('d-alert','✓ Riley will remember this date.',true);
+  }catch(e){A('d-alert','Error: '+e.message,false);}finally{setBtn('d-btn',false,'Add Date');}
+}
+async function addLifeEvent(){
+  const type=document.getElementById('le-type').value;
+  if(!type)return A('le-alert','Choose what is happening',false);
+  setBtn('le-btn',true,'Share with Riley');
+  try{
+    const {error}=await SB.from('life_events').insert({user_id:UID,event_type:type,notes:document.getElementById('le-notes').value.trim()||null,active_support_needed:true,emotional_weight:['loss','divorce','breakup'].includes(type)?5:3});
+    if(error)throw error;
+    document.getElementById('le-type').value='';document.getElementById('le-notes').value='';
+    A('le-alert','✓ Thank you for telling me. I have got it.',true);
+  }catch(e){A('le-alert','Error: '+e.message,false);}finally{setBtn('le-btn',false,'Share with Riley');}
+}
 
 </script>
 

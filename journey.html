@@ -107,7 +107,7 @@ async function loadJourney(){
   const {data:enrolls}=await q.order('enrolled_at',{ascending:false});
   let enroll=(enrolls||[]).find(e=>!slug||e.programs?.slug===slug)||(enrolls||[])[0];
   if(!enroll||!enroll.programs){
-    document.getElementById('content').innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-family:\'DM Serif Display\',serif;font-size:22px;margin-bottom:12px">No active journey yet</div><div style="font-size:13px;color:var(--smoke);margin-bottom:24px;line-height:1.6">Every journey is a series of small steps, walked one day at a time.<br>Begin one whenever you''re ready.</div><a href="/programs" class="btn btn-gold">Browse Journeys →</a></div>';
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-family:\'DM Serif Display\',serif;font-size:22px;margin-bottom:12px">No active journey yet</div><div style="font-size:13px;color:var(--smoke);margin-bottom:24px;line-height:1.6">Every journey is a series of small steps, walked one day at a time.<br>Begin one whenever you\'re ready.</div><a href="/programs" class="btn btn-gold">Browse Journeys →</a></div>';
     return;
   }
   ENROLL=enroll;PROGRAM=enroll.programs;
@@ -125,7 +125,7 @@ async function loadJourney(){
   // Fetch the step content
   const {data:step}=await SB.from('journey_steps').select('*').eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
   if(!step){
-    document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">This journey''s daily steps are being written. Check back soon — or talk with Riley in the meantime.</div>';
+    document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">This journey\'s daily steps are being written. Check back soon — or talk with Riley in the meantime.</div>';
     return;
   }
   STEP=step;
@@ -152,7 +152,7 @@ function renderStep(step,day,dur,alreadyDone){
 
     <!-- Action -->
     <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:20px 22px;margin-bottom:18px">
-      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Today''s one action</div>
+      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Today's one action</div>
       <div style="font-size:15px;color:var(--parchment);line-height:1.6">${esc(step.action||'')}</div>
     </div>
 
@@ -160,7 +160,7 @@ function renderStep(step,day,dur,alreadyDone){
 
     <!-- Journal -->
     <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:20px 22px;margin-bottom:24px">
-      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px">Today''s reflection</div>
+      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px">Today's reflection</div>
       <div style="font-size:14px;color:var(--parchment);font-style:italic;margin-bottom:14px;line-height:1.6">${esc(step.journal_prompt||'')}</div>
       <textarea id="journal" placeholder="Write as much or as little as you want…" style="width:100%;min-height:90px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;resize:vertical;line-height:1.6" ${alreadyDone?'disabled':''}>${alreadyDone?'(completed)':''}</textarea>
     </div>
@@ -202,7 +202,7 @@ function renderCompletion(){
       <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:24px">Journey complete</div>
       <div style="font-family:'DM Serif Display',serif;font-size:18px;font-style:italic;color:var(--parchment);line-height:1.7;max-width:480px;margin:0 auto 32px;opacity:0.9">${esc(msg)}</div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-        ${nextSlug?`<a href="/programs?unlock=${nextSlug}" class="btn btn-gold" style="font-size:13px;padding:11px 24px">Begin What''s Next →</a>`:''}
+        ${nextSlug?`<a href="/programs?unlock=${nextSlug}" class="btn btn-gold" style="font-size:13px;padding:11px 24px">Begin What's Next →</a>`:''}
         <a href="/roadmap" class="btn btn-ghost" style="font-size:13px;padding:11px 24px">See Your Timeline</a>
       </div>
     </div>`;

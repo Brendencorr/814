@@ -46,8 +46,11 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ brief: existing, cached: true }) };
     }
 
+    const briefMonth = new Date().getUTCMonth() + 1;
+    const briefDay   = new Date().getUTCDate();
+
     // Gather user context in parallel — all non-fatal
-    const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes] = await Promise.allSettled([
+    const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes, lifeEventsRes, importantRes, calRes] = await Promise.allSettled([
       supabase.from("user_profiles").select("full_name").eq("id", user_id).single(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours,notes,water_oz").eq("user_id", user_id)
         .gte("checkin_date", sevenAgo).order("checkin_date", { ascending: false }).limit(7),
@@ -56,6 +59,9 @@ exports.handler = async (event) => {
       supabase.from("habit_completions").select("habit_id").eq("user_id", user_id).eq("completed_date", today),
       supabase.from("user_goals").select("title,current_value,target_value,unit").eq("user_id", user_id).eq("is_active", true).limit(5),
       supabase.from("user_program_progress").select("*,programs(title,duration_days)").eq("user_id", user_id).eq("status", "active").limit(3),
+      supabase.from("life_events").select("event_type,notes,riley_strategy").eq("user_id", user_id).eq("active_support_needed", true).order("created_at", { ascending: false }).limit(2),
+      supabase.from("important_dates").select("label,riley_strategy,is_sensitive").eq("user_id", user_id).eq("event_month", briefMonth).eq("event_day", briefDay),
+      supabase.from("emotional_calendar").select("label,riley_strategy").eq("event_month", briefMonth).eq("event_day", briefDay),
     ]);
 
     const get   = r => r.status === "fulfilled" ? r.value?.data : null;
@@ -66,6 +72,8 @@ exports.handler = async (event) => {
     const doneToday = get(habitsCompRes) || [];
     const goals     = get(goalsRes)    || [];
     const programs  = get(programsRes) || [];
+    const lifeEvents = get(lifeEventsRes) || [];
+    const todaysDates = [...(get(importantRes) || []).filter(d => d.is_sensitive !== false), ...(get(calRes) || [])];
 
     const firstName = profile?.full_name?.split(" ")[0] || "there";
     const prevCheckin = checkins.find(c => c.checkin_date === yesterday) || checkins[0];
@@ -104,6 +112,8 @@ exports.handler = async (event) => {
       programs.length          ? `Active programs: ${programs.map(p => `${p.programs?.title || "Program"} (day ${p.days_completed})`).join(", ")}` : "",
       `Season: ${season} — theme: ${seasonTheme[season]}`,
       `Recent mood trend: ${moodTrend}`,
+      lifeEvents.length ? `ACTIVE LIFE EVENT — hold with care: ${lifeEvents.map(e => `${e.event_type}${e.riley_strategy ? " (" + e.riley_strategy + ")" : ""}`).join("; ")}` : "",
+      todaysDates.length ? `TODAY CARRIES WEIGHT: ${todaysDates.map(d => `${d.label}${d.riley_strategy ? " — " + d.riley_strategy : ""}`).join("; ")}. Soften celebratory language. Lead with presence.` : "",
     ].filter(Boolean).join("\n");
 
     // Generate brief with Claude

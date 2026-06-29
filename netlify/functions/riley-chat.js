@@ -309,6 +309,31 @@ function buildUserContext(profile, clientData) {
         lines.push(`  - ${prog.title || p.program_name || "Program"}: Day ${p.days_completed || 0} of ${prog.duration_days || 30} (${p.status || "active"})`);
       });
     }
+
+    // ── MEMORY — what Riley already knows about this person (cross-session) ──
+    if (clientData.memory && clientData.memory.length) {
+      lines.push("\nWHAT YOU REMEMBER ABOUT THIS PERSON (from past sessions — reference naturally, never announce that you 'looked it up'):");
+      clientData.memory.slice(0, 15).forEach(m => {
+        lines.push(`  - [${m.memory_type}] ${m.content}`);
+      });
+    }
+
+    // ── ACTIVE LIFE EVENTS — shape Riley's whole approach ──
+    if (clientData.lifeEvents && clientData.lifeEvents.length) {
+      lines.push("\nACTIVE LIFE EVENTS — hold these with care:");
+      clientData.lifeEvents.forEach(e => {
+        lines.push(`  - ${e.event_type}${e.notes ? ": " + e.notes.slice(0, 80) : ""}${e.riley_strategy ? " → " + e.riley_strategy : ""}`);
+      });
+    }
+
+    // ── TODAY'S EMOTIONAL DATES — soften, never assume ──
+    if (clientData.sensitiveDates && clientData.sensitiveDates.length) {
+      lines.push("\nTODAY CARRIES WEIGHT:");
+      clientData.sensitiveDates.forEach(d => {
+        lines.push(`  - ${d.label}${d.riley_strategy ? " → " + d.riley_strategy : ""}`);
+      });
+      lines.push("  Acknowledge this gently only if it fits the conversation. Never force it. Soften celebratory language.");
+    }
   }
 
   // ── ENTITLEMENTS — shapes what Riley sells and how she talks ──
@@ -354,11 +379,14 @@ async function getUserProfile(supabase, userId) {
 async function getClientData(supabase, userId) {
   if (!userId) return null;
   try {
-    const todayISO = new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const todayISO = now.toISOString().split("T")[0];
+    const month = now.getUTCMonth() + 1;
+    const day = now.getUTCDate();
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
@@ -366,6 +394,10 @@ async function getClientData(supabase, userId) {
       supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", sevenISO),
       supabase.from("user_program_progress").select("*, programs(title,duration_days,emoji)").eq("user_id", userId).eq("status", "active").limit(5),
       supabase.from("user_active_products").select("product_key").eq("user_id", userId),
+      supabase.from("riley_memory").select("memory_type,content,confidence").eq("user_id", userId).eq("is_active", true).order("last_confirmed_at", { ascending: false }).limit(15),
+      supabase.from("life_events").select("event_type,notes,riley_strategy").eq("user_id", userId).eq("active_support_needed", true).order("created_at", { ascending: false }).limit(3),
+      supabase.from("important_dates").select("label,riley_strategy,is_sensitive").eq("user_id", userId).eq("event_month", month).eq("event_day", day),
+      supabase.from("emotional_calendar").select("label,riley_strategy").eq("event_month", month).eq("event_day", day),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -383,6 +415,11 @@ async function getClientData(supabase, userId) {
                : ownedProducts.includes("companion") ? "companion"
                : ownedProducts.length ? "alacarte" : "free";
 
+    // Merge personal + shared sensitive dates for today
+    const personalDates = importantRes.value?.data || [];
+    const sharedDates = calRes.value?.data || [];
+    const sensitiveDates = [...personalDates.filter(d => d.is_sensitive !== false), ...sharedDates];
+
     return {
       sobriety: soberRes.value?.data?.[0] || null,
       todayCheckin: checkinRes.value?.data?.[0] || null,
@@ -391,6 +428,9 @@ async function getClientData(supabase, userId) {
       programs: programsRes.value?.data || [],
       ownedProducts,
       tier,
+      memory: memoryRes.value?.data || [],
+      lifeEvents: lifeEventsRes.value?.data || [],
+      sensitiveDates,
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);
@@ -438,6 +478,50 @@ async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
       { user_id: userId, session_id: sessionId, role: "assistant", content: reply },
     ]);
   } catch (e) { console.warn("persistMessages failed (non-fatal):", e.message); }
+}
+
+// ── Memory Engine — distill durable memories from a conversation ──────────────
+// Bounded for scale: only called at message-count milestones, not every turn.
+// One small Claude call; returns NEW memories only (existing ones passed in to dedupe).
+async function extractMemories(supabase, userId, conversation) {
+  if (!userId || !conversation || conversation.length < 4) return;
+  try {
+    // What we already know, so Claude doesn't repeat it
+    const { data: existing } = await supabase
+      .from("riley_memory").select("content").eq("user_id", userId).eq("is_active", true).limit(30);
+    const known = (existing || []).map(m => m.content);
+
+    const transcript = conversation.slice(-10)
+      .map(m => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
+
+    const sys = `You distill durable memories from a wellness conversation for Riley to remember long-term.
+Return ONLY a JSON array (possibly empty). Each item: {"memory_type": one of [long_term, preference, sensitive, journey], "content": "one concise fact", "confidence": 0.0-1.0}.
+Extract ONLY stable, useful facts: names, relationships, losses, recovery details, triggers, clear preferences, goals, life events.
+Do NOT extract: small talk, momentary feelings, anything already known, anything speculative.
+Mark grief, loss, trauma, and crisis content as "sensitive".
+Already known (do not repeat): ${known.length ? known.join(" | ") : "nothing yet"}`;
+
+    const resp = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 400, system: sys, messages: [{ role: "user", content: transcript }] }),
+    });
+    if (!resp.ok) return;
+    const d = await resp.json();
+    let memories;
+    try { memories = JSON.parse(d.content?.[0]?.text || "[]"); } catch { return; }
+    if (!Array.isArray(memories) || !memories.length) return;
+
+    const rows = memories.slice(0, 5).filter(m => m.content && m.content.length > 3).map(m => ({
+      user_id: userId,
+      memory_type: ["long_term", "preference", "sensitive", "journey"].includes(m.memory_type) ? m.memory_type : "long_term",
+      content: String(m.content).slice(0, 300),
+      confidence: typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8,
+      source: "conversation",
+      is_active: true,
+    }));
+    if (rows.length) await supabase.from("riley_memory").insert(rows);
+  } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
 }
 
 // ── Conversation history builder ──────────────────────────────────────────────
@@ -562,6 +646,13 @@ exports.handler = async function (event) {
   if (supabase && user_id && session_id && reply) {
     const userMsg = message || conversationHistory[conversationHistory.length - 1]?.content || "";
     persistMessages(supabase, user_id, session_id, userMsg, reply);
+
+    // Memory Engine — distill durable memories at conversation milestones.
+    // Bounded for scale: runs ~once per 6 messages, not every turn. Non-blocking.
+    const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
+    if (fullConvo.length >= 6 && fullConvo.length % 6 === 0) {
+      extractMemories(supabase, user_id, fullConvo);
+    }
   }
 
   // Return plain text so the streaming client UI (getReader) works without

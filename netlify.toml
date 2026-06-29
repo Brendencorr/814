@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html,login.html"
 
 [functions]
   directory = "netlify/functions"
@@ -52,12 +52,12 @@
 # ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
 [[redirects]]
   from = "https://riley.eight14.us/dashboard"
-  to   = "/riley-dashboard.html"
+  to   = "/dashboard.html"
   status = 200
 
 [[redirects]]
   from = "https://riley.eight14.us/dashboard/"
-  to   = "/riley-dashboard.html"
+  to   = "/dashboard.html"
   status = 200
 
 [[redirects]]
@@ -270,6 +270,34 @@
   to     = "/chat.html"
   status = 200
   force  = true
+
+
+# ── Sign-up / Login — direct to clean Google OAuth page ──────
+[[redirects]]
+  from = "https://riley.eight14.us/login"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/login/"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/login.html"
+  to     = "/login.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/signup"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/signup/"
+  to   = "/login.html"
+  status = 200
 
 # ── Static assets — serve directly, never catch-all ──────────
 [[redirects]]

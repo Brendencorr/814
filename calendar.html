@@ -181,6 +181,7 @@ async function toggleH(id){
 
 </script>
 
+
 <script>
 /* ── ENTITLEMENT GATING (shared) ─────────────────────────────────────────── */
 (function(){
@@ -205,7 +206,7 @@ async function toggleH(id){
   const mode=(e,k)=>(e&&e.features&&e.features[k]&&e.features[k].gate_mode)||'hidden';
 
   function gateSidebar(ent){
-    document.querySelectorAll('aside a[href]').forEach(a=>{
+    document.querySelectorAll('aside a[href], nav.nav a[href]').forEach(a=>{
       const href=a.getAttribute('href');
       const feat=NAV_FEAT[href];
       if(!feat) return;            // always-visible

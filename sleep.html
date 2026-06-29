@@ -5,468 +5,216 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sleep — Riley · The 8:14 Project</title>
 <style>
-
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;
-  --gold:#c9a84c;--gold-light:#e8d5a3;--gold-dim:rgba(201,168,76,0.15);
-  --riley-blue:#2a4a6e;--riley-blue-light:#4a7ab0;
-  --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
-}
-
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
-
-/* ── LAYOUT ── */
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink)}
 .dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-
-/* ── SIDEBAR ── */
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.06)}
+.sidebar-logo{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:20px}
 .sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
 .sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin:16px 0 4px}
+.sni{display:flex;align-items:center;gap:10px;padding:9px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover,.sni.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
 .sidebar-spacer{flex:1}
-.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px;transition:color .15s}
-.sign-out-btn:hover{color:var(--red)}
-
-/* ── MAIN ── */
-.dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
-.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
-.topbar-actions{display:flex;gap:10px;align-items:center}
-.topbar-btn{background:var(--ink);color:var(--parchment);border:none;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.04em;text-decoration:none;display:inline-block}
-.topbar-btn.gold{background:var(--gold);color:var(--ink)}
-
-.dash-content{padding:32px}
-
-/* ── BRIEF CARD ── */
-.briefing-card{background:var(--ink);border-radius:2px;overflow:hidden;margin-bottom:28px}
-.briefing-card-header{padding:24px 28px;background:linear-gradient(135deg,rgba(201,168,76,0.12) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-start;justify-content:space-between}
-.bc-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px}
-.bc-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--parchment);margin-bottom:6px}
-.bc-subtitle{font-size:13px;color:var(--smoke);line-height:1.5;max-width:440px}
-.bc-progress-label{font-size:11px;color:var(--smoke);margin-bottom:6px;font-family:'DM Mono',monospace;text-align:right}
-.briefing-modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05)}
-.bmod{background:rgba(15,14,13,0.97);padding:20px;cursor:pointer;transition:background .15s;position:relative}
-.bmod:hover{background:rgba(201,168,76,0.05)}
-.bmod.done::after{content:'✓';position:absolute;top:12px;right:14px;font-size:11px;color:var(--green);font-weight:700}
-.bmod.coming{opacity:0.45;cursor:default}
-.bmod-icon{font-size:20px;margin-bottom:8px}
-.bmod-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
-.bmod-content{font-size:13px;color:var(--parchment);line-height:1.45}
-.brief-footer{padding:14px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between}
-
-/* ── STATS ── */
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:12px;margin-top:28px;display:flex;align-items:center;gap:10px}
-.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
-.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
-.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
-.stat-trend{display:inline-block;font-size:11px;color:var(--green);font-weight:600;margin-left:4px}
-
-/* ── TWO COL ── */
-.two-col{display:grid;grid-template-columns:1fr 320px;gap:20px}
-.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:16px}
-.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
-.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
-.panel-action{font-size:12px;color:var(--riley-blue-light);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;text-decoration:none}
-
-/* ── CONVERSATIONS ── */
-.conv-item{padding:14px 20px;border-bottom:1px solid var(--mist);cursor:pointer;transition:background .12s;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;text-decoration:none;color:inherit}
-.conv-item:hover{background:var(--warm-white)}
-.conv-item:last-child{border-bottom:none}
-.conv-title{font-size:13px;color:var(--ink);font-weight:500;margin-bottom:3px}
-.conv-preview{font-size:12px;color:var(--smoke);line-height:1.4}
-.conv-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
-.conv-tag{display:inline-block;font-size:9px;background:var(--gold-dim);color:var(--gold);padding:2px 6px;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;margin-right:3px}
-
-/* ── PROGRAMS ── */
-.prog-list{padding:0 20px}
-.prog-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--mist)}
-.prog-item:last-child{border-bottom:none}
-.prog-icon{width:36px;height:36px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border-radius:2px}
-.prog-name{font-size:13px;color:var(--ink);font-weight:500}
-.prog-status{font-size:11px;color:var(--smoke);margin-top:2px}
-.prog-progress{margin-left:auto;text-align:right;flex-shrink:0}
-.prog-pct{font-family:'DM Mono',monospace;font-size:18px;color:var(--gold);font-weight:500;line-height:1}
-.prog-bar-wrap{width:60px;height:3px;background:var(--mist);border-radius:2px;margin-top:4px;margin-left:auto}
-.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
-
-/* ── CHECK-IN PANEL ── */
-.checkin-panel{display:flex;flex-direction:column;gap:12px}
-.checkin-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
-.checkin-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
-.mood-scale{display:flex;gap:6px;margin-top:8px}
-.mood-btn{flex:1;padding:8px 4px;background:var(--warm-white);border:1px solid var(--mist);border-radius:1px;cursor:pointer;font-size:18px;text-align:center;transition:border-color .12s,transform .1s}
-.mood-btn:hover{border-color:var(--gold);transform:scale(1.1)}
-.mood-btn.selected{border-color:var(--gold);background:var(--gold-dim)}
-.streak-display{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
-.streak-num{font-family:'DM Serif Display',serif;font-size:48px;color:var(--ink);line-height:1}
-.streak-unit{font-size:14px;color:var(--smoke)}
-.streak-dots{display:flex;gap:4px;margin-top:10px}
-.streak-dot{width:10px;height:10px;border-radius:50%;background:var(--mist)}
-.streak-dot.done{background:var(--gold)}
-.streak-dot.today{background:var(--green)}
-.todo-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--mist);cursor:pointer}
-.todo-item:last-child{border-bottom:none}
-.todo-check{width:18px;height:18px;border:1.5px solid var(--mist);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
-.todo-check.done{border-color:var(--green);color:var(--green)}
-.todo-text{font-size:13px;color:var(--ink)}
-.todo-text.done{color:var(--smoke);text-decoration:line-through}
-.goal-row{margin-bottom:12px}
-.goal-row:last-child{margin-bottom:0}
-.goal-top{display:flex;justify-content:space-between;margin-bottom:5px}
-.goal-name{font-size:12px;color:var(--ink)}
-.goal-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold)}
-.goal-bar{height:3px;background:var(--mist);border-radius:2px}
-.goal-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
-
-/* ── EMPTY STATES ── */
-.empty{padding:24px 20px;text-align:center}
-.empty-icon{font-size:28px;margin-bottom:8px}
-.empty-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
-.empty-sub{font-size:12px;color:var(--smoke);line-height:1.5;margin-bottom:14px}
-.btn-sm{display:inline-block;padding:8px 16px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;text-decoration:none;letter-spacing:0.04em}
-.btn-gold{background:var(--gold);color:var(--ink)}
+.sidebar-user{padding:16px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
+.uav{width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.uav img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.unm{font-size:12px;color:var(--parchment);font-weight:500}
+.upl{font-size:10px;color:var(--gold)}
+.sob{margin-left:auto;background:none;border:none;color:var(--smoke);font-size:16px;cursor:pointer}
+.sob:hover{color:var(--red)}
+.dash-main{overflow-y:auto}
+.dash-topbar{padding:20px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tbt{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
+.tbs{font-size:13px;color:var(--smoke);margin-top:2px}
+.btn{display:inline-block;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none}
 .btn-dark{background:var(--ink);color:var(--parchment)}
-
-/* ── SCROLLBAR ── */
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.45;cursor:default}
+.dc{padding:28px 32px}
+.card{background:white;border:1px solid var(--mist);border-radius:2px;padding:24px;margin-bottom:20px}
+.ct{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:4px}
+.cs{font-size:13px;color:var(--smoke);margin-bottom:18px;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em}
+.field input,.field select,.field textarea{background:var(--warm-white);border:1px solid var(--mist);border-radius:2px;padding:9px 12px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field textarea{resize:vertical;min-height:72px}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px}
+.alert{padding:10px 14px;border-radius:2px;font-size:13px;margin-top:10px;display:none;border:1px solid}
+.ok{background:rgba(74,124,89,0.1);color:var(--green);border-color:rgba(74,124,89,0.3)}
+.err{background:rgba(139,58,58,0.1);color:var(--red);border-color:rgba(139,58,58,0.3)}
+.divider{border-top:1px solid var(--mist);margin:20px 0;padding-top:20px}
+.mini-head{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px}
+.log-list{display:flex;flex-direction:column;gap:1px;background:var(--mist);border-radius:2px;overflow:hidden;margin-top:12px}
+.log-row{background:white;padding:11px 16px;display:flex;align-items:center;gap:12px}
+.log-row:hover{background:var(--warm-white)}
+.log-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.log-info{flex:1;min-width:0}
+.log-title{font-size:13px;font-weight:500;color:var(--ink)}
+.log-detail{font-size:11px;color:var(--smoke);margin-top:2px}
+.log-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;white-space:nowrap}
+.pbar{height:5px;background:var(--mist);border-radius:3px;margin-top:6px;overflow:hidden}
+.pbf{height:100%;background:var(--gold);border-radius:3px;transition:width .4s}
+.pbf.g{background:var(--green)}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:white;border:1px solid var(--mist);padding:18px;border-radius:2px;text-align:center}
+.sv{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1}
+.sl{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px}
+.two-col{display:grid;grid-template-columns:1fr 360px;gap:24px}
 ::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .two-col{grid-template-columns:1fr}
-  .briefing-modules-grid{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:700px){
-  .dash-layout{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .dash-content{padding:20px 16px}
-}
-
-  /* Dashboard body override */
-  body { background: var(--warm-white); color: var(--ink); }
-  
-  /* Form elements */
-  .form-section { background: white; border: 1px solid var(--mist); border-radius: 2px; padding: 24px; margin-bottom: 20px; }
-  .form-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 4px; }
-  .form-sub { font-size: 13px; color: var(--smoke); margin-bottom: 20px; }
-  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; }
-  .field input, .field select, .field textarea { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 2px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
-  .field textarea { resize: vertical; min-height: 72px; }
-  .btn-save { background: var(--gold); color: var(--ink); border: none; padding: 11px 24px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s; border-radius: 2px; }
-  .btn-save:hover { opacity: 0.88; }
-  .btn-save:disabled { opacity: 0.5; cursor: default; }
-  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--mist); padding: 9px 18px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; transition: border-color .15s; }
-  .btn-secondary:hover { border-color: var(--smoke); }
-  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; }
-  
-  /* Success/error messages */
-  .msg { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-top: 12px; display: none; }
-  .msg.success { background: rgba(74,124,89,0.1); color: var(--green); border: 1px solid rgba(74,124,89,0.3); }
-  .msg.error   { background: rgba(139,58,58,0.1); color: var(--red);   border: 1px solid rgba(139,58,58,0.3); }
-  
-  /* Log/history list */
-  .log-list { display: flex; flex-direction: column; gap: 1px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: 16px; }
-  .log-item { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-  .log-item:hover { background: var(--warm-white); }
-  .log-meta { flex: 1; }
-  .log-title { font-size: 13px; font-weight: 500; color: var(--ink); }
-  .log-detail { font-size: 11px; color: var(--smoke); margin-top: 2px; }
-  .log-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; white-space: nowrap; }
-  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
-  .badge-gold { background: var(--gold-dim); color: var(--gold); }
-  .badge-green { background: rgba(74,124,89,0.12); color: var(--green); }
-  
-  /* Stat cards inline */
-  .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
-  .mini-stat { background: white; border: 1px solid var(--mist); padding: 16px; border-radius: 2px; text-align: center; }
-  .mini-stat-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); line-height: 1; }
-  .mini-stat-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
-  
-  /* Tag pills */
-  .tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; margin-top: 3px; }
-  
-  /* Empty state */
-  .empty-state { text-align: center; padding: 40px 20px; color: var(--smoke); }
-  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
-  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-  .empty-state .sub { font-size: 13px; line-height: 1.6; }
-  
-  /* Topbar btn */
-  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; text-decoration: none; display: inline-block; }
-  .topbar-btn.gold { background: var(--gold); color: var(--ink); }
-  
-  /* Habit toggle */
-  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--mist); }
-  .habit-row:last-child { border-bottom: none; }
-  .habit-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mist); background: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
-  .habit-toggle.done { background: var(--green); border-color: var(--green); color: white; }
-  .habit-name { flex: 1; font-size: 13px; color: var(--ink); }
-  .habit-name.done { text-decoration: line-through; color: var(--smoke); }
-  
-  /* Progress bar */
-  .prog-bar-bg { height: 6px; background: var(--mist); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .4s; }
-  .prog-bar-fill.green { background: var(--green); }
-  
-  /* Section header */
-  .sect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
-  .sect-head:first-child { margin-top: 0; }
-  
-  /* Calendar grid */
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
-  .cal-cell { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--mist); color: var(--smoke); cursor: default; }
-  .cal-cell.done  { background: var(--gold); color: var(--ink); }
-  .cal-cell.today { background: var(--green); color: white; }
-  .cal-cell.empty { background: transparent; }
-  
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
-  
-  /* Responsive */
-  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-  @media (max-width: 700px) {
-    .dash-layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .dash-content { padding: 20px 16px; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    .field-row { grid-template-columns: 1fr; }
-  }
-
-/* Sidebar sticky */
-.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.sign-out-btn { margin-left: auto; background: transparent; border: none; color: var(--smoke); font-size: 14px; cursor: pointer; padding: 4px; }
-.sign-out-btn:hover { color: var(--red); }
-.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; }
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dc{padding:16px}.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="dash-layout">
-<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="sidebar-section-label">TODAY</div><a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a><a href="/chat" class="sidebar-nav-item">💬 Chat with Riley</a><a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a><div class="sidebar-section-label">HISTORY</div><a href="/conversations" class="sidebar-nav-item">📁 Conversations</a><a href="/progress" class="sidebar-nav-item">📊 Progress</a><a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a><a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a><div class="sidebar-section-label">PROGRAMS</div><a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a><a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a><div class="sidebar-section-label">LIFE DATA</div><a href="/sleep" class="sidebar-nav-item active">😴 Sleep</a><a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a><a href="/calendar" class="sidebar-nav-item">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div><button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni">🌅 Morning Brief</a><a href="/chat" class="sni">💬 Chat with Riley</a><a href="/tracker" class="sni">✅ Daily Check-In</a><div class="snl">HISTORY</div><a href="/conversations" class="sni">📁 Conversations</a><a href="/progress" class="sni">📊 Progress</a><a href="/workouts" class="sni">🏋️ Workouts</a><a href="/nutrition" class="sni">🍳 Nutrition</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni">🎯 Enrollments</a><a href="/roadmap" class="sni">🗺️ Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni active">😴 Sleep</a><a href="/finance" class="sni">💰 Financial Goals</a><a href="/calendar" class="sni">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="uav" id="uav">?</div><div><div class="unm" id="unm">…</div><div class="upl">Life Coach · Active</div></div><button class="sob" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="dash-main">
 <div class="dash-topbar">
-  <div>
-    <div class="topbar-greeting" id="greeting">Good morning.</div>
-    <div class="topbar-date" id="topbar-date"></div>
-  </div>
-  <div class="topbar-actions"><a href="/tracker" class="topbar-btn">← Tracker</a></div>
+  <div><div class="tbt" id="greeting">Sleep</div><div class="tbs" id="topbar-date"></div></div>
+  <div style="display:flex;gap:8px"><a href="/tracker" class="btn btn-dark">← Tracker</a><a href="/chat" class="btn btn-gold">Talk to Riley</a></div>
 </div>
-<div class="dash-content">
+<div class="dc">
 
-<div class="mini-stats">
-  <div class="mini-stat"><div class="mini-stat-val" id="sl-avg">—</div><div class="mini-stat-label">Avg Hours</div></div>
-  <div class="mini-stat"><div class="mini-stat-val" id="sl-goal">—</div><div class="mini-stat-label">Goal</div></div>
-  <div class="mini-stat"><div class="mini-stat-val" id="sl-streak">—</div><div class="mini-stat-label">On-Goal Streak</div></div>
-  <div class="mini-stat"><div class="mini-stat-val" id="sl-last">—</div><div class="mini-stat-label">Last Night</div></div>
+<div class="stat-row">
+  <div class="stat"><div class="sv" id="sl-avg">—</div><div class="sl">Avg Hours (14d)</div></div>
+  <div class="stat"><div class="sv" id="sl-goal">8h</div><div class="sl">Tonight's Goal</div></div>
+  <div class="stat"><div class="sv" id="sl-last">—</div><div class="sl">Last Night</div></div>
+  <div class="stat"><div class="sv" id="sl-streak">—</div><div class="sl">On-Goal Streak</div></div>
 </div>
-
-<div class="form-section">
-  <div class="form-title">Log Sleep</div>
-  <div class="form-sub">Track your sleep — Riley correlates it with your mood, energy, and performance.</div>
-  <div class="field-row">
-    <div class="field"><label>Date</label><input type="date" id="sl-date"></div>
-    <div class="field"><label>Hours slept</label><input type="number" id="sl-hours" placeholder="7.5" step="0.5" min="0" max="24"></div>
-    <div class="field"><label>Quality (1-5)</label>
-      <select id="sl-quality"><option value="">—</option><option value="1">1 — Terrible</option><option value="2">2 — Poor</option><option value="3">3 — OK</option><option value="4">4 — Good</option><option value="5">5 — Great</option></select>
-    </div>
+<div class="card">
+  <div class="ct">Log Sleep</div>
+  <div class="cs">Riley correlates your sleep with mood, energy, and performance in your brief.</div>
+  <div class="fr">
+    <div class="field"><label>Date (night of)</label><input type="date" id="sl-date"></div>
+    <div class="field"><label>Hours slept</label><input type="number" id="sl-hrs" placeholder="7.5" step="0.5" min="0" max="24"></div>
+    <div class="field"><label>Quality (1–5)</label><select id="sl-q"><option value="">—</option><option value="1">1 — Terrible</option><option value="2">2 — Poor</option><option value="3">3 — OK</option><option value="4">4 — Good</option><option value="5">5 — Great</option></select></div>
+    <div class="field"><label>Sleep goal (hrs/night)</label><input type="number" id="sl-goal-in" placeholder="8" step="0.5" min="4" max="12"></div>
   </div>
-  <div class="field"><label>Notes</label><textarea id="sl-notes" placeholder="Woke up at 3am, stress dreams…"></textarea></div>
-  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--mist)">
-    <div class="field"><label>Sleep goal (hours/night)</label><input type="number" id="sl-goal-in" placeholder="8" step="0.5" min="4" max="12"></div>
-  </div>
-  <button class="btn-save" onclick="logSleep()">Save Sleep Log</button>
-  <div class="msg" id="msg-sleep"></div>
+  <div class="field"><label>Notes</label><textarea id="sl-notes" rows="2" placeholder="Woke up early, stress dreams…"></textarea></div>
+  <button class="btn btn-gold" id="sl-btn" onclick="logSleep()">Save Sleep Log</button>
+  <div class="alert" id="sl-alert"></div>
 </div>
-
-<div class="section-label">14-Day Sleep Chart</div>
-<div id="sleep-chart" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px"></div>
-<div class="section-label">Recent Logs</div>
-<div id="sleep-history"></div>
-
+<div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">14-Day Chart</div>
+<div id="sl-chart" class="card" style="padding:16px"></div>
+<div style="margin-top:16px;font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px">Recent Logs</div>
+<div id="sl-history"></div>
 </div>
 </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 
-const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+const SB = supabase.createClient(
+  'https://tglljvjixlolaguycvbb.supabase.co',
+  'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+);
+let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
 
-let _db, _user, _uid, _today;
-
-async function authInit() {
-  _db = supabase.createClient(SB_URL, SB_KEY);
-  const { data } = await _db.auth.getSession();
-  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return false; }
-  _user = data.session.user;
-  _uid  = _user.id;
-  _today = new Date().toISOString().slice(0,10);
-  
-  const meta = _user.user_metadata || {};
-  const fullName  = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
-  const firstName = fullName.split(' ')[0];
-  const avatarUrl = meta.avatar_url || meta.picture || '';
-  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BC';
-  
-  // Topbar
-  const h = new Date().getHours();
-  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  const gEl = document.getElementById('greeting');
-  if (gEl) gEl.textContent = greet + ', ' + firstName + '. \u2600\uFE0F';
-  const dEl = document.getElementById('topbar-date');
-  if (dEl) dEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  
-  // Sidebar user
-  const av = document.getElementById('user-avatar');
-  if (av) {
-    if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-    else av.textContent = initials;
-  }
-  const nm = document.getElementById('user-name');
-  if (nm) nm.textContent = fullName;
-  
-  return true;
+function A(id,msg,ok){
+  const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
+  el.textContent=msg;el.className='alert '+(ok?'ok':'err');el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',5000);
 }
-
-async function signOut() {
-  await _db.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
+function setBtn(id,loading,label){
+  const el=document.getElementById(id);if(!el)return;
+  el.disabled=loading;el.textContent=loading?'Saving…':label;
 }
-
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function fmtDate(ts) {
-  if (!ts) return '';
-  const d = new Date(ts), t = new Date(), y = new Date();
-  y.setDate(t.getDate()-1);
-  if (d.toDateString()===t.toDateString()) return 'Today';
-  if (d.toDateString()===y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-function fmtTime(ts) {
-  if (!ts) return '';
-  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-}
-function showMsg(id, text, type='success') {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className = 'msg ' + type;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display='none'; }, 3500);
-}
-
-
-(async function() {
-  if (!(await authInit())) return;
-  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
-  document.getElementById('sl-date').value = yesterday.toISOString().slice(0,10);
-  await loadSleep();
-})();
-
-async function loadSleep() {
-  const {data:ciData} = await _db.from('daily_checkins').select('checkin_date,sleep_hours,notes').eq('user_id',_uid).gte('checkin_date', dAgo(14)).order('checkin_date',{ascending:false});
-  const logs = ciData||[];
-  
-  const {data:goalData} = await _db.from('user_goals').select('current_value,target_value').eq('user_id',_uid).eq('category','sleep').eq('is_active',true).maybeSingle();
-  const goalHrs = goalData?.target_value||8;
-  document.getElementById('sl-goal').textContent = goalHrs+'h';
-  document.getElementById('sl-goal-in').value = goalHrs;
-  
-  const withSleep = logs.filter(l=>l.sleep_hours);
-  const avg = withSleep.length?Math.round(withSleep.reduce((s,l)=>s+l.sleep_hours,0)/withSleep.length*10)/10:null;
-  document.getElementById('sl-avg').textContent = avg?avg+'h':'—';
-  if (withSleep.length) document.getElementById('sl-last').textContent = withSleep[0].sleep_hours+'h';
-  
-  // Streak of nights meeting goal
-  const sorted = [...withSleep].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));
-  let streak=0;
-  for (const l of sorted) { if (l.sleep_hours>=goalHrs) streak++; else break; }
-  document.getElementById('sl-streak').textContent = streak||'—';
-  
-  // 14-day bar chart (CSS only)
-  const chartEl = document.getElementById('sleep-chart');
-  const last14 = [];
-  for (let i=13;i>=0;i--) { const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toISOString().slice(0,10)); }
-  const logMap = Object.fromEntries(withSleep.map(l=>[l.checkin_date,l.sleep_hours]));
-  const maxH = Math.max(goalHrs+2, ...Object.values(logMap), 1);
-  chartEl.innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;position:relative">' +
-    '<div style="position:absolute;left:0;right:0;bottom:'+(goalHrs/maxH*100)+'%;border-top:1px dashed var(--gold);pointer-events:none"></div>' +
-    last14.map(d => {
-      const h = logMap[d];
-      const pct = h?Math.min(100,(h/maxH*100)):0;
-      const col = h?(h>=goalHrs?'var(--green)':'var(--gold)'):'var(--mist)';
-      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">' +
-        '<div style="width:100%;background:'+col+';height:'+pct+'%;border-radius:2px 2px 0 0;min-height:'+(h?2:0)+'px" title="'+d+(h?' — '+h+'h':'')+'"></div>' +
-        '<div style="font-size:8px;color:var(--smoke);font-family:DM Mono,monospace">'+new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'narrow'})+'</div>' +
-        '</div>';
-    }).join('') + '</div><div style="font-size:10px;color:var(--smoke);margin-top:8px;font-family:DM Mono,monospace">— = sleep goal ('+goalHrs+'h)</div>';
-  
-  // History list
-  const hist = document.getElementById('sleep-history');
-  if (!withSleep.length) { hist.innerHTML='<div class="empty-state"><div class="icon">😴</div><div class="title">No sleep logged yet</div><div class="sub">Start tracking tonight.</div></div>'; return; }
-  hist.innerHTML='<div class="log-list">'+sorted.slice(0,14).map(l=>{
-    const met = l.sleep_hours>=goalHrs;
-    return '<div class="log-item">'+
-      '<div style="font-size:22px;width:36px;text-align:center">'+(met?'✅':'😴')+'</div>'+
-      '<div class="log-meta"><div class="log-title">'+l.sleep_hours+'h sleep</div>'+(l.notes?'<div class="log-detail">'+esc(l.notes)+'</div>':'')+'</div>'+
-      '<div class="log-date">'+fmtDate(l.checkin_date)+'</div>'+
-      '</div>';
-  }).join('')+'</div>';
-}
-
-async function logSleep() {
-  const hrs = parseFloat(document.getElementById('sl-hours').value)||null;
-  const date = document.getElementById('sl-date').value||_today;
-  if (!hrs) return showMsg('msg-sleep','Please enter hours slept.','error');
-  
-  const {error} = await _db.from('daily_checkins').upsert({
-    user_id:_uid, checkin_date:date, sleep_hours:hrs,
-    notes:document.getElementById('sl-notes').value.trim()||null
-  },{onConflict:'user_id,checkin_date'});
-  
-  // Save goal if changed
-  const goalHrs = parseFloat(document.getElementById('sl-goal-in').value)||8;
-  // Check if sleep goal exists, then update or insert
-  const {data:existGoal} = await _db.from('user_goals').select('id').eq('user_id',_uid).eq('category','sleep').eq('is_active',true).maybeSingle();
-  if(existGoal) {
-    await _db.from('user_goals').update({current_value:hrs,target_value:goalHrs}).eq('id',existGoal.id);
-  } else {
-    await _db.from('user_goals').insert({user_id:_uid,title:'Sleep goal',category:'sleep',target_value:goalHrs,current_value:hrs,unit:'hours',period:'daily',period_start:_today,is_active:true,sort_order:99});
-  }
-  
-  if (error) return showMsg('msg-sleep','Error: '+error.message,'error');
-  document.getElementById('sl-hours').value='';
-  document.getElementById('sl-notes').value='';
-  showMsg('msg-sleep','Sleep logged!');
-  await loadSleep();
-}
-
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 
+async function boot(onReady){
+  try{
+    const {data:{session}}=await SB.auth.getSession();
+    if(!session){window.location.href='https://riley.eight14.us';return;}
+    USER=session.user;UID=USER.id;
+    const meta=USER.user_metadata||{};
+    const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+    const firstName=fullName.split(' ')[0];
+    const avatarUrl=meta.avatar_url||meta.picture||'';
+    const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    const h=new Date().getHours();
+    const el=document.getElementById('greeting');
+    if(el)el.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'. ☀️';
+    const dtEl=document.getElementById('topbar-date');
+    if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const av=document.getElementById('uav');
+    if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+    const nm=document.getElementById('unm');if(nm)nm.textContent=fullName;
+    await onReady();
+  }catch(e){console.error('Boot error:',e);}
+}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+
+
+(async()=>{ await boot(async()=>{
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  document.getElementById('sl-date').value=yesterday.toISOString().slice(0,10);
+  await loadSleep();
+}); })();
+
+async function loadSleep(){
+  try{
+    const {data:rows}=await SB.from('daily_checkins').select('checkin_date,sleep_hours,notes').eq('user_id',UID).gte('checkin_date',dAgo(14)).order('checkin_date',{ascending:false});
+    const logs=rows||[];
+    const {data:goalRow}=await SB.from('user_goals').select('target_value').eq('user_id',UID).eq('category','sleep').eq('is_active',true).maybeSingle();
+    const goalHrs=goalRow?.target_value||8;
+    document.getElementById('sl-goal').textContent=goalHrs+'h';
+    document.getElementById('sl-goal-in').value=goalHrs;
+    const withSleep=logs.filter(l=>l.sleep_hours);
+    const avg=withSleep.length?Math.round(withSleep.reduce((s,l)=>s+l.sleep_hours,0)/withSleep.length*10)/10:null;
+    document.getElementById('sl-avg').textContent=avg?avg+'h':'—';
+    if(withSleep.length)document.getElementById('sl-last').textContent=withSleep[0].sleep_hours+'h';
+    let streak=0;
+    for(const l of withSleep){if(l.sleep_hours>=goalHrs)streak++;else break;}
+    document.getElementById('sl-streak').textContent=streak||'—';
+    // 14-day bar chart
+    const last14=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toISOString().slice(0,10));}
+    const logMap=Object.fromEntries(withSleep.map(l=>[l.checkin_date,l.sleep_hours]));
+    const maxH=Math.max(goalHrs+2,...Object.values(logMap),1);
+    document.getElementById('sl-chart').innerHTML=
+      '<div style="display:flex;align-items:flex-end;gap:3px;height:90px;position:relative">'+
+      '<div style="position:absolute;left:0;right:0;bottom:'+(goalHrs/maxH*100)+'%;border-top:1px dashed var(--gold);pointer-events:none" title="Goal: '+goalHrs+'h"></div>'+
+      last14.map(d=>{const h=logMap[d];const pct=h?Math.min(100,h/maxH*100):0;const col=h?(h>=goalHrs?'var(--green)':'var(--gold)'):'var(--mist)';
+        return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">'+
+          '<div style="width:100%;background:'+col+';height:'+pct+'%;border-radius:2px 2px 0 0;min-height:'+(h?2:0)+'px" title="'+d+(h?' — '+h+'h':'')+'"></div>'+
+          '<div style="font-size:8px;color:var(--smoke);font-family:DM Mono,monospace">'+new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'narrow'})+'</div>'+
+          '</div>';
+      }).join('')+'</div><div style="font-size:10px;color:var(--smoke);margin-top:8px;font-family:DM Mono,monospace">— = goal ('+goalHrs+'h)</div>';
+    const hist=document.getElementById('sl-history');
+    if(!withSleep.length){hist.innerHTML='<div style="padding:16px;text-align:center;color:var(--smoke);font-size:13px">No sleep logged yet.</div>';return;}
+    hist.innerHTML='<div class="log-list">'+withSleep.slice(0,14).map(l=>{
+      const met=l.sleep_hours>=goalHrs;
+      return '<div class="log-row"><div class="log-icon">'+(met?'✅':'😴')+'</div><div class="log-info"><div class="log-title">'+l.sleep_hours+'h sleep</div>'+(l.notes?'<div class="log-detail">'+esc(l.notes)+'</div>':'')+'</div><div class="log-date">'+fmtDate(l.checkin_date)+'</div></div>';
+    }).join('')+'</div>';
+  }catch(e){console.error('loadSleep:',e);}
+}
+async function logSleep(){
+  const hrs=parseFloat(document.getElementById('sl-hrs').value)||null;
+  if(!hrs)return A('sl-alert','Please enter hours slept.',false);
+  setBtn('sl-btn',true,'Save Sleep Log');
+  try{
+    const date=document.getElementById('sl-date').value||dAgo(1);
+    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:date,sleep_hours:hrs,notes:document.getElementById('sl-notes').value.trim()||null},{onConflict:'user_id,checkin_date'});
+    if(error)throw error;
+    // Update or create sleep goal
+    const goalHrs=parseFloat(document.getElementById('sl-goal-in').value)||8;
+    const {data:existing}=await SB.from('user_goals').select('id').eq('user_id',UID).eq('category','sleep').eq('is_active',true).maybeSingle();
+    if(existing){await SB.from('user_goals').update({target_value:goalHrs,current_value:hrs}).eq('id',existing.id);}
+    else{await SB.from('user_goals').insert({user_id:UID,title:'Sleep goal',category:'sleep',target_value:goalHrs,current_value:hrs,unit:'hours',period:'daily',period_start:TODAY,is_active:true,sort_order:99});}
+    document.getElementById('sl-hrs').value='';document.getElementById('sl-notes').value='';
+    A('sl-alert','✓ Sleep logged!',true);
+    await loadSleep();
+  }catch(e){A('sl-alert','Error: '+e.message,false);console.error(e);}
+  finally{setBtn('sl-btn',false,'Save Sleep Log');}
+}
 </script>
 </body>
 </html>

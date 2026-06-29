@@ -324,12 +324,17 @@ async function loadSobriety() {
 
     const days = Math.max(0, Math.floor((Date.now() - new Date(data.start_date)) / 86400000));
     document.getElementById('sober-num').textContent = days;
-    document.getElementById('sober-msg').textContent =
-      days >= 365 ? 'Over a year. Absolutely extraordinary.' :
-      days >= 90  ? 'Personal best territory. Keep going.' :
-      days >= 30  ? 'A full month. You\'re really doing this.' :
-      days >= 7   ? 'One week down. Keep building.' :
-                    'Every single day counts.';
+    const yrs  = Math.floor(days / 365);
+    const mons = Math.floor((days % 365) / 30);
+    const soberMsg =
+      yrs >= 5  ? yrs + ' years sober. Truly extraordinary. Ryan would be proud.' :
+      yrs >= 2  ? yrs + ' years and ' + mons + ' months. You are living proof.' :
+      yrs >= 1  ? '1 year and ' + mons + ' months sober. A complete transformation.' :
+      days >= 90 ? days + ' days — personal best territory. Keep going.' :
+      days >= 30 ? 'A full month sober. You\'re really doing this.' :
+      days >= 7  ? 'One week down. Keep building.' :
+                   'Every single day counts.';
+    document.getElementById('sober-msg').textContent = soberMsg;
 
     document.getElementById('sober-display').style.display = 'block';
     document.getElementById('sober-form').style.display    = 'none';

@@ -93,18 +93,24 @@ exports.handler = async (event) => {
     ].filter(Boolean).join("\n");
 
     // Generate brief with Claude
-    const systemPrompt = `You are Riley, the wellness guide for The 8:14 Project. Generate a personalized morning brief.
+    const systemPrompt = `You are Riley, the wellness guide for The 8:14 Project. Generate a full personalized morning brief.
 
-The entire brief must be readable in under 60 seconds. Short. Warm. Honest.
+The entire brief must be readable in under 45 seconds. Every field: short, warm, honest, specific.
 Never preachy. Never corporate. Never generic. No motivational poster energy.
-Always hopeful. Specific to this person. Reference their actual data.
+Always hopeful. Reference their actual data — sobriety days, sleep, mood, habits, programs.
+Numbers support. Stories inspire.
 
-Return ONLY valid JSON with exactly these 4 keys — no other text:
+Return ONLY valid JSON with exactly these 9 keys — no other text:
 {
-  "mood_note": "One sentence acknowledging where they are based on their data. Warm. Real.",
-  "encouragement": "One sentence of genuine encouragement tied to something specific about their journey.",
-  "focus": "One short phrase — today's single focus area. (e.g. 'Keep the streak going', 'Rest and nourish', 'One step forward')",
-  "action": "One specific small action they can do in the next hour. 15 words max. Concrete."
+  "riley_note": "Riley's specific observation from their data. Start with 'I noticed...' or 'You've...' — something concrete from what you know. 1 sentence.",
+  "mood_note": "One sentence acknowledging where they are right now based on their data. Warm. Real.",
+  "encouragement": "One sentence of genuine encouragement tied to something specific about their journey. Not generic.",
+  "focus": "Today's single focus area. One short phrase. (e.g. 'Keep the streak going', 'Rest and rebuild', 'Move and nourish')",
+  "quote": "One short quote — under 15 words. Something that feels true for their journey right now. No attribution needed.",
+  "challenge": "One small challenge for today. Specific. Doable in the next few hours. Under 15 words.",
+  "reflection_prompt": "One question to sit with today. Something that invites quiet thought, not pressure. Under 15 words.",
+  "nutrition_tip": "One practical nutrition note relevant to recovery or their current state. 1 short sentence.",
+  "action": "The single most important action they can take today. Concrete. Under 15 words."
 }`;
 
     const apiResp = await fetch(ANTHROPIC_API_URL, {
@@ -116,7 +122,7 @@ Return ONLY valid JSON with exactly these 4 keys — no other text:
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-6",
-        max_tokens: 400,
+        max_tokens: 700,
         system:     systemPrompt,
         messages:   [{ role: "user", content: `USER CONTEXT:\n${ctx}\n\nGenerate the morning brief.` }],
       }),
@@ -131,12 +137,15 @@ Return ONLY valid JSON with exactly these 4 keys — no other text:
       modules = JSON.parse(rawText);
     } catch {
       modules = {
-        mood_note:     "A new day. That takes something.",
-        encouragement: soberDays !== null
-          ? `${soberDays} days is real. You built that one choice at a time.`
-          : "You showed up today. That's the whole thing.",
-        focus:  "One step forward",
-        action: "Drink a glass of water and take three slow breaths.",
+        riley_note:        soberDays !== null ? `You have ${soberDays} days. That took real work.` : "You came back today. That matters.",
+        mood_note:         "A new day. That takes something.",
+        encouragement:     soberDays !== null ? `${soberDays} days is real. You built that one choice at a time.` : "You showed up today. That's the whole thing.",
+        focus:             "One step forward",
+        quote:             "Progress is not linear. It is persistent.",
+        challenge:         "Text one person who matters to you today.",
+        reflection_prompt: "What would make today feel worth it?",
+        nutrition_tip:     "Eat something with protein in the first hour of your morning.",
+        action:            "Drink a glass of water and take three slow breaths.",
       };
     }
 

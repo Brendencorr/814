@@ -82,7 +82,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni active"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Journal</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni"><span class="sni-icon">🎒</span>Enrollments</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni active"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">Daily Brief</div><div class="tb-sub" id="tb-date"></div></div>
@@ -110,11 +110,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 
 <!-- ── MORNING BRIEF ──────────────────────────────────────────── -->
-<div class="card" id="brief-card">
-  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px" id="br-label">Morning Brief</div>
-  <div id="br-body">
-    <div style="font-size:12px;color:var(--smoke);line-height:1.8;margin-bottom:20px">Your brief is personalized to your check-ins, streak, and goals. Generate it below.</div>
-    <button id="br-gen-btn" onclick="generateBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:10px 22px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate Today's Brief</button>
+<div style="background:linear-gradient(135deg,rgba(201,168,76,0.06),rgba(20,18,16,0.4));border:1px solid rgba(201,168,76,0.15);border-radius:6px;overflow:hidden;margin-bottom:16px">
+  <div style="padding:20px 24px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div id="br-label" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:6px">Morning Brief</div>
+      <div id="br-date" style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)"></div>
+    </div>
+    <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);text-align:right">
+      <div>Estimated reading time</div>
+      <div style="color:var(--gold);margin-top:3px">45 seconds</div>
+    </div>
+  </div>
+  <div id="br-body" style="padding:24px">
+    <div style="font-size:13px;color:var(--smoke);line-height:1.8;margin-bottom:20px">Your brief is assembled fresh each morning from your check-ins, streak, and goals.</div>
+    <button id="br-gen-btn" onclick="generateBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:11px 24px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate Today's Brief</button>
   </div>
 </div>
 
@@ -272,41 +281,77 @@ async function generateBrief(){
 
 function renderBrief(brief){
   const m=brief.modules||{};
-  const icons={mood_note:'🌅',encouragement:'✨',focus:'🎯',action:'→',mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚'};
-  const labels={mood_note:'Where you are',encouragement:'Today\'s encouragement',focus:'Today\'s focus',action:'One action'};
 
-  // New format (mood_note, encouragement, focus, action)
-  if(m.mood_note||m.encouragement||m.focus||m.action){
-    const html=`
-      ${m.mood_note?`<div style="font-size:14px;color:var(--parchment);line-height:1.7;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border-left:2px solid var(--gold);border-radius:0 2px 2px 0">${esc(m.mood_note)}</div>`:''}
-      ${m.encouragement?`<div style="margin-bottom:16px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Encouragement</div><div style="font-size:13px;color:var(--parchment);line-height:1.6">${esc(m.encouragement)}</div></div>`:''}
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
-        ${m.focus?`<div style="padding:14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Today's Focus</div><div style="font-size:13px;color:var(--parchment)">${esc(m.focus)}</div></div>`:''}
-        ${m.action?`<div id="action-card" style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:3px;cursor:pointer" onclick="markActionDone(this)" title="Click when done"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">One Action</div><div style="font-size:13px;color:var(--parchment)">${esc(m.action)}</div></div>`:''}
-      </div>
-      <div style="margin-top:20px;font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">Generated today · Click "One Action" when complete</div>`;
-    document.getElementById('br-body').innerHTML=html;
-  } else {
-    // Legacy module format
-    const order=['mindset','meditation','hydration','workout','nutrition','reading'];
-    const keys=[...order.filter(k=>m[k]),...Object.keys(m).filter(k=>!order.includes(k))];
-    document.getElementById('br-body').innerHTML=
-      `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">`+
-      keys.map(k=>`<div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:3px">
-        <div style="font-size:16px;margin-bottom:6px">${icons[k]||'•'}</div>
-        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${labels[k]||k}</div>
-        <div style="font-size:11px;color:var(--parchment);line-height:1.5">${esc(String(m[k]).slice(0,100))}</div>
-      </div>`).join('')+`</div>`;
+  // Set the date header
+  const now=new Date();
+  const dateEl=document.getElementById('br-date');
+  if(dateEl)dateEl.textContent=now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('br-label').textContent='Morning Brief';
+
+  // Build the 45-second layout
+  const sections=[];
+
+  // Riley Note — most personal, top of brief
+  if(m.riley_note){
+    sections.push(`<div style="padding:16px 20px;background:rgba(74,122,176,0.08);border:1px solid rgba(74,122,176,0.2);border-radius:4px;display:flex;gap:12px;align-items:flex-start;margin-bottom:16px">
+      <div style="font-size:20px;flex-shrink:0">🤝</div>
+      <div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley noticed</div>
+      <div style="font-size:14px;color:var(--parchment);line-height:1.6">${esc(m.riley_note)}</div></div>
+    </div>`);
   }
+
+  // Mood note — where they are
+  if(m.mood_note){
+    sections.push(`<div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.6;margin-bottom:20px;padding-left:14px;border-left:2px solid var(--gold)">${esc(m.mood_note)}</div>`);
+  }
+
+  // Focus + Encouragement row
+  const focusEnc=[];
+  if(m.focus) focusEnc.push(`<div style="padding:14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px;flex:1"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's focus</div><div style="font-size:13px;color:var(--parchment);font-weight:500">${esc(m.focus)}</div></div>`);
+  if(m.encouragement) focusEnc.push(`<div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Encouragement</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.encouragement)}</div></div>`);
+  if(focusEnc.length) sections.push(`<div style="display:flex;gap:10px;margin-bottom:16px">${focusEnc.join('')}</div>`);
+
+  // Quote
+  if(m.quote){
+    sections.push(`<div style="text-align:center;padding:16px 20px;margin-bottom:16px"><div style="font-family:'DM Serif Display',serif;font-size:16px;font-style:italic;color:var(--smoke);line-height:1.6">"${esc(m.quote)}"</div></div>`);
+  }
+
+  // Challenge + Reflection row
+  const cr=[];
+  if(m.challenge) cr.push(`<div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's challenge</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.challenge)}</div></div>`);
+  if(m.reflection_prompt) cr.push(`<div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Sit with this</div><div style="font-size:13px;font-style:italic;color:var(--smoke);line-height:1.5">${esc(m.reflection_prompt)}</div></div>`);
+  if(cr.length) sections.push(`<div style="display:flex;gap:10px;margin-bottom:16px">${cr.join('')}</div>`);
+
+  // Nutrition tip
+  if(m.nutrition_tip){
+    sections.push(`<div style="padding:12px 16px;background:rgba(58,124,86,0.08);border:1px solid rgba(58,124,86,0.2);border-radius:3px;display:flex;gap:10px;align-items:center;margin-bottom:16px">
+      <span style="font-size:16px">🍃</span>
+      <div><div style="font-size:8px;font-family:'DM Mono',monospace;color:#4aad72;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px">Nourishment</div>
+      <div style="font-size:12px;color:var(--parchment)">${esc(m.nutrition_tip)}</div></div>
+    </div>`);
+  }
+
+  // Action — with done toggle
+  if(m.action){
+    sections.push(`<div id="action-card" onclick="markActionDone(this)" style="padding:16px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);border-radius:3px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px" title="Click when done">
+      <div id="action-check" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px;color:var(--gold)"></div>
+      <div><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">One action today</div>
+      <div style="font-size:14px;color:var(--parchment);font-weight:500">${esc(m.action)}</div></div>
+    </div>`);
+  }
+
+  sections.push(`<div style="margin-top:12px;font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">Generated ${now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})} · Tap the action when done</div>`);
+
+  document.getElementById('br-body').innerHTML=sections.join('');
 }
 
 function markActionDone(el){
   const isDone=el.dataset.done==='1';
   el.dataset.done=isDone?'0':'1';
-  el.style.background=isDone?'rgba(255,255,255,0.03)':'rgba(74,173,114,0.1)';
-  el.style.borderColor=isDone?'rgba(255,255,255,0.08)':'rgba(74,173,114,0.3)';
-  const label=el.querySelector('div:first-child');
-  if(label)label.style.color=isDone?'var(--smoke2)':'var(--green2)';
+  el.style.background=isDone?'var(--gold-dim)':'rgba(74,173,114,0.1)';
+  el.style.borderColor=isDone?'rgba(201,168,76,0.25)':'rgba(74,173,114,0.3)';
+  const chk=document.getElementById('action-check');
+  if(chk){chk.textContent=isDone?'':'✓';chk.style.borderColor=isDone?'var(--gold)':'var(--green2)';chk.style.color=isDone?'var(--gold)':'var(--green2)';chk.style.background=isDone?'transparent':'rgba(74,173,114,0.15)';}
 }
 
 </script>

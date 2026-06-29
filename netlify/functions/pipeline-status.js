@@ -31,7 +31,7 @@ exports.handler = async function (event) {
     const [runsRes, scoresRes, postsRes, scoutRes] = await Promise.all([
       supabase
         .from("pipeline_runs")
-        .select("*")
+        .select("id,run_date,status,scout_topics_count,sage_posts_count,buffer_posts_scheduled,echo_top_pillar,echo_format_winner,error_message,sage_output,created_at")
         .order("created_at", { ascending: false })
         .limit(5),
       supabase

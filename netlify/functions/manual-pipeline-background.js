@@ -255,7 +255,7 @@ exports.handler = async function (event) {
     sageReply = await callClaude(apiKey, SAGE_PROMPT, sageMessage);
     sagePosts = parseSagePosts(sageReply);
     console.log(`[pipeline-bg] Sage complete — ${sagePosts.length} posts`);
-    await logStep({ sage_posts_count: sagePosts.length });
+    await logStep({ sage_posts_count: sagePosts.length, sage_output: sageReply });
   } catch (e) {
     const msg = "Sage step failed: " + e.message;
     console.error("[pipeline-bg]", msg);

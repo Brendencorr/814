@@ -118,7 +118,7 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
 .rvh{font-family:'Playfair Display',serif;font-size:26px;color:var(--text);margin-bottom:.25rem}
 .rvs{font-size:.82rem;color:var(--muted2);margin-bottom:1.25rem}
 .pgr{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
-.pca{background:var(--card);border:1px solid var(--border);padding:1rem;display:flex;flex-direction:column;gap:.65rem;transition:opacity .2s}
+.pca{background:var(--card);border:1px solid var(--border);padding:1.1rem;display:flex;flex-direction:column;gap:.75rem;transition:opacity .2s}
 .pca.excl{opacity:.35;border-style:dashed}
 .pct2{display:flex;align-items:flex-start;gap:.6rem}
 .pbg{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:.1em;padding:.2rem .55rem;flex-shrink:0}
@@ -129,10 +129,15 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
 .pat{margin-left:auto;flex-shrink:0}
 .atg{width:28px;height:28px;border-radius:50%;border:2px solid var(--green);background:var(--green-dim);color:var(--green);font-size:.85rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .atg.off{border-color:var(--border2);background:transparent;color:var(--muted)}
-.cpt{font-size:.75rem;color:var(--muted2);overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.5}
+.cpt{font-size:.82rem;color:var(--text);line-height:1.65;white-space:pre-wrap;word-break:break-word}
 .cpt.ex{display:block}
 .cpe{width:100%;background:var(--bg);border:1px solid var(--gold);color:var(--text);font-size:.75rem;padding:.5rem;resize:vertical;min-height:70px;outline:none;font-family:'DM Sans',sans-serif;display:none}
-.phs2{font-size:.65rem;color:var(--muted);font-family:monospace}
+.phs2{font-size:.72rem;color:var(--muted);line-height:1.5}
+.slides{border-left:2px solid var(--border2);padding-left:.75rem;display:flex;flex-direction:column;gap:.4rem}
+.slide-item{font-size:.78rem;color:var(--text);line-height:1.5}
+.slide-num{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.12em;margin-bottom:.15rem}
+.full-hash{font-size:.72rem;color:var(--sage);font-family:monospace;line-height:1.5;margin-top:.25rem}
+.sep-line{border:none;border-top:1px solid var(--border);margin:.25rem 0}
 .pca2{display:flex;gap:.5rem}
 .bt{padding:.28rem .6rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:.68rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:color .15s}
 .bt:hover{color:var(--text)}
@@ -442,31 +447,118 @@ async function runBgPipeline(){
 }
 
 function jr(){
-  // Load review from published_posts via pipeline-status
+  // Load full Sage output from pipeline_runs.sage_output
   fetch(B+'/pipeline-status').then(function(r){return r.json();}).then(function(d){
-    var posts=d.published_posts||[];
-    if(posts.length){
-      RP=posts.map(function(p,i){
-        return{num:String(i+1),type:ptype(p.post_type||''),headline:p.post_type||'Post '+(i+1),caption:p.caption_preview||'',hashtags:'',platform:p.platform||'Instagram',dayTime:'',approved:true};
-      });
-    }else{RP=dp();}
-    var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
-    document.getElementById('rvh').textContent='Your '+RP.length+' Posts';
-    document.getElementById('rvs').textContent='Week of '+td+'. Review, edit, and approve before scheduling.';
-    var g=document.getElementById('pgr');g.innerHTML='';
-    var pi=function(p){var m={instagram:'📷',facebook:'🔵',youtube:'►️'};return m[(p||'').toLowerCase()]||'📄';};
-    var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};
-    RP.forEach(function(p,i){
-      var c=document.createElement('div');c.className='pca'+(p.approved?'':' excl');c.id='pc'+i;
-      c.innerHTML='<div class="pct2"><span class="pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span><div class="pcm"><div class="ppl">'+pi(p.platform)+' '+x(p.platform)+'</div><div class="phd">'+x(p.headline)+'</div></div><button class="atg'+(p.approved?'':' off')+'" id="tg'+i+'" onclick="ta('+i+')">'+(p.approved?'&#10003;':'&#9675;')+'</button></div><div class="cpt" id="ct'+i+'">'+x(p.caption||'(No caption preview available.)')+'</div>'+(p.hashtags?'<div class="phs2">'+x(p.hashtags)+'</div>':'')+'<div class="pca2"><button class="bt" onclick="te('+i+')">Expand</button></div>';
-      g.appendChild(c);
-    });
-    document.getElementById('tct').textContent=RP.length;uac();
+    var runs=d.pipeline_runs||[];
+    var latest=runs[0];
+    if(latest&&latest.sage_output&&latest.sage_output.length>100){
+      RP=parseSageFull(latest.sage_output);
+    }else{
+      // Fall back to published_posts previews
+      var posts=d.published_posts||[];
+      RP=posts.length?posts.map(function(p,i){
+        return{num:String(i+1),type:ptype(p.post_type||''),headline:p.post_type||'Post '+(i+1),
+          caption:p.caption_preview||'',hashtags:'',slides:[],platform:p.platform||'Instagram',dayTime:'',approved:true};
+      }):dp();
+    }
+    buildReviewGrid();
     gs('r',document.querySelector('[data-s="r"]'));
-  }).catch(function(e){
-    RP=dp();
-    gs('r',document.querySelector('[data-s="r"]'));
+  }).catch(function(){RP=dp();buildReviewGrid();gs('r',document.querySelector('[data-s="r"]'));});
+}
+
+// Full parser — extracts complete captions, slides, hashtags from raw Sage output
+function parseSageFull(text){
+  var lines=text.split('\n'),blocks=[],cur='';
+  lines.forEach(function(l){
+    if(/^POST \d+/.test(l.trim())&&cur.trim()){blocks.push(cur);cur=l;}
+    else{cur+='\n'+l;}
   });
+  if(cur.trim())blocks.push(cur);
+  var posts=[];
+  blocks.forEach(function(block,i){
+    if(!block.trim())return;
+    var tM=block.match(/^POST (\d+)\s*[^\w\n]*(.+)/m);
+    var pM=block.match(/Platform:\s*(.+)/);
+    var dtM=block.match(/Day\/Time:\s*(.+)/);
+    // Extract slides
+    var slideMatches=[],slideReg=/SLIDE (\d+)[^:]*:\s*\n?([\s\S]*?)(?=\nSLIDE \d|\nCAPTION:|\n---|\nPOST \d|$)/g,sm;
+    while((sm=slideReg.exec(block))!==null){slideMatches.push({num:sm[1],text:sm[2].trim()});}
+    // Extract caption
+    var capLines=[],hashLines=[],inCap=false,inHash=false;
+    block.split('\n').forEach(function(l){
+      if(/^CAPTION:/.test(l)){inCap=true;inHash=false;var a=l.replace(/^CAPTION:\s*/,'');if(a)capLines.push(a);}
+      else if(/^HASHTAGS?:/.test(l)){inCap=false;inHash=true;var a=l.replace(/^HASHTAGS?:\s*/,'');if(a)hashLines.push(a);}
+      else if(inCap&&!/^SLIDE \d|^---|^POST \d|^QUOTE:|^FIND:|^RILEY CAPTION:|^CREDIT LINE:|^SHARE:|^POST:/.test(l)){capLines.push(l);}
+      else if(inHash&&!/^---|^POST \d/.test(l)){hashLines.push(l);}
+      else if(/^QUOTE:|^FIND:|^POST:/.test(l)&&!inHash){inCap=true;var a=l.replace(/^[^:]+:\s*/,'');if(a)capLines.push(a);}
+    });
+    var raw=tM?tM[2].trim():'Post '+(i+1);
+    posts.push({
+      num:tM?tM[1]:String(i+1),
+      type:ptype(raw),
+      headline:raw,
+      slides:slideMatches,
+      caption:capLines.join('\n').trim(),
+      hashtags:hashLines.join('\n').trim(),
+      platform:pM?pM[1].trim():'Instagram',
+      dayTime:dtM?dtM[1].trim():'',
+      approved:true
+    });
+  });
+  return posts.length>=3?posts:dp();
+}
+
+function buildReviewGrid(){
+  var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  document.getElementById('rvh').textContent='Your '+RP.length+' Posts';
+  document.getElementById('rvs').textContent='Week of '+td+'. Review and approve before scheduling.';
+  var g=document.getElementById('pgr');g.innerHTML='';
+  var pi=function(p){var m={instagram:'📷',facebook:'🔵',youtube:'►️'};return m[(p||'').toLowerCase()]||'📄';};
+  var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};
+  RP.forEach(function(p,i){
+    var c=document.createElement('div');
+    c.className='pca'+(p.approved?'':' excl');
+    c.id='pc'+i;
+    // Build slides section for carousels
+    var slidesHtml='';
+    if(p.slides&&p.slides.length){
+      slidesHtml='<div class="slides">';
+      p.slides.forEach(function(s){
+        if(!s.text)return;
+        slidesHtml+='<div class="slide-item"><div class="slide-num">SLIDE '+s.num+'</div>'+x(s.text)+'</div>';
+      });
+      slidesHtml+='</div>';
+    }
+    // Caption section
+    var captionHtml='';
+    if(p.caption){
+      captionHtml='<div style="font-family:\'Bebas Neue\',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.15em;margin-bottom:.3rem">CAPTION</div>'+
+        '<div class="cpt" id="ct'+i+'">'+x(p.caption)+'</div>'+
+        '<textarea class="cpe" id="ce'+i+'" onchange="uc('+i+',this.value)">'+x(p.caption)+'</textarea>';
+    }
+    // Hashtags
+    var hashHtml=p.hashtags?'<div class="full-hash">'+x(p.hashtags)+'</div>':'';
+
+    c.innerHTML=
+      '<div class="pct2">'+
+        '<span class="pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span>'+
+        '<div class="pcm">'+
+          '<div class="ppl">'+pi(p.platform)+' '+x(p.platform)+(p.dayTime?' · '+x(p.dayTime):'')+'</div>'+
+          '<div class="phd">'+x(p.headline)+'</div>'+
+        '</div>'+
+        '<button class="atg'+(p.approved?'':' off')+'" id="tg'+i+'" onclick="ta('+i+')">'+(p.approved?'&#10003;':'&#9675;')+'</button>'+
+      '</div>'+
+      slidesHtml+
+      (slidesHtml&&captionHtml?'<hr class="sep-line">':'')+
+      captionHtml+
+      hashHtml+
+      '<div class="pca2">'+
+        (p.caption?'<button class="bt" onclick="ted('+i+')">&#9999; Edit Caption</button>':'')+
+      '</div>';
+    g.appendChild(c);
+  });
+  document.getElementById('tct').textContent=RP.length;
+  uac();
 }
 
 function ptype(raw){

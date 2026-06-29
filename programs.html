@@ -1,711 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Programs — Riley · The 8:14 Project</title>
-  <link rel="stylesheet" href="/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-// ============================================================
-// dashboard-auth.js
-// Shared auth + Supabase client for all dashboard pages.
-// Every dashboard HTML file loads this first via:
-// ============================================================
-
-// ─── FALLBACK CONFIG ─────────────────────────────────────────
-const FALLBACK_CONFIG = {
-  supabaseUrl: 'https://tglljvjixlolaguycvbb.supabase.co',
-  supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
-};
-
-let supabase = null;
-let currentUser = null;
-
-// ─── BOOT ────────────────────────────────────────────────────
-// Call this at the top of every dashboard page's <script> block.
-// Returns { user, client } or null on failure.
-// Redirects to riley.eight14.us if not authenticated.
-
-async function initDashboard() {
-  try {
-    const config = await getSiteConfig();
-    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      window.location.href = 'https://riley.eight14.us';
-      return null;
-    }
-
-    currentUser = session.user;
-
-    // Upsert profile row on first login
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || '',
-        avatar_url: currentUser.user_metadata?.avatar_url || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id', ignoreDuplicates: false });
-
-    return { user: currentUser, client: supabase };
-  } catch (err) {
-    console.error('initDashboard error:', err);
-    return null;
-  }
-}
-
-// ─── SIGN OUT ────────────────────────────────────────────────
-async function signOut() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
-}
-
-// ─── SITE CONFIG LOADER ───────────────────────────────────────
-async function getSiteConfig() {
-  const cached = sessionStorage.getItem('siteConfig');
-  if (cached) return JSON.parse(cached);
-
-  try {
-    const res = await fetch('/.netlify/functions/site-config');
-    if (!res.ok) throw new Error('site-config returned ' + res.status);
-    const config = await res.json();
-    sessionStorage.setItem('siteConfig', JSON.stringify(config));
-    return config;
-  } catch (err) {
-    console.warn('site-config fetch failed, using fallback:', err);
-    return FALLBACK_CONFIG;
-  }
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-}
-
-function formatTime(tsStr) {
-  if (!tsStr) return '';
-  return new Date(tsStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function calcSobrietyDays(startDateStr) {
-  if (!startDateStr) return 0;
-  const start = new Date(startDateStr);
-  const now = new Date();
-  return Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
-}
-
-// ─── SIDEBAR RENDERER ────────────────────────────────────────
-// Injects inner HTML into <aside class="sidebar" id="sidebar-mount"></aside>
-
-function renderSidebar(activePage, user) {
-  const mount = document.getElementById('sidebar-mount');
-  if (!mount) return;
-
-  const sections = [
-    {
-      label: 'Today',
-      items: [
-        { id: 'dashboard', label: 'Morning Brief',   icon: '🌅', href: '/dashboard.html' },
-        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.eight14.us' },
-        { id: 'checkin',   label: 'Daily Check-In',  icon: '✅', href: '/tracker.html' },
-      ]
-    },
-    {
-      label: 'History',
-      items: [
-        { id: 'conversations', label: 'Conversations', icon: '📁', href: '/conversations.html' },
-        { id: 'progress',      label: 'Progress',      icon: '📊', href: '/progress.html' },
-        { id: 'workouts',      label: 'Workouts',      icon: '🏋️', href: '/workouts.html' },
-        { id: 'nutrition',     label: 'Nutrition',     icon: '🍳', href: '/nutrition.html' },
-      ]
-    },
-    {
-      label: 'Programs',
-      items: [
-        { id: 'programs', label: 'Enrollments', icon: '🎯', href: '/programs.html' },
-        { id: 'roadmap',  label: 'Roadmap',     icon: '🗺️', href: '/roadmap.html' },
-      ]
-    },
-    {
-      label: 'Life Data',
-      items: [
-        { id: 'sleep',    label: 'Sleep',           icon: '😴', href: '/sleep.html' },
-        { id: 'finance',  label: 'Financial Goals', icon: '💰', href: '/finance.html' },
-        { id: 'calendar', label: 'Calendar',        icon: '📅', href: '/calendar.html' },
-      ]
-    },
-  ];
-
-  const initials = (user?.user_metadata?.full_name || user?.email || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const avatarUrl = user?.user_metadata?.avatar_url;
-  const fullName  = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member';
-
-  mount.innerHTML = `
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-
-    ${sections.map(s => `
-      <div class="sidebar-section-label">${s.label}</div>
-      ${s.items.map(item => `
-        <a href="${item.href}" class="sidebar-nav-item ${activePage === item.id ? 'active' : ''}">
-          <span class="nav-icon">${item.icon}</span> ${item.label}
-        </a>`).join('')}
-    `).join('')}
-
-    <div class="sidebar-spacer"></div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar">
-        ${avatarUrl
-          ? `<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-          : initials}
-      </div>
-      <div class="user-info">
-        <div class="user-name">${fullName}</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  `;
-}
-
-// ─── CSS VARS (injected into every page) ─────────────────────
-const DASHBOARD_CSS_VARS = `
-  :root {
-    --ink:              #0f0e0d;
-    --parchment:        #f5f0e8;
-    --warm-white:       #faf8f4;
-    --gold:             #c9a84c;
-    --gold-light:       #e8d5a3;
-    --gold-dim:         rgba(201,168,76,0.15);
-    --riley-blue:       #2a4a6e;
-    --riley-blue-light: #4a7ab0;
-    --mist:             #e8e4dc;
-    --smoke:            #8a8578;
-    --green:            #4a7c59;
-    --red:              #8b3a3a;
-    --sidebar-w:        240px;
-  }
-`;
-
-(function injectVars() {
-  const style = document.createElement('style');
-  style.textContent = DASHBOARD_CSS_VARS;
-  document.head.prepend(style);
-})();
-
-</script>
-// ============================================================
-
-// ─── FALLBACK CONFIG ─────────────────────────────────────────
-const FALLBACK_CONFIG = {
-  supabaseUrl: 'https://tglljvjixlolaguycvbb.supabase.co',
-  supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
-};
-
-let supabase = null;
-let currentUser = null;
-
-// ─── BOOT ────────────────────────────────────────────────────
-// Call this at the top of every dashboard page's <script> block.
-// Returns { user, client } or null on failure.
-// Redirects to riley.eight14.us if not authenticated.
-
-async function initDashboard() {
-  try {
-    const config = await getSiteConfig();
-    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      window.location.href = 'https://riley.eight14.us';
-      return null;
-    }
-
-    currentUser = session.user;
-
-    // Upsert profile row on first login
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || '',
-        avatar_url: currentUser.user_metadata?.avatar_url || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id', ignoreDuplicates: false });
-
-    return { user: currentUser, client: supabase };
-  } catch (err) {
-    console.error('initDashboard error:', err);
-    return null;
-  }
-}
-
-// ─── SIGN OUT ────────────────────────────────────────────────
-async function signOut() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
-}
-
-// ─── SITE CONFIG LOADER ───────────────────────────────────────
-async function getSiteConfig() {
-  const cached = sessionStorage.getItem('siteConfig');
-  if (cached) return JSON.parse(cached);
-
-  try {
-    const res = await fetch('/.netlify/functions/site-config');
-    if (!res.ok) throw new Error('site-config returned ' + res.status);
-    const config = await res.json();
-    sessionStorage.setItem('siteConfig', JSON.stringify(config));
-    return config;
-  } catch (err) {
-    console.warn('site-config fetch failed, using fallback:', err);
-    return FALLBACK_CONFIG;
-  }
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-}
-
-function formatTime(tsStr) {
-  if (!tsStr) return '';
-  return new Date(tsStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function calcSobrietyDays(startDateStr) {
-  if (!startDateStr) return 0;
-  const start = new Date(startDateStr);
-  const now = new Date();
-  return Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
-}
-
-// ─── SIDEBAR RENDERER ────────────────────────────────────────
-// Injects inner HTML into <aside class="sidebar" id="sidebar-mount"></aside>
-
-function renderSidebar(activePage, user) {
-  const mount = document.getElementById('sidebar-mount');
-  if (!mount) return;
-
-  const sections = [
-    {
-      label: 'Today',
-      items: [
-        { id: 'dashboard', label: 'Morning Brief',   icon: '🌅', href: '/dashboard.html' },
-        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.eight14.us' },
-        { id: 'checkin',   label: 'Daily Check-In',  icon: '✅', href: '/tracker.html' },
-      ]
-    },
-    {
-      label: 'History',
-      items: [
-        { id: 'conversations', label: 'Conversations', icon: '📁', href: '/conversations.html' },
-        { id: 'progress',      label: 'Progress',      icon: '📊', href: '/progress.html' },
-        { id: 'workouts',      label: 'Workouts',      icon: '🏋️', href: '/workouts.html' },
-        { id: 'nutrition',     label: 'Nutrition',     icon: '🍳', href: '/nutrition.html' },
-      ]
-    },
-    {
-      label: 'Programs',
-      items: [
-        { id: 'programs', label: 'Enrollments', icon: '🎯', href: '/programs.html' },
-        { id: 'roadmap',  label: 'Roadmap',     icon: '🗺️', href: '/roadmap.html' },
-      ]
-    },
-    {
-      label: 'Life Data',
-      items: [
-        { id: 'sleep',    label: 'Sleep',           icon: '😴', href: '/sleep.html' },
-        { id: 'finance',  label: 'Financial Goals', icon: '💰', href: '/finance.html' },
-        { id: 'calendar', label: 'Calendar',        icon: '📅', href: '/calendar.html' },
-      ]
-    },
-  ];
-
-  const initials = (user?.user_metadata?.full_name || user?.email || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const avatarUrl = user?.user_metadata?.avatar_url;
-  const fullName  = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member';
-
-  mount.innerHTML = `
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-
-    ${sections.map(s => `
-      <div class="sidebar-section-label">${s.label}</div>
-      ${s.items.map(item => `
-        <a href="${item.href}" class="sidebar-nav-item ${activePage === item.id ? 'active' : ''}">
-          <span class="nav-icon">${item.icon}</span> ${item.label}
-        </a>`).join('')}
-    `).join('')}
-
-    <div class="sidebar-spacer"></div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar">
-        ${avatarUrl
-          ? `<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-          : initials}
-      </div>
-      <div class="user-info">
-        <div class="user-name">${fullName}</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  `;
-}
-
-// ─── CSS VARS (injected into every page) ─────────────────────
-const DASHBOARD_CSS_VARS = `
-  :root {
-    --ink:              #0f0e0d;
-    --parchment:        #f5f0e8;
-    --warm-white:       #faf8f4;
-    --gold:             #c9a84c;
-    --gold-light:       #e8d5a3;
-    --gold-dim:         rgba(201,168,76,0.15);
-    --riley-blue:       #2a4a6e;
-    --riley-blue-light: #4a7ab0;
-    --mist:             #e8e4dc;
-    --smoke:            #8a8578;
-    --green:            #4a7c59;
-    --red:              #8b3a3a;
-    --sidebar-w:        240px;
-  }
-`;
-
-(function injectVars() {
-  const style = document.createElement('style');
-  style.textContent = DASHBOARD_CSS_VARS;
-  document.head.prepend(style);
-})();
-
-</script>
-  <style>
-    .program-card {
-      border: 1px solid var(--mist);
-      border-radius: 2px;
-      overflow: hidden;
-      background: white;
-      transition: border-color 0.15s;
-    }
-    .program-card:hover { border-color: var(--gold); }
-
-    .program-card.enrolled {
-      border-color: var(--gold);
-    }
-
-    .program-header {
-      padding: 24px;
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-    }
-
-    .program-icon {
-      width: 48px;
-      height: 48px;
-      background: var(--ink);
-      border-radius: 2px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .program-name {
-      font-family: 'DM Serif Display', serif;
-      font-size: 18px;
-      color: var(--ink);
-      margin-bottom: 4px;
-    }
-
-    .program-desc {
-      font-size: 13px;
-      color: var(--smoke);
-      line-height: 1.5;
-    }
-
-    .program-meta {
-      padding: 0 24px 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .program-progress-section {
-      padding: 16px 24px;
-      background: var(--warm-white);
-      border-top: 1px solid var(--mist);
-    }
-
-    .program-footer {
-      padding: 16px 24px;
-      border-top: 1px solid var(--mist);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .programs-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    /* Enrollment complete banner */
-    .enrolled-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      background: var(--gold-dim);
-      border-radius: 1px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gold);
-    }
-
-    /* Stats row for enrolled programs */
-    .prog-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--mist);
-      margin-top: 12px;
-      border: 1px solid var(--mist);
-    }
-
-    .prog-stat {
-      background: white;
-      padding: 10px 12px;
-      text-align: center;
-    }
-
-    .prog-stat-val {
-      font-family: 'DM Mono', monospace;
-      font-size: 18px;
-      color: var(--gold);
-      font-weight: 500;
-    }
-
-    .prog-stat-label {
-      font-size: 10px;
-      color: var(--smoke);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-top: 2px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programs — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.programs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.prog-card{background:white;border:1px solid var(--mist);border-radius:2px;padding:24px;position:relative;overflow:hidden}
+.prog-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);opacity:0}
+.prog-card.active-prog::before{opacity:1}
+.prog-emoji{font-size:32px;margin-bottom:12px}
+.prog-name{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.prog-desc{font-size:12px;color:var(--smoke);line-height:1.5;margin-bottom:16px}
+.prog-day{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold);margin-bottom:8px}
+.prog-bar-wrap{height:4px;background:var(--mist);border-radius:2px;margin-bottom:12px}
+.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+.prog-status-badge{display:inline-block;font-size:10px;padding:3px 8px;border-radius:1px;font-family:'DM Mono',monospace;letter-spacing:0.05em;text-transform:uppercase}
+.badge-active{background:rgba(74,124,89,0.15);color:var(--green)}
+.badge-enrolled{background:var(--gold-dim);color:var(--gold)}
+.badge-complete{background:rgba(74,124,89,0.1);color:var(--green)}
+.prog-price{font-family:'DM Mono',monospace;font-size:14px;color:var(--ink);font-weight:500;margin-bottom:4px}
+.prog-duration{font-size:11px;color:var(--smoke)}
+.btn-enroll{width:100%;margin-top:16px;padding:10px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em}
+.btn-enroll:disabled{background:var(--mist);color:var(--smoke);cursor:default}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:1000px){.programs-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.programs-grid{grid-template-columns:1fr}.dash-content{padding:20px 16px}}
+</style>
 </head>
 <body>
-
 <div class="dash-layout">
-  <div id="sidebar-mount"></div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item active">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
 
   <main class="dash-main">
     <div class="dash-topbar">
       <div>
-        <div class="topbar-title">Programs</div>
-        <div class="topbar-sub">Your enrollments and available programs</div>
+        <div class="topbar-greeting">Programs</div>
+        <div class="topbar-date" id="topbar-date"></div>
       </div>
     </div>
 
     <div class="dash-content">
 
-      <!-- Active enrollments -->
-      <div class="section-label">Your Active Programs</div>
-      <div id="active-programs">
-        <div class="loading-wrap"><div class="spinner"></div> Loading your programs…</div>
+      <div class="section-label">Active Programs</div>
+      <div class="programs-grid" id="active-programs">
+        <div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
       </div>
 
-      <!-- Available programs -->
-      <div class="section-label">All Programs</div>
-      <div class="programs-grid" id="all-programs">
-        <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
+      <div class="section-label">Available Programs</div>
+      <div class="programs-grid" id="available-programs">
+        <div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
       </div>
 
     </div>
   </main>
 </div>
 
+<div class="save-toast" id="save-toast">Enrolled!</div>
+
 <script>
-(async () => {
-  const ctx = await initDashboard();
-  if (!ctx) return;
-  const { user, client } = ctx;
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, enrolledIds = new Set();
 
-  document.getElementById('sidebar-mount').innerHTML = renderSidebar('programs', user);
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+    await loadData();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
 
-  const [enrollmentsRes, programsRes] = await Promise.all([
-    client.from('user_program_progress')
-      .select('*, programs(id, slug, title, description, emoji, duration_days, price_cents)')
-      .eq('user_id', user.id)
-      .order('enrolled_at', { ascending: false }),
-    client.from('programs').select('*').eq('is_active', true).order('sort_order')
-  ]);
+async function loadData() {
+  try {
+    const [progsRes, enrollRes] = await Promise.allSettled([
+      sb.from('programs').select('*').eq('is_active', true).order('sort_order'),
+      sb.from('user_program_progress').select('*, programs(*)').eq('user_id', userId),
+    ]);
+    const programs = progsRes.value?.data || [];
+    const enrolled = enrollRes.value?.data || [];
+    enrolledIds = new Set(enrolled.map(e => e.program_id || e.programs?.id));
 
-  const enrollments = enrollmentsRes.data || [];
-  const programs = programsRes.data || [];
-  const enrolledProgramIds = new Set(enrollments.map(e => e.program_id));
+    const activeEl = document.getElementById('active-programs');
+    const availEl = document.getElementById('available-programs');
 
-  // ── Active enrollments ──────────────────────────────────────
-  const activeEl = document.getElementById('active-programs');
-  const activeEnrollments = enrollments.filter(e => e.status !== 'completed');
-
-  if (activeEnrollments.length === 0) {
-    activeEl.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🎯</div>
-        <div class="empty-state-title">No active programs</div>
-        <div class="empty-state-sub">Enroll in a program below to get started.</div>
-      </div>`;
-  } else {
-    activeEl.innerHTML = `<div class="programs-grid">
-      ${activeEnrollments.map(e => {
-        const prog = e.programs || {};
+    if (!enrolled.length) {
+      activeEl.innerHTML = '<div style="grid-column:1/-1;padding:32px;text-align:center"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px">No active programs yet</div><div style="font-size:12px;color:var(--smoke)">Enroll in a program below to get started.</div></div>';
+    } else {
+      activeEl.innerHTML = enrolled.map(e => {
+        const p = e.programs || {};
         const days = e.days_completed || 0;
-        const total = prog.duration_days || 1;
-        const pct = Math.min(100, Math.round((days / total) * 100));
-        const enrolled = new Date(e.enrolled_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        const daysLeft = Math.max(0, total - days);
-
+        const total = p.duration_days || 30;
+        const pct = Math.min(100, Math.round(days / total * 100));
+        const status = e.status || 'active';
+        const badgeClass = status === 'completed' ? 'badge-complete' : 'badge-active';
         return `
-          <div class="program-card enrolled">
-            <div class="program-header">
-              <div class="program-icon">${prog.emoji || '🎯'}</div>
-              <div>
-                <div class="program-name">${escHtml(prog.title || 'Program')}</div>
-                <div class="program-desc">${escHtml(prog.description || '')}</div>
-              </div>
-            </div>
-            <div class="program-meta">
-              <div class="enrolled-badge">✓ Enrolled</div>
-              <span class="tag tag-smoke">${prog.duration_days || '?'} days</span>
-            </div>
-            <div class="program-progress-section">
-              <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-                <span style="font-size:12px;color:var(--ink);font-weight:500">Progress</span>
-                <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)">${pct}%</span>
-              </div>
-              <div class="progress-bar-wrap" style="height:6px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
-              <div class="prog-stats">
-                <div class="prog-stat">
-                  <div class="prog-stat-val">${days}</div>
-                  <div class="prog-stat-label">Days Done</div>
-                </div>
-                <div class="prog-stat">
-                  <div class="prog-stat-val">${daysLeft}</div>
-                  <div class="prog-stat-label">Days Left</div>
-                </div>
-                <div class="prog-stat">
-                  <div class="prog-stat-val">${total}</div>
-                  <div class="prog-stat-label">Total Days</div>
-                </div>
-              </div>
-            </div>
-            <div class="program-footer">
-              <span style="font-size:11px;color:var(--smoke)">Enrolled ${enrolled}</span>
-              <button class="btn btn-ghost" style="font-size:12px;padding:7px 14px" onclick="markDayComplete('${e.id}', ${days})">Mark Day Complete</button>
-            </div>
+          <div class="prog-card active-prog">
+            <div class="prog-emoji">${p.emoji || '🎯'}</div>
+            <div class="prog-name">${p.title || e.program_name || 'Program'}</div>
+            <div class="prog-desc">${p.description || ''}</div>
+            <div class="prog-day">Day ${days} of ${total}</div>
+            <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+            <span class="prog-status-badge ${badgeClass}">${status}</span>
           </div>`;
-      }).join('')}
-    </div>`;
-  }
+      }).join('');
+    }
 
-  // ── All programs ────────────────────────────────────────────
-  const allEl = document.getElementById('all-programs');
-  if (programs.length === 0) {
-    allEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-title">No programs available yet</div></div>`;
-  } else {
-    allEl.innerHTML = programs.map(prog => {
-      const isEnrolled = enrolledProgramIds.has(prog.id);
-      return `
-        <div class="program-card ${isEnrolled ? 'enrolled' : ''}">
-          <div class="program-header">
-            <div class="program-icon">${prog.emoji || '🎯'}</div>
-            <div>
-              <div class="program-name">${escHtml(prog.title)}</div>
-              <div class="program-desc">${escHtml(prog.description || '')}</div>
-            </div>
-          </div>
-          <div class="program-meta">
-            ${isEnrolled ? '<div class="enrolled-badge">✓ Enrolled</div>' : ''}
-            ${prog.duration_days ? `<span class="tag tag-smoke">${prog.duration_days} days</span>` : ''}
-            ${prog.price_cents > 0 ? `<span class="tag tag-gold">$${(prog.price_cents/100).toFixed(0)}</span>` : '<span class="tag tag-green">Included</span>'}
-          </div>
-          <div class="program-footer">
-            ${isEnrolled
-              ? `<span style="font-size:13px;color:var(--smoke)">Already enrolled</span>`
-              : `<button class="btn btn-gold" style="font-size:12px;padding:8px 16px" onclick="enroll('${prog.id}')">Enroll Now →</button>`}
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  window._client = client;
-  window._userId = user.id;
-})();
-
-async function enroll(programId) {
-  const { error } = await _client.from('user_program_progress').insert({
-    user_id: _userId,
-    program_id: programId,
-    status: 'active',
-    days_completed: 0,
-    enrolled_at: new Date().toISOString()
-  });
-  if (!error) location.reload();
-  else alert('Enrollment error: ' + error.message);
+    const unenrolled = programs.filter(p => !enrolledIds.has(p.id));
+    if (!unenrolled.length) {
+      availEl.innerHTML = '<div style="grid-column:1/-1;padding:20px;text-align:center;color:var(--smoke);font-size:13px">You\'re enrolled in all available programs.</div>';
+    } else {
+      availEl.innerHTML = unenrolled.map(p => {
+        const price = p.price_cents ? (p.price_cents === 0 ? 'Free' : '$' + (p.price_cents / 100).toFixed(0)) : 'Free';
+        return `
+          <div class="prog-card">
+            <div class="prog-emoji">${p.emoji || '🎯'}</div>
+            <div class="prog-name">${p.title}</div>
+            <div class="prog-desc">${p.description || ''}</div>
+            <div class="prog-price">${price}</div>
+            <div class="prog-duration">${p.duration_days || 30} days</div>
+            <button class="btn-enroll" onclick="enroll('${p.id}','${p.title}',${p.duration_days||30},this)">Enroll Now</button>
+          </div>`;
+      }).join('');
+    }
+  } catch(e) { console.warn(e); }
 }
 
-async function markDayComplete(enrollmentId, currentDays) {
-  const { error } = await _client.from('user_program_progress')
-    .update({
-      days_completed: currentDays + 1,
-      last_activity_at: new Date().toISOString()
-    })
-    .eq('id', enrollmentId)
-    .eq('user_id', _userId);
-  if (!error) location.reload();
+async function enroll(programId, programName, durationDays, btn) {
+  if (!userId) return;
+  btn.disabled = true; btn.textContent = 'Enrolling…';
+  try {
+    await sb.from('user_program_progress').insert({
+      user_id: userId,
+      program_id: programId,
+      program_name: programName,
+      days_completed: 0,
+      status: 'active',
+      enrolled_at: new Date().toISOString(),
+      started_at: new Date().toISOString(),
+    });
+    showToast('Enrolled in ' + programName);
+    await loadData();
+  } catch(e) { console.warn(e); btn.disabled = false; btn.textContent = 'Enroll Now'; }
 }
 
-function escHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </body>
 </html>

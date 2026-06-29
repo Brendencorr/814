@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roadmap — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
+.panel-body{padding:20px}
+/* Sobriety milestones */
+.sober-big{display:flex;align-items:baseline;gap:12px;margin-bottom:24px}
+.sober-num{font-family:'DM Serif Display',serif;font-size:64px;color:var(--ink);line-height:1}
+.sober-unit{font-size:18px;color:var(--smoke)}
+.milestone-row{display:flex;align-items:center;gap:0;overflow-x:auto;padding:20px 0;position:relative}
+.milestone-row::before{content:'';position:absolute;top:50%;left:0;right:0;height:2px;background:var(--mist);z-index:0;margin-top:-12px}
+.milestone-node{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;min-width:80px;position:relative;z-index:1}
+.milestone-circle{width:40px;height:40px;border-radius:50%;border:2px solid var(--mist);background:white;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s}
+.milestone-circle.done{background:var(--gold);border-color:var(--gold)}
+.milestone-circle.current{background:var(--green);border-color:var(--green);box-shadow:0 0 0 4px rgba(74,124,89,0.2)}
+.milestone-circle.future{background:white;border-color:var(--mist);color:var(--smoke)}
+.milestone-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke);text-align:center;white-space:nowrap}
+.milestone-label.done{color:var(--gold);font-weight:600}
+.milestone-label.current{color:var(--green);font-weight:700}
+/* Program timeline */
+.prog-journey{margin-bottom:24px}
+.prog-journey-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.prog-emoji{font-size:28px}
+.prog-name{font-size:15px;font-weight:600;color:var(--ink)}
+.prog-current-day{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold)}
+.prog-timeline{display:flex;align-items:center;gap:0;overflow-x:auto;padding:12px 0}
+.prog-ms{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:60px;position:relative}
+.prog-ms-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--mist);background:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.prog-ms-dot.done{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.prog-ms-dot.current{background:var(--green);border-color:var(--green);color:white}
+.prog-ms-lbl{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:center}
+.prog-bar-wrap{height:2px;background:var(--mist);border-radius:2px;margin-bottom:12px}
+.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px}
+/* Badges */
+.badges-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:8px}
+.badge-item{text-align:center;padding:12px 8px;border:1px solid var(--mist);border-radius:2px;background:white}
+.badge-item.earned{border-color:var(--gold);background:var(--gold-dim)}
+.badge-icon{font-size:28px;margin-bottom:4px}
+.badge-label{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.05em}
+.badge-item.earned .badge-label{color:var(--gold)}
+/* Next up */
+.next-card{background:var(--ink);border-radius:2px;padding:24px;margin-bottom:20px}
+.next-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px}
+.next-title{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);margin-bottom:6px}
+.next-sub{font-size:13px;color:var(--smoke);line-height:1.5;margin-bottom:16px}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;text-decoration:none;display:inline-block}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.badges-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}.badges-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item active">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Your Roadmap</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="section-label">Sobriety Journey</div>
+      <div id="sober-section">
+        <div style="padding:20px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+      </div>
+
+      <div class="section-label">Sobriety Badges</div>
+      <div id="badges-section">
+        <div style="padding:20px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+      </div>
+
+      <div class="section-label">Program Journeys</div>
+      <div id="programs-section">
+        <div style="padding:20px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+      </div>
+
+      <div class="section-label">What's Next</div>
+      <div id="next-section"></div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId;
+
+const SOBER_MILESTONES = [
+  {days:1,label:'Day 1',icon:'🌱'},
+  {days:7,label:'1 Week',icon:'🌿'},
+  {days:14,label:'2 Weeks',icon:'🌳'},
+  {days:30,label:'30 Days',icon:'⭐'},
+  {days:60,label:'60 Days',icon:'🌟'},
+  {days:90,label:'90 Days',icon:'💪'},
+  {days:180,label:'6 Months',icon:'🏆'},
+  {days:365,label:'1 Year',icon:'👑'},
+  {days:730,label:'2 Years',icon:'💎'},
+];
+
+const BADGE_DEFS = [
+  {days:1,label:'Day 1',icon:'🌱'},
+  {days:7,label:'1 Week',icon:'🌿'},
+  {days:30,label:'30 Days',icon:'⭐'},
+  {days:90,label:'90 Days',icon:'💪'},
+  {days:180,label:'6 Mo',icon:'🏆'},
+  {days:365,label:'1 Year',icon:'👑'},
+];
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+
+    const [soberRes, enrollRes, progsRes] = await Promise.allSettled([
+      sb.from('sobriety_tracker').select('*').eq('user_id', userId).eq('is_active', true).order('start_date', {ascending:false}).limit(1),
+      sb.from('user_program_progress').select('*, programs(*)').eq('user_id', userId),
+      sb.from('programs').select('*').eq('is_active', true).order('sort_order'),
+    ]);
+
+    const soberData = soberRes.value?.data?.[0];
+    const soberDays = soberData ? Math.floor((Date.now() - new Date(soberData.start_date)) / 86400000) : 0;
+
+    renderSoberSection(soberDays, soberData?.start_date);
+    renderBadges(soberDays);
+    renderPrograms(enrollRes.value?.data || []);
+    renderNext(enrollRes.value?.data || [], progsRes.value?.data || []);
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+function renderSoberSection(days, startDate) {
+  const el = document.getElementById('sober-section');
+  if (!days) {
+    el.innerHTML = '<div class="panel"><div class="panel-body"><p style="color:var(--smoke);font-size:13px">No sobriety start date set. <a href="/tracker" style="color:var(--gold)">Set it in your tracker.</a></p></div></div>';
+    return;
+  }
+  const nextMs = SOBER_MILESTONES.find(m => m.days > days);
+  const daysToNext = nextMs ? nextMs.days - days : 0;
+
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-body">
+        <div class="sober-big">
+          <span class="sober-num">${days}</span>
+          <span class="sober-unit">days sober</span>
+        </div>
+        ${startDate ? '<div style="font-size:13px;color:var(--smoke);margin-bottom:20px">Since '+new Date(startDate).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'</div>' : ''}
+        ${nextMs ? '<div style="font-size:13px;color:var(--smoke);margin-bottom:16px">Next milestone: <strong style="color:var(--gold)">' + nextMs.label + '</strong> — <strong>' + daysToNext + '</strong> days away</div>' : ''}
+        <div class="milestone-row">
+          ${SOBER_MILESTONES.map(m => {
+            const cls = days >= m.days ? 'done' : (nextMs && nextMs.days === m.days ? '' : 'future');
+            const isCurrent = nextMs && nextMs.days === m.days;
+            return `<div class="milestone-node">
+              <div class="milestone-circle ${cls} ${isCurrent ? 'current' : ''}">${m.icon}</div>
+              <div class="milestone-label ${cls} ${isCurrent ? 'current' : ''}">${m.label}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderBadges(days) {
+  const el = document.getElementById('badges-section');
+  el.innerHTML = `<div class="badges-grid">
+    ${BADGE_DEFS.map(b => `
+      <div class="badge-item ${days >= b.days ? 'earned' : ''}">
+        <div class="badge-icon">${b.icon}</div>
+        <div class="badge-label">${b.label}</div>
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+function renderPrograms(enrolled) {
+  const el = document.getElementById('programs-section');
+  if (!enrolled.length) {
+    el.innerHTML = '<div class="panel"><div class="panel-body"><p style="color:var(--smoke);font-size:13px">No active programs. <a href="/programs" style="color:var(--gold)">Browse programs.</a></p></div></div>';
+    return;
+  }
+  const PROG_MS = [1,7,14,30,60,90];
+  el.innerHTML = enrolled.map(e => {
+    const p = e.programs || {};
+    const days = e.days_completed || 0;
+    const total = p.duration_days || 30;
+    const pct = Math.min(100, Math.round(days / total * 100));
+    return `
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-header">
+          <div class="prog-journey-header">
+            <span class="prog-emoji">${p.emoji || '🎯'}</span>
+            <div>
+              <div class="prog-name">${p.title || e.program_name || 'Program'}</div>
+              <div class="prog-current-day">Day ${days} of ${total}</div>
+            </div>
+          </div>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;color:var(--gold)">${pct}%</span>
+        </div>
+        <div class="panel-body">
+          <div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:${pct}%"></div></div>
+          <div class="prog-timeline">
+            ${PROG_MS.filter(m => m <= total).map(m => {
+              const isDone = days >= m;
+              const isCurr = !isDone && PROG_MS.filter(ms => ms <= total).find(ms => ms > days) === m;
+              return `<div class="prog-ms">
+                <div class="prog-ms-dot ${isDone ? 'done' : isCurr ? 'current' : ''}">${m <= days ? '✓' : m}</div>
+                <div class="prog-ms-lbl">Day ${m}</div>
+              </div>`;
+            }).join('<div style="flex:1;height:2px;background:var(--mist);margin-bottom:14px"></div>')}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderNext(enrolled, allProgs) {
+  const el = document.getElementById('next-section');
+  const enrolledIds = new Set(enrolled.map(e => e.program_id || e.programs?.id));
+  const next = allProgs.find(p => !enrolledIds.has(p.id));
+  if (!next) { el.innerHTML = '<div style="font-size:13px;color:var(--smoke);padding:8px 0">You\'re enrolled in all available programs. More coming soon.</div>'; return; }
+  const price = next.price_cents ? '$' + (next.price_cents / 100).toFixed(0) : 'Free';
+  el.innerHTML = `
+    <div class="next-card">
+      <div class="next-label">Up Next</div>
+      <div class="next-title">${next.emoji || '🎯'} ${next.title}</div>
+      <div class="next-sub">${next.description || ''} · ${next.duration_days || 30} days · ${price}</div>
+      <a href="/programs" class="btn-gold">View Program</a>
+    </div>
+  `;
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

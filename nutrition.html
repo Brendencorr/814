@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
+.panel-body{padding:20px}
+/* Today summary bar */
+.macro-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.macro-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
+.macro-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.macro-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
+.macro-unit{font-size:11px;color:var(--smoke);margin-top:4px}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.form-input,.form-select{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
+/* Log list */
+.log-entry{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;padding:14px 0;border-bottom:1px solid var(--mist)}
+.log-entry:last-child{border-bottom:none}
+.log-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.log-meal{font-size:11px;background:var(--gold-dim);color:var(--gold);padding:2px 8px;border-radius:1px;font-family:'DM Mono',monospace;letter-spacing:0.05em;display:inline-block;margin-bottom:4px}
+.log-macros{font-size:12px;color:var(--smoke)}
+.log-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.macro-bar{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item active">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Nutrition</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="section-label">Today's Totals</div>
+      <div class="macro-bar">
+        <div class="macro-card"><div class="macro-label">Calories</div><div class="macro-value" id="tot-cal">0</div><div class="macro-unit">kcal</div></div>
+        <div class="macro-card"><div class="macro-label">Protein</div><div class="macro-value" id="tot-pro">0</div><div class="macro-unit">g</div></div>
+        <div class="macro-card"><div class="macro-label">Carbs</div><div class="macro-value" id="tot-carb">0</div><div class="macro-unit">g</div></div>
+        <div class="macro-card"><div class="macro-label">Fat</div><div class="macro-value" id="tot-fat">0</div><div class="macro-unit">g</div></div>
+      </div>
+
+      <div class="section-label">Log a Meal</div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Meal Type</label>
+              <select class="form-select" id="meal-label">
+                <option>Breakfast</option>
+                <option>Lunch</option>
+                <option>Dinner</option>
+                <option>Snack</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="meal-date">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Description</label>
+              <input type="text" class="form-input" id="meal-desc" placeholder="What did you eat?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Calories</label>
+              <input type="number" class="form-input" id="meal-cal" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Protein (g)</label>
+              <input type="number" class="form-input" id="meal-pro" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Carbs (g)</label>
+              <input type="number" class="form-input" id="meal-carb" placeholder="0" min="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fat (g)</label>
+              <input type="number" class="form-input" id="meal-fat" placeholder="0" min="0">
+            </div>
+          </div>
+          <button class="btn-gold" onclick="logMeal()">Log Meal</button>
+        </div>
+      </div>
+
+      <div class="section-label">Recent Entries</div>
+      <div class="panel">
+        <div style="padding:0 20px" id="meal-list">
+          <div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+        </div>
+      </div>
+
+      <div class="section-label">Weekly Averages</div>
+      <div class="macro-bar">
+        <div class="macro-card"><div class="macro-label">Avg Calories</div><div class="macro-value" id="avg-cal">—</div><div class="macro-unit">kcal/day</div></div>
+        <div class="macro-card"><div class="macro-label">Avg Protein</div><div class="macro-value" id="avg-pro">—</div><div class="macro-unit">g/day</div></div>
+        <div class="macro-card"><div class="macro-label">Avg Carbs</div><div class="macro-value" id="avg-carb">—</div><div class="macro-unit">g/day</div></div>
+        <div class="macro-card"><div class="macro-label">Avg Fat</div><div class="macro-value" id="avg-fat">—</div><div class="macro-unit">g/day</div></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="save-toast" id="save-toast">Logged</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, todayISO;
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    todayISO = now.toISOString().split('T')[0];
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    document.getElementById('meal-date').value = todayISO;
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+    await loadData();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+async function loadData() {
+  try {
+    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+    const [todayRes, recentRes] = await Promise.allSettled([
+      sb.from('nutrition_logs').select('*').eq('user_id', userId).eq('logged_date', todayISO),
+      sb.from('nutrition_logs').select('*').eq('user_id', userId).gte('logged_date', sevenAgo.toISOString().split('T')[0]).order('logged_date', {ascending:false}).limit(20),
+    ]);
+    const todayLogs = todayRes.value?.data || [];
+    const allLogs = recentRes.value?.data || [];
+    updateTotals(todayLogs);
+    renderList(allLogs);
+    calcWeekly(allLogs);
+  } catch(e) { console.warn(e); }
+}
+
+function updateTotals(logs) {
+  const sum = (f) => logs.reduce((s,l) => s + (l[f]||0), 0);
+  document.getElementById('tot-cal').textContent = Math.round(sum('calories'));
+  document.getElementById('tot-pro').textContent = Math.round(sum('protein_g'));
+  document.getElementById('tot-carb').textContent = Math.round(sum('carbs_g'));
+  document.getElementById('tot-fat').textContent = Math.round(sum('fat_g'));
+}
+
+function calcWeekly(logs) {
+  const days = [...new Set(logs.map(l => l.logged_date))].length || 1;
+  const sum = (f) => logs.reduce((s,l) => s + (l[f]||0), 0);
+  document.getElementById('avg-cal').textContent = Math.round(sum('calories') / days);
+  document.getElementById('avg-pro').textContent = Math.round(sum('protein_g') / days);
+  document.getElementById('avg-carb').textContent = Math.round(sum('carbs_g') / days);
+  document.getElementById('avg-fat').textContent = Math.round(sum('fat_g') / days);
+}
+
+function renderList(logs) {
+  const el = document.getElementById('meal-list');
+  if (!logs.length) { el.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">No meals logged yet. Add your first one above.</div>'; return; }
+  el.innerHTML = logs.map(l => `
+    <div class="log-entry">
+      <div>
+        <span class="log-meal">${l.label || 'Meal'}</span>
+        <div class="log-name">${l.notes || 'No description'}</div>
+        <div class="log-macros">${l.calories||0} kcal · ${l.protein_g||0}g protein · ${l.carbs_g||0}g carbs · ${l.fat_g||0}g fat</div>
+      </div>
+      <div class="log-date">${fmtDate(l.logged_date)}</div>
+    </div>
+  `).join('');
+}
+
+function fmtDate(iso) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric'});
+}
+
+async function logMeal() {
+  const label = document.getElementById('meal-label').value;
+  const date = document.getElementById('meal-date').value;
+  const notes = document.getElementById('meal-desc').value.trim() || null;
+  const calories = parseFloat(document.getElementById('meal-cal').value) || 0;
+  const protein_g = parseFloat(document.getElementById('meal-pro').value) || 0;
+  const carbs_g = parseFloat(document.getElementById('meal-carb').value) || 0;
+  const fat_g = parseFloat(document.getElementById('meal-fat').value) || 0;
+  if (!date || !userId) return;
+  try {
+    await sb.from('nutrition_logs').insert({ user_id: userId, logged_date: date, label, notes, calories, protein_g, carbs_g, fat_g });
+    ['meal-desc','meal-cal','meal-pro','meal-carb','meal-fat'].forEach(id => document.getElementById(id).value = '');
+    showToast('Meal logged');
+    await loadData();
+  } catch(e) { console.warn(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

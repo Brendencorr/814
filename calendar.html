@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-body{padding:20px}
+.two-col{display:grid;grid-template-columns:1fr 360px;gap:24px}
+/* Coming soon hero */
+.cal-hero{background:var(--ink);border-radius:2px;padding:48px 40px;text-align:center;margin-bottom:28px}
+.cal-hero-icon{font-size:48px;margin-bottom:16px}
+.cal-hero-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:8px}
+.cal-hero-sub{font-size:14px;color:var(--smoke);line-height:1.6;max-width:400px;margin:0 auto 28px}
+.integration-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.int-badge{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid rgba(255,255,255,0.12);border-radius:2px;font-size:13px;color:var(--smoke)}
+.int-badge .icon{font-size:18px}
+/* Events */
+.event-item{display:flex;gap:16px;align-items:start;padding:14px 0;border-bottom:1px solid var(--mist)}
+.event-item:last-child{border-bottom:none}
+.event-time{font-family:'DM Mono',monospace;font-size:12px;color:var(--smoke);white-space:nowrap;padding-top:2px;min-width:48px}
+.event-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.event-dot.meeting{background:#4a7ab0}
+.event-dot.workout{background:var(--green)}
+.event-dot.focus{background:var(--gold)}
+.event-dot.personal{background:#9b59b6}
+.event-name{font-size:13px;font-weight:500;color:var(--ink)}
+.event-type{font-size:11px;color:var(--smoke)}
+.event-del{margin-left:auto;background:none;border:none;color:var(--smoke);cursor:pointer;font-size:16px;opacity:0.5}
+.event-del:hover{opacity:1;color:var(--red)}
+/* Priorities */
+.priority-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--mist)}
+.priority-item:last-child{border-bottom:none}
+.priority-icon{font-size:16px}
+.priority-text{font-size:13px;color:var(--ink);flex:1}
+.priority-source{font-size:10px;background:var(--gold-dim);color:var(--gold);padding:2px 6px;border-radius:1px;font-family:'DM Mono',monospace;letter-spacing:0.05em}
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.form-input,.form-select{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item active">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Calendar</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="cal-hero">
+        <div class="cal-hero-icon">📅</div>
+        <div class="cal-hero-title">Calendar Integration Coming Soon</div>
+        <div class="cal-hero-sub">Riley will sync your Google Calendar and Outlook to pull your schedule into your daily brief — workouts, meetings, focus blocks, all in one view.</div>
+        <div class="integration-row">
+          <div class="int-badge"><span class="icon">📆</span> Google Calendar</div>
+          <div class="int-badge"><span class="icon">📊</span> Outlook</div>
+          <div class="int-badge"><span class="icon">🍎</span> Apple Calendar</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="section-label">Today's Schedule</div>
+          <div class="panel">
+            <div class="panel-body">
+              <div id="events-list">
+                <div style="padding:12px 0;text-align:center;color:var(--smoke);font-size:13px">No events yet. Add one below.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-label">Add Event</div>
+          <div class="panel">
+            <div class="panel-body">
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">Time</label>
+                  <input type="time" class="form-input" id="ev-time">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Type</label>
+                  <select class="form-select" id="ev-type">
+                    <option value="meeting">Meeting</option>
+                    <option value="workout">Workout</option>
+                    <option value="focus">Focus Block</option>
+                    <option value="personal">Personal</option>
+                  </select>
+                </div>
+                <div class="form-group full">
+                  <label class="form-label">Title</label>
+                  <input type="text" class="form-input" id="ev-title" placeholder="Event title…">
+                </div>
+              </div>
+              <button class="btn-gold" onclick="addEvent()">Add Event</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Today's Priorities</div>
+          <div class="panel">
+            <div class="panel-body" id="priorities-list">
+              <div style="color:var(--smoke);font-size:13px">Loading priorities…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="save-toast" id="save-toast">Saved</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, events = [];
+const EV_COLORS = {meeting:'meeting',workout:'workout',focus:'focus',personal:'personal'};
+const EV_ICONS = {meeting:'🤝',workout:'🏋️',focus:'🎯',personal:'⭐'};
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+    // Set default time to next hour
+    const next = new Date(); next.setHours(next.getHours()+1, 0, 0, 0);
+    document.getElementById('ev-time').value = next.toTimeString().slice(0,5);
+    loadEventsFromStorage();
+    await loadPriorities();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+function loadEventsFromStorage() {
+  try {
+    const stored = localStorage.getItem('riley_calendar_' + (userId||''));
+    events = stored ? JSON.parse(stored) : [];
+  } catch(e) { events = []; }
+  renderEvents();
+}
+
+function saveEventsToStorage() {
+  try { localStorage.setItem('riley_calendar_' + (userId||''), JSON.stringify(events)); } catch(e) {}
+}
+
+function addEvent() {
+  const time = document.getElementById('ev-time').value;
+  const title = document.getElementById('ev-title').value.trim();
+  const type = document.getElementById('ev-type').value;
+  if (!time || !title) return;
+  events.push({ id: Date.now()+'', time, title, type });
+  events.sort((a,b) => a.time.localeCompare(b.time));
+  saveEventsToStorage();
+  renderEvents();
+  document.getElementById('ev-title').value = '';
+  showToast('Event added');
+}
+
+function deleteEvent(id) {
+  events = events.filter(e => e.id !== id);
+  saveEventsToStorage();
+  renderEvents();
+}
+
+function renderEvents() {
+  const el = document.getElementById('events-list');
+  if (!events.length) { el.innerHTML = '<div style="padding:12px 0;text-align:center;color:var(--smoke);font-size:13px">No events yet. Add one below.</div>'; return; }
+  el.innerHTML = events.map(e => `
+    <div class="event-item">
+      <div class="event-time">${fmt12(e.time)}</div>
+      <div class="event-dot ${EV_COLORS[e.type]||'personal'}"></div>
+      <div style="flex:1">
+        <div class="event-name">${EV_ICONS[e.type]||'📌'} ${e.title}</div>
+        <div class="event-type">${e.type}</div>
+      </div>
+      <button class="event-del" onclick="deleteEvent('${e.id}')">×</button>
+    </div>
+  `).join('');
+}
+
+function fmt12(t) {
+  if (!t) return '';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return ((h % 12) || 12) + ':' + String(m).padStart(2,'0') + ' ' + ampm;
+}
+
+async function loadPriorities() {
+  try {
+    const [habitsRes, goalsRes] = await Promise.allSettled([
+      sb.from('habits').select('title,emoji').eq('user_id', userId).eq('is_active', true).limit(5),
+      sb.from('user_goals').select('title,category').eq('user_id', userId).eq('is_active', true).limit(5),
+    ]);
+    const habits = habitsRes.value?.data || [];
+    const goals = goalsRes.value?.data || [];
+    const el = document.getElementById('priorities-list');
+    if (!habits.length && !goals.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">Set up habits and goals in your tracker to see today\'s priorities here.</div>'; return; }
+    const items = [
+      ...habits.map(h => ({ icon: h.emoji || '✅', text: h.title, source: 'habit' })),
+      ...goals.map(g => ({ icon: '🎯', text: g.title, source: 'goal' })),
+    ];
+    el.innerHTML = items.map(item => `
+      <div class="priority-item">
+        <span class="priority-icon">${item.icon}</span>
+        <span class="priority-text">${item.text}</span>
+        <span class="priority-source">${item.source}</span>
+      </div>
+    `).join('');
+  } catch(e) { console.warn(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial Goals — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-body{padding:20px}
+.filter-tabs{display:flex;gap:2px;background:rgba(0,0,0,0.05);padding:3px;width:fit-content;margin-bottom:24px;border-radius:2px}
+.ftab{padding:7px 16px;font-size:12px;cursor:pointer;background:transparent;border:none;font-family:'DM Sans',sans-serif;color:var(--smoke);border-radius:1px;transition:all .15s}
+.ftab.active{background:white;color:var(--ink);font-weight:600}
+.goal-card{background:white;border:1px solid var(--mist);border-radius:2px;padding:20px;margin-bottom:12px}
+.goal-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.goal-title{font-size:14px;font-weight:600;color:var(--ink)}
+.goal-period{font-size:11px;background:var(--gold-dim);color:var(--gold);padding:3px 8px;border-radius:1px;font-family:'DM Mono',monospace;letter-spacing:0.05em;text-transform:uppercase}
+.goal-amounts{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.goal-current{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink)}
+.goal-target{font-size:14px;color:var(--smoke)}
+.goal-unit{font-size:12px;color:var(--smoke)}
+.goal-bar{height:6px;background:var(--mist);border-radius:3px;margin-bottom:12px}
+.goal-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .4s}
+.goal-pct{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)}
+.goal-actions{display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--mist)}
+.goal-update-input{width:100px;padding:7px 10px;border:1px solid var(--mist);font-family:'DM Mono',monospace;font-size:13px;background:var(--warm-white)}
+.btn-sm{padding:7px 14px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none}
+.btn-dark{background:var(--ink);color:var(--parchment)}
+.btn-ghost{background:transparent;border:1px solid var(--mist);color:var(--smoke)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.form-input,.form-select{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item active">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Financial Goals</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="filter-tabs">
+        <button class="ftab active" onclick="filterGoals('all', this)">All</button>
+        <button class="ftab" onclick="filterGoals('monthly', this)">Monthly</button>
+        <button class="ftab" onclick="filterGoals('quarterly', this)">Quarterly</button>
+        <button class="ftab" onclick="filterGoals('yearly', this)">Yearly</button>
+      </div>
+
+      <div id="goals-list">
+        <div style="padding:24px;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+      </div>
+
+      <div class="section-label">Add Financial Goal</div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label class="form-label">Goal Title</label>
+              <input type="text" class="form-input" id="goal-title" placeholder="e.g. Monthly revenue target">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Value</label>
+              <input type="number" class="form-input" id="goal-target" placeholder="10000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Value</label>
+              <input type="number" class="form-input" id="goal-current" placeholder="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Unit</label>
+              <input type="text" class="form-input" id="goal-unit" placeholder="$ revenue, clients…">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Period</label>
+              <select class="form-select" id="goal-period">
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-gold" onclick="addGoal()">Add Goal</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="save-toast" id="save-toast">Saved</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, goals = [], currentFilter = 'all';
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+    await loadGoals();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+async function loadGoals() {
+  try {
+    const { data } = await sb.from('user_goals').select('*').eq('user_id', userId).eq('category', 'financial').eq('is_active', true).order('sort_order');
+    goals = data || [];
+    renderGoals();
+  } catch(e) { console.warn(e); }
+}
+
+function filterGoals(period, btn) {
+  currentFilter = period;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGoals();
+}
+
+function renderGoals() {
+  const el = document.getElementById('goals-list');
+  const filtered = currentFilter === 'all' ? goals : goals.filter(g => g.period === currentFilter);
+  if (!filtered.length) {
+    el.innerHTML = '<div style="padding:32px;text-align:center"><div style="font-size:28px;margin-bottom:8px">💰</div><div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px">No '+(currentFilter==='all'?'financial':currentFilter)+' goals yet</div><div style="font-size:12px;color:var(--smoke)">Add a goal below to start tracking.</div></div>';
+    return;
+  }
+  el.innerHTML = filtered.map(g => {
+    const pct = g.target_value ? Math.min(100, Math.round((g.current_value||0) / g.target_value * 100)) : 0;
+    return `
+      <div class="goal-card" id="gc-${g.id}">
+        <div class="goal-card-header">
+          <div class="goal-title">${g.title}</div>
+          <span class="goal-period">${g.period || 'monthly'}</span>
+        </div>
+        <div class="goal-amounts">
+          <span class="goal-current">${fmtVal(g.current_value, g.unit)}</span>
+          <span class="goal-target">/ ${fmtVal(g.target_value, g.unit)}</span>
+        </div>
+        <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+        <div class="goal-pct">${pct}% complete</div>
+        <div class="goal-actions">
+          <input type="number" class="goal-update-input" id="upd-${g.id}" placeholder="Update value">
+          <button class="btn-sm btn-dark" onclick="updateGoal('${g.id}')">Update</button>
+          <button class="btn-sm btn-ghost" onclick="deleteGoal('${g.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function fmtVal(val, unit) {
+  const v = val || 0;
+  if (unit && (unit.startsWith('$') || unit.toLowerCase().includes('revenue') || unit.toLowerCase().includes('dollar'))) {
+    return '$' + v.toLocaleString();
+  }
+  return v.toLocaleString() + (unit ? ' ' + unit : '');
+}
+
+async function updateGoal(id) {
+  const val = parseFloat(document.getElementById('upd-'+id).value);
+  if (isNaN(val) || !userId) return;
+  try {
+    await sb.from('user_goals').update({ current_value: val }).eq('id', id);
+    const g = goals.find(x => x.id === id);
+    if (g) g.current_value = val;
+    renderGoals();
+    showToast('Goal updated');
+  } catch(e) { console.warn(e); }
+}
+
+async function deleteGoal(id) {
+  if (!userId) return;
+  try {
+    await sb.from('user_goals').update({ is_active: false }).eq('id', id);
+    goals = goals.filter(g => g.id !== id);
+    renderGoals();
+  } catch(e) { console.warn(e); }
+}
+
+async function addGoal() {
+  const title = document.getElementById('goal-title').value.trim();
+  const target = parseFloat(document.getElementById('goal-target').value) || 0;
+  const current = parseFloat(document.getElementById('goal-current').value) || 0;
+  const unit = document.getElementById('goal-unit').value.trim();
+  const period = document.getElementById('goal-period').value;
+  if (!title || !userId) return;
+  try {
+    const { data } = await sb.from('user_goals').insert({ user_id: userId, category: 'financial', title, target_value: target, current_value: current, unit, period, is_active: true, sort_order: goals.length }).select().single();
+    if (data) { goals.push(data); renderGoals(); }
+    ['goal-title','goal-target','goal-current','goal-unit'].forEach(id => document.getElementById(id).value = '');
+    showToast('Goal added');
+  } catch(e) { console.warn(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

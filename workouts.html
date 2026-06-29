@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workouts — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-light:#e8d5a3;--gold-dim:rgba(201,168,76,0.15);--riley-blue:#2a4a6e;--riley-blue-light:#4a7ab0;--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px;transition:color .15s}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
+.panel-body{padding:20px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
+.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
+.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.form-input{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.form-select{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.btn-gold{display:inline-block;padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
+.workout-timeline{padding:0 20px}
+.workout-entry{display:grid;grid-template-columns:48px 1fr auto;gap:16px;align-items:start;padding:16px 0;border-bottom:1px solid var(--mist)}
+.workout-entry:last-child{border-bottom:none}
+.workout-icon{width:40px;height:40px;background:var(--ink);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.workout-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.workout-meta{font-size:12px;color:var(--smoke)}
+.workout-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;white-space:nowrap;text-align:right}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.stats-row{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item active">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Workouts</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-label">This Week</div><div class="stat-value" id="stat-count">—</div><div class="stat-sub">workouts</div></div>
+        <div class="stat-card"><div class="stat-label">Total Minutes</div><div class="stat-value" id="stat-mins">—</div><div class="stat-sub">this week</div></div>
+        <div class="stat-card"><div class="stat-label">Miles Logged</div><div class="stat-value" id="stat-miles">—</div><div class="stat-sub">this week</div></div>
+        <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="stat-streak">—</div><div class="stat-sub">days active</div></div>
+      </div>
+
+      <div class="section-label">Log Workout</div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Activity Type</label>
+              <select class="form-select" id="activity-type">
+                <option value="Run">🏃 Run</option>
+                <option value="Lift">🏋️ Lift</option>
+                <option value="Bike">🚴 Bike</option>
+                <option value="Walk">🚶 Walk</option>
+                <option value="Swim">🏊 Swim</option>
+                <option value="Yoga">🧘 Yoga</option>
+                <option value="HIIT">💥 HIIT</option>
+                <option value="Other">🎯 Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="workout-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-input" id="workout-duration" placeholder="30" min="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Distance (miles)</label>
+              <input type="number" class="form-input" id="workout-distance" placeholder="0.0" step="0.1" min="0">
+            </div>
+            <div class="form-group full">
+              <label class="form-label">Notes</label>
+              <input type="text" class="form-input" id="workout-notes" placeholder="How did it go?">
+            </div>
+          </div>
+          <button class="btn-gold" onclick="logWorkout()">Log Workout</button>
+        </div>
+      </div>
+
+      <div class="section-label">Recent Workouts</div>
+      <div class="panel">
+        <div class="workout-timeline" id="workout-list">
+          <div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="save-toast" id="save-toast">Logged</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId;
+
+const ICONS = {Run:'🏃',Lift:'🏋️',Bike:'🚴',Walk:'🚶',Swim:'🏊',Yoga:'🧘',HIIT:'💥',Other:'🎯'};
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    document.getElementById('workout-date').value = now.toISOString().split('T')[0];
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+    await loadData();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+async function loadData() {
+  try {
+    const { data: logs } = await sb.from('fitness_logs').select('*').eq('user_id', userId).order('logged_date', {ascending:false}).limit(20);
+    renderList(logs || []);
+    calcStats(logs || []);
+  } catch(e) { console.warn(e); }
+}
+
+function calcStats(logs) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const weekStart = new Date(now); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekLogs = logs.filter(l => new Date(l.logged_date) >= weekStart);
+  document.getElementById('stat-count').textContent = weekLogs.length;
+  document.getElementById('stat-mins').textContent = weekLogs.reduce((s,l) => s + (l.duration_minutes||0), 0);
+  document.getElementById('stat-miles').textContent = weekLogs.reduce((s,l) => s + (l.distance_miles||0), 0).toFixed(1);
+  // Streak: consecutive days with at least one workout
+  const dates = [...new Set(logs.map(l => l.logged_date))].sort().reverse();
+  let streak = 0;
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    const iso = d.toISOString().split('T')[0];
+    if (dates.includes(iso)) streak++; else if (i > 0) break;
+  }
+  document.getElementById('stat-streak').textContent = streak;
+}
+
+function renderList(logs) {
+  const el = document.getElementById('workout-list');
+  if (!logs.length) { el.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">No workouts logged yet. Add your first one above.</div>'; return; }
+  el.innerHTML = logs.map(l => {
+    const icon = ICONS[l.activity_type] || '🎯';
+    const meta = [l.duration_minutes ? l.duration_minutes + ' min' : null, l.distance_miles ? l.distance_miles + ' mi' : null, l.notes].filter(Boolean).join(' · ');
+    return `<div class="workout-entry">
+      <div class="workout-icon">${icon}</div>
+      <div>
+        <div class="workout-name">${l.activity_type || 'Workout'}</div>
+        <div class="workout-meta">${meta || 'No details'}</div>
+      </div>
+      <div class="workout-date">${formatDate(l.logged_date)}</div>
+    </div>`;
+  }).join('');
+}
+
+function formatDate(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('en-US', {month:'short',day:'numeric'});
+}
+
+async function logWorkout() {
+  const type = document.getElementById('activity-type').value;
+  const date = document.getElementById('workout-date').value;
+  const dur = parseInt(document.getElementById('workout-duration').value) || null;
+  const dist = parseFloat(document.getElementById('workout-distance').value) || null;
+  const notes = document.getElementById('workout-notes').value.trim() || null;
+  if (!date || !userId) return;
+  try {
+    await sb.from('fitness_logs').insert({ user_id: userId, logged_date: date, activity_type: type, duration_minutes: dur, distance_miles: dist, notes });
+    document.getElementById('workout-duration').value = '';
+    document.getElementById('workout-distance').value = '';
+    document.getElementById('workout-notes').value = '';
+    showToast('Workout logged');
+    await loadData();
+  } catch(e) { console.warn(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

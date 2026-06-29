@@ -168,9 +168,15 @@ A person should never have to say the same hard thing twice to you.
 [USER_CONTEXT_PLACEHOLDER]`;
 
 // ── User context builder ──────────────────────────────────────────────────────
-function buildUserContext(profile) {
-  if (!profile) return "USER CONTEXT:\nThis visitor is not logged in.";
-  const lines = ["USER CONTEXT — this person is logged in:"];
+function buildUserContext(profile, clientData) {
+  const lines = [];
+
+  if (!profile) {
+    lines.push("USER CONTEXT:\nThis visitor is not logged in.");
+    return lines.join("\n");
+  }
+
+  lines.push("USER CONTEXT — this person is logged in:");
   if (profile.full_name) lines.push(`Name: ${profile.full_name}`);
   if (profile.email)     lines.push(`Email: ${profile.email}`);
   if (profile.sobriety_date) {
@@ -183,8 +189,53 @@ function buildUserContext(profile) {
       : "Programs purchased: none yet"
   );
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
+
+  if (clientData) {
+    // Sobriety tracker
+    if (clientData.sobriety) {
+      const s = clientData.sobriety;
+      const days = s.start_date ? Math.floor((Date.now() - new Date(s.start_date)) / 86400000) : 0;
+      lines.push(`\nSOBRIETY TRACKER: ${days} days sober (start date: ${s.start_date || "not set"})`);
+    }
+
+    // Today's check-in
+    if (clientData.todayCheckin) {
+      const c = clientData.todayCheckin;
+      const moodLabels = ["","Hard","Low","OK","Good","Great"];
+      lines.push(`\nTODAY'S CHECK-IN: mood ${c.mood ? moodLabels[c.mood] + " (" + c.mood + "/5)" : "not logged"}, water ${c.water_oz || 0} oz, sleep ${c.sleep_hours || 0} hrs${c.notes ? ", notes: " + c.notes.slice(0,100) : ""}`);
+    } else {
+      lines.push("\nTODAY'S CHECK-IN: not completed yet today");
+    }
+
+    // Active goals
+    if (clientData.goals && clientData.goals.length) {
+      lines.push("\nACTIVE GOALS:");
+      clientData.goals.slice(0, 5).forEach(g => {
+        const pct = g.target_value ? Math.round((g.current_value || 0) / g.target_value * 100) : 0;
+        lines.push(`  - ${g.title}: ${g.current_value || 0}/${g.target_value || 0} ${g.unit || ""} (${pct}%) [${g.category}]`);
+      });
+    }
+
+    // Habit completion rate this week
+    if (clientData.habitSummary) {
+      lines.push(`\nHABITS THIS WEEK: ${clientData.habitSummary.rate}% completion rate (${clientData.habitSummary.done}/${clientData.habitSummary.possible} total completions)`);
+      if (clientData.habitSummary.names && clientData.habitSummary.names.length) {
+        lines.push(`  Active habits: ${clientData.habitSummary.names.join(", ")}`);
+      }
+    }
+
+    // Active programs
+    if (clientData.programs && clientData.programs.length) {
+      lines.push("\nACTIVE PROGRAMS:");
+      clientData.programs.slice(0, 3).forEach(p => {
+        const prog = p.programs || {};
+        lines.push(`  - ${prog.title || p.program_name || "Program"}: Day ${p.days_completed || 0} of ${prog.duration_days || 30} (${p.status || "active"})`);
+      });
+    }
+  }
+
   lines.push("");
-  lines.push("Use their name naturally (not every message). Reference their sobriety date when relevant.");
+  lines.push("Use their name naturally (not every message). Reference their data when relevant to what they say.");
   lines.push("If they have no programs yet, the free 7-Day Rebuild Reset is the right first suggestion.");
   return lines.join("\n");
 }
@@ -197,16 +248,55 @@ async function getUserProfile(supabase, userId) {
   } catch { return null; }
 }
 
+async function getClientData(supabase, userId) {
+  if (!userId) return null;
+  try {
+    const todayISO = new Date().toISOString().split("T")[0];
+    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
+    const sevenISO = sevenAgo.toISOString().split("T")[0];
+
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes] = await Promise.allSettled([
+      supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
+      supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
+      supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
+      supabase.from("habits").select("id,title,emoji").eq("user_id", userId).eq("is_active", true),
+      supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", sevenISO),
+      supabase.from("user_program_progress").select("*, programs(title,duration_days,emoji)").eq("user_id", userId).eq("status", "active").limit(5),
+    ]);
+
+    const habits = habitsRes.value?.data || [];
+    const comps = habitCompRes.value?.data || [];
+    const possible = habits.length * 7;
+    const habitSummary = {
+      rate: possible ? Math.round(comps.length / possible * 100) : 0,
+      done: comps.length,
+      possible,
+      names: habits.map(h => (h.emoji || "") + " " + h.title),
+    };
+
+    return {
+      sobriety: soberRes.value?.data?.[0] || null,
+      todayCheckin: checkinRes.value?.data?.[0] || null,
+      goals: goalsRes.value?.data || [],
+      habitSummary,
+      programs: programsRes.value?.data || [],
+    };
+  } catch (e) {
+    console.warn("getClientData failed (non-fatal):", e.message);
+    return null;
+  }
+}
+
 async function getContentContext(supabase) {
   try {
-    const [scoutRes, echoRes, postsRes] = await Promise.all([
+    const [scoutRes, echoRes, postsRes] = await Promise.allSettled([
       supabase.from("scout_history").select("top_theme, topics_covered").order("week_of", { ascending: false }).limit(1),
       supabase.from("echo_scores").select("best_pillar").order("created_at", { ascending: false }).limit(1),
       supabase.from("published_posts").select("caption_preview, post_type, platform").order("created_at", { ascending: false }).limit(3),
     ]);
-    const scout = scoutRes.data?.[0];
-    const echo  = echoRes.data?.[0];
-    const posts = postsRes.data || [];
+    const scout = scoutRes.value?.data?.[0];
+    const echo  = echoRes.value?.data?.[0];
+    const posts = postsRes.value?.data || [];
     if (!scout && !echo && !posts.length) return "";
     let ctx = "\n\nCURRENT CONTENT CONTEXT — updated weekly:";
     if (scout?.top_theme)              ctx += `\nThis week's theme: ${scout.top_theme}`;
@@ -221,11 +311,12 @@ async function getContentContext(supabase) {
 }
 
 async function buildSystemPrompt(supabase, userId) {
-  const [profile, contentCtx] = await Promise.all([
+  const [profile, clientData, contentCtx] = await Promise.all([
     userId ? getUserProfile(supabase, userId) : Promise.resolve(null),
+    getClientData(supabase, userId),
     getContentContext(supabase),
   ]);
-  return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile)) + contentCtx;
+  return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile, clientData)) + contentCtx;
 }
 
 async function persistMessages(supabase, userId, sessionId, userMsg, reply) {

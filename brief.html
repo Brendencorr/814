@@ -1,602 +1,290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Today's Brief — Riley · The 8:14 Project</title>
-  <link rel="stylesheet" href="/dashboard.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-// ============================================================
-// dashboard-auth.js
-// Shared auth + Supabase client for all dashboard pages.
-// Every dashboard HTML file loads this first via:
-// ============================================================
-
-// ─── FALLBACK CONFIG ─────────────────────────────────────────
-const FALLBACK_CONFIG = {
-  supabaseUrl: 'https://tglljvjixlolaguycvbb.supabase.co',
-  supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
-};
-
-let supabase = null;
-let currentUser = null;
-
-// ─── BOOT ────────────────────────────────────────────────────
-// Call this at the top of every dashboard page's <script> block.
-// Returns { user, client } or null on failure.
-// Redirects to riley.eight14.us if not authenticated.
-
-async function initDashboard() {
-  try {
-    const config = await getSiteConfig();
-    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      window.location.href = 'https://riley.eight14.us';
-      return null;
-    }
-
-    currentUser = session.user;
-
-    // Upsert profile row on first login
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || '',
-        avatar_url: currentUser.user_metadata?.avatar_url || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id', ignoreDuplicates: false });
-
-    return { user: currentUser, client: supabase };
-  } catch (err) {
-    console.error('initDashboard error:', err);
-    return null;
-  }
-}
-
-// ─── SIGN OUT ────────────────────────────────────────────────
-async function signOut() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
-}
-
-// ─── SITE CONFIG LOADER ───────────────────────────────────────
-async function getSiteConfig() {
-  const cached = sessionStorage.getItem('siteConfig');
-  if (cached) return JSON.parse(cached);
-
-  try {
-    const res = await fetch('/.netlify/functions/site-config');
-    if (!res.ok) throw new Error('site-config returned ' + res.status);
-    const config = await res.json();
-    sessionStorage.setItem('siteConfig', JSON.stringify(config));
-    return config;
-  } catch (err) {
-    console.warn('site-config fetch failed, using fallback:', err);
-    return FALLBACK_CONFIG;
-  }
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-}
-
-function formatTime(tsStr) {
-  if (!tsStr) return '';
-  return new Date(tsStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function calcSobrietyDays(startDateStr) {
-  if (!startDateStr) return 0;
-  const start = new Date(startDateStr);
-  const now = new Date();
-  return Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
-}
-
-// ─── SIDEBAR RENDERER ────────────────────────────────────────
-// Injects inner HTML into <aside class="sidebar" id="sidebar-mount"></aside>
-
-function renderSidebar(activePage, user) {
-  const mount = document.getElementById('sidebar-mount');
-  if (!mount) return;
-
-  const sections = [
-    {
-      label: 'Today',
-      items: [
-        { id: 'dashboard', label: 'Morning Brief',   icon: '🌅', href: '/dashboard.html' },
-        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.eight14.us' },
-        { id: 'checkin',   label: 'Daily Check-In',  icon: '✅', href: '/tracker.html' },
-      ]
-    },
-    {
-      label: 'History',
-      items: [
-        { id: 'conversations', label: 'Conversations', icon: '📁', href: '/conversations.html' },
-        { id: 'progress',      label: 'Progress',      icon: '📊', href: '/progress.html' },
-        { id: 'workouts',      label: 'Workouts',      icon: '🏋️', href: '/workouts.html' },
-        { id: 'nutrition',     label: 'Nutrition',     icon: '🍳', href: '/nutrition.html' },
-      ]
-    },
-    {
-      label: 'Programs',
-      items: [
-        { id: 'programs', label: 'Enrollments', icon: '🎯', href: '/programs.html' },
-        { id: 'roadmap',  label: 'Roadmap',     icon: '🗺️', href: '/roadmap.html' },
-      ]
-    },
-    {
-      label: 'Life Data',
-      items: [
-        { id: 'sleep',    label: 'Sleep',           icon: '😴', href: '/sleep.html' },
-        { id: 'finance',  label: 'Financial Goals', icon: '💰', href: '/finance.html' },
-        { id: 'calendar', label: 'Calendar',        icon: '📅', href: '/calendar.html' },
-      ]
-    },
-  ];
-
-  const initials = (user?.user_metadata?.full_name || user?.email || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const avatarUrl = user?.user_metadata?.avatar_url;
-  const fullName  = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member';
-
-  mount.innerHTML = `
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-
-    ${sections.map(s => `
-      <div class="sidebar-section-label">${s.label}</div>
-      ${s.items.map(item => `
-        <a href="${item.href}" class="sidebar-nav-item ${activePage === item.id ? 'active' : ''}">
-          <span class="nav-icon">${item.icon}</span> ${item.label}
-        </a>`).join('')}
-    `).join('')}
-
-    <div class="sidebar-spacer"></div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar">
-        ${avatarUrl
-          ? `<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-          : initials}
-      </div>
-      <div class="user-info">
-        <div class="user-name">${fullName}</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  `;
-}
-
-// ─── CSS VARS (injected into every page) ─────────────────────
-const DASHBOARD_CSS_VARS = `
-  :root {
-    --ink:              #0f0e0d;
-    --parchment:        #f5f0e8;
-    --warm-white:       #faf8f4;
-    --gold:             #c9a84c;
-    --gold-light:       #e8d5a3;
-    --gold-dim:         rgba(201,168,76,0.15);
-    --riley-blue:       #2a4a6e;
-    --riley-blue-light: #4a7ab0;
-    --mist:             #e8e4dc;
-    --smoke:            #8a8578;
-    --green:            #4a7c59;
-    --red:              #8b3a3a;
-    --sidebar-w:        240px;
-  }
-`;
-
-(function injectVars() {
-  const style = document.createElement('style');
-  style.textContent = DASHBOARD_CSS_VARS;
-  document.head.prepend(style);
-})();
-
-</script>
-// ============================================================
-
-// ─── FALLBACK CONFIG ─────────────────────────────────────────
-const FALLBACK_CONFIG = {
-  supabaseUrl: 'https://tglljvjixlolaguycvbb.supabase.co',
-  supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
-};
-
-let supabase = null;
-let currentUser = null;
-
-// ─── BOOT ────────────────────────────────────────────────────
-// Call this at the top of every dashboard page's <script> block.
-// Returns { user, client } or null on failure.
-// Redirects to riley.eight14.us if not authenticated.
-
-async function initDashboard() {
-  try {
-    const config = await getSiteConfig();
-    supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) {
-      window.location.href = 'https://riley.eight14.us';
-      return null;
-    }
-
-    currentUser = session.user;
-
-    // Upsert profile row on first login
-    await supabase
-      .from('user_profiles')
-      .upsert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || '',
-        avatar_url: currentUser.user_metadata?.avatar_url || '',
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'id', ignoreDuplicates: false });
-
-    return { user: currentUser, client: supabase };
-  } catch (err) {
-    console.error('initDashboard error:', err);
-    return null;
-  }
-}
-
-// ─── SIGN OUT ────────────────────────────────────────────────
-async function signOut() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
-}
-
-// ─── SITE CONFIG LOADER ───────────────────────────────────────
-async function getSiteConfig() {
-  const cached = sessionStorage.getItem('siteConfig');
-  if (cached) return JSON.parse(cached);
-
-  try {
-    const res = await fetch('/.netlify/functions/site-config');
-    if (!res.ok) throw new Error('site-config returned ' + res.status);
-    const config = await res.json();
-    sessionStorage.setItem('siteConfig', JSON.stringify(config));
-    return config;
-  } catch (err) {
-    console.warn('site-config fetch failed, using fallback:', err);
-    return FALLBACK_CONFIG;
-  }
-}
-
-// ─── HELPERS ─────────────────────────────────────────────────
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return 'Today';
-  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
-}
-
-function formatTime(tsStr) {
-  if (!tsStr) return '';
-  return new Date(tsStr).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function calcSobrietyDays(startDateStr) {
-  if (!startDateStr) return 0;
-  const start = new Date(startDateStr);
-  const now = new Date();
-  return Math.max(0, Math.floor((now - start) / (1000 * 60 * 60 * 24)));
-}
-
-// ─── SIDEBAR RENDERER ────────────────────────────────────────
-// Injects inner HTML into <aside class="sidebar" id="sidebar-mount"></aside>
-
-function renderSidebar(activePage, user) {
-  const mount = document.getElementById('sidebar-mount');
-  if (!mount) return;
-
-  const sections = [
-    {
-      label: 'Today',
-      items: [
-        { id: 'dashboard', label: 'Morning Brief',   icon: '🌅', href: '/dashboard.html' },
-        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.eight14.us' },
-        { id: 'checkin',   label: 'Daily Check-In',  icon: '✅', href: '/tracker.html' },
-      ]
-    },
-    {
-      label: 'History',
-      items: [
-        { id: 'conversations', label: 'Conversations', icon: '📁', href: '/conversations.html' },
-        { id: 'progress',      label: 'Progress',      icon: '📊', href: '/progress.html' },
-        { id: 'workouts',      label: 'Workouts',      icon: '🏋️', href: '/workouts.html' },
-        { id: 'nutrition',     label: 'Nutrition',     icon: '🍳', href: '/nutrition.html' },
-      ]
-    },
-    {
-      label: 'Programs',
-      items: [
-        { id: 'programs', label: 'Enrollments', icon: '🎯', href: '/programs.html' },
-        { id: 'roadmap',  label: 'Roadmap',     icon: '🗺️', href: '/roadmap.html' },
-      ]
-    },
-    {
-      label: 'Life Data',
-      items: [
-        { id: 'sleep',    label: 'Sleep',           icon: '😴', href: '/sleep.html' },
-        { id: 'finance',  label: 'Financial Goals', icon: '💰', href: '/finance.html' },
-        { id: 'calendar', label: 'Calendar',        icon: '📅', href: '/calendar.html' },
-      ]
-    },
-  ];
-
-  const initials = (user?.user_metadata?.full_name || user?.email || 'U')
-    .split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-  const avatarUrl = user?.user_metadata?.avatar_url;
-  const fullName  = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member';
-
-  mount.innerHTML = `
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-
-    ${sections.map(s => `
-      <div class="sidebar-section-label">${s.label}</div>
-      ${s.items.map(item => `
-        <a href="${item.href}" class="sidebar-nav-item ${activePage === item.id ? 'active' : ''}">
-          <span class="nav-icon">${item.icon}</span> ${item.label}
-        </a>`).join('')}
-    `).join('')}
-
-    <div class="sidebar-spacer"></div>
-
-    <div class="sidebar-user">
-      <div class="user-avatar">
-        ${avatarUrl
-          ? `<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`
-          : initials}
-      </div>
-      <div class="user-info">
-        <div class="user-name">${fullName}</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  `;
-}
-
-// ─── CSS VARS (injected into every page) ─────────────────────
-const DASHBOARD_CSS_VARS = `
-  :root {
-    --ink:              #0f0e0d;
-    --parchment:        #f5f0e8;
-    --warm-white:       #faf8f4;
-    --gold:             #c9a84c;
-    --gold-light:       #e8d5a3;
-    --gold-dim:         rgba(201,168,76,0.15);
-    --riley-blue:       #2a4a6e;
-    --riley-blue-light: #4a7ab0;
-    --mist:             #e8e4dc;
-    --smoke:            #8a8578;
-    --green:            #4a7c59;
-    --red:              #8b3a3a;
-    --sidebar-w:        240px;
-  }
-`;
-
-(function injectVars() {
-  const style = document.createElement('style');
-  style.textContent = DASHBOARD_CSS_VARS;
-  document.head.prepend(style);
-})();
-
-</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Brief — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+/* Brief card */
+.brief-hero{background:var(--ink);border-radius:2px;overflow:hidden;margin-bottom:24px}
+.brief-hero-header{padding:28px 32px;background:linear-gradient(135deg,rgba(201,168,76,0.14) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.bh-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px}
+.bh-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:6px}
+.bh-sub{font-size:13px;color:var(--smoke);line-height:1.5;max-width:420px}
+.progress-ring-wrap{text-align:right;flex-shrink:0}
+.progress-ring-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;margin-bottom:6px}
+.modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05)}
+.bmod{background:rgba(15,14,13,0.97);padding:20px;cursor:pointer;transition:background .15s;position:relative}
+.bmod:hover{background:rgba(201,168,76,0.06)}
+.bmod.done{background:rgba(74,124,89,0.06)}
+.bmod.done::after{content:'✓';position:absolute;top:12px;right:14px;font-size:11px;color:var(--green);font-weight:700}
+.bmod-icon{font-size:22px;margin-bottom:8px}
+.bmod-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
+.bmod-content{font-size:13px;color:var(--parchment);line-height:1.45}
+/* Coming soon / preferences */
+.coming-soon{background:var(--ink);border-radius:2px;padding:48px 40px;text-align:center;margin-bottom:24px}
+.cs-icon{font-size:48px;margin-bottom:16px}
+.cs-title{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:8px}
+.cs-sub{font-size:14px;color:var(--smoke);line-height:1.6;max-width:440px;margin:0 auto 32px}
+.module-types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:left;margin-bottom:32px;max-width:700px;margin-left:auto;margin-right:auto}
+.mt-item{background:rgba(255,255,255,0.04);padding:12px 14px;border-radius:2px;border:1px solid rgba(255,255,255,0.07)}
+.mt-icon{font-size:18px;margin-bottom:4px}
+.mt-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.05em}
+/* Prefs panel */
+.prefs-panel{background:white;border:1px solid var(--mist);border-radius:2px;padding:28px;max-width:560px}
+.prefs-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:20px}
+.pref-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.pref-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.pref-input{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px}
+.focus-checkboxes{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.focus-check{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.focus-check input{accent-color:var(--gold)}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.modules-grid,.module-types{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
 </head>
 <body>
-
 <div class="dash-layout">
-  <div id="sidebar-mount"></div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item active">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
 
   <main class="dash-main">
     <div class="dash-topbar">
       <div>
-        <div class="topbar-title">Today's Brief</div>
-        <div class="topbar-sub" id="brief-date"></div>
+        <div class="topbar-greeting">Daily Brief</div>
+        <div class="topbar-date" id="topbar-date"></div>
       </div>
     </div>
 
     <div class="dash-content">
-      <div id="brief-container">
-        <div class="loading-wrap"><div class="spinner"></div> Loading your brief…</div>
+      <div id="brief-content">
+        <div style="padding:40px;text-align:center;color:var(--smoke)">Loading your brief…</div>
       </div>
     </div>
   </main>
 </div>
 
+<div class="save-toast" id="save-toast">Saved</div>
+
 <script>
-const MODULE_META = {
-  mindset:    { icon: '🧠', label: 'Mindset & Therapy' },
-  workout:    { icon: '🏋️', label: 'Workout' },
-  nutrition:  { icon: '🍳', label: 'Meals & Nutrition' },
-  grocery:    { icon: '🛒', label: 'Grocery List' },
-  linkedin:   { icon: '🎥', label: 'LinkedIn Post' },
-  video:      { icon: '🎙', label: 'Video Script' },
-  reading:    { icon: '📚', label: 'Reading Assignment' },
-  podcast:    { icon: '🎧', label: 'Podcast' },
-  meditation: { icon: '🙏', label: 'Meditation' },
-  calendar:   { icon: '📅', label: 'Calendar Review' },
-  priorities: { icon: '🎯', label: 'Top Priorities' },
-  goals:      { icon: '📈', label: 'Weekly Goals' },
-  financial:  { icon: '💰', label: 'Financial Check' },
-  habits:     { icon: '📖', label: 'Habit Tracking' },
-  sleep:      { icon: '😴', label: 'Sleep Review' },
-  water:      { icon: '💧', label: 'Hydration Goal' },
-  recovery:   { icon: '🚶', label: 'Recovery Walk' },
-  reflection: { icon: '📷', label: 'Evening Reflection' },
-};
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, todayISO, briefData = null;
 
-(async () => {
-  const ctx = await initDashboard();
-  if (!ctx) return;
-  const { user, client } = ctx;
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    todayISO = now.toISOString().split('T')[0];
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
 
-  document.getElementById('sidebar-mount').innerHTML = renderSidebar('brief', user);
-  document.getElementById('brief-date').textContent = new Date().toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric'
-  });
+    const { data: brief } = await sb.from('daily_briefs').select('*').eq('user_id', userId).eq('brief_date', todayISO).single();
+    briefData = brief;
+    if (brief?.modules?.length) { renderBrief(brief); } else { renderComingSoon(); }
+  } catch(e) { console.error(e); renderComingSoon(); }
+}
 
-  const today = new Date().toISOString().split('T')[0];
-
-  const { data: brief } = await client
-    .from('daily_briefs')
-    .select('*')
-    .eq('user_id', user.id)
-    .eq('brief_date', today)
-    .maybeSingle();
-
-  const container = document.getElementById('brief-container');
-
-  if (!brief || !brief.modules || Object.keys(brief.modules).length === 0) {
-    // No brief yet — coming soon state
-    container.innerHTML = `
-      <div style="max-width:600px">
-        <div style="background:var(--ink);color:var(--parchment);padding:40px;border-radius:2px;margin-bottom:24px">
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px">Coming Soon</div>
-          <div style="font-family:'DM Serif Display',serif;font-size:32px;margin-bottom:12px">Your Daily Brief</div>
-          <div style="font-size:14px;color:var(--smoke);line-height:1.6">
-            Every morning at 6:00 AM, Riley will assemble a completely personalized brief for your day — mindset coaching, workout, meals, content, and more.<br><br>
-            The module engine is being built now. Once live, your brief will be waiting for you every morning.
-          </div>
-        </div>
-
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--mist);border:1px solid var(--mist);border-radius:2px;overflow:hidden">
-          ${Object.entries(MODULE_META).map(([key, m]) => `
-            <div style="background:white;padding:18px 16px">
-              <div style="font-size:22px;margin-bottom:6px">${m.icon}</div>
-              <div style="font-size:12px;color:var(--smoke)">${m.label}</div>
-            </div>`).join('')}
-        </div>
-
-        <div style="margin-top:24px;padding:20px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:2px">
-          <div style="font-size:13px;color:var(--ink);font-weight:500;margin-bottom:6px">While you wait</div>
-          <div style="font-size:13px;color:var(--smoke);margin-bottom:14px">Talk to Riley now — every conversation shapes what goes into your brief.</div>
-          <a href="https://riley.eight14.us" class="btn btn-dark">Talk to Riley →</a>
-        </div>
-      </div>`;
-    return;
-  }
-
-  // Brief exists — render modules
-  const modules = brief.modules;
+function renderBrief(brief) {
+  const modules = brief.modules || [];
   const completion = brief.completion || {};
-  const moduleKeys = Object.keys(modules);
+  const done = Object.values(completion).filter(Boolean).length;
+  const total = modules.length;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const circ = 138.2;
+  const offset = circ - (circ * pct / 100);
 
-  container.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 280px;gap:24px">
-      <div>
-        <div style="background:var(--ink);color:var(--parchment);padding:24px;border-radius:2px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">Daily Brief · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div>
-            <div style="font-family:'DM Serif Display',serif;font-size:24px">Your ${new Date().toLocaleDateString('en-US',{weekday:'long'})} Blueprint</div>
-          </div>
-          <div style="text-align:right">
-            <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--smoke);margin-bottom:6px">${brief.completed_modules} / ${brief.total_modules} complete</div>
-            <div style="width:120px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-left:auto">
-              <div style="height:100%;width:${brief.total_modules>0?(brief.completed_modules/brief.total_modules*100):0}%;background:var(--gold);border-radius:2px"></div>
-            </div>
-          </div>
+  document.getElementById('brief-content').innerHTML = `
+    <div class="brief-hero">
+      <div class="brief-hero-header">
+        <div>
+          <div class="bh-label">Daily Intelligence Brief — ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'})}</div>
+          <div class="bh-title">Your Blueprint for Today</div>
+          <div class="bh-sub">Riley has assembled your personalized brief. Work through each module to complete your day.</div>
         </div>
-
-        ${moduleKeys.map(key => {
-          const meta = MODULE_META[key] || { icon: '•', label: key };
-          const done = completion[key];
-          return `
-            <div style="background:white;border:1px solid var(--mist);border-radius:2px;margin-bottom:12px;overflow:hidden">
-              <div style="padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between">
-                <div style="display:flex;align-items:center;gap:10px">
-                  <span style="font-size:20px">${meta.icon}</span>
-                  <span style="font-size:14px;font-weight:600;color:var(--ink)">${meta.label}</span>
-                </div>
-                <button
-                  id="complete-${key}"
-                  onclick="markComplete('${key}', '${brief.id}')"
-                  style="padding:6px 14px;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;border-radius:1px;border:1px solid ${done?'var(--green)':'var(--mist)'};background:${done?'rgba(74,124,89,.1)':'white'};color:${done?'var(--green)':'var(--smoke)'};font-weight:${done?'600':'400'}"
-                >${done ? '✓ Done' : 'Mark complete'}</button>
-              </div>
-              <div style="padding:18px 20px;font-size:14px;color:var(--ink);line-height:1.7;white-space:pre-wrap">${escHtml(String(modules[key]))}</div>
-            </div>`;
-        }).join('')}
-      </div>
-
-      <!-- Sidebar -->
-      <div>
-        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke);letter-spacing:.15em;text-transform:uppercase;margin-bottom:12px;padding-top:4px">Progress</div>
-        <div style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px;margin-bottom:12px">
-          ${moduleKeys.map(key => {
-            const meta = MODULE_META[key] || { icon: '•', label: key };
-            const done = completion[key];
-            return `
-              <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--mist)">
-                <span>${meta.icon}</span>
-                <span style="font-size:12px;color:${done?'var(--smoke)':'var(--ink)'};flex:1;${done?'text-decoration:line-through':''}">${meta.label}</span>
-                ${done ? '<span style="color:var(--green);font-size:12px">✓</span>' : ''}
-              </div>`;
-          }).join('')}
+        <div class="progress-ring-wrap">
+          <div class="progress-ring-label">${done} / ${total} complete</div>
+          <svg viewBox="0 0 56 56" width="56" height="56" style="transform:rotate(-90deg)">
+            <circle cx="28" cy="28" r="22" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="4"/>
+            <circle id="progress-ring" cx="28" cy="28" r="22" fill="none" stroke="#c9a84c" stroke-width="4" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+          </svg>
         </div>
-        <a href="https://riley.eight14.us" class="btn btn-dark" style="width:100%;justify-content:center">Talk to Riley →</a>
       </div>
-    </div>`;
-
-  window._briefClient = client;
-  window._briefUserId = user.id;
-})();
-
-async function markComplete(moduleKey, briefId) {
-  const { data: brief } = await _briefClient.from('daily_briefs').select('completion,completed_modules').eq('id', briefId).maybeSingle();
-  if (!brief) return;
-
-  const newCompletion = { ...brief.completion, [moduleKey]: true };
-  const newCount = Object.values(newCompletion).filter(Boolean).length;
-
-  await _briefClient.from('daily_briefs').update({
-    completion: newCompletion,
-    completed_modules: newCount
-  }).eq('id', briefId);
-
-  const btn = document.getElementById('complete-' + moduleKey);
-  if (btn) {
-    btn.textContent = '✓ Done';
-    btn.style.borderColor = 'var(--green)';
-    btn.style.background = 'rgba(74,124,89,.1)';
-    btn.style.color = 'var(--green)';
-    btn.style.fontWeight = '600';
-  }
+      <div class="modules-grid">
+        ${modules.map((m, i) => `
+          <div class="bmod ${completion[i] ? 'done' : ''}" onclick="toggleModule(${i})">
+            <div class="bmod-icon">${m.icon || '📌'}</div>
+            <div class="bmod-label">${m.label || 'Module'}</div>
+            <div class="bmod-content">${m.content || ''}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
-function escHtml(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+async function toggleModule(index) {
+  if (!briefData) return;
+  const completion = briefData.completion || {};
+  completion[index] = !completion[index];
+  briefData.completion = completion;
+  try {
+    await sb.from('daily_briefs').update({ completion }).eq('id', briefData.id);
+    renderBrief(briefData);
+    showToast(completion[index] ? 'Module complete ✓' : 'Marked incomplete');
+  } catch(e) { console.warn(e); }
 }
+
+function renderComingSoon() {
+  const MODULE_TYPES = [
+    {icon:'🧠',label:'Mindset'},
+    {icon:'🏋️',label:'Workout'},
+    {icon:'🍳',label:'Nutrition'},
+    {icon:'💤',label:'Sleep'},
+    {icon:'📚',label:'Reading'},
+    {icon:'🙏',label:'Meditation'},
+    {icon:'📅',label:'Schedule'},
+    {icon:'🎯',label:'Goals'},
+    {icon:'💬',label:'Riley Chat'},
+    {icon:'💧',label:'Hydration'},
+    {icon:'☀️',label:'Morning Ritual'},
+    {icon:'🌙',label:'Evening Wind-Down'},
+    {icon:'📊',label:'Progress Check'},
+    {icon:'🤝',label:'Community'},
+    {icon:'🎵',label:'Focus Playlist'},
+    {icon:'✏️',label:'Journal Prompt'},
+    {icon:'🧘',label:'Breathwork'},
+    {icon:'💰',label:'Finance Review'},
+    {icon:'🌿',label:'Gratitude'},
+    {icon:'🔥',label:'Recovery Win'},
+  ];
+
+  document.getElementById('brief-content').innerHTML = `
+    <div class="coming-soon">
+      <div class="cs-icon">🌅</div>
+      <div class="cs-title">Your brief isn't ready yet</div>
+      <div class="cs-sub">Riley assembles your personalized daily brief each morning at 6:00 AM. Come back tomorrow — or set your preferences below so it's perfectly tailored to you.</div>
+      <div class="module-types">
+        ${MODULE_TYPES.map(m => `<div class="mt-item"><div class="mt-icon">${m.icon}</div><div class="mt-label">${m.label}</div></div>`).join('')}
+      </div>
+    </div>
+    <div class="section-label">Set Up Your Preferences</div>
+    <div class="prefs-panel">
+      <div class="prefs-title">Personalize Your Brief</div>
+      <div class="pref-row">
+        <label class="pref-label">Preferred Wake Time</label>
+        <input type="time" class="pref-input" id="pref-wake" value="06:00">
+      </div>
+      <div class="pref-row">
+        <label class="pref-label">Timezone</label>
+        <input type="text" class="pref-input" id="pref-tz" placeholder="e.g. America/Denver" value="America/Denver">
+      </div>
+      <div class="pref-row">
+        <label class="pref-label">Focus Areas</label>
+        <div class="focus-checkboxes">
+          <label class="focus-check"><input type="checkbox" id="fc-sobriety" checked> Sobriety &amp; Recovery</label>
+          <label class="focus-check"><input type="checkbox" id="fc-fitness" checked> Fitness &amp; Movement</label>
+          <label class="focus-check"><input type="checkbox" id="fc-nutrition"> Nutrition &amp; Gut Health</label>
+          <label class="focus-check"><input type="checkbox" id="fc-mindset"> Mindset &amp; Mental Health</label>
+          <label class="focus-check"><input type="checkbox" id="fc-finance"> Financial Goals</label>
+          <label class="focus-check"><input type="checkbox" id="fc-sleep"> Sleep Optimization</label>
+        </div>
+      </div>
+      <button class="btn-gold" onclick="savePrefs()">Save Preferences</button>
+    </div>
+  `;
+}
+
+async function savePrefs() {
+  const prefs = {
+    wake_time: document.getElementById('pref-wake')?.value,
+    timezone: document.getElementById('pref-tz')?.value,
+    focus_areas: ['sobriety','fitness','nutrition','mindset','finance','sleep'].filter((f,i) => document.getElementById('fc-'+['sobriety','fitness','nutrition','mindset','finance','sleep'][i])?.checked),
+  };
+  try {
+    await sb.from('user_profiles').upsert({ id: userId, brief_preferences: prefs }, { onConflict: 'id' });
+    showToast('Preferences saved');
+  } catch(e) { showToast('Saved locally'); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html"
 
 [functions]
   directory = "netlify/functions"
@@ -121,6 +121,117 @@
   status = 200
   force  = true
 
+[[redirects]]
+  from = "https://riley.eight14.us/workouts"
+  to   = "/workouts.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/workouts/"
+  to   = "/workouts.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/workouts.html"
+  to     = "/workouts.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/nutrition"
+  to   = "/nutrition.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/nutrition/"
+  to   = "/nutrition.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/nutrition.html"
+  to     = "/nutrition.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/progress"
+  to   = "/progress.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/progress/"
+  to   = "/progress.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/progress.html"
+  to     = "/progress.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/sleep"
+  to   = "/sleep.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/sleep/"
+  to   = "/sleep.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/sleep.html"
+  to     = "/sleep.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/finance"
+  to   = "/finance.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/finance/"
+  to   = "/finance.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/finance.html"
+  to     = "/finance.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/calendar"
+  to   = "/calendar.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/calendar/"
+  to   = "/calendar.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/calendar.html"
+  to     = "/calendar.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/roadmap"
+  to   = "/roadmap.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/roadmap/"
+  to   = "/roadmap.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/roadmap.html"
+  to     = "/roadmap.html"
+  status = 200
+  force  = true
 
 # ── Static assets — serve directly, never catch-all ──────────
 [[redirects]]

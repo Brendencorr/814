@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sleep — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-body{padding:20px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
+.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);line-height:1}
+.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
+.form-input{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
+.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
+/* Sleep chart */
+.sleep-chart{display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:12px}
+.sleep-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.sleep-bar{width:100%;border-radius:2px 2px 0 0;background:var(--gold);min-height:3px;transition:height .3s;position:relative}
+.sleep-bar.under{background:var(--red)}
+.sleep-bar.good{background:var(--green)}
+.sleep-bar-label{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:center}
+.sleep-bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;white-space:nowrap}
+.goal-set-row{display:flex;gap:10px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--mist)}
+.goal-set-row input{width:80px;padding:9px 10px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Mono',monospace;font-size:13px;text-align:center}
+.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.save-toast.show{opacity:1}
+/* Stars */
+.star-rating{display:flex;gap:4px}
+.star{font-size:22px;cursor:pointer;color:var(--mist);transition:color .1s}
+.star.active{color:var(--gold)}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item active">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Sleep</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Last Night</div><div class="stat-value" id="stat-last">—</div><div class="stat-sub">hours</div></div>
+        <div class="stat-card"><div class="stat-label">7-Day Avg</div><div class="stat-value" id="stat-avg">—</div><div class="stat-sub">hours</div></div>
+        <div class="stat-card"><div class="stat-label">Goal</div><div class="stat-value" id="stat-goal">8</div><div class="stat-sub">hours/night</div></div>
+      </div>
+
+      <div class="section-label">Log Sleep</div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-input" id="sleep-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Hours Slept</label>
+              <input type="number" class="form-input" id="sleep-hours" placeholder="7.5" step="0.25" min="0" max="24">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bedtime</label>
+              <input type="time" class="form-input" id="sleep-bed">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Wake Time</label>
+              <input type="time" class="form-input" id="sleep-wake">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quality</label>
+              <div class="star-rating" id="star-rating">
+                <span class="star" data-val="1" onclick="setStar(1)">★</span>
+                <span class="star" data-val="2" onclick="setStar(2)">★</span>
+                <span class="star" data-val="3" onclick="setStar(3)">★</span>
+                <span class="star" data-val="4" onclick="setStar(4)">★</span>
+                <span class="star" data-val="5" onclick="setStar(5)">★</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <input type="text" class="form-input" id="sleep-notes" placeholder="How did you sleep?">
+            </div>
+          </div>
+          <button class="btn-gold" onclick="logSleep()">Log Sleep</button>
+        </div>
+      </div>
+
+      <div class="section-label">14-Day Sleep Chart</div>
+      <div class="panel">
+        <div class="panel-body">
+          <div class="sleep-chart" id="sleep-chart"></div>
+          <div class="goal-set-row">
+            <span style="font-size:12px;color:var(--smoke);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Nightly goal:</span>
+            <input type="number" id="goal-hours" value="8" min="4" max="12" step="0.5">
+            <span style="font-size:12px;color:var(--smoke)">hours</span>
+            <button onclick="saveGoal()" style="padding:8px 14px;font-size:12px;font-weight:600;background:var(--ink);color:var(--parchment);border:none;cursor:pointer;font-family:'DM Sans',sans-serif">Set Goal</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<div class="save-toast" id="save-toast">Logged</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId, sleepGoal = 8, sleepQuality = 0;
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    document.getElementById('sleep-date').value = now.toISOString().split('T')[0];
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+
+    // Load sleep goal
+    const { data: goalData } = await sb.from('user_goals').select('current_value,target_value').eq('user_id', userId).eq('category', 'sleep').eq('is_active', true).limit(1).single();
+    if (goalData?.target_value) { sleepGoal = goalData.target_value; document.getElementById('stat-goal').textContent = sleepGoal; document.getElementById('goal-hours').value = sleepGoal; }
+
+    await loadData();
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+function setStar(val) {
+  sleepQuality = val;
+  document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.dataset.val) <= val));
+}
+
+async function loadData() {
+  const fourteenAgo = new Date(); fourteenAgo.setDate(fourteenAgo.getDate() - 13);
+  const { data: logs } = await sb.from('daily_checkins').select('checkin_date,sleep_hours').eq('user_id', userId).gte('checkin_date', fourteenAgo.toISOString().split('T')[0]).order('checkin_date', {ascending:false});
+  const valid = (logs || []).filter(l => l.sleep_hours > 0);
+  if (valid.length) {
+    document.getElementById('stat-last').textContent = valid[0].sleep_hours;
+    const avg = (valid.reduce((s,l) => s + l.sleep_hours, 0) / valid.length).toFixed(1);
+    document.getElementById('stat-avg').textContent = avg;
+  }
+  buildChart(logs || []);
+}
+
+function buildChart(logs) {
+  const el = document.getElementById('sleep-chart');
+  el.innerHTML = '';
+  const maxH = 12;
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const iso = d.toISOString().split('T')[0];
+    const entry = logs.find(l => l.checkin_date === iso);
+    const hrs = entry?.sleep_hours || 0;
+    const pct = hrs ? Math.min(100, (hrs / maxH) * 100) : 4;
+    const cls = !hrs ? '' : hrs >= sleepGoal ? 'good' : hrs < sleepGoal - 1 ? 'under' : '';
+    const wrap = document.createElement('div');
+    wrap.className = 'sleep-bar-wrap';
+    wrap.innerHTML = `
+      <div class="sleep-bar ${cls}" style="height:${pct}%">
+        ${hrs ? '<div class="sleep-bar-val">'+hrs+'h</div>' : ''}
+      </div>
+      <div class="sleep-bar-label">${d.getDate()}</div>
+    `;
+    el.appendChild(wrap);
+  }
+}
+
+async function logSleep() {
+  const date = document.getElementById('sleep-date').value;
+  const hours = parseFloat(document.getElementById('sleep-hours').value);
+  const notes = document.getElementById('sleep-notes').value.trim() || null;
+  if (!date || !hours || !userId) return;
+  try {
+    await sb.from('daily_checkins').upsert({
+      user_id: userId, checkin_date: date, sleep_hours: hours, notes
+    }, { onConflict: 'user_id,checkin_date' });
+    document.getElementById('sleep-hours').value = '';
+    document.getElementById('sleep-notes').value = '';
+    setStar(0);
+    showToast('Sleep logged');
+    await loadData();
+  } catch(e) { console.warn(e); }
+}
+
+async function saveGoal() {
+  const val = parseFloat(document.getElementById('goal-hours').value);
+  if (!val || !userId) return;
+  sleepGoal = val;
+  document.getElementById('stat-goal').textContent = val;
+  try {
+    const { data: existing } = await sb.from('user_goals').select('id').eq('user_id', userId).eq('category', 'sleep').eq('is_active', true).limit(1).single();
+    if (existing?.id) {
+      await sb.from('user_goals').update({ target_value: val }).eq('id', existing.id);
+    } else {
+      await sb.from('user_goals').insert({ user_id: userId, category: 'sleep', title: 'Sleep Goal', target_value: val, unit: 'hours', is_active: true });
+    }
+    showToast('Goal saved');
+    await loadData();
+  } catch(e) { console.warn(e); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('save-toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

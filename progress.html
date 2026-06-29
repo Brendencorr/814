@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Progress — Riley · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
+.sign-out-btn:hover{color:var(--red)}
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.dash-content{padding:32px}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
+.section-label:first-child{margin-top:0}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
+.panel-body{padding:20px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
+.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);line-height:1}
+.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
+/* Mood chart */
+.mood-chart{display:flex;align-items:flex-end;gap:8px;height:80px;padding:8px 0}
+.mood-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.mood-bar{width:100%;border-radius:2px 2px 0 0;transition:height .3s;min-height:4px;background:var(--gold)}
+.mood-bar-label{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace}
+.mood-emoji{font-size:14px;text-align:center}
+/* Habit grid */
+.habit-grid-wrap{overflow-x:auto}
+.habit-grid{display:grid;gap:3px;width:max-content}
+.hg-cell{width:18px;height:18px;border-radius:2px;background:var(--mist)}
+.hg-cell.done{background:var(--gold)}
+.hg-cell.today{background:var(--green)}
+.hg-header{font-size:10px;color:var(--smoke);font-family:'DM Mono',monospace;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+/* Goal bars */
+.goal-row{margin-bottom:14px}
+.goal-row:last-child{margin-bottom:0}
+.goal-top{display:flex;justify-content:space-between;margin-bottom:5px}
+.goal-name{font-size:13px;color:var(--ink);font-weight:500}
+.goal-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)}
+.goal-bar{height:4px;background:var(--mist);border-radius:2px}
+.goal-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+@media(max-width:900px){.stats-row,.two-col{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-mark">Riley<span>.</span></div>
+      <div class="sidebar-logo-sub">The 8:14 Project</div>
+    </div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item active">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">Loading…</div>
+        <div class="user-plan">Life Coach · Active</div>
+      </div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <div class="dash-topbar">
+      <div>
+        <div class="topbar-greeting">Progress Overview</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+
+    <div class="dash-content">
+
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Sobriety Days</div><div class="stat-value" id="stat-sober">—</div><div class="stat-sub">days clean</div></div>
+        <div class="stat-card"><div class="stat-label">Check-In Streak</div><div class="stat-value" id="stat-checkin">—</div><div class="stat-sub">days in a row</div></div>
+        <div class="stat-card"><div class="stat-label">Habit Rate</div><div class="stat-value" id="stat-habits">—</div><div class="stat-sub">% this week</div></div>
+        <div class="stat-card"><div class="stat-label">Goals Active</div><div class="stat-value" id="stat-goals">—</div><div class="stat-sub">goals tracked</div></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <div class="section-label">14-Day Mood</div>
+          <div class="panel">
+            <div class="panel-body">
+              <div class="mood-chart" id="mood-chart"></div>
+            </div>
+          </div>
+
+          <div class="section-label">Goal Progress</div>
+          <div class="panel">
+            <div class="panel-body" id="goals-list">
+              <div style="color:var(--smoke);font-size:13px">Loading…</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Habit Completion (7 days)</div>
+          <div class="panel">
+            <div class="panel-body">
+              <div class="habit-grid-wrap">
+                <div id="habit-grid"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-label">Recent Check-Ins</div>
+          <div class="panel">
+            <div class="panel-body" id="recent-checkins">
+              <div style="color:var(--smoke);font-size:13px">Loading…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+let sb, userId;
+const MOOD_EMOJI = ['','😔','😕','😐','🙂','😊'];
+
+async function init() {
+  try {
+    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
+    userId = session.user.id;
+    const now = new Date();
+    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
+    const meta = session.user.user_metadata || {};
+    const av = document.getElementById('user-avatar');
+    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
+    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+
+    const fourteenAgo = new Date(); fourteenAgo.setDate(fourteenAgo.getDate() - 13);
+    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
+    const todayISO = now.toISOString().split('T')[0];
+
+    const [soberRes, checkinRes, habitsRes, habitCompRes, goalsRes] = await Promise.allSettled([
+      sb.from('sobriety_tracker').select('start_date').eq('user_id', userId).eq('is_active', true).order('start_date', {ascending:false}).limit(1),
+      sb.from('daily_checkins').select('*').eq('user_id', userId).gte('checkin_date', fourteenAgo.toISOString().split('T')[0]).order('checkin_date', {ascending:false}),
+      sb.from('habits').select('*').eq('user_id', userId).eq('is_active', true),
+      sb.from('habit_completions').select('*').eq('user_id', userId).gte('completed_date', sevenAgo.toISOString().split('T')[0]),
+      sb.from('user_goals').select('*').eq('user_id', userId).eq('is_active', true),
+    ]);
+
+    // Sobriety
+    const soberData = soberRes.value?.data?.[0];
+    if (soberData?.start_date) {
+      const days = Math.floor((Date.now() - new Date(soberData.start_date)) / 86400000);
+      document.getElementById('stat-sober').textContent = days;
+    }
+
+    // Checkins
+    const checkins = checkinRes.value?.data || [];
+    let streak = 0;
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0];
+      if (checkins.find(c => c.checkin_date === iso)) streak++; else if (i > 0) break;
+    }
+    document.getElementById('stat-checkin').textContent = streak;
+    buildMoodChart(checkins);
+    renderRecentCheckins(checkins.slice(0,7));
+
+    // Habits
+    const habits = habitsRes.value?.data || [];
+    const comps = habitCompRes.value?.data || [];
+    const weekDays = 7; const possible = habits.length * weekDays;
+    const pct = possible ? Math.round(comps.length / possible * 100) : 0;
+    document.getElementById('stat-habits').textContent = pct + '%';
+    buildHabitGrid(habits, comps);
+
+    // Goals
+    const goals = goalsRes.value?.data || [];
+    document.getElementById('stat-goals').textContent = goals.length;
+    renderGoals(goals);
+
+  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
+}
+
+function buildMoodChart(checkins) {
+  const el = document.getElementById('mood-chart');
+  el.innerHTML = '';
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const iso = d.toISOString().split('T')[0];
+    const ci = checkins.find(c => c.checkin_date === iso);
+    const mood = ci?.mood || 0;
+    const div = document.createElement('div');
+    div.className = 'mood-bar-wrap';
+    const pct = mood ? (mood / 5 * 100) : 5;
+    div.innerHTML = `
+      <div class="mood-emoji">${mood ? MOOD_EMOJI[mood] : ''}</div>
+      <div class="mood-bar" style="height:${pct}%;background:${mood ? 'var(--gold)' : 'var(--mist)'}"></div>
+      <div class="mood-bar-label">${d.getDate()}</div>
+    `;
+    el.appendChild(div);
+  }
+}
+
+function buildHabitGrid(habits, comps) {
+  const el = document.getElementById('habit-grid');
+  if (!habits.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No habits tracked.</div>'; return; }
+  el.style.gridTemplateColumns = 'repeat(' + (7+1) + ', auto)';
+  el.className = 'habit-grid';
+  // Date headers
+  el.innerHTML = '<div></div>';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const cell = document.createElement('div');
+    cell.style.cssText = 'width:18px;text-align:center;font-size:9px;color:var(--smoke);font-family:"DM Mono",monospace;padding-bottom:4px';
+    cell.textContent = d.getDate();
+    el.appendChild(cell);
+  }
+  habits.forEach(h => {
+    const label = document.createElement('div');
+    label.className = 'hg-header';
+    label.textContent = (h.emoji || '') + ' ' + h.title;
+    label.style.cssText = 'font-size:10px;color:var(--smoke);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;align-self:center';
+    el.appendChild(label);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const iso = d.toISOString().split('T')[0];
+      const done = comps.find(c => c.habit_id === h.id && c.completed_date === iso);
+      const cell = document.createElement('div');
+      cell.className = 'hg-cell' + (done ? ' done' : '') + (i === 0 ? ' today' : '');
+      el.appendChild(cell);
+    }
+  });
+}
+
+function renderGoals(goals) {
+  const el = document.getElementById('goals-list');
+  if (!goals.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No goals set. <a href="/tracker" style="color:var(--gold)">Add goals in tracker.</a></div>'; return; }
+  el.innerHTML = goals.map(g => {
+    const pct = g.target_value ? Math.min(100, Math.round((g.current_value||0) / g.target_value * 100)) : 0;
+    return `<div class="goal-row">
+      <div class="goal-top"><span class="goal-name">${g.title}</span><span class="goal-val">${g.current_value||0}/${g.target_value||0} ${g.unit||''}</span></div>
+      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRecentCheckins(checkins) {
+  const el = document.getElementById('recent-checkins');
+  if (!checkins.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No check-ins yet.</div>'; return; }
+  el.innerHTML = checkins.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--mist)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--ink)">${new Date(c.checkin_date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
+        <div style="font-size:12px;color:var(--smoke)">${c.notes ? c.notes.slice(0,60) + (c.notes.length>60?'…':'') : 'No notes'}</div>
+      </div>
+      <div style="font-size:22px">${c.mood ? ['','😔','😕','😐','🙂','😊'][c.mood] : '—'}</div>
+    </div>
+  `).join('');
+}
+
+async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
+window.addEventListener('DOMContentLoaded', init);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+</body>
+</html>

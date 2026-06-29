@@ -607,10 +607,10 @@ nav::-webkit-scrollbar { display: none; }
 <script src="riley-chat.js"></script>
 
 <script>
-// ── Config ───────────────────────────────────────────────────────────────
-const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// ── Config — loaded at runtime from site-config function ─────────────────
+// No credentials hardcoded. SUPABASE_URL and SUPABASE_ANON_KEY come from
+// Netlify environment variables via the site-config function.
+let db = null;
 
 // ── State ─────────────────────────────────────────────────────────────────
 let currentUser    = null;
@@ -618,9 +618,22 @@ let currentProfile = null;
 let activeSession  = null;   // current chat session_id
 let checkedInToday = false;
 
-// ── Init ──────────────────────────────────────────────────────────────────
+// ── Boot: fetch config then check session ─────────────────────────────────
 async function init() {
-  const { data: { session }, error } = await db.auth.getSession();
+  // 1. Load Supabase config from server
+  try {
+    const cfgRes = await fetch('/.netlify/functions/site-config');
+    const cfg    = await cfgRes.json();
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
+    db = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+  } catch (e) {
+    console.error('site-config failed:', e.message);
+    window.location.href = 'https://login.eight14.us';
+    return;
+  }
+
+  // 2. Verify session — redirect to login if not authenticated
+  const { data: { session } } = await db.auth.getSession();
   if (!session) { window.location.href = 'https://login.eight14.us'; return; }
 
   currentUser = session.user;

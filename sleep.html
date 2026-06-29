@@ -5,287 +5,504 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sleep — Riley · The 8:14 Project</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
-.sign-out-btn:hover{color:var(--red)}
-.dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
-.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
-.dash-content{padding:32px}
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
-.section-label:first-child{margin-top:0}
-.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
-.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
-.panel-body{padding:20px}
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
-.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
-.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);line-height:1}
-.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-grid .full{grid-column:1/-1}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
-.form-input{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
-.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
-/* Sleep chart */
-.sleep-chart{display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:12px}
-.sleep-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.sleep-bar{width:100%;border-radius:2px 2px 0 0;background:var(--gold);min-height:3px;transition:height .3s;position:relative}
-.sleep-bar.under{background:var(--red)}
-.sleep-bar.good{background:var(--green)}
-.sleep-bar-label{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:center}
-.sleep-bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace;white-space:nowrap}
-.goal-set-row{display:flex;gap:10px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--mist)}
-.goal-set-row input{width:80px;padding:9px 10px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Mono',monospace;font-size:13px;text-align:center}
-.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
-.save-toast.show{opacity:1}
-/* Stars */
-.star-rating{display:flex;gap:4px}
-.star{font-size:22px;cursor:pointer;color:var(--mist);transition:color .1s}
-.star.active{color:var(--gold)}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
-@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.stats-row{grid-template-columns:1fr 1fr}.dash-content{padding:20px 16px}}
+
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --parchment: #f5f0e8;
+    --warm-white: #faf8f4;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --gold-dim: rgba(201,168,76,0.15);
+    --riley-blue: #2a4a6e;
+    --riley-blue-light: #4a7ab0;
+    --mist: #e8e4dc;
+    --smoke: #8a8578;
+    --green: #4a7c59;
+    --red: #8b3a3a;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--parchment); min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* ── VISION SCREEN ── */
+  #screen-vision { background: var(--ink); position: relative; overflow: hidden; }
+  .vision-bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(42,74,110,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .vision-inner { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 64px 32px 80px; }
+  .vision-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+  }
+  .vision-eyebrow::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--gold); opacity: 0.4; }
+  .vision-headline { font-family: 'DM Serif Display', serif; font-size: clamp(42px,7vw,80px); line-height: 1.05; color: var(--parchment); margin-bottom: 12px; }
+  .vision-headline em { font-style: italic; color: var(--gold); }
+  .vision-sub { font-size: 18px; font-weight: 300; color: var(--smoke); margin-bottom: 56px; line-height: 1.6; max-width: 540px; }
+  .vision-sub strong { color: var(--parchment); font-weight: 500; }
+
+  .vision-tabs { display: flex; gap: 2px; margin-bottom: 40px; background: rgba(255,255,255,0.04); padding: 4px; width: fit-content; }
+  .vtab { padding: 8px 20px; font-size: 12px; cursor: pointer; color: var(--smoke); font-family: 'DM Sans', sans-serif; background: transparent; border: none; transition: color .15s, background .15s; }
+  .vtab.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+  .vtab:hover:not(.active) { color: var(--parchment); }
+
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 48px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+  .arch-box { background: rgba(15,14,13,0.9); padding: 28px 28px 24px; position: relative; }
+  .arch-box:hover { background: rgba(201,168,76,0.04); }
+  .arch-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+  .arch-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); margin-bottom: 8px; }
+  .arch-desc { font-size: 13px; color: var(--smoke); line-height: 1.55; }
+  .arch-count { font-family: 'DM Mono', monospace; font-size: 36px; color: var(--gold); font-weight: 500; opacity: 0.3; position: absolute; bottom: 20px; right: 24px; }
+
+  .briefing-preview { border: 1px solid rgba(201,168,76,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+  .briefing-header { background: rgba(201,168,76,0.08); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(201,168,76,0.15); }
+  .briefing-badge { font-family: 'DM Mono', monospace; font-size: 10px; background: var(--gold); color: var(--ink); padding: 3px 8px; letter-spacing: 0.1em; }
+  .briefing-name { font-size: 14px; color: var(--parchment); font-weight: 500; margin-left: 12px; }
+  .briefing-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .briefing-mods { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod-v { background: rgba(15,14,13,0.95); padding: 16px 18px; cursor: pointer; transition: background .15s; }
+  .bmod-v:hover { background: rgba(201,168,76,0.06); }
+  .bm-icon { font-size: 18px; margin-bottom: 6px; }
+  .bm-label { font-size: 11px; color: var(--smoke); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bm-preview { font-size: 12px; color: var(--parchment); margin-top: 4px; opacity: 0.7; line-height: 1.4; }
+
+  .module-library { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 48px; }
+  .module-card { border: 1px solid rgba(255,255,255,0.07); padding: 20px; border-radius: 2px; position: relative; overflow: hidden; }
+  .module-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); opacity: 0; transition: opacity .2s; }
+  .module-card:hover::before { opacity: 1; }
+  .mc-number { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+  .mc-label { font-size: 13px; color: var(--smoke); margin-bottom: 12px; }
+  .mc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mc-tag { font-size: 10px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 1px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+  .vision-cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--gold); color: var(--ink); border: none; padding: 14px 32px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase; transition: opacity .15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; color: var(--parchment); border: 1px solid rgba(255,255,255,0.2); padding: 14px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color .15s; }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.5); }
+
+  /* ── DASHBOARD ── */
+  #screen-dashboard { background: var(--warm-white); color: var(--ink); }
+  .dash-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--ink); padding: 32px 0; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.06); }
+  .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 24px; }
+  .sidebar-logo-mark { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); }
+  .sidebar-logo-mark span { color: var(--gold); }
+  .sidebar-logo-sub { font-size: 11px; color: var(--smoke); letter-spacing: 0.05em; margin-top: 2px; }
+  .sidebar-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--smoke); letter-spacing: 0.18em; text-transform: uppercase; padding: 0 24px; margin-bottom: 6px; margin-top: 20px; }
+  .sidebar-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; font-size: 13px; color: var(--smoke); transition: color .15s, background .15s; border-left: 2px solid transparent; }
+  .sidebar-nav-item:hover, .sidebar-nav-item.active { color: var(--parchment); background: rgba(255,255,255,0.04); border-left-color: var(--gold); }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+  .user-name { font-size: 12px; color: var(--parchment); font-weight: 500; }
+  .user-plan { font-size: 10px; color: var(--gold); }
+
+  .dash-main { overflow-y: auto; }
+  .dash-topbar { padding: 24px 32px; background: white; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-greeting { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); }
+  .topbar-date { font-size: 13px; color: var(--smoke); margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; }
+
+  .dash-content { padding: 32px; }
+
+  .briefing-card { background: var(--ink); border-radius: 2px; overflow: hidden; margin-bottom: 28px; }
+  .briefing-card-header { padding: 24px 28px; background: linear-gradient(135deg, rgba(201,168,76,0.12) 0%, transparent 60%); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: flex-start; justify-content: space-between; }
+  .bc-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .bc-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--parchment); margin-bottom: 6px; }
+  .bc-subtitle { font-size: 13px; color: var(--smoke); line-height: 1.5; max-width: 440px; }
+  .bc-progress-label { font-size: 11px; color: var(--smoke); margin-bottom: 6px; font-family: 'DM Mono', monospace; text-align: right; }
+
+  .briefing-modules-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod { background: rgba(15,14,13,0.97); padding: 20px; cursor: pointer; transition: background .15s; position: relative; }
+  .bmod:hover { background: rgba(201,168,76,0.05); }
+  .bmod.done::after { content: '✓'; position: absolute; top: 12px; right: 14px; font-size: 11px; color: var(--green); font-weight: 700; }
+  .bmod-icon { font-size: 20px; margin-bottom: 8px; }
+  .bmod-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+  .bmod-content { font-size: 13px; color: var(--parchment); line-height: 1.45; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .stat-label { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--smoke); margin-top: 4px; }
+  .stat-trend { display: inline-block; font-size: 11px; color: var(--green); font-weight: 600; margin-left: 4px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .panel { background: white; border: 1px solid var(--mist); border-radius: 2px; overflow: hidden; }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .panel-action { font-size: 12px; color: var(--riley-blue-light); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+  .conv-item { padding: 14px 20px; border-bottom: 1px solid var(--mist); cursor: pointer; transition: background .12s; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+  .conv-item:hover { background: var(--warm-white); }
+  .conv-item:last-child { border-bottom: none; }
+  .conv-title { font-size: 13px; color: var(--ink); font-weight: 500; margin-bottom: 3px; }
+  .conv-preview { font-size: 12px; color: var(--smoke); line-height: 1.4; }
+  .conv-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
+  .conv-tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+  .checkin-panel { display: flex; flex-direction: column; gap: 12px; }
+  .checkin-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .checkin-label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .streak-display { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+  .streak-num { font-family: 'DM Serif Display', serif; font-size: 48px; color: var(--ink); line-height: 1; }
+  .streak-unit { font-size: 14px; color: var(--smoke); }
+  .streak-dots { display: flex; gap: 4px; margin-top: 10px; }
+  .streak-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mist); }
+  .streak-dot.done { background: var(--gold); }
+  .streak-dot.today { background: var(--green); }
+  .mood-scale { display: flex; gap: 6px; margin-top: 8px; }
+  .mood-btn { flex: 1; padding: 8px 4px; background: var(--warm-white); border: 1px solid var(--mist); border-radius: 1px; cursor: pointer; font-size: 18px; text-align: center; transition: border-color .12s, transform .1s; }
+  .mood-btn:hover { border-color: var(--gold); transform: scale(1.1); }
+  .mood-btn.selected { border-color: var(--gold); background: var(--gold-dim); }
+
+  .prog-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--mist); }
+  .prog-item:last-child { border-bottom: none; }
+  .prog-icon { width: 36px; height: 36px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border-radius: 2px; }
+  .prog-name { font-size: 13px; color: var(--ink); font-weight: 500; }
+  .prog-status { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .prog-progress { margin-left: auto; text-align: right; }
+  .prog-pct { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--gold); font-weight: 500; line-height: 1; }
+  .prog-bar-wrap { width: 60px; height: 3px; background: var(--mist); border-radius: 2px; margin-top: 4px; margin-left: auto; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--smoke); text-transform: uppercase; margin-bottom: 12px; margin-top: 28px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--mist); }
+
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .todo-check { width: 18px; height: 18px; border: 1.5px solid var(--mist); border-radius: 50%; flex-shrink: 0; }
+  .todo-check.done { border-color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--green); }
+  .todo-text { font-size: 13px; color: var(--ink); }
+  .todo-text.done { color: var(--smoke); text-decoration: line-through; }
+
+  .goal-row { margin-bottom: 12px; }
+  .goal-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .goal-name { font-size: 12px; color: var(--ink); }
+  .goal-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .goal-bar { height: 3px; background: var(--mist); border-radius: 2px; }
+  .goal-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+  @media(max-width:700px){
+    .arch-grid, .briefing-modules-grid, .module-library, .stats-row, .briefing-mods, .two-col { grid-template-columns: 1fr 1fr; }
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* Dashboard body override */
+  body { background: var(--warm-white); color: var(--ink); }
+  
+  /* Form elements */
+  .form-section { background: white; border: 1px solid var(--mist); border-radius: 2px; padding: 24px; margin-bottom: 20px; }
+  .form-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 4px; }
+  .form-sub { font-size: 13px; color: var(--smoke); margin-bottom: 20px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; }
+  .field input, .field select, .field textarea { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 2px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .btn-save { background: var(--gold); color: var(--ink); border: none; padding: 11px 24px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s; border-radius: 2px; }
+  .btn-save:hover { opacity: 0.88; }
+  .btn-save:disabled { opacity: 0.5; cursor: default; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--mist); padding: 9px 18px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; transition: border-color .15s; }
+  .btn-secondary:hover { border-color: var(--smoke); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; }
+  
+  /* Success/error messages */
+  .msg { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-top: 12px; display: none; }
+  .msg.success { background: rgba(74,124,89,0.1); color: var(--green); border: 1px solid rgba(74,124,89,0.3); }
+  .msg.error   { background: rgba(139,58,58,0.1); color: var(--red);   border: 1px solid rgba(139,58,58,0.3); }
+  
+  /* Log/history list */
+  .log-list { display: flex; flex-direction: column; gap: 1px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: 16px; }
+  .log-item { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .log-item:hover { background: var(--warm-white); }
+  .log-meta { flex: 1; }
+  .log-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .log-detail { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .log-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
+  .badge-gold { background: var(--gold-dim); color: var(--gold); }
+  .badge-green { background: rgba(74,124,89,0.12); color: var(--green); }
+  
+  /* Stat cards inline */
+  .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .mini-stat { background: white; border: 1px solid var(--mist); padding: 16px; border-radius: 2px; text-align: center; }
+  .mini-stat-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); line-height: 1; }
+  .mini-stat-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+  
+  /* Tag pills */
+  .tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; margin-top: 3px; }
+  
+  /* Empty state */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--smoke); }
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .empty-state .sub { font-size: 13px; line-height: 1.6; }
+  
+  /* Topbar btn */
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; text-decoration: none; display: inline-block; }
+  .topbar-btn.gold { background: var(--gold); color: var(--ink); }
+  
+  /* Habit toggle */
+  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--mist); }
+  .habit-row:last-child { border-bottom: none; }
+  .habit-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mist); background: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
+  .habit-toggle.done { background: var(--green); border-color: var(--green); color: white; }
+  .habit-name { flex: 1; font-size: 13px; color: var(--ink); }
+  .habit-name.done { text-decoration: line-through; color: var(--smoke); }
+  
+  /* Progress bar */
+  .prog-bar-bg { height: 6px; background: var(--mist); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .4s; }
+  .prog-bar-fill.green { background: var(--green); }
+  
+  /* Section header */
+  .sect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
+  .sect-head:first-child { margin-top: 0; }
+  
+  /* Calendar grid */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--mist); color: var(--smoke); cursor: default; }
+  .cal-cell.done  { background: var(--gold); color: var(--ink); }
+  .cal-cell.today { background: var(--green); color: white; }
+  .cal-cell.empty { background: transparent; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+  
+  /* Responsive */
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .dash-content { padding: 20px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+/* Sidebar sticky */
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sign-out-btn { margin-left: auto; background: transparent; border: none; color: var(--smoke); font-size: 14px; cursor: pointer; padding: 4px; }
+.sign-out-btn:hover { color: var(--red); }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; }
 </style>
 </head>
 <body>
 <div class="dash-layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-    <div class="sidebar-section-label">Today</div>
-    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
-    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
-    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
-    <div class="sidebar-section-label">History</div>
-    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
-    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
-    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
-    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
-    <div class="sidebar-section-label">Programs</div>
-    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
-    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
-    <div class="sidebar-section-label">Life Data</div>
-    <a href="/sleep" class="sidebar-nav-item active">😴 Sleep</a>
-    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
-    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-user">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div>
-        <div class="user-name" id="user-name">Loading…</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  </aside>
+<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="sidebar-section-label">TODAY</div><a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a><a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a><a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a><div class="sidebar-section-label">HISTORY</div><a href="/conversations" class="sidebar-nav-item">📁 Conversations</a><a href="/progress" class="sidebar-nav-item">📊 Progress</a><a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a><a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a><div class="sidebar-section-label">PROGRAMS</div><a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a><a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a><div class="sidebar-section-label">LIFE DATA</div><a href="/sleep" class="sidebar-nav-item active">😴 Sleep</a><a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a><a href="/calendar" class="sidebar-nav-item">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div><button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button></div></aside>
+<main class="dash-main">
+<div class="dash-topbar">
+  <div>
+    <div class="topbar-greeting" id="greeting">Good morning.</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+  <div class="topbar-actions"><a href="/tracker" class="topbar-btn">← Tracker</a></div>
+</div>
+<div class="dash-content">
 
-  <main class="dash-main">
-    <div class="dash-topbar">
-      <div>
-        <div class="topbar-greeting">Sleep</div>
-        <div class="topbar-date" id="topbar-date"></div>
-      </div>
-    </div>
-
-    <div class="dash-content">
-
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-label">Last Night</div><div class="stat-value" id="stat-last">—</div><div class="stat-sub">hours</div></div>
-        <div class="stat-card"><div class="stat-label">7-Day Avg</div><div class="stat-value" id="stat-avg">—</div><div class="stat-sub">hours</div></div>
-        <div class="stat-card"><div class="stat-label">Goal</div><div class="stat-value" id="stat-goal">8</div><div class="stat-sub">hours/night</div></div>
-      </div>
-
-      <div class="section-label">Log Sleep</div>
-      <div class="panel">
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Date</label>
-              <input type="date" class="form-input" id="sleep-date">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Hours Slept</label>
-              <input type="number" class="form-input" id="sleep-hours" placeholder="7.5" step="0.25" min="0" max="24">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Bedtime</label>
-              <input type="time" class="form-input" id="sleep-bed">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Wake Time</label>
-              <input type="time" class="form-input" id="sleep-wake">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Quality</label>
-              <div class="star-rating" id="star-rating">
-                <span class="star" data-val="1" onclick="setStar(1)">★</span>
-                <span class="star" data-val="2" onclick="setStar(2)">★</span>
-                <span class="star" data-val="3" onclick="setStar(3)">★</span>
-                <span class="star" data-val="4" onclick="setStar(4)">★</span>
-                <span class="star" data-val="5" onclick="setStar(5)">★</span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Notes</label>
-              <input type="text" class="form-input" id="sleep-notes" placeholder="How did you sleep?">
-            </div>
-          </div>
-          <button class="btn-gold" onclick="logSleep()">Log Sleep</button>
-        </div>
-      </div>
-
-      <div class="section-label">14-Day Sleep Chart</div>
-      <div class="panel">
-        <div class="panel-body">
-          <div class="sleep-chart" id="sleep-chart"></div>
-          <div class="goal-set-row">
-            <span style="font-size:12px;color:var(--smoke);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Nightly goal:</span>
-            <input type="number" id="goal-hours" value="8" min="4" max="12" step="0.5">
-            <span style="font-size:12px;color:var(--smoke)">hours</span>
-            <button onclick="saveGoal()" style="padding:8px 14px;font-size:12px;font-weight:600;background:var(--ink);color:var(--parchment);border:none;cursor:pointer;font-family:'DM Sans',sans-serif">Set Goal</button>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </main>
+<div class="mini-stats">
+  <div class="mini-stat"><div class="mini-stat-val" id="sl-avg">—</div><div class="mini-stat-label">Avg Hours</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="sl-goal">—</div><div class="mini-stat-label">Goal</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="sl-streak">—</div><div class="mini-stat-label">On-Goal Streak</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="sl-last">—</div><div class="mini-stat-label">Last Night</div></div>
 </div>
 
-<div class="save-toast" id="save-toast">Logged</div>
+<div class="form-section">
+  <div class="form-title">Log Sleep</div>
+  <div class="form-sub">Track your sleep — Riley correlates it with your mood, energy, and performance.</div>
+  <div class="field-row">
+    <div class="field"><label>Date</label><input type="date" id="sl-date"></div>
+    <div class="field"><label>Hours slept</label><input type="number" id="sl-hours" placeholder="7.5" step="0.5" min="0" max="24"></div>
+    <div class="field"><label>Quality (1-5)</label>
+      <select id="sl-quality"><option value="">—</option><option value="1">1 — Terrible</option><option value="2">2 — Poor</option><option value="3">3 — OK</option><option value="4">4 — Good</option><option value="5">5 — Great</option></select>
+    </div>
+  </div>
+  <div class="field"><label>Notes</label><textarea id="sl-notes" placeholder="Woke up at 3am, stress dreams…"></textarea></div>
+  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--mist)">
+    <div class="field"><label>Sleep goal (hours/night)</label><input type="number" id="sl-goal-in" placeholder="8" step="0.5" min="4" max="12"></div>
+  </div>
+  <button class="btn-save" onclick="logSleep()">Save Sleep Log</button>
+  <div class="msg" id="msg-sleep"></div>
+</div>
 
+<div class="section-label">14-Day Sleep Chart</div>
+<div id="sleep-chart" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px"></div>
+<div class="section-label">Recent Logs</div>
+<div id="sleep-history"></div>
+
+</div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
-let sb, userId, sleepGoal = 8, sleepQuality = 0;
 
-async function init() {
-  try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
-    userId = session.user.id;
-    const now = new Date();
-    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
-    document.getElementById('sleep-date').value = now.toISOString().split('T')[0];
-    const meta = session.user.user_metadata || {};
-    const av = document.getElementById('user-avatar');
-    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
-    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
+const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
 
-    // Load sleep goal
-    const { data: goalData } = await sb.from('user_goals').select('current_value,target_value').eq('user_id', userId).eq('category', 'sleep').eq('is_active', true).limit(1).single();
-    if (goalData?.target_value) { sleepGoal = goalData.target_value; document.getElementById('stat-goal').textContent = sleepGoal; document.getElementById('goal-hours').value = sleepGoal; }
+let _db, _user, _uid, _today;
 
-    await loadData();
-  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
-}
-
-function setStar(val) {
-  sleepQuality = val;
-  document.querySelectorAll('.star').forEach(s => s.classList.toggle('active', parseInt(s.dataset.val) <= val));
-}
-
-async function loadData() {
-  const fourteenAgo = new Date(); fourteenAgo.setDate(fourteenAgo.getDate() - 13);
-  const { data: logs } = await sb.from('daily_checkins').select('checkin_date,sleep_hours').eq('user_id', userId).gte('checkin_date', fourteenAgo.toISOString().split('T')[0]).order('checkin_date', {ascending:false});
-  const valid = (logs || []).filter(l => l.sleep_hours > 0);
-  if (valid.length) {
-    document.getElementById('stat-last').textContent = valid[0].sleep_hours;
-    const avg = (valid.reduce((s,l) => s + l.sleep_hours, 0) / valid.length).toFixed(1);
-    document.getElementById('stat-avg').textContent = avg;
+async function authInit() {
+  _db = supabase.createClient(SB_URL, SB_KEY);
+  const { data } = await _db.auth.getSession();
+  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return false; }
+  _user = data.session.user;
+  _uid  = _user.id;
+  _today = new Date().toISOString().slice(0,10);
+  
+  const meta = _user.user_metadata || {};
+  const fullName  = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
+  const firstName = fullName.split(' ')[0];
+  const avatarUrl = meta.avatar_url || meta.picture || '';
+  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BC';
+  
+  // Topbar
+  const h = new Date().getHours();
+  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const gEl = document.getElementById('greeting');
+  if (gEl) gEl.textContent = greet + ', ' + firstName + '. \u2600\uFE0F';
+  const dEl = document.getElementById('topbar-date');
+  if (dEl) dEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  
+  // Sidebar user
+  const av = document.getElementById('user-avatar');
+  if (av) {
+    if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    else av.textContent = initials;
   }
-  buildChart(logs || []);
+  const nm = document.getElementById('user-name');
+  if (nm) nm.textContent = fullName;
+  
+  return true;
 }
 
-function buildChart(logs) {
-  const el = document.getElementById('sleep-chart');
-  el.innerHTML = '';
-  const maxH = 12;
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const iso = d.toISOString().split('T')[0];
-    const entry = logs.find(l => l.checkin_date === iso);
-    const hrs = entry?.sleep_hours || 0;
-    const pct = hrs ? Math.min(100, (hrs / maxH) * 100) : 4;
-    const cls = !hrs ? '' : hrs >= sleepGoal ? 'good' : hrs < sleepGoal - 1 ? 'under' : '';
-    const wrap = document.createElement('div');
-    wrap.className = 'sleep-bar-wrap';
-    wrap.innerHTML = `
-      <div class="sleep-bar ${cls}" style="height:${pct}%">
-        ${hrs ? '<div class="sleep-bar-val">'+hrs+'h</div>' : ''}
-      </div>
-      <div class="sleep-bar-label">${d.getDate()}</div>
-    `;
-    el.appendChild(wrap);
-  }
+async function signOut() {
+  await _db.auth.signOut();
+  window.location.href = 'https://riley.eight14.us';
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts), t = new Date(), y = new Date();
+  y.setDate(t.getDate()-1);
+  if (d.toDateString()===t.toDateString()) return 'Today';
+  if (d.toDateString()===y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function fmtTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function showMsg(id, text, type='success') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display='none'; }, 3500);
+}
+
+
+(async function() {
+  if (!(await authInit())) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  document.getElementById('sl-date').value = yesterday.toISOString().slice(0,10);
+  await loadSleep();
+})();
+
+async function loadSleep() {
+  const {data:ciData} = await _db.from('daily_checkins').select('checkin_date,sleep_hours,notes').eq('user_id',_uid).gte('checkin_date', dAgo(14)).order('checkin_date',{ascending:false});
+  const logs = ciData||[];
+  
+  const {data:goalData} = await _db.from('user_goals').select('current_value,target_value').eq('user_id',_uid).eq('category','sleep').eq('is_active',true).maybeSingle();
+  const goalHrs = goalData?.target_value||8;
+  document.getElementById('sl-goal').textContent = goalHrs+'h';
+  document.getElementById('sl-goal-in').value = goalHrs;
+  
+  const withSleep = logs.filter(l=>l.sleep_hours);
+  const avg = withSleep.length?Math.round(withSleep.reduce((s,l)=>s+l.sleep_hours,0)/withSleep.length*10)/10:null;
+  document.getElementById('sl-avg').textContent = avg?avg+'h':'—';
+  if (withSleep.length) document.getElementById('sl-last').textContent = withSleep[0].sleep_hours+'h';
+  
+  // Streak of nights meeting goal
+  const sorted = [...withSleep].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));
+  let streak=0;
+  for (const l of sorted) { if (l.sleep_hours>=goalHrs) streak++; else break; }
+  document.getElementById('sl-streak').textContent = streak||'—';
+  
+  // 14-day bar chart (CSS only)
+  const chartEl = document.getElementById('sleep-chart');
+  const last14 = [];
+  for (let i=13;i>=0;i--) { const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toISOString().slice(0,10)); }
+  const logMap = Object.fromEntries(withSleep.map(l=>[l.checkin_date,l.sleep_hours]));
+  const maxH = Math.max(goalHrs+2, ...Object.values(logMap), 1);
+  chartEl.innerHTML = '<div style="display:flex;align-items:flex-end;gap:4px;height:100px;position:relative">' +
+    '<div style="position:absolute;left:0;right:0;bottom:'+(goalHrs/maxH*100)+'%;border-top:1px dashed var(--gold);pointer-events:none"></div>' +
+    last14.map(d => {
+      const h = logMap[d];
+      const pct = h?Math.min(100,(h/maxH*100)):0;
+      const col = h?(h>=goalHrs?'var(--green)':'var(--gold)'):'var(--mist)';
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">' +
+        '<div style="width:100%;background:'+col+';height:'+pct+'%;border-radius:2px 2px 0 0;min-height:'+(h?2:0)+'px" title="'+d+(h?' — '+h+'h':'')+'"></div>' +
+        '<div style="font-size:8px;color:var(--smoke);font-family:DM Mono,monospace">'+new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'narrow'})+'</div>' +
+        '</div>';
+    }).join('') + '</div><div style="font-size:10px;color:var(--smoke);margin-top:8px;font-family:DM Mono,monospace">— = sleep goal ('+goalHrs+'h)</div>';
+  
+  // History list
+  const hist = document.getElementById('sleep-history');
+  if (!withSleep.length) { hist.innerHTML='<div class="empty-state"><div class="icon">😴</div><div class="title">No sleep logged yet</div><div class="sub">Start tracking tonight.</div></div>'; return; }
+  hist.innerHTML='<div class="log-list">'+sorted.slice(0,14).map(l=>{
+    const met = l.sleep_hours>=goalHrs;
+    return '<div class="log-item">'+
+      '<div style="font-size:22px;width:36px;text-align:center">'+(met?'✅':'😴')+'</div>'+
+      '<div class="log-meta"><div class="log-title">'+l.sleep_hours+'h sleep</div>'+(l.notes?'<div class="log-detail">'+esc(l.notes)+'</div>':'')+'</div>'+
+      '<div class="log-date">'+fmtDate(l.checkin_date)+'</div>'+
+      '</div>';
+  }).join('')+'</div>';
 }
 
 async function logSleep() {
-  const date = document.getElementById('sleep-date').value;
-  const hours = parseFloat(document.getElementById('sleep-hours').value);
-  const notes = document.getElementById('sleep-notes').value.trim() || null;
-  if (!date || !hours || !userId) return;
-  try {
-    await sb.from('daily_checkins').upsert({
-      user_id: userId, checkin_date: date, sleep_hours: hours, notes
-    }, { onConflict: 'user_id,checkin_date' });
-    document.getElementById('sleep-hours').value = '';
-    document.getElementById('sleep-notes').value = '';
-    setStar(0);
-    showToast('Sleep logged');
-    await loadData();
-  } catch(e) { console.warn(e); }
+  const hrs = parseFloat(document.getElementById('sl-hours').value)||null;
+  const date = document.getElementById('sl-date').value||_today;
+  if (!hrs) return showMsg('msg-sleep','Please enter hours slept.','error');
+  
+  const {error} = await _db.from('daily_checkins').upsert({
+    user_id:_uid, checkin_date:date, sleep_hours:hrs,
+    notes:document.getElementById('sl-notes').value.trim()||null
+  },{onConflict:'user_id,checkin_date'});
+  
+  // Save goal if changed
+  const goalHrs = parseFloat(document.getElementById('sl-goal-in').value)||8;
+  await _db.from('user_goals').upsert({user_id:_uid,title:'Sleep goal',category:'sleep',target_value:goalHrs,current_value:hrs,unit:'hours',period:'daily',period_start:_today,is_active:true},{onConflict:'user_id,category'});
+  
+  if (error) return showMsg('msg-sleep','Error: '+error.message,'error');
+  document.getElementById('sl-hours').value='';
+  document.getElementById('sl-notes').value='';
+  showMsg('msg-sleep','Sleep logged!');
+  await loadSleep();
 }
 
-async function saveGoal() {
-  const val = parseFloat(document.getElementById('goal-hours').value);
-  if (!val || !userId) return;
-  sleepGoal = val;
-  document.getElementById('stat-goal').textContent = val;
-  try {
-    const { data: existing } = await sb.from('user_goals').select('id').eq('user_id', userId).eq('category', 'sleep').eq('is_active', true).limit(1).single();
-    if (existing?.id) {
-      await sb.from('user_goals').update({ target_value: val }).eq('id', existing.id);
-    } else {
-      await sb.from('user_goals').insert({ user_id: userId, category: 'sleep', title: 'Sleep Goal', target_value: val, unit: 'hours', is_active: true });
-    }
-    showToast('Goal saved');
-    await loadData();
-  } catch(e) { console.warn(e); }
-}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
 
-function showToast(msg) {
-  const t = document.getElementById('save-toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
-window.addEventListener('DOMContentLoaded', init);
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </body>
 </html>

@@ -5,309 +5,507 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Progress — Riley · The 8:14 Project</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
-.sign-out-btn:hover{color:var(--red)}
-.dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
-.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
-.dash-content{padding:32px}
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
-.section-label:first-child{margin-top:0}
-.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
-.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
-.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
-.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
-.panel-body{padding:20px}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
-.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-family:'DM Serif Display',serif;font-size:36px;color:var(--ink);line-height:1}
-.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
-/* Mood chart */
-.mood-chart{display:flex;align-items:flex-end;gap:8px;height:80px;padding:8px 0}
-.mood-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.mood-bar{width:100%;border-radius:2px 2px 0 0;transition:height .3s;min-height:4px;background:var(--gold)}
-.mood-bar-label{font-size:9px;color:var(--smoke);font-family:'DM Mono',monospace}
-.mood-emoji{font-size:14px;text-align:center}
-/* Habit grid */
-.habit-grid-wrap{overflow-x:auto}
-.habit-grid{display:grid;gap:3px;width:max-content}
-.hg-cell{width:18px;height:18px;border-radius:2px;background:var(--mist)}
-.hg-cell.done{background:var(--gold)}
-.hg-cell.today{background:var(--green)}
-.hg-header{font-size:10px;color:var(--smoke);font-family:'DM Mono',monospace;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
-/* Goal bars */
-.goal-row{margin-bottom:14px}
-.goal-row:last-child{margin-bottom:0}
-.goal-top{display:flex;justify-content:space-between;margin-bottom:5px}
-.goal-name{font-size:13px;color:var(--ink);font-weight:500}
-.goal-val{font-family:'DM Mono',monospace;font-size:12px;color:var(--gold)}
-.goal-bar{height:4px;background:var(--mist);border-radius:2px}
-.goal-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
-@media(max-width:900px){.stats-row,.two-col{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --parchment: #f5f0e8;
+    --warm-white: #faf8f4;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --gold-dim: rgba(201,168,76,0.15);
+    --riley-blue: #2a4a6e;
+    --riley-blue-light: #4a7ab0;
+    --mist: #e8e4dc;
+    --smoke: #8a8578;
+    --green: #4a7c59;
+    --red: #8b3a3a;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--parchment); min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* ── VISION SCREEN ── */
+  #screen-vision { background: var(--ink); position: relative; overflow: hidden; }
+  .vision-bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(42,74,110,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .vision-inner { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 64px 32px 80px; }
+  .vision-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+  }
+  .vision-eyebrow::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--gold); opacity: 0.4; }
+  .vision-headline { font-family: 'DM Serif Display', serif; font-size: clamp(42px,7vw,80px); line-height: 1.05; color: var(--parchment); margin-bottom: 12px; }
+  .vision-headline em { font-style: italic; color: var(--gold); }
+  .vision-sub { font-size: 18px; font-weight: 300; color: var(--smoke); margin-bottom: 56px; line-height: 1.6; max-width: 540px; }
+  .vision-sub strong { color: var(--parchment); font-weight: 500; }
+
+  .vision-tabs { display: flex; gap: 2px; margin-bottom: 40px; background: rgba(255,255,255,0.04); padding: 4px; width: fit-content; }
+  .vtab { padding: 8px 20px; font-size: 12px; cursor: pointer; color: var(--smoke); font-family: 'DM Sans', sans-serif; background: transparent; border: none; transition: color .15s, background .15s; }
+  .vtab.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+  .vtab:hover:not(.active) { color: var(--parchment); }
+
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 48px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+  .arch-box { background: rgba(15,14,13,0.9); padding: 28px 28px 24px; position: relative; }
+  .arch-box:hover { background: rgba(201,168,76,0.04); }
+  .arch-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+  .arch-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); margin-bottom: 8px; }
+  .arch-desc { font-size: 13px; color: var(--smoke); line-height: 1.55; }
+  .arch-count { font-family: 'DM Mono', monospace; font-size: 36px; color: var(--gold); font-weight: 500; opacity: 0.3; position: absolute; bottom: 20px; right: 24px; }
+
+  .briefing-preview { border: 1px solid rgba(201,168,76,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+  .briefing-header { background: rgba(201,168,76,0.08); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(201,168,76,0.15); }
+  .briefing-badge { font-family: 'DM Mono', monospace; font-size: 10px; background: var(--gold); color: var(--ink); padding: 3px 8px; letter-spacing: 0.1em; }
+  .briefing-name { font-size: 14px; color: var(--parchment); font-weight: 500; margin-left: 12px; }
+  .briefing-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .briefing-mods { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod-v { background: rgba(15,14,13,0.95); padding: 16px 18px; cursor: pointer; transition: background .15s; }
+  .bmod-v:hover { background: rgba(201,168,76,0.06); }
+  .bm-icon { font-size: 18px; margin-bottom: 6px; }
+  .bm-label { font-size: 11px; color: var(--smoke); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bm-preview { font-size: 12px; color: var(--parchment); margin-top: 4px; opacity: 0.7; line-height: 1.4; }
+
+  .module-library { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 48px; }
+  .module-card { border: 1px solid rgba(255,255,255,0.07); padding: 20px; border-radius: 2px; position: relative; overflow: hidden; }
+  .module-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); opacity: 0; transition: opacity .2s; }
+  .module-card:hover::before { opacity: 1; }
+  .mc-number { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+  .mc-label { font-size: 13px; color: var(--smoke); margin-bottom: 12px; }
+  .mc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mc-tag { font-size: 10px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 1px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+  .vision-cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--gold); color: var(--ink); border: none; padding: 14px 32px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase; transition: opacity .15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; color: var(--parchment); border: 1px solid rgba(255,255,255,0.2); padding: 14px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color .15s; }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.5); }
+
+  /* ── DASHBOARD ── */
+  #screen-dashboard { background: var(--warm-white); color: var(--ink); }
+  .dash-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--ink); padding: 32px 0; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.06); }
+  .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 24px; }
+  .sidebar-logo-mark { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); }
+  .sidebar-logo-mark span { color: var(--gold); }
+  .sidebar-logo-sub { font-size: 11px; color: var(--smoke); letter-spacing: 0.05em; margin-top: 2px; }
+  .sidebar-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--smoke); letter-spacing: 0.18em; text-transform: uppercase; padding: 0 24px; margin-bottom: 6px; margin-top: 20px; }
+  .sidebar-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; font-size: 13px; color: var(--smoke); transition: color .15s, background .15s; border-left: 2px solid transparent; }
+  .sidebar-nav-item:hover, .sidebar-nav-item.active { color: var(--parchment); background: rgba(255,255,255,0.04); border-left-color: var(--gold); }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+  .user-name { font-size: 12px; color: var(--parchment); font-weight: 500; }
+  .user-plan { font-size: 10px; color: var(--gold); }
+
+  .dash-main { overflow-y: auto; }
+  .dash-topbar { padding: 24px 32px; background: white; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-greeting { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); }
+  .topbar-date { font-size: 13px; color: var(--smoke); margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; }
+
+  .dash-content { padding: 32px; }
+
+  .briefing-card { background: var(--ink); border-radius: 2px; overflow: hidden; margin-bottom: 28px; }
+  .briefing-card-header { padding: 24px 28px; background: linear-gradient(135deg, rgba(201,168,76,0.12) 0%, transparent 60%); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: flex-start; justify-content: space-between; }
+  .bc-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .bc-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--parchment); margin-bottom: 6px; }
+  .bc-subtitle { font-size: 13px; color: var(--smoke); line-height: 1.5; max-width: 440px; }
+  .bc-progress-label { font-size: 11px; color: var(--smoke); margin-bottom: 6px; font-family: 'DM Mono', monospace; text-align: right; }
+
+  .briefing-modules-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod { background: rgba(15,14,13,0.97); padding: 20px; cursor: pointer; transition: background .15s; position: relative; }
+  .bmod:hover { background: rgba(201,168,76,0.05); }
+  .bmod.done::after { content: '✓'; position: absolute; top: 12px; right: 14px; font-size: 11px; color: var(--green); font-weight: 700; }
+  .bmod-icon { font-size: 20px; margin-bottom: 8px; }
+  .bmod-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+  .bmod-content { font-size: 13px; color: var(--parchment); line-height: 1.45; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .stat-label { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--smoke); margin-top: 4px; }
+  .stat-trend { display: inline-block; font-size: 11px; color: var(--green); font-weight: 600; margin-left: 4px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .panel { background: white; border: 1px solid var(--mist); border-radius: 2px; overflow: hidden; }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .panel-action { font-size: 12px; color: var(--riley-blue-light); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+  .conv-item { padding: 14px 20px; border-bottom: 1px solid var(--mist); cursor: pointer; transition: background .12s; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+  .conv-item:hover { background: var(--warm-white); }
+  .conv-item:last-child { border-bottom: none; }
+  .conv-title { font-size: 13px; color: var(--ink); font-weight: 500; margin-bottom: 3px; }
+  .conv-preview { font-size: 12px; color: var(--smoke); line-height: 1.4; }
+  .conv-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
+  .conv-tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+  .checkin-panel { display: flex; flex-direction: column; gap: 12px; }
+  .checkin-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .checkin-label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .streak-display { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+  .streak-num { font-family: 'DM Serif Display', serif; font-size: 48px; color: var(--ink); line-height: 1; }
+  .streak-unit { font-size: 14px; color: var(--smoke); }
+  .streak-dots { display: flex; gap: 4px; margin-top: 10px; }
+  .streak-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mist); }
+  .streak-dot.done { background: var(--gold); }
+  .streak-dot.today { background: var(--green); }
+  .mood-scale { display: flex; gap: 6px; margin-top: 8px; }
+  .mood-btn { flex: 1; padding: 8px 4px; background: var(--warm-white); border: 1px solid var(--mist); border-radius: 1px; cursor: pointer; font-size: 18px; text-align: center; transition: border-color .12s, transform .1s; }
+  .mood-btn:hover { border-color: var(--gold); transform: scale(1.1); }
+  .mood-btn.selected { border-color: var(--gold); background: var(--gold-dim); }
+
+  .prog-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--mist); }
+  .prog-item:last-child { border-bottom: none; }
+  .prog-icon { width: 36px; height: 36px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border-radius: 2px; }
+  .prog-name { font-size: 13px; color: var(--ink); font-weight: 500; }
+  .prog-status { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .prog-progress { margin-left: auto; text-align: right; }
+  .prog-pct { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--gold); font-weight: 500; line-height: 1; }
+  .prog-bar-wrap { width: 60px; height: 3px; background: var(--mist); border-radius: 2px; margin-top: 4px; margin-left: auto; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--smoke); text-transform: uppercase; margin-bottom: 12px; margin-top: 28px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--mist); }
+
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .todo-check { width: 18px; height: 18px; border: 1.5px solid var(--mist); border-radius: 50%; flex-shrink: 0; }
+  .todo-check.done { border-color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--green); }
+  .todo-text { font-size: 13px; color: var(--ink); }
+  .todo-text.done { color: var(--smoke); text-decoration: line-through; }
+
+  .goal-row { margin-bottom: 12px; }
+  .goal-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .goal-name { font-size: 12px; color: var(--ink); }
+  .goal-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .goal-bar { height: 3px; background: var(--mist); border-radius: 2px; }
+  .goal-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+  @media(max-width:700px){
+    .arch-grid, .briefing-modules-grid, .module-library, .stats-row, .briefing-mods, .two-col { grid-template-columns: 1fr 1fr; }
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* Dashboard body override */
+  body { background: var(--warm-white); color: var(--ink); }
+  
+  /* Form elements */
+  .form-section { background: white; border: 1px solid var(--mist); border-radius: 2px; padding: 24px; margin-bottom: 20px; }
+  .form-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 4px; }
+  .form-sub { font-size: 13px; color: var(--smoke); margin-bottom: 20px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; }
+  .field input, .field select, .field textarea { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 2px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .btn-save { background: var(--gold); color: var(--ink); border: none; padding: 11px 24px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s; border-radius: 2px; }
+  .btn-save:hover { opacity: 0.88; }
+  .btn-save:disabled { opacity: 0.5; cursor: default; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--mist); padding: 9px 18px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; transition: border-color .15s; }
+  .btn-secondary:hover { border-color: var(--smoke); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; }
+  
+  /* Success/error messages */
+  .msg { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-top: 12px; display: none; }
+  .msg.success { background: rgba(74,124,89,0.1); color: var(--green); border: 1px solid rgba(74,124,89,0.3); }
+  .msg.error   { background: rgba(139,58,58,0.1); color: var(--red);   border: 1px solid rgba(139,58,58,0.3); }
+  
+  /* Log/history list */
+  .log-list { display: flex; flex-direction: column; gap: 1px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: 16px; }
+  .log-item { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .log-item:hover { background: var(--warm-white); }
+  .log-meta { flex: 1; }
+  .log-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .log-detail { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .log-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
+  .badge-gold { background: var(--gold-dim); color: var(--gold); }
+  .badge-green { background: rgba(74,124,89,0.12); color: var(--green); }
+  
+  /* Stat cards inline */
+  .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .mini-stat { background: white; border: 1px solid var(--mist); padding: 16px; border-radius: 2px; text-align: center; }
+  .mini-stat-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); line-height: 1; }
+  .mini-stat-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+  
+  /* Tag pills */
+  .tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; margin-top: 3px; }
+  
+  /* Empty state */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--smoke); }
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .empty-state .sub { font-size: 13px; line-height: 1.6; }
+  
+  /* Topbar btn */
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; text-decoration: none; display: inline-block; }
+  .topbar-btn.gold { background: var(--gold); color: var(--ink); }
+  
+  /* Habit toggle */
+  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--mist); }
+  .habit-row:last-child { border-bottom: none; }
+  .habit-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mist); background: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
+  .habit-toggle.done { background: var(--green); border-color: var(--green); color: white; }
+  .habit-name { flex: 1; font-size: 13px; color: var(--ink); }
+  .habit-name.done { text-decoration: line-through; color: var(--smoke); }
+  
+  /* Progress bar */
+  .prog-bar-bg { height: 6px; background: var(--mist); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .4s; }
+  .prog-bar-fill.green { background: var(--green); }
+  
+  /* Section header */
+  .sect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
+  .sect-head:first-child { margin-top: 0; }
+  
+  /* Calendar grid */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--mist); color: var(--smoke); cursor: default; }
+  .cal-cell.done  { background: var(--gold); color: var(--ink); }
+  .cal-cell.today { background: var(--green); color: white; }
+  .cal-cell.empty { background: transparent; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+  
+  /* Responsive */
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .dash-content { padding: 20px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+/* Sidebar sticky */
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sign-out-btn { margin-left: auto; background: transparent; border: none; color: var(--smoke); font-size: 14px; cursor: pointer; padding: 4px; }
+.sign-out-btn:hover { color: var(--red); }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; }
 </style>
 </head>
 <body>
 <div class="dash-layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-    <div class="sidebar-section-label">Today</div>
-    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
-    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
-    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
-    <div class="sidebar-section-label">History</div>
-    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
-    <a href="/progress" class="sidebar-nav-item active">📊 Progress</a>
-    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
-    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
-    <div class="sidebar-section-label">Programs</div>
-    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
-    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
-    <div class="sidebar-section-label">Life Data</div>
-    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
-    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
-    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-user">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div>
-        <div class="user-name" id="user-name">Loading…</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  </aside>
+<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="sidebar-section-label">TODAY</div><a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a><a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a><a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a><div class="sidebar-section-label">HISTORY</div><a href="/conversations" class="sidebar-nav-item">📁 Conversations</a><a href="/progress" class="sidebar-nav-item active">📊 Progress</a><a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a><a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a><div class="sidebar-section-label">PROGRAMS</div><a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a><a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a><div class="sidebar-section-label">LIFE DATA</div><a href="/sleep" class="sidebar-nav-item">😴 Sleep</a><a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a><a href="/calendar" class="sidebar-nav-item">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div><button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button></div></aside>
+<main class="dash-main">
+<div class="dash-topbar">
+  <div>
+    <div class="topbar-greeting" id="greeting">Good morning.</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+  <div class="topbar-actions"><a href="/dashboard" class="topbar-btn">← Dashboard</a></div>
+</div>
+<div class="dash-content">
 
-  <main class="dash-main">
-    <div class="dash-topbar">
-      <div>
-        <div class="topbar-greeting">Progress Overview</div>
-        <div class="topbar-date" id="topbar-date"></div>
-      </div>
-    </div>
-
-    <div class="dash-content">
-
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-label">Sobriety Days</div><div class="stat-value" id="stat-sober">—</div><div class="stat-sub">days clean</div></div>
-        <div class="stat-card"><div class="stat-label">Check-In Streak</div><div class="stat-value" id="stat-checkin">—</div><div class="stat-sub">days in a row</div></div>
-        <div class="stat-card"><div class="stat-label">Habit Rate</div><div class="stat-value" id="stat-habits">—</div><div class="stat-sub">% this week</div></div>
-        <div class="stat-card"><div class="stat-label">Goals Active</div><div class="stat-value" id="stat-goals">—</div><div class="stat-sub">goals tracked</div></div>
-      </div>
-
-      <div class="two-col">
-        <div>
-          <div class="section-label">14-Day Mood</div>
-          <div class="panel">
-            <div class="panel-body">
-              <div class="mood-chart" id="mood-chart"></div>
-            </div>
-          </div>
-
-          <div class="section-label">Goal Progress</div>
-          <div class="panel">
-            <div class="panel-body" id="goals-list">
-              <div style="color:var(--smoke);font-size:13px">Loading…</div>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="section-label">Habit Completion (7 days)</div>
-          <div class="panel">
-            <div class="panel-body">
-              <div class="habit-grid-wrap">
-                <div id="habit-grid"></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="section-label">Recent Check-Ins</div>
-          <div class="panel">
-            <div class="panel-body" id="recent-checkins">
-              <div style="color:var(--smoke);font-size:13px">Loading…</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </main>
+<div class="stats-row" style="margin-bottom:24px">
+  <div class="stat-card"><div class="stat-label">Sobriety</div><div class="stat-value" id="p-sober">—</div><div class="stat-sub" id="p-sober-sub">days</div></div>
+  <div class="stat-card"><div class="stat-label">Check-In Streak</div><div class="stat-value" id="p-streak">—</div><div class="stat-sub">days in a row</div></div>
+  <div class="stat-card"><div class="stat-label">Habits This Week</div><div class="stat-value" id="p-habits">—</div><div class="stat-sub">completion rate</div></div>
+  <div class="stat-card"><div class="stat-label">Goals On Track</div><div class="stat-value" id="p-goals">—</div><div class="stat-sub">of active goals</div></div>
 </div>
 
-<script>
-const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
-let sb, userId;
-const MOOD_EMOJI = ['','😔','😕','😐','🙂','😊'];
+<div class="two-col">
+<div>
+  <div class="section-label">14-Day Mood</div>
+  <div style="background:white;border:1px solid var(--mist);border-radius:2px;padding:16px;margin-bottom:20px" id="mood-chart"></div>
+  
+  <div class="section-label">Habit Completion</div>
+  <div style="background:white;border:1px solid var(--mist);border-radius:2px;padding:16px;margin-bottom:20px" id="habit-grid"></div>
+  
+  <div class="section-label">Recent Workouts</div>
+  <div id="p-workouts"></div>
+</div>
+<div>
+  <div class="section-label">Goal Progress</div>
+  <div id="p-goal-bars" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px;margin-bottom:16px"></div>
+  
+  <div class="section-label">Active Programs</div>
+  <div id="p-programs"></div>
+</div>
+</div>
 
-async function init() {
-  try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
-    userId = session.user.id;
-    const now = new Date();
-    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
-    const meta = session.user.user_metadata || {};
-    const av = document.getElementById('user-avatar');
-    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
-    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
-
-    const fourteenAgo = new Date(); fourteenAgo.setDate(fourteenAgo.getDate() - 13);
-    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 6);
-    const todayISO = now.toISOString().split('T')[0];
-
-    const [soberRes, checkinRes, habitsRes, habitCompRes, goalsRes] = await Promise.allSettled([
-      sb.from('sobriety_tracker').select('start_date').eq('user_id', userId).eq('is_active', true).order('start_date', {ascending:false}).limit(1),
-      sb.from('daily_checkins').select('*').eq('user_id', userId).gte('checkin_date', fourteenAgo.toISOString().split('T')[0]).order('checkin_date', {ascending:false}),
-      sb.from('habits').select('*').eq('user_id', userId).eq('is_active', true),
-      sb.from('habit_completions').select('*').eq('user_id', userId).gte('completed_date', sevenAgo.toISOString().split('T')[0]),
-      sb.from('user_goals').select('*').eq('user_id', userId).eq('is_active', true),
-    ]);
-
-    // Sobriety
-    const soberData = soberRes.value?.data?.[0];
-    if (soberData?.start_date) {
-      const days = Math.floor((Date.now() - new Date(soberData.start_date)) / 86400000);
-      document.getElementById('stat-sober').textContent = days;
-    }
-
-    // Checkins
-    const checkins = checkinRes.value?.data || [];
-    let streak = 0;
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
-      if (checkins.find(c => c.checkin_date === iso)) streak++; else if (i > 0) break;
-    }
-    document.getElementById('stat-checkin').textContent = streak;
-    buildMoodChart(checkins);
-    renderRecentCheckins(checkins.slice(0,7));
-
-    // Habits
-    const habits = habitsRes.value?.data || [];
-    const comps = habitCompRes.value?.data || [];
-    const weekDays = 7; const possible = habits.length * weekDays;
-    const pct = possible ? Math.round(comps.length / possible * 100) : 0;
-    document.getElementById('stat-habits').textContent = pct + '%';
-    buildHabitGrid(habits, comps);
-
-    // Goals
-    const goals = goalsRes.value?.data || [];
-    document.getElementById('stat-goals').textContent = goals.length;
-    renderGoals(goals);
-
-  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
-}
-
-function buildMoodChart(checkins) {
-  const el = document.getElementById('mood-chart');
-  el.innerHTML = '';
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const iso = d.toISOString().split('T')[0];
-    const ci = checkins.find(c => c.checkin_date === iso);
-    const mood = ci?.mood || 0;
-    const div = document.createElement('div');
-    div.className = 'mood-bar-wrap';
-    const pct = mood ? (mood / 5 * 100) : 5;
-    div.innerHTML = `
-      <div class="mood-emoji">${mood ? MOOD_EMOJI[mood] : ''}</div>
-      <div class="mood-bar" style="height:${pct}%;background:${mood ? 'var(--gold)' : 'var(--mist)'}"></div>
-      <div class="mood-bar-label">${d.getDate()}</div>
-    `;
-    el.appendChild(div);
-  }
-}
-
-function buildHabitGrid(habits, comps) {
-  const el = document.getElementById('habit-grid');
-  if (!habits.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No habits tracked.</div>'; return; }
-  el.style.gridTemplateColumns = 'repeat(' + (7+1) + ', auto)';
-  el.className = 'habit-grid';
-  // Date headers
-  el.innerHTML = '<div></div>';
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const cell = document.createElement('div');
-    cell.style.cssText = 'width:18px;text-align:center;font-size:9px;color:var(--smoke);font-family:"DM Mono",monospace;padding-bottom:4px';
-    cell.textContent = d.getDate();
-    el.appendChild(cell);
-  }
-  habits.forEach(h => {
-    const label = document.createElement('div');
-    label.className = 'hg-header';
-    label.textContent = (h.emoji || '') + ' ' + h.title;
-    label.style.cssText = 'font-size:10px;color:var(--smoke);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;align-self:center';
-    el.appendChild(label);
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const iso = d.toISOString().split('T')[0];
-      const done = comps.find(c => c.habit_id === h.id && c.completed_date === iso);
-      const cell = document.createElement('div');
-      cell.className = 'hg-cell' + (done ? ' done' : '') + (i === 0 ? ' today' : '');
-      el.appendChild(cell);
-    }
-  });
-}
-
-function renderGoals(goals) {
-  const el = document.getElementById('goals-list');
-  if (!goals.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No goals set. <a href="/tracker" style="color:var(--gold)">Add goals in tracker.</a></div>'; return; }
-  el.innerHTML = goals.map(g => {
-    const pct = g.target_value ? Math.min(100, Math.round((g.current_value||0) / g.target_value * 100)) : 0;
-    return `<div class="goal-row">
-      <div class="goal-top"><span class="goal-name">${g.title}</span><span class="goal-val">${g.current_value||0}/${g.target_value||0} ${g.unit||''}</span></div>
-      <div class="goal-bar"><div class="goal-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  }).join('');
-}
-
-function renderRecentCheckins(checkins) {
-  const el = document.getElementById('recent-checkins');
-  if (!checkins.length) { el.innerHTML = '<div style="color:var(--smoke);font-size:13px">No check-ins yet.</div>'; return; }
-  el.innerHTML = checkins.map(c => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--mist)">
-      <div>
-        <div style="font-size:13px;font-weight:500;color:var(--ink)">${new Date(c.checkin_date+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
-        <div style="font-size:12px;color:var(--smoke)">${c.notes ? c.notes.slice(0,60) + (c.notes.length>60?'…':'') : 'No notes'}</div>
-      </div>
-      <div style="font-size:22px">${c.mood ? ['','😔','😕','😐','🙂','😊'][c.mood] : '—'}</div>
-    </div>
-  `).join('');
-}
-
-async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
-window.addEventListener('DOMContentLoaded', init);
-</script>
+</div>
+</main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+
+let _db, _user, _uid, _today;
+
+async function authInit() {
+  _db = supabase.createClient(SB_URL, SB_KEY);
+  const { data } = await _db.auth.getSession();
+  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return false; }
+  _user = data.session.user;
+  _uid  = _user.id;
+  _today = new Date().toISOString().slice(0,10);
+  
+  const meta = _user.user_metadata || {};
+  const fullName  = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
+  const firstName = fullName.split(' ')[0];
+  const avatarUrl = meta.avatar_url || meta.picture || '';
+  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BC';
+  
+  // Topbar
+  const h = new Date().getHours();
+  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const gEl = document.getElementById('greeting');
+  if (gEl) gEl.textContent = greet + ', ' + firstName + '. \u2600\uFE0F';
+  const dEl = document.getElementById('topbar-date');
+  if (dEl) dEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  
+  // Sidebar user
+  const av = document.getElementById('user-avatar');
+  if (av) {
+    if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    else av.textContent = initials;
+  }
+  const nm = document.getElementById('user-name');
+  if (nm) nm.textContent = fullName;
+  
+  return true;
+}
+
+async function signOut() {
+  await _db.auth.signOut();
+  window.location.href = 'https://riley.eight14.us';
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts), t = new Date(), y = new Date();
+  y.setDate(t.getDate()-1);
+  if (d.toDateString()===t.toDateString()) return 'Today';
+  if (d.toDateString()===y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function fmtTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function showMsg(id, text, type='success') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display='none'; }, 3500);
+}
+
+
+(async function() {
+  if (!(await authInit())) return;
+  
+  const [sobrietyR, checkinsR, habitsR, habitDoneR, goalsR, workoutsR, progsR] = await Promise.allSettled([
+    _db.from('sobriety_tracker').select('start_date').eq('user_id',_uid).eq('is_active',true).maybeSingle(),
+    _db.from('daily_checkins').select('checkin_date,mood').eq('user_id',_uid).gte('checkin_date',dAgo(14)).order('checkin_date',{ascending:false}),
+    _db.from('habits').select('id,title,emoji').eq('user_id',_uid).eq('is_active',true),
+    _db.from('habit_completions').select('habit_id,completed_date').eq('user_id',_uid).gte('completed_date',dAgo(6)),
+    _db.from('user_goals').select('*').eq('user_id',_uid).eq('is_active',true).order('sort_order').limit(6),
+    _db.from('fitness_logs').select('logged_date,activity_type,duration_minutes').eq('user_id',_uid).order('logged_date',{ascending:false}).limit(5),
+    _db.from('user_program_progress').select('*,programs(title,emoji,duration_days)').eq('user_id',_uid).limit(4)
+  ]);
+  
+  const safe = r => r.status==='fulfilled'?r.value?.data:null;
+  const sobriety = safe(sobrietyR);
+  const checkins = safe(checkinsR)||[];
+  const habits   = safe(habitsR)||[];
+  const done14   = safe(habitDoneR)||[];
+  const goals    = safe(goalsR)||[];
+  const workouts = safe(workoutsR)||[];
+  const progs    = safe(progsR)||[];
+  
+  // Sobriety
+  if (sobriety) {
+    const days = Math.max(0,Math.floor((Date.now()-new Date(sobriety.start_date))/86400000));
+    document.getElementById('p-sober').textContent=days;
+    document.getElementById('p-sober-sub').textContent=days>=90?'days · personal best':'days strong';
+  }
+  
+  // Streak
+  const dates=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));
+  let streak=0,exp=_today;
+  for(const d of dates){if(d.checkin_date===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else break;}
+  document.getElementById('p-streak').textContent=streak||'—';
+  
+  // Habits this week
+  const weekStart = dAgo(6);
+  const thisDone = done14.filter(d=>d.completed_date>=weekStart);
+  const possible = habits.length*7;
+  const habitPct = possible>0?Math.round(thisDone.length/possible*100):0;
+  document.getElementById('p-habits').textContent=habits.length?habitPct+'%':'—';
+  
+  // Goals
+  const onTrack = goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
+  document.getElementById('p-goals').textContent=goals.length?onTrack+'/'+goals.length:'—';
+  
+  // Mood chart (14 days)
+  const moodMap=Object.fromEntries(checkins.filter(c=>c.mood).map(c=>[c.checkin_date,c.mood]));
+  const moodEmoji=['','😔','😐','🙂','😊','🔥'];
+  const last14=Array.from({length:14},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(13-i));return d.toISOString().slice(0,10);});
+  document.getElementById('mood-chart').innerHTML='<div style="display:flex;gap:6px;align-items:flex-end">' +
+    last14.map(d=>{const m=moodMap[d];return '<div style="flex:1;text-align:center"><div style="font-size:'+(m?'20px':'12px')+';margin-bottom:4px">'+(m?moodEmoji[m]:'·')+'</div><div style="font-size:8px;color:var(--smoke);font-family:DM Mono,monospace">'+new Date(d+'T00:00:00').toLocaleDateString('en-US',{day:'numeric'})+'</div></div>';}).join('') +
+    '</div>';
+  
+  // Habit grid
+  const doneSet = new Set(done14.map(d=>d.habit_id+'|'+d.completed_date));
+  document.getElementById('habit-grid').innerHTML=habits.length?
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px"><span style="font-size:10px;color:var(--smoke);font-family:DM Mono,monospace">HABIT</span><div style="display:flex;gap:3px">' +
+    last14.slice(-7).map(d=>'<div style="font-size:8px;color:var(--smoke);font-family:DM Mono,monospace;width:22px;text-align:center">'+new Date(d+'T00:00:00').toLocaleDateString('en-US',{weekday:'narrow'})+'</div>').join('')+'</div></div>'+
+    habits.map(h=>'<div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:6px;align-items:center">'+
+      '<span style="font-size:12px;color:var(--ink)">'+(h.emoji||'')+'&nbsp;'+esc(h.title)+'</span>'+
+      '<div style="display:flex;gap:3px">'+last14.slice(-7).map(d=>{const done=doneSet.has(h.id+'|'+d);return '<div style="width:22px;height:22px;border-radius:50%;background:'+(d===_today?(done?'var(--green)':'var(--mist)'):(done?'var(--gold)':'var(--mist)'))+';display:flex;align-items:center;justify-content:center;font-size:9px">'+(done?'✓':'')+'</div>';}).join('')+'</div></div>'
+    ).join(''):
+    '<div style="font-size:13px;color:var(--smoke);text-align:center;padding:16px">Add habits in the Tracker.</div>';
+  
+  // Goals bars
+  const gbEl = document.getElementById('p-goal-bars');
+  gbEl.innerHTML=!goals.length?'<div style="font-size:13px;color:var(--smoke);text-align:center;padding:16px">No goals set yet.</div>':
+    goals.map(g=>{const pct=g.target_value>0?Math.min(100,Math.round(g.current_value/g.target_value*100)):0;const fin=pct>=100;
+      return '<div class="goal-row"><div class="goal-top"><span class="goal-name">'+esc(g.title)+'</span><span class="goal-val"'+(fin?' style="color:var(--green)"':'')+'>'+(g.current_value||0).toLocaleString()+' / '+(g.target_value||0).toLocaleString()+' '+(g.unit||'')+(fin?' ✓':'')+'</span></div><div class="goal-bar"><div class="goal-fill"'+(fin?' style="background:var(--green);width:100%"':' style="width:'+pct+'%"')+'></div></div></div>';
+    }).join('');
+  
+  // Workouts
+  const wkEl=document.getElementById('p-workouts');
+  wkEl.innerHTML=!workouts.length?'<div class="empty-state"><div class="icon">🏋️</div><div class="title">No workouts yet</div><div class="sub"><a href="/workouts" style="color:var(--gold)">Log a workout →</a></div></div>':
+    '<div class="log-list">'+workouts.map(w=>'<div class="log-item"><div class="log-meta"><div class="log-title">'+esc(w.activity_type)+(w.duration_minutes?' · '+w.duration_minutes+'min':'')+'</div></div><div class="log-date">'+fmtDate(w.logged_date)+'</div></div>').join('')+'</div>';
+  
+  // Programs
+  const pgEl=document.getElementById('p-programs');
+  pgEl.innerHTML=!progs.length?'<div class="empty-state"><div class="icon">🎯</div><div class="sub"><a href="/programs" style="color:var(--gold)">Browse programs →</a></div></div>':
+    '<div class="log-list">'+progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));
+      return '<div class="log-item" style="flex-direction:column;align-items:stretch"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="font-size:20px">'+(pr.emoji||'🎯')+'</span><div><div class="log-title">'+esc(pr.title||e.program_name||'Program')+'</div><div class="log-detail">Day '+d+' of '+t+'</div></div><div class="log-date">'+pct+'%</div></div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:'+pct+'%"></div></div></div>';
+    }).join('')+'</div>';
+})();
+
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+
+</script>
 </body>
 </html>

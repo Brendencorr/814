@@ -5,283 +5,487 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nutrition — Riley · The 8:14 Project</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px}
-.sign-out-btn:hover{color:var(--red)}
-.dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
-.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
-.dash-content{padding:32px}
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:16px;margin-top:32px;display:flex;align-items:center;gap:10px}
-.section-label:first-child{margin-top:0}
-.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
-.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:20px}
-.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
-.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
-.panel-body{padding:20px}
-/* Today summary bar */
-.macro-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
-.macro-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px;text-align:center}
-.macro-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.macro-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
-.macro-unit{font-size:11px;color:var(--smoke);margin-top:4px}
-/* Form */
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.form-grid .full{grid-column:1/-1}
-.form-group{display:flex;flex-direction:column;gap:6px}
-.form-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em}
-.form-input,.form-select{padding:10px 12px;border:1px solid var(--mist);background:var(--warm-white);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink)}
-.btn-gold{padding:11px 24px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:var(--gold);color:var(--ink);letter-spacing:0.04em;margin-top:4px}
-/* Log list */
-.log-entry{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;padding:14px 0;border-bottom:1px solid var(--mist)}
-.log-entry:last-child{border-bottom:none}
-.log-name{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px}
-.log-meal{font-size:11px;background:var(--gold-dim);color:var(--gold);padding:2px 8px;border-radius:1px;font-family:'DM Mono',monospace;letter-spacing:0.05em;display:inline-block;margin-bottom:4px}
-.log-macros{font-size:12px;color:var(--smoke)}
-.log-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
-.save-toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:var(--parchment);padding:10px 20px;font-size:13px;font-family:'DM Mono',monospace;border-radius:2px;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
-.save-toast.show{opacity:1}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
-@media(max-width:900px){.macro-bar{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:20px 16px}}
+
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0f0e0d;
+    --parchment: #f5f0e8;
+    --warm-white: #faf8f4;
+    --gold: #c9a84c;
+    --gold-light: #e8d5a3;
+    --gold-dim: rgba(201,168,76,0.15);
+    --riley-blue: #2a4a6e;
+    --riley-blue-light: #4a7ab0;
+    --mist: #e8e4dc;
+    --smoke: #8a8578;
+    --green: #4a7c59;
+    --red: #8b3a3a;
+  }
+
+  body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--parchment); min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  /* ── VISION SCREEN ── */
+  #screen-vision { background: var(--ink); position: relative; overflow: hidden; }
+  .vision-bg {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(42,74,110,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .vision-inner { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 64px 32px 80px; }
+  .vision-eyebrow {
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.2em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 12px;
+  }
+  .vision-eyebrow::after { content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--gold); opacity: 0.4; }
+  .vision-headline { font-family: 'DM Serif Display', serif; font-size: clamp(42px,7vw,80px); line-height: 1.05; color: var(--parchment); margin-bottom: 12px; }
+  .vision-headline em { font-style: italic; color: var(--gold); }
+  .vision-sub { font-size: 18px; font-weight: 300; color: var(--smoke); margin-bottom: 56px; line-height: 1.6; max-width: 540px; }
+  .vision-sub strong { color: var(--parchment); font-weight: 500; }
+
+  .vision-tabs { display: flex; gap: 2px; margin-bottom: 40px; background: rgba(255,255,255,0.04); padding: 4px; width: fit-content; }
+  .vtab { padding: 8px 20px; font-size: 12px; cursor: pointer; color: var(--smoke); font-family: 'DM Sans', sans-serif; background: transparent; border: none; transition: color .15s, background .15s; }
+  .vtab.active { background: var(--gold); color: var(--ink); font-weight: 600; }
+  .vtab:hover:not(.active) { color: var(--parchment); }
+
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-bottom: 48px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); }
+  .arch-box { background: rgba(15,14,13,0.9); padding: 28px 28px 24px; position: relative; }
+  .arch-box:hover { background: rgba(201,168,76,0.04); }
+  .arch-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; margin-bottom: 10px; }
+  .arch-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); margin-bottom: 8px; }
+  .arch-desc { font-size: 13px; color: var(--smoke); line-height: 1.55; }
+  .arch-count { font-family: 'DM Mono', monospace; font-size: 36px; color: var(--gold); font-weight: 500; opacity: 0.3; position: absolute; bottom: 20px; right: 24px; }
+
+  .briefing-preview { border: 1px solid rgba(201,168,76,0.2); border-radius: 2px; overflow: hidden; margin-bottom: 48px; }
+  .briefing-header { background: rgba(201,168,76,0.08); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(201,168,76,0.15); }
+  .briefing-badge { font-family: 'DM Mono', monospace; font-size: 10px; background: var(--gold); color: var(--ink); padding: 3px 8px; letter-spacing: 0.1em; }
+  .briefing-name { font-size: 14px; color: var(--parchment); font-weight: 500; margin-left: 12px; }
+  .briefing-time { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .briefing-mods { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod-v { background: rgba(15,14,13,0.95); padding: 16px 18px; cursor: pointer; transition: background .15s; }
+  .bmod-v:hover { background: rgba(201,168,76,0.06); }
+  .bm-icon { font-size: 18px; margin-bottom: 6px; }
+  .bm-label { font-size: 11px; color: var(--smoke); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .bm-preview { font-size: 12px; color: var(--parchment); margin-top: 4px; opacity: 0.7; line-height: 1.4; }
+
+  .module-library { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 48px; }
+  .module-card { border: 1px solid rgba(255,255,255,0.07); padding: 20px; border-radius: 2px; position: relative; overflow: hidden; }
+  .module-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--gold); opacity: 0; transition: opacity .2s; }
+  .module-card:hover::before { opacity: 1; }
+  .mc-number { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; color: var(--gold); line-height: 1; margin-bottom: 4px; }
+  .mc-label { font-size: 13px; color: var(--smoke); margin-bottom: 12px; }
+  .mc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mc-tag { font-size: 10px; background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 1px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.05em; }
+
+  .vision-cta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .btn-primary { background: var(--gold); color: var(--ink); border: none; padding: 14px 32px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase; transition: opacity .15s; }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost { background: transparent; color: var(--parchment); border: 1px solid rgba(255,255,255,0.2); padding: 14px 28px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: border-color .15s; }
+  .btn-ghost:hover { border-color: rgba(255,255,255,0.5); }
+
+  /* ── DASHBOARD ── */
+  #screen-dashboard { background: var(--warm-white); color: var(--ink); }
+  .dash-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--ink); padding: 32px 0; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.06); }
+  .sidebar-logo { padding: 0 24px 32px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 24px; }
+  .sidebar-logo-mark { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--parchment); }
+  .sidebar-logo-mark span { color: var(--gold); }
+  .sidebar-logo-sub { font-size: 11px; color: var(--smoke); letter-spacing: 0.05em; margin-top: 2px; }
+  .sidebar-section-label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--smoke); letter-spacing: 0.18em; text-transform: uppercase; padding: 0 24px; margin-bottom: 6px; margin-top: 20px; }
+  .sidebar-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 24px; cursor: pointer; font-size: 13px; color: var(--smoke); transition: color .15s, background .15s; border-left: 2px solid transparent; }
+  .sidebar-nav-item:hover, .sidebar-nav-item.active { color: var(--parchment); background: rgba(255,255,255,0.04); border-left-color: var(--gold); }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; align-items: center; gap: 12px; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; }
+  .user-name { font-size: 12px; color: var(--parchment); font-weight: 500; }
+  .user-plan { font-size: 10px; color: var(--gold); }
+
+  .dash-main { overflow-y: auto; }
+  .dash-topbar { padding: 24px 32px; background: white; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-greeting { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--ink); }
+  .topbar-date { font-size: 13px; color: var(--smoke); margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; }
+
+  .dash-content { padding: 32px; }
+
+  .briefing-card { background: var(--ink); border-radius: 2px; overflow: hidden; margin-bottom: 28px; }
+  .briefing-card-header { padding: 24px 28px; background: linear-gradient(135deg, rgba(201,168,76,0.12) 0%, transparent 60%); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; align-items: flex-start; justify-content: space-between; }
+  .bc-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--gold); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+  .bc-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--parchment); margin-bottom: 6px; }
+  .bc-subtitle { font-size: 13px; color: var(--smoke); line-height: 1.5; max-width: 440px; }
+  .bc-progress-label { font-size: 11px; color: var(--smoke); margin-bottom: 6px; font-family: 'DM Mono', monospace; text-align: right; }
+
+  .briefing-modules-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1px; background: rgba(255,255,255,0.05); }
+  .bmod { background: rgba(15,14,13,0.97); padding: 20px; cursor: pointer; transition: background .15s; position: relative; }
+  .bmod:hover { background: rgba(201,168,76,0.05); }
+  .bmod.done::after { content: '✓'; position: absolute; top: 12px; right: 14px; font-size: 11px; color: var(--green); font-weight: 700; }
+  .bmod-icon { font-size: 20px; margin-bottom: 8px; }
+  .bmod-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+  .bmod-content { font-size: 13px; color: var(--parchment); line-height: 1.45; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .stat-label { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); line-height: 1; }
+  .stat-sub { font-size: 11px; color: var(--smoke); margin-top: 4px; }
+  .stat-trend { display: inline-block; font-size: 11px; color: var(--green); font-weight: 600; margin-left: 4px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+  .panel { background: white; border: 1px solid var(--mist); border-radius: 2px; overflow: hidden; }
+  .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--mist); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .panel-action { font-size: 12px; color: var(--riley-blue-light); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; }
+
+  .conv-item { padding: 14px 20px; border-bottom: 1px solid var(--mist); cursor: pointer; transition: background .12s; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: start; }
+  .conv-item:hover { background: var(--warm-white); }
+  .conv-item:last-child { border-bottom: none; }
+  .conv-title { font-size: 13px; color: var(--ink); font-weight: 500; margin-bottom: 3px; }
+  .conv-preview { font-size: 12px; color: var(--smoke); line-height: 1.4; }
+  .conv-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; text-align: right; white-space: nowrap; }
+  .conv-tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px; }
+
+  .checkin-panel { display: flex; flex-direction: column; gap: 12px; }
+  .checkin-card { background: white; border: 1px solid var(--mist); padding: 20px; border-radius: 2px; }
+  .checkin-label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .streak-display { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+  .streak-num { font-family: 'DM Serif Display', serif; font-size: 48px; color: var(--ink); line-height: 1; }
+  .streak-unit { font-size: 14px; color: var(--smoke); }
+  .streak-dots { display: flex; gap: 4px; margin-top: 10px; }
+  .streak-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mist); }
+  .streak-dot.done { background: var(--gold); }
+  .streak-dot.today { background: var(--green); }
+  .mood-scale { display: flex; gap: 6px; margin-top: 8px; }
+  .mood-btn { flex: 1; padding: 8px 4px; background: var(--warm-white); border: 1px solid var(--mist); border-radius: 1px; cursor: pointer; font-size: 18px; text-align: center; transition: border-color .12s, transform .1s; }
+  .mood-btn:hover { border-color: var(--gold); transform: scale(1.1); }
+  .mood-btn.selected { border-color: var(--gold); background: var(--gold-dim); }
+
+  .prog-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--mist); }
+  .prog-item:last-child { border-bottom: none; }
+  .prog-icon { width: 36px; height: 36px; background: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border-radius: 2px; }
+  .prog-name { font-size: 13px; color: var(--ink); font-weight: 500; }
+  .prog-status { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .prog-progress { margin-left: auto; text-align: right; }
+  .prog-pct { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--gold); font-weight: 500; line-height: 1; }
+  .prog-bar-wrap { width: 60px; height: 3px; background: var(--mist); border-radius: 2px; margin-top: 4px; margin-left: auto; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  .section-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.18em; color: var(--smoke); text-transform: uppercase; margin-bottom: 12px; margin-top: 28px; display: flex; align-items: center; gap: 10px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--mist); }
+
+  .todo-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .todo-check { width: 18px; height: 18px; border: 1.5px solid var(--mist); border-radius: 50%; flex-shrink: 0; }
+  .todo-check.done { border-color: var(--green); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--green); }
+  .todo-text { font-size: 13px; color: var(--ink); }
+  .todo-text.done { color: var(--smoke); text-decoration: line-through; }
+
+  .goal-row { margin-bottom: 12px; }
+  .goal-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .goal-name { font-size: 12px; color: var(--ink); }
+  .goal-val { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--gold); }
+  .goal-bar { height: 3px; background: var(--mist); border-radius: 2px; }
+  .goal-fill { height: 100%; background: var(--gold); border-radius: 2px; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 2px; }
+
+  @media(max-width:700px){
+    .arch-grid, .briefing-modules-grid, .module-library, .stats-row, .briefing-mods, .two-col { grid-template-columns: 1fr 1fr; }
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+
+  /* Dashboard body override */
+  body { background: var(--warm-white); color: var(--ink); }
+  
+  /* Form elements */
+  .form-section { background: white; border: 1px solid var(--mist); border-radius: 2px; padding: 24px; margin-bottom: 20px; }
+  .form-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 4px; }
+  .form-sub { font-size: 13px; color: var(--smoke); margin-bottom: 20px; }
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; }
+  .field input, .field select, .field textarea { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 2px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
+  .field textarea { resize: vertical; min-height: 72px; }
+  .btn-save { background: var(--gold); color: var(--ink); border: none; padding: 11px 24px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s; border-radius: 2px; }
+  .btn-save:hover { opacity: 0.88; }
+  .btn-save:disabled { opacity: 0.5; cursor: default; }
+  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--mist); padding: 9px 18px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; transition: border-color .15s; }
+  .btn-secondary:hover { border-color: var(--smoke); }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; }
+  
+  /* Success/error messages */
+  .msg { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-top: 12px; display: none; }
+  .msg.success { background: rgba(74,124,89,0.1); color: var(--green); border: 1px solid rgba(74,124,89,0.3); }
+  .msg.error   { background: rgba(139,58,58,0.1); color: var(--red);   border: 1px solid rgba(139,58,58,0.3); }
+  
+  /* Log/history list */
+  .log-list { display: flex; flex-direction: column; gap: 1px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: 16px; }
+  .log-item { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+  .log-item:hover { background: var(--warm-white); }
+  .log-meta { flex: 1; }
+  .log-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+  .log-detail { font-size: 11px; color: var(--smoke); margin-top: 2px; }
+  .log-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; white-space: nowrap; }
+  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
+  .badge-gold { background: var(--gold-dim); color: var(--gold); }
+  .badge-green { background: rgba(74,124,89,0.12); color: var(--green); }
+  
+  /* Stat cards inline */
+  .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .mini-stat { background: white; border: 1px solid var(--mist); padding: 16px; border-radius: 2px; text-align: center; }
+  .mini-stat-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); line-height: 1; }
+  .mini-stat-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
+  
+  /* Tag pills */
+  .tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; margin-top: 3px; }
+  
+  /* Empty state */
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--smoke); }
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
+  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+  .empty-state .sub { font-size: 13px; line-height: 1.6; }
+  
+  /* Topbar btn */
+  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; text-decoration: none; display: inline-block; }
+  .topbar-btn.gold { background: var(--gold); color: var(--ink); }
+  
+  /* Habit toggle */
+  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--mist); }
+  .habit-row:last-child { border-bottom: none; }
+  .habit-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mist); background: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
+  .habit-toggle.done { background: var(--green); border-color: var(--green); color: white; }
+  .habit-name { flex: 1; font-size: 13px; color: var(--ink); }
+  .habit-name.done { text-decoration: line-through; color: var(--smoke); }
+  
+  /* Progress bar */
+  .prog-bar-bg { height: 6px; background: var(--mist); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .4s; }
+  .prog-bar-fill.green { background: var(--green); }
+  
+  /* Section header */
+  .sect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
+  .sect-head:first-child { margin-top: 0; }
+  
+  /* Calendar grid */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
+  .cal-cell { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--mist); color: var(--smoke); cursor: default; }
+  .cal-cell.done  { background: var(--gold); color: var(--ink); }
+  .cal-cell.today { background: var(--green); color: white; }
+  .cal-cell.empty { background: transparent; }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+  
+  /* Responsive */
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+  @media (max-width: 700px) {
+    .dash-layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .dash-content { padding: 20px 16px; }
+    .stats-row { grid-template-columns: 1fr 1fr; }
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+/* Sidebar sticky */
+.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.sign-out-btn { margin-left: auto; background: transparent; border: none; color: var(--smoke); font-size: 14px; cursor: pointer; padding: 4px; }
+.sign-out-btn:hover { color: var(--red); }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; }
 </style>
 </head>
 <body>
 <div class="dash-layout">
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-    <div class="sidebar-section-label">Today</div>
-    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
-    <a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a>
-    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
-    <div class="sidebar-section-label">History</div>
-    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
-    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
-    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
-    <a href="/nutrition" class="sidebar-nav-item active">🍳 Nutrition</a>
-    <div class="sidebar-section-label">Programs</div>
-    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
-    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
-    <div class="sidebar-section-label">Life Data</div>
-    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
-    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
-    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-user">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div>
-        <div class="user-name" id="user-name">Loading…</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
-    </div>
-  </aside>
+<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="sidebar-section-label">TODAY</div><a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a><a href="https://riley.eight14.us" class="sidebar-nav-item">💬 Chat with Riley</a><a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a><div class="sidebar-section-label">HISTORY</div><a href="/conversations" class="sidebar-nav-item">📁 Conversations</a><a href="/progress" class="sidebar-nav-item">📊 Progress</a><a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a><a href="/nutrition" class="sidebar-nav-item active">🍳 Nutrition</a><div class="sidebar-section-label">PROGRAMS</div><a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a><a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a><div class="sidebar-section-label">LIFE DATA</div><a href="/sleep" class="sidebar-nav-item">😴 Sleep</a><a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a><a href="/calendar" class="sidebar-nav-item">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div><button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button></div></aside>
+<main class="dash-main">
+<div class="dash-topbar">
+  <div>
+    <div class="topbar-greeting" id="greeting">Good morning.</div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+  <div class="topbar-actions"><a href="/tracker" class="topbar-btn">← Tracker</a><a href="/progress" class="topbar-btn gold">View Progress →</a></div>
+</div>
+<div class="dash-content">
 
-  <main class="dash-main">
-    <div class="dash-topbar">
-      <div>
-        <div class="topbar-greeting">Nutrition</div>
-        <div class="topbar-date" id="topbar-date"></div>
-      </div>
-    </div>
-
-    <div class="dash-content">
-
-      <div class="section-label">Today's Totals</div>
-      <div class="macro-bar">
-        <div class="macro-card"><div class="macro-label">Calories</div><div class="macro-value" id="tot-cal">0</div><div class="macro-unit">kcal</div></div>
-        <div class="macro-card"><div class="macro-label">Protein</div><div class="macro-value" id="tot-pro">0</div><div class="macro-unit">g</div></div>
-        <div class="macro-card"><div class="macro-label">Carbs</div><div class="macro-value" id="tot-carb">0</div><div class="macro-unit">g</div></div>
-        <div class="macro-card"><div class="macro-label">Fat</div><div class="macro-value" id="tot-fat">0</div><div class="macro-unit">g</div></div>
-      </div>
-
-      <div class="section-label">Log a Meal</div>
-      <div class="panel">
-        <div class="panel-body">
-          <div class="form-grid">
-            <div class="form-group">
-              <label class="form-label">Meal Type</label>
-              <select class="form-select" id="meal-label">
-                <option>Breakfast</option>
-                <option>Lunch</option>
-                <option>Dinner</option>
-                <option>Snack</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Date</label>
-              <input type="date" class="form-input" id="meal-date">
-            </div>
-            <div class="form-group full">
-              <label class="form-label">Description</label>
-              <input type="text" class="form-input" id="meal-desc" placeholder="What did you eat?">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Calories</label>
-              <input type="number" class="form-input" id="meal-cal" placeholder="0" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Protein (g)</label>
-              <input type="number" class="form-input" id="meal-pro" placeholder="0" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Carbs (g)</label>
-              <input type="number" class="form-input" id="meal-carb" placeholder="0" min="0">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fat (g)</label>
-              <input type="number" class="form-input" id="meal-fat" placeholder="0" min="0">
-            </div>
-          </div>
-          <button class="btn-gold" onclick="logMeal()">Log Meal</button>
-        </div>
-      </div>
-
-      <div class="section-label">Recent Entries</div>
-      <div class="panel">
-        <div style="padding:0 20px" id="meal-list">
-          <div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">Loading…</div>
-        </div>
-      </div>
-
-      <div class="section-label">Weekly Averages</div>
-      <div class="macro-bar">
-        <div class="macro-card"><div class="macro-label">Avg Calories</div><div class="macro-value" id="avg-cal">—</div><div class="macro-unit">kcal/day</div></div>
-        <div class="macro-card"><div class="macro-label">Avg Protein</div><div class="macro-value" id="avg-pro">—</div><div class="macro-unit">g/day</div></div>
-        <div class="macro-card"><div class="macro-label">Avg Carbs</div><div class="macro-value" id="avg-carb">—</div><div class="macro-unit">g/day</div></div>
-        <div class="macro-card"><div class="macro-label">Avg Fat</div><div class="macro-value" id="avg-fat">—</div><div class="macro-unit">g/day</div></div>
-      </div>
-
-    </div>
-  </main>
+<div class="mini-stats" id="today-totals">
+  <div class="mini-stat"><div class="mini-stat-val" id="n-cal">—</div><div class="mini-stat-label">Calories</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="n-pro">—</div><div class="mini-stat-label">Protein (g)</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="n-carb">—</div><div class="mini-stat-label">Carbs (g)</div></div>
+  <div class="mini-stat"><div class="mini-stat-val" id="n-fat">—</div><div class="mini-stat-label">Fat (g)</div></div>
 </div>
 
-<div class="save-toast" id="save-toast">Logged</div>
-
-<script>
-const SUPABASE_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
-let sb, userId, todayISO;
-
-async function init() {
-  try {
-    sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
-    userId = session.user.id;
-    const now = new Date();
-    todayISO = now.toISOString().split('T')[0];
-    document.getElementById('topbar-date').textContent = now.toLocaleDateString('en-US', {weekday:'long',month:'long',day:'numeric'});
-    document.getElementById('meal-date').value = todayISO;
-    const meta = session.user.user_metadata || {};
-    const av = document.getElementById('user-avatar');
-    if (meta.avatar_url) av.innerHTML = '<img src="'+meta.avatar_url+'" alt="">'; else av.textContent = (meta.full_name||session.user.email||'?')[0].toUpperCase();
-    document.getElementById('user-name').textContent = meta.full_name || session.user.email || 'User';
-    await loadData();
-  } catch(e) { console.error(e); window.location.href = 'https://riley.eight14.us'; }
-}
-
-async function loadData() {
-  try {
-    const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
-    const [todayRes, recentRes] = await Promise.allSettled([
-      sb.from('nutrition_logs').select('*').eq('user_id', userId).eq('logged_date', todayISO),
-      sb.from('nutrition_logs').select('*').eq('user_id', userId).gte('logged_date', sevenAgo.toISOString().split('T')[0]).order('logged_date', {ascending:false}).limit(20),
-    ]);
-    const todayLogs = todayRes.value?.data || [];
-    const allLogs = recentRes.value?.data || [];
-    updateTotals(todayLogs);
-    renderList(allLogs);
-    calcWeekly(allLogs);
-  } catch(e) { console.warn(e); }
-}
-
-function updateTotals(logs) {
-  const sum = (f) => logs.reduce((s,l) => s + (l[f]||0), 0);
-  document.getElementById('tot-cal').textContent = Math.round(sum('calories'));
-  document.getElementById('tot-pro').textContent = Math.round(sum('protein_g'));
-  document.getElementById('tot-carb').textContent = Math.round(sum('carbs_g'));
-  document.getElementById('tot-fat').textContent = Math.round(sum('fat_g'));
-}
-
-function calcWeekly(logs) {
-  const days = [...new Set(logs.map(l => l.logged_date))].length || 1;
-  const sum = (f) => logs.reduce((s,l) => s + (l[f]||0), 0);
-  document.getElementById('avg-cal').textContent = Math.round(sum('calories') / days);
-  document.getElementById('avg-pro').textContent = Math.round(sum('protein_g') / days);
-  document.getElementById('avg-carb').textContent = Math.round(sum('carbs_g') / days);
-  document.getElementById('avg-fat').textContent = Math.round(sum('fat_g') / days);
-}
-
-function renderList(logs) {
-  const el = document.getElementById('meal-list');
-  if (!logs.length) { el.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--smoke);font-size:13px">No meals logged yet. Add your first one above.</div>'; return; }
-  el.innerHTML = logs.map(l => `
-    <div class="log-entry">
-      <div>
-        <span class="log-meal">${l.label || 'Meal'}</span>
-        <div class="log-name">${l.notes || 'No description'}</div>
-        <div class="log-macros">${l.calories||0} kcal · ${l.protein_g||0}g protein · ${l.carbs_g||0}g carbs · ${l.fat_g||0}g fat</div>
-      </div>
-      <div class="log-date">${fmtDate(l.logged_date)}</div>
+<div class="form-section">
+  <div class="form-title">Log a Meal</div>
+  <div class="form-sub">Track your nutrition — Riley uses this to suggest meals and monitor your fueling.</div>
+  <div class="field-row">
+    <div class="field"><label>Date</label><input type="date" id="n-date"></div>
+    <div class="field"><label>Meal</label>
+      <select id="n-label">
+        <option>Breakfast</option><option>Lunch</option><option>Dinner</option>
+        <option>Snack</option><option>Pre-workout</option><option>Post-workout</option><option>Other</option>
+      </select>
     </div>
-  `).join('');
+  </div>
+  <div class="field-row" style="margin-top:10px">
+    <div class="field"><label>Calories</label><input type="number" id="n-cal-in" placeholder="500" min="0"></div>
+    <div class="field"><label>Protein (g)</label><input type="number" id="n-pro-in" placeholder="40" min="0"></div>
+    <div class="field"><label>Carbs (g)</label><input type="number" id="n-carb-in" placeholder="60" min="0"></div>
+    <div class="field"><label>Fat (g)</label><input type="number" id="n-fat-in" placeholder="15" min="0"></div>
+  </div>
+  <div class="field" style="margin-top:10px"><label>Notes / Foods</label><textarea id="n-notes" placeholder="Eggs, spinach, chicken thighs…"></textarea></div>
+  <button class="btn-save" onclick="logMeal()">Log Meal</button>
+  <div class="msg" id="msg-nutrition"></div>
+</div>
+
+<div class="section-label">Today's Meals</div>
+<div id="nutrition-today"></div>
+<div class="section-label">Recent History</div>
+<div id="nutrition-history"></div>
+
+</div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+
+const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+
+let _db, _user, _uid, _today;
+
+async function authInit() {
+  _db = supabase.createClient(SB_URL, SB_KEY);
+  const { data } = await _db.auth.getSession();
+  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return false; }
+  _user = data.session.user;
+  _uid  = _user.id;
+  _today = new Date().toISOString().slice(0,10);
+  
+  const meta = _user.user_metadata || {};
+  const fullName  = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
+  const firstName = fullName.split(' ')[0];
+  const avatarUrl = meta.avatar_url || meta.picture || '';
+  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BC';
+  
+  // Topbar
+  const h = new Date().getHours();
+  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const gEl = document.getElementById('greeting');
+  if (gEl) gEl.textContent = greet + ', ' + firstName + '. \u2600\uFE0F';
+  const dEl = document.getElementById('topbar-date');
+  if (dEl) dEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  
+  // Sidebar user
+  const av = document.getElementById('user-avatar');
+  if (av) {
+    if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+    else av.textContent = initials;
+  }
+  const nm = document.getElementById('user-name');
+  if (nm) nm.textContent = fullName;
+  
+  return true;
 }
 
-function fmtDate(iso) {
-  return new Date(iso + 'T12:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric'});
+async function signOut() {
+  await _db.auth.signOut();
+  window.location.href = 'https://riley.eight14.us';
 }
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts), t = new Date(), y = new Date();
+  y.setDate(t.getDate()-1);
+  if (d.toDateString()===t.toDateString()) return 'Today';
+  if (d.toDateString()===y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+function fmtTime(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+}
+function showMsg(id, text, type='success') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg ' + type;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display='none'; }, 3500);
+}
+
+
+(async function() {
+  if (!(await authInit())) return;
+  document.getElementById('n-date').value = _today;
+  await loadNutrition();
+})();
+
+async function loadNutrition() {
+  const {data:all} = await _db.from('nutrition_logs').select('*').eq('user_id',_uid).order('logged_date',{ascending:false}).order('created_at',{ascending:false}).limit(50);
+  const logs = all||[];
+  
+  const todayLogs = logs.filter(l=>l.logged_date===_today);
+  const sum = todayLogs.reduce((a,l)=>({
+    cal:a.cal+(l.calories||0), pro:a.pro+(l.protein_g||0),
+    carb:a.carb+(l.carbs_g||0), fat:a.fat+(l.fat_g||0)
+  }),{cal:0,pro:0,carb:0,fat:0});
+  
+  document.getElementById('n-cal').textContent  = todayLogs.length?sum.cal:'—';
+  document.getElementById('n-pro').textContent  = todayLogs.length?sum.pro:'—';
+  document.getElementById('n-carb').textContent = todayLogs.length?sum.carb:'—';
+  document.getElementById('n-fat').textContent  = todayLogs.length?sum.fat:'—';
+  
+  function renderLogs(el, items) {
+    if (!items.length) { el.innerHTML='<div class="empty-state"><div class="icon">🍳</div><div class="title">Nothing logged yet</div></div>'; return; }
+    el.innerHTML='<div class="log-list">'+items.map(l=>{
+      const macros=[l.calories?l.calories+' kcal':null,l.protein_g?l.protein_g+'g protein':null,l.notes].filter(Boolean).join(' · ');
+      return '<div class="log-item">' +
+        '<div style="font-size:22px;width:36px;text-align:center">'+mealIcon(l.label)+'</div>' +
+        '<div class="log-meta"><div class="log-title">'+esc(l.label||'Meal')+'</div>'+(macros?'<div class="log-detail">'+esc(macros)+'</div>':'')+'</div>' +
+        '<div class="log-date">'+fmtTime(l.created_at)+'</div>' +
+        '<button onclick="deleteMeal(''+l.id+'')" style="background:none;border:none;color:var(--smoke);cursor:pointer;padding:4px;font-size:16px">×</button>' +
+        '</div>';
+    }).join('')+'</div>';
+  }
+  renderLogs(document.getElementById('nutrition-today'), todayLogs);
+  renderLogs(document.getElementById('nutrition-history'), logs.filter(l=>l.logged_date!==_today).slice(0,20));
+}
+
+function mealIcon(l){const m={Breakfast:'🌅',Lunch:'☀️',Dinner:'🌙',Snack:'🍎','Pre-workout':'⚡','Post-workout':'💪'};return m[l]||'🍽️';}
 
 async function logMeal() {
-  const label = document.getElementById('meal-label').value;
-  const date = document.getElementById('meal-date').value;
-  const notes = document.getElementById('meal-desc').value.trim() || null;
-  const calories = parseFloat(document.getElementById('meal-cal').value) || 0;
-  const protein_g = parseFloat(document.getElementById('meal-pro').value) || 0;
-  const carbs_g = parseFloat(document.getElementById('meal-carb').value) || 0;
-  const fat_g = parseFloat(document.getElementById('meal-fat').value) || 0;
-  if (!date || !userId) return;
-  try {
-    await sb.from('nutrition_logs').insert({ user_id: userId, logged_date: date, label, notes, calories, protein_g, carbs_g, fat_g });
-    ['meal-desc','meal-cal','meal-pro','meal-carb','meal-fat'].forEach(id => document.getElementById(id).value = '');
-    showToast('Meal logged');
-    await loadData();
-  } catch(e) { console.warn(e); }
+  const {error} = await _db.from('nutrition_logs').insert({
+    user_id:_uid, logged_date:document.getElementById('n-date').value||_today,
+    label:document.getElementById('n-label').value,
+    calories:parseInt(document.getElementById('n-cal-in').value)||null,
+    protein_g:parseInt(document.getElementById('n-pro-in').value)||null,
+    carbs_g:parseInt(document.getElementById('n-carb-in').value)||null,
+    fat_g:parseInt(document.getElementById('n-fat-in').value)||null,
+    notes:document.getElementById('n-notes').value.trim()||null
+  });
+  if (error) return showMsg('msg-nutrition','Error: '+error.message,'error');
+  ['n-cal-in','n-pro-in','n-carb-in','n-fat-in','n-notes'].forEach(id=>document.getElementById(id).value='');
+  showMsg('msg-nutrition','Meal logged!');
+  await loadNutrition();
+}
+async function deleteMeal(id) {
+  await _db.from('nutrition_logs').delete().eq('id',id);
+  await loadNutrition();
 }
 
-function showToast(msg) {
-  const t = document.getElementById('save-toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2000);
-}
-
-async function signOut() { await sb.auth.signOut(); window.location.href = 'https://riley.eight14.us'; }
-window.addEventListener('DOMContentLoaded', init);
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </body>
 </html>

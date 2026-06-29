@@ -466,5 +466,89 @@ async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:U
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}catch(e){ck.classList.toggle('done',was);console.error(e);}}
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 </script>
+
+<script>
+/* ── ENTITLEMENT GATING (shared) ─────────────────────────────────────────── */
+(function(){
+  // Map sidebar hrefs → required feature key. Items not listed are always shown.
+  const NAV_FEAT = {
+    '/tracker':'daily_checkin', '/progress':'daily_checkin',
+    '/workouts':'tracker_fitness', '/nutrition':'tracker_nutrition',
+    '/sleep':'tracker_sleep', '/finance':'tracker_finance',
+    '/calendar':'tracker_calendar', '/roadmap':'roadmap', '/brief':'adaptive_programming'
+  };
+  const PAGE_FEATURE = null;
+
+  async function loadEnt(uid){
+    const k='ent_'+uid, c=sessionStorage.getItem(k);
+    if(c){try{return JSON.parse(c);}catch(e){}}
+    try{
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+      const d=await r.json(); sessionStorage.setItem(k,JSON.stringify(d)); return d;
+    }catch(e){ return {products:[],tier:'free',features:{}}; }
+  }
+  const can=(e,k)=>e&&e.features&&e.features[k]&&e.features[k].access===true;
+  const mode=(e,k)=>(e&&e.features&&e.features[k]&&e.features[k].gate_mode)||'hidden';
+
+  function gateSidebar(ent){
+    document.querySelectorAll('aside a[href]').forEach(a=>{
+      const href=a.getAttribute('href');
+      const feat=NAV_FEAT[href];
+      if(!feat) return;            // always-visible
+      if(can(ent,feat)) return;    // entitled
+      if(mode(ent,feat)==='hidden'){ a.style.display='none'; return; }
+      // locked_upsell — show dimmed + lock, intercept click
+      a.style.opacity='0.45';
+      if(!a.querySelector('.ent-lock')){
+        const l=document.createElement('span');
+        l.className='ent-lock'; l.textContent='🔒';
+        l.style.cssText='margin-left:auto;font-size:10px;opacity:0.8';
+        a.appendChild(l);
+      }
+      a.addEventListener('click',e=>{e.preventDefault();window.location.href='/programs?unlock='+feat;});
+    });
+  }
+
+  function wall(ent,feat){
+    const fmap={
+      daily_checkin:{name:'Daily Check-In',need:'Riley Companion',sub:'companion'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion',sub:'companion'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Concierge',sub:'concierge'},
+      tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
+      roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
+    };
+    const f=fmap[feat]||{name:'This feature',need:'a subscription'};
+    const main=document.querySelector('.main')||document.body;
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;left:220px;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
+    ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
+      <div style="font-size:44px;margin-bottom:20px">🔒</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
+      <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to dashboard</a></div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+
+  async function run(){
+    if(typeof SB==='undefined')return;
+    try{
+      const {data:{session}}=await SB.auth.getSession();
+      if(!session)return;
+      const ent=await loadEnt(session.user.id);
+      gateSidebar(ent);
+      if(PAGE_FEATURE && !can(ent,PAGE_FEATURE)){
+        if(mode(ent,PAGE_FEATURE)==='hidden') window.location.href='/dashboard';
+        else wall(ent,PAGE_FEATURE);
+      }
+    }catch(e){console.error('gating:',e);}
+  }
+  if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+})();
+</script>
 </body>
 </html>

@@ -265,3 +265,8 @@
   to = "/dashboard.html"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/"
+  to = "/dashboard.html"
+  status = 200

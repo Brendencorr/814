@@ -162,6 +162,29 @@ When user_id and session_id are provided:
 - Riley's system prompt is personalized with the user's profile (name, sobriety date, programs)
 - Both the user message and Riley's reply are saved to riley_conversations automatically
 
+## Operator Dashboard (admin.eight14.us)
+admin.eight14.us serves dashboard.html — private operator tool for Brenden only.
+Password gate: Riley814 (stored in sessionStorage).
+
+Design system:
+- Background: #06090e | Cards: #0a1018 | Borders: #1a2530
+- Gold: #c9a84c | Sage: #4a7c59 | Text: #e8e4de
+- Fonts: Playfair Display (headings), DM Sans (body), Bebas Neue (labels/nav)
+- All from Google Fonts CDN
+
+Dashboard reads live data via:
+- GET /.netlify/functions/pipeline-status → pipeline_runs, echo_scores, published_posts, scout_history
+
+Dashboard writes/triggers via:
+- POST /.netlify/functions/echo → Echo analysis from weekly numbers
+- POST /.netlify/functions/scout → Scout research
+- POST /.netlify/functions/sage → Sage content writing
+- POST /.netlify/functions/atlas → Atlas scheduling
+- POST /.netlify/functions/weekly-pipeline → Manual pipeline trigger
+
+Supabase tables used by dashboard (no RLS — anon key reads work):
+- echo_scores, pipeline_runs, published_posts, scout_history
+
 ## Self-Improvement Logic
 - Scout reads echo_scores.best_pillar and format_winner before every run
 - Scout reads last 4 weeks of scout_history to avoid repeating topics

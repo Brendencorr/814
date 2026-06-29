@@ -494,8 +494,16 @@ async function loadSobriety() {
 async function saveSobriety() {
   const dt = document.getElementById('sober-date').value;
   if (!dt) return showMsg('msg-sober','Please select a date.','error');
-  await _db.from('sobriety_tracker').upsert({user_id:_uid,start_date:dt,is_active:true},{onConflict:'user_id'});
-  showMsg('msg-sober','Sobriety date saved!');
+  const btn = document.querySelector('[onclick="saveSobriety()"]');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  // Must use insert (no unique constraint on user_id for upsert)
+  await _db.from('sobriety_tracker').update({is_active:false}).eq('user_id',_uid);
+  const {error} = await _db.from('sobriety_tracker').insert({
+    user_id:_uid, start_date:dt, is_active:true, milestone_days:[]
+  });
+  if(btn){btn.disabled=false;btn.textContent='Save Start Date';}
+  if(error){showMsg('msg-sober','Error: '+error.message,'error');console.error(error);return;}
+  showMsg('msg-sober','✓ Sobriety date saved!','success');
   await loadSobriety();
 }
 
@@ -516,7 +524,9 @@ function selectMood(n, btn) {
   btn.classList.add('selected');
 }
 async function saveCheckin() {
-  const payload = {
+  const btn = document.querySelector('[onclick="saveCheckin()"]');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const {error} = await _db.from('daily_checkins').upsert({
     user_id:_uid, checkin_date:_today,
     mood: selectedMood||null,
     water_oz: parseInt(document.getElementById('water-oz').value)||null,
@@ -524,9 +534,10 @@ async function saveCheckin() {
     screen_time_min: parseInt(document.getElementById('screen-min').value)||null,
     notes: document.getElementById('checkin-notes').value.trim()||null,
     sobriety_day: true
-  };
-  const {error} = await _db.from('daily_checkins').upsert(payload,{onConflict:'user_id,checkin_date'});
-  showMsg('msg-checkin', error?'Error: '+error.message:'Check-in saved!', error?'error':'success');
+  },{onConflict:'user_id,checkin_date'});
+  if(btn){btn.disabled=false;btn.textContent='Save Check-In';}
+  if(error) console.error('saveCheckin error:',error);
+  showMsg('msg-checkin', error?'Error: '+error.message:'✓ Check-in saved!', error?'error':'success');
 }
 
 // ── HABITS ──
@@ -561,14 +572,17 @@ async function toggleHabit(id) {
 async function addHabit() {
   const title = document.getElementById('habit-title').value.trim();
   if (!title) return showMsg('msg-habit','Please enter a habit name.','error');
+  const btn_h = document.querySelector('[onclick="addHabit()"]');
+  if(btn_h){btn_h.disabled=true;btn_h.textContent='Adding…';}
   const {error} = await _db.from('habits').insert({
     user_id:_uid, title, emoji:document.getElementById('habit-emoji').value.trim()||null,
-    category:document.getElementById('habit-cat').value, is_active:true
+    category:document.getElementById('habit-cat').value, is_active:true, sort_order:0
   });
-  if (error) return showMsg('msg-habit','Error: '+error.message,'error');
+  if(btn_h){btn_h.disabled=false;btn_h.textContent='Add Habit';}
+  if(error){console.error('addHabit:',error);return showMsg('msg-habit','Error: '+error.message,'error');}
   document.getElementById('habit-title').value='';
   document.getElementById('habit-emoji').value='';
-  showMsg('msg-habit','Habit added!');
+  showMsg('msg-habit','✓ Habit added!','success');
   await loadHabits();
 }
 async function deleteHabit(id) {
@@ -613,19 +627,19 @@ async function addGoal() {
   if (!title) return showMsg('msg-goal','Please enter a goal title.','error');
   const target = parseFloat(document.getElementById('goal-target').value)||0;
   const current = parseFloat(document.getElementById('goal-current').value)||0;
+  const btn_g = document.querySelector('[onclick="addGoal()"]');
+  if(btn_g){btn_g.disabled=true;btn_g.textContent='Adding…';}
   const {error} = await _db.from('user_goals').insert({
     user_id:_uid, title, target_value:target, current_value:current,
     unit:document.getElementById('goal-unit').value.trim()||null,
     period:document.getElementById('goal-period').value,
     category:document.getElementById('goal-cat').value,
-    period_start:_today, is_active:true
+    period_start:_today, is_active:true, sort_order:0
   });
-  if (error) return showMsg('msg-goal','Error: '+error.message,'error');
-  document.getElementById('goal-title').value='';
-  document.getElementById('goal-target').value='';
-  document.getElementById('goal-current').value='';
-  document.getElementById('goal-unit').value='';
-  showMsg('msg-goal','Goal added!');
+  if(btn_g){btn_g.disabled=false;btn_g.textContent='Add Goal';}
+  if(error){console.error('addGoal:',error);return showMsg('msg-goal','Error: '+error.message,'error');}
+  ['goal-title','goal-target','goal-current','goal-unit'].forEach(id=>document.getElementById(id).value='');
+  showMsg('msg-goal','✓ Goal added!','success');
   await loadGoals();
 }
 

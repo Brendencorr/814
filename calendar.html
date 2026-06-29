@@ -3,302 +3,108 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calendar — Riley · The 8:14 Project</title>
+<title>Calendar — Riley</title>
 <style>
-
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;
-  --gold:#c9a84c;--gold-light:#e8d5a3;--gold-dim:rgba(201,168,76,0.15);
-  --riley-blue:#2a4a6e;--riley-blue-light:#4a7ab0;
-  --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
-}
-
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
-
-/* ── LAYOUT ── */
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-
-/* ── SIDEBAR ── */
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
-.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
-.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px;transition:color .15s}
-.sign-out-btn:hover{color:var(--red)}
-
-/* ── MAIN ── */
-.dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
-.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
-.topbar-actions{display:flex;gap:10px;align-items:center}
-.topbar-btn{background:var(--ink);color:var(--parchment);border:none;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.04em;text-decoration:none;display:inline-block}
-.topbar-btn.gold{background:var(--gold);color:var(--ink)}
-
-.dash-content{padding:32px}
-
-/* ── BRIEF CARD ── */
-.briefing-card{background:var(--ink);border-radius:2px;overflow:hidden;margin-bottom:28px}
-.briefing-card-header{padding:24px 28px;background:linear-gradient(135deg,rgba(201,168,76,0.12) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-start;justify-content:space-between}
-.bc-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px}
-.bc-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--parchment);margin-bottom:6px}
-.bc-subtitle{font-size:13px;color:var(--smoke);line-height:1.5;max-width:440px}
-.bc-progress-label{font-size:11px;color:var(--smoke);margin-bottom:6px;font-family:'DM Mono',monospace;text-align:right}
-.briefing-modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05)}
-.bmod{background:rgba(15,14,13,0.97);padding:20px;cursor:pointer;transition:background .15s;position:relative}
-.bmod:hover{background:rgba(201,168,76,0.05)}
-.bmod.done::after{content:'✓';position:absolute;top:12px;right:14px;font-size:11px;color:var(--green);font-weight:700}
-.bmod.coming{opacity:0.45;cursor:default}
-.bmod-icon{font-size:20px;margin-bottom:8px}
-.bmod-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
-.bmod-content{font-size:13px;color:var(--parchment);line-height:1.45}
-.brief-footer{padding:14px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between}
-
-/* ── STATS ── */
-.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:12px;margin-top:28px;display:flex;align-items:center;gap:10px}
-.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
-.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
-.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
-.stat-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
-.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
-.stat-trend{display:inline-block;font-size:11px;color:var(--green);font-weight:600;margin-left:4px}
-
-/* ── TWO COL ── */
-.two-col{display:grid;grid-template-columns:1fr 320px;gap:20px}
-.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:16px}
-.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
-.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
-.panel-action{font-size:12px;color:var(--riley-blue-light);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;text-decoration:none}
-
-/* ── CONVERSATIONS ── */
-.conv-item{padding:14px 20px;border-bottom:1px solid var(--mist);cursor:pointer;transition:background .12s;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;text-decoration:none;color:inherit}
-.conv-item:hover{background:var(--warm-white)}
-.conv-item:last-child{border-bottom:none}
-.conv-title{font-size:13px;color:var(--ink);font-weight:500;margin-bottom:3px}
-.conv-preview{font-size:12px;color:var(--smoke);line-height:1.4}
-.conv-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
-.conv-tag{display:inline-block;font-size:9px;background:var(--gold-dim);color:var(--gold);padding:2px 6px;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;margin-right:3px}
-
-/* ── PROGRAMS ── */
-.prog-list{padding:0 20px}
-.prog-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--mist)}
-.prog-item:last-child{border-bottom:none}
-.prog-icon{width:36px;height:36px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border-radius:2px}
-.prog-name{font-size:13px;color:var(--ink);font-weight:500}
-.prog-status{font-size:11px;color:var(--smoke);margin-top:2px}
-.prog-progress{margin-left:auto;text-align:right;flex-shrink:0}
-.prog-pct{font-family:'DM Mono',monospace;font-size:18px;color:var(--gold);font-weight:500;line-height:1}
-.prog-bar-wrap{width:60px;height:3px;background:var(--mist);border-radius:2px;margin-top:4px;margin-left:auto}
-.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
-
-/* ── CHECK-IN PANEL ── */
-.checkin-panel{display:flex;flex-direction:column;gap:12px}
-.checkin-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
-.checkin-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
-.mood-scale{display:flex;gap:6px;margin-top:8px}
-.mood-btn{flex:1;padding:8px 4px;background:var(--warm-white);border:1px solid var(--mist);border-radius:1px;cursor:pointer;font-size:18px;text-align:center;transition:border-color .12s,transform .1s}
-.mood-btn:hover{border-color:var(--gold);transform:scale(1.1)}
-.mood-btn.selected{border-color:var(--gold);background:var(--gold-dim)}
-.streak-display{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
-.streak-num{font-family:'DM Serif Display',serif;font-size:48px;color:var(--ink);line-height:1}
-.streak-unit{font-size:14px;color:var(--smoke)}
-.streak-dots{display:flex;gap:4px;margin-top:10px}
-.streak-dot{width:10px;height:10px;border-radius:50%;background:var(--mist)}
-.streak-dot.done{background:var(--gold)}
-.streak-dot.today{background:var(--green)}
-.todo-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--mist);cursor:pointer}
-.todo-item:last-child{border-bottom:none}
-.todo-check{width:18px;height:18px;border:1.5px solid var(--mist);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
-.todo-check.done{border-color:var(--green);color:var(--green)}
-.todo-text{font-size:13px;color:var(--ink)}
-.todo-text.done{color:var(--smoke);text-decoration:line-through}
-.goal-row{margin-bottom:12px}
-.goal-row:last-child{margin-bottom:0}
-.goal-top{display:flex;justify-content:space-between;margin-bottom:5px}
-.goal-name{font-size:12px;color:var(--ink)}
-.goal-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold)}
-.goal-bar{height:3px;background:var(--mist);border-radius:2px}
-.goal-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
-
-/* ── EMPTY STATES ── */
-.empty{padding:24px 20px;text-align:center}
-.empty-icon{font-size:28px;margin-bottom:8px}
-.empty-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
-.empty-sub{font-size:12px;color:var(--smoke);line-height:1.5;margin-bottom:14px}
-.btn-sm{display:inline-block;padding:8px 16px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;text-decoration:none;letter-spacing:0.04em}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--warm:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--mist:rgba(255,255,255,0.06);--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.tb-actions{display:flex;gap:8px}
+.btn{display:inline-block;padding:7px 16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none;letter-spacing:0.04em}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
 .btn-gold{background:var(--gold);color:var(--ink)}
-.btn-dark{background:var(--ink);color:var(--parchment)}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
-
-/* ── RESPONSIVE ── */
-@media(max-width:900px){
-  .two-col{grid-template-columns:1fr}
-  .briefing-modules-grid{grid-template-columns:repeat(2,1fr)}
-}
-@media(max-width:700px){
-  .dash-layout{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .dash-content{padding:20px 16px}
-}
-
-  /* Dashboard body override */
-  body { background: var(--warm-white); color: var(--ink); }
-  
-  /* Form elements */
-  .form-section { background: white; border: 1px solid var(--mist); border-radius: 2px; padding: 24px; margin-bottom: 20px; }
-  .form-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--ink); margin-bottom: 4px; }
-  .form-sub { font-size: 13px; color: var(--smoke); margin-bottom: 20px; }
-  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
-  .field { display: flex; flex-direction: column; gap: 6px; }
-  .field label { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; }
-  .field input, .field select, .field textarea { background: var(--warm-white); border: 1px solid var(--mist); border-radius: 2px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); outline: none; transition: border-color .15s; width: 100%; }
-  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--gold); }
-  .field textarea { resize: vertical; min-height: 72px; }
-  .btn-save { background: var(--gold); color: var(--ink); border: none; padding: 11px 24px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; transition: opacity .15s; border-radius: 2px; }
-  .btn-save:hover { opacity: 0.88; }
-  .btn-save:disabled { opacity: 0.5; cursor: default; }
-  .btn-secondary { background: transparent; color: var(--ink); border: 1px solid var(--mist); padding: 9px 18px; font-size: 12px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; transition: border-color .15s; }
-  .btn-secondary:hover { border-color: var(--smoke); }
-  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer; border-radius: 2px; }
-  
-  /* Success/error messages */
-  .msg { padding: 10px 14px; border-radius: 2px; font-size: 12px; margin-top: 12px; display: none; }
-  .msg.success { background: rgba(74,124,89,0.1); color: var(--green); border: 1px solid rgba(74,124,89,0.3); }
-  .msg.error   { background: rgba(139,58,58,0.1); color: var(--red);   border: 1px solid rgba(139,58,58,0.3); }
-  
-  /* Log/history list */
-  .log-list { display: flex; flex-direction: column; gap: 1px; background: var(--mist); border-radius: 2px; overflow: hidden; margin-top: 16px; }
-  .log-item { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-  .log-item:hover { background: var(--warm-white); }
-  .log-meta { flex: 1; }
-  .log-title { font-size: 13px; font-weight: 500; color: var(--ink); }
-  .log-detail { font-size: 11px; color: var(--smoke); margin-top: 2px; }
-  .log-date { font-size: 11px; color: var(--smoke); font-family: 'DM Mono', monospace; white-space: nowrap; }
-  .log-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em; }
-  .badge-gold { background: var(--gold-dim); color: var(--gold); }
-  .badge-green { background: rgba(74,124,89,0.12); color: var(--green); }
-  
-  /* Stat cards inline */
-  .mini-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px; }
-  .mini-stat { background: white; border: 1px solid var(--mist); padding: 16px; border-radius: 2px; text-align: center; }
-  .mini-stat-val { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--ink); line-height: 1; }
-  .mini-stat-label { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--smoke); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; }
-  
-  /* Tag pills */
-  .tag { display: inline-block; font-size: 9px; background: var(--gold-dim); color: var(--gold); padding: 2px 6px; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; margin-top: 3px; }
-  
-  /* Empty state */
-  .empty-state { text-align: center; padding: 40px 20px; color: var(--smoke); }
-  .empty-state .icon { font-size: 32px; margin-bottom: 12px; }
-  .empty-state .title { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
-  .empty-state .sub { font-size: 13px; line-height: 1.6; }
-  
-  /* Topbar btn */
-  .topbar-btn { background: var(--ink); color: var(--parchment); border: none; padding: 9px 18px; font-size: 12px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; letter-spacing: 0.04em; text-decoration: none; display: inline-block; }
-  .topbar-btn.gold { background: var(--gold); color: var(--ink); }
-  
-  /* Habit toggle */
-  .habit-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--mist); }
-  .habit-row:last-child { border-bottom: none; }
-  .habit-toggle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--mist); background: white; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; transition: all .15s; }
-  .habit-toggle.done { background: var(--green); border-color: var(--green); color: white; }
-  .habit-name { flex: 1; font-size: 13px; color: var(--ink); }
-  .habit-name.done { text-decoration: line-through; color: var(--smoke); }
-  
-  /* Progress bar */
-  .prog-bar-bg { height: 6px; background: var(--mist); border-radius: 3px; margin-top: 6px; overflow: hidden; }
-  .prog-bar-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width .4s; }
-  .prog-bar-fill.green { background: var(--green); }
-  
-  /* Section header */
-  .sect-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; margin-top: 28px; }
-  .sect-head:first-child { margin-top: 0; }
-  
-  /* Calendar grid */
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
-  .cal-cell { aspect-ratio: 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-family: 'DM Mono', monospace; background: var(--mist); color: var(--smoke); cursor: default; }
-  .cal-cell.done  { background: var(--gold); color: var(--ink); }
-  .cal-cell.today { background: var(--green); color: white; }
-  .cal-cell.empty { background: transparent; }
-  
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
-  
-  /* Responsive */
-  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
-  @media (max-width: 700px) {
-    .dash-layout { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .dash-content { padding: 20px 16px; }
-    .stats-row { grid-template-columns: 1fr 1fr; }
-    .field-row { grid-template-columns: 1fr; }
-  }
-
-/* Sidebar sticky */
-.sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-.sign-out-btn { margin-left: auto; background: transparent; border: none; color: var(--smoke); font-size: 14px; cursor: pointer; padding: 4px; }
-.sign-out-btn:hover { color: var(--red); }
-.user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--ink); flex-shrink: 0; overflow: hidden; }
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.content{padding:24px 28px}
+.card{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:22px;margin-bottom:16px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--smoke);margin-bottom:18px;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.12em}
+.field input,.field select,.field textarea{background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field input::placeholder,.field textarea::placeholder{color:var(--smoke2)}
+.field select option{background:var(--ink3)}
+.field textarea{resize:vertical;min-height:72px}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px}
+.alert{padding:10px 14px;border-radius:2px;font-size:12px;margin-top:10px;display:none;border:1px solid;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.alert-ok{background:rgba(74,173,114,0.1);color:var(--green2);border-color:rgba(74,173,114,0.25)}
+.alert-err{background:rgba(139,58,58,0.1);color:#e07070;border-color:rgba(139,58,58,0.25)}
+.divider{border-top:1px solid rgba(255,255,255,0.06);margin:18px 0;padding-top:18px}
+.mini-head{font-size:11px;font-weight:600;color:var(--parchment);margin-bottom:12px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:16px}
+.sv{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);line-height:1;margin-bottom:4px}
+.sl{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em}
+.log-list{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.03);border-radius:3px;overflow:hidden;margin-top:12px}
+.log-row{background:var(--ink2);padding:11px 16px;display:flex;align-items:center;gap:12px;transition:background .12s}
+.log-row:hover{background:var(--ink3)}
+.log-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.log-info{flex:1;min-width:0}
+.log-title{font-size:12px;font-weight:500;color:var(--parchment)}
+.log-detail{font-size:11px;color:var(--smoke);margin-top:2px}
+.log-date{font-size:10px;color:var(--smoke2);font-family:'DM Mono',monospace;white-space:nowrap}
+.pbar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pbf{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
+.pbf.g{background:var(--green2)}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.tag{display:inline-block;font-size:8px;background:var(--gold-dim);color:var(--gold);padding:2px 5px;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;margin-right:3px;border-radius:1px}
+.empty{padding:20px;text-align:center;color:var(--smoke);font-size:12px;line-height:1.7}
+.empty a{color:var(--gold);text-decoration:none}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}}
 </style>
 </head>
 <body>
-<div class="dash-layout">
-<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="sidebar-section-label">TODAY</div><a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a><a href="/chat" class="sidebar-nav-item">💬 Chat with Riley</a><a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a><div class="sidebar-section-label">HISTORY</div><a href="/conversations" class="sidebar-nav-item">📁 Conversations</a><a href="/progress" class="sidebar-nav-item">📊 Progress</a><a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a><a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a><div class="sidebar-section-label">PROGRAMS</div><a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a><a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a><div class="sidebar-section-label">LIFE DATA</div><a href="/sleep" class="sidebar-nav-item">😴 Sleep</a><a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a><a href="/calendar" class="sidebar-nav-item active">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="user-avatar" id="user-avatar">?</div><div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div><button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button></div></aside>
-<main class="dash-main">
-<div class="dash-topbar">
-  <div>
-    <div class="topbar-greeting" id="greeting">Good morning.</div>
-    <div class="topbar-date" id="topbar-date"></div>
-  </div>
-  <div class="topbar-actions"><a href="/dashboard" class="topbar-btn">← Dashboard</a></div>
+<div class="layout">
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Morning Brief</a><a href="/chat" class="sni"><span class="sni-icon">💬</span>Chat with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">✅</span>Daily Check-In</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">📁</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">📊</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🏋️</span>Workouts</a><a href="/nutrition" class="sni"><span class="sni-icon">🍳</span>Nutrition</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Enrollments</a><a href="/roadmap" class="sni"><span class="sni-icon">🗺️</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">😴</span>Sleep</a><a href="/finance" class="sni"><span class="sni-icon">💰</span>Financial Goals</a><a href="/calendar" class="sni active"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<main class="main">
+<div class="topbar">
+  <div><div class="tb-title" id="tb-greeting">Calendar</div><div class="tb-sub" id="tb-date"></div></div>
+  <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Dashboard</a></div>
 </div>
-<div class="dash-content">
+<div class="content">
 
 <div class="two-col">
 <div>
-  <div class="form-section">
-    <div style="font-size:32px;margin-bottom:12px">📅</div>
-    <div class="form-title">Calendar Integration</div>
-    <div class="form-sub">Riley will connect to your Google Calendar or Outlook to understand your schedule — then build your daily brief around it.</div>
-    <div style="margin-top:20px">
-      <div style="background:var(--warm-white);border:1px solid var(--mist);border-radius:2px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:20px">📆</div>
-        <div><div style="font-size:13px;font-weight:500;color:var(--ink)">Google Calendar</div><div style="font-size:11px;color:var(--smoke)">Sync meetings, events, and blocks</div></div>
-        <div style="margin-left:auto"><span style="font-size:10px;font-family:DM Mono,monospace;background:var(--gold-dim);color:var(--gold);padding:3px 8px">COMING SOON</span></div>
-      </div>
-      <div style="background:var(--warm-white);border:1px solid var(--mist);border-radius:2px;padding:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:20px">📧</div>
-        <div><div style="font-size:13px;font-weight:500;color:var(--ink)">Outlook / Microsoft 365</div><div style="font-size:11px;color:var(--smoke)">Sync meetings and tasks</div></div>
-        <div style="margin-left:auto"><span style="font-size:10px;font-family:DM Mono,monospace;background:var(--gold-dim);color:var(--gold);padding:3px 8px">COMING SOON</span></div>
-      </div>
+  <div class="card">
+    <div class="card-title">Calendar Integration</div>
+    <div class="card-sub">Riley will connect to your Google Calendar to understand your schedule and build your brief around it.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--ink3);border-radius:3px;border:1px solid rgba(255,255,255,0.06)"><span style="font-size:20px">📆</span><div><div style="font-size:13px;color:var(--parchment)">Google Calendar</div><div style="font-size:11px;color:var(--smoke)">Sync meetings, events, and time blocks</div></div><span style="margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;background:var(--gold-dim);color:var(--gold);padding:3px 8px;letter-spacing:0.1em">COMING SOON</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--ink3);border-radius:3px;border:1px solid rgba(255,255,255,0.06)"><span style="font-size:20px">📧</span><div><div style="font-size:13px;color:var(--parchment)">Outlook / Microsoft 365</div><div style="font-size:11px;color:var(--smoke)">Sync meetings and tasks</div></div><span style="margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;background:var(--gold-dim);color:var(--gold);padding:3px 8px;letter-spacing:0.1em">COMING SOON</span></div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--ink3);border-radius:3px;border:1px solid rgba(255,255,255,0.06)"><span style="font-size:20px">⌚</span><div><div style="font-size:13px;color:var(--parchment)">Whoop Integration</div><div style="font-size:11px;color:var(--smoke)">HRV, recovery, sleep stages, strain</div></div><span style="margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;background:var(--gold-dim);color:var(--gold);padding:3px 8px;letter-spacing:0.1em">COMING SOON</span></div>
     </div>
   </div>
 </div>
 <div>
-  <div class="section-label" style="margin-top:0">Today's Priorities</div>
-  <div id="today-habits" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px;margin-bottom:16px"></div>
-  <div class="section-label">Active Goals</div>
-  <div id="today-goals" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:20px"></div>
+  <div class="card"><div style="font-size:11px;font-weight:600;color:var(--parchment);margin-bottom:14px;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-transform:uppercase">Today's Priorities</div><div id="cal-habits"></div></div>
+  <div class="card"><div style="font-size:11px;font-weight:600;color:var(--parchment);margin-bottom:14px;font-family:'DM Mono',monospace;letter-spacing:0.06em;text-transform:uppercase">Active Goals</div><div id="cal-goals"></div></div>
 </div>
 </div>
 
@@ -308,114 +114,69 @@ body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--i
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 
-const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
-const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+const SB = supabase.createClient(
+  'https://tglljvjixlolaguycvbb.supabase.co',
+  'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+);
+let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
 
-let _db, _user, _uid, _today;
-
-async function authInit() {
-  _db = supabase.createClient(SB_URL, SB_KEY);
-  const { data } = await _db.auth.getSession();
-  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return false; }
-  _user = data.session.user;
-  _uid  = _user.id;
-  _today = new Date().toISOString().slice(0,10);
-  
-  const meta = _user.user_metadata || {};
-  const fullName  = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
-  const firstName = fullName.split(' ')[0];
-  const avatarUrl = meta.avatar_url || meta.picture || '';
-  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || 'BC';
-  
-  // Topbar
-  const h = new Date().getHours();
-  const greet = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-  const gEl = document.getElementById('greeting');
-  if (gEl) gEl.textContent = greet + ', ' + firstName + '. \u2600\uFE0F';
-  const dEl = document.getElementById('topbar-date');
-  if (dEl) dEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  
-  // Sidebar user
-  const av = document.getElementById('user-avatar');
-  if (av) {
-    if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-    else av.textContent = initials;
-  }
-  const nm = document.getElementById('user-name');
-  if (nm) nm.textContent = fullName;
-  
-  return true;
+function A(id,msg,ok){
+  const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
+  el.textContent=msg;el.className='alert '+(ok?'alert-ok':'alert-err');el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',5000);
 }
-
-async function signOut() {
-  await _db.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
+function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+async function boot(cb){
+  try{
+    const {data:{session}}=await SB.auth.getSession();
+    if(!session){window.location.href='https://riley.eight14.us';return;}
+    USER=session.user;UID=USER.id;
+    const meta=USER.user_metadata||{};
+    const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+    const firstName=fullName.split(' ')[0];
+    const avatarUrl=meta.avatar_url||meta.picture||'';
+    const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    const h=new Date().getHours();
+    const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
+    const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+    const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
+    await cb();
+  }catch(e){console.error('Boot:',e);}
 }
-
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function fmtDate(ts) {
-  if (!ts) return '';
-  const d = new Date(ts), t = new Date(), y = new Date();
-  y.setDate(t.getDate()-1);
-  if (d.toDateString()===t.toDateString()) return 'Today';
-  if (d.toDateString()===y.toDateString()) return 'Yesterday';
-  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
-}
-function fmtTime(ts) {
-  if (!ts) return '';
-  return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-}
-function showMsg(id, text, type='success') {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className = 'msg ' + type;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display='none'; }, 3500);
-}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 
 
-(async function() {
-  if (!(await authInit())) return;
-  
-  const [habitsR, doneR, goalsR] = await Promise.allSettled([
-    _db.from('habits').select('*').eq('user_id',_uid).eq('is_active',true).order('sort_order').limit(8),
-    _db.from('habit_completions').select('habit_id').eq('user_id',_uid).eq('completed_date',_today),
-    _db.from('user_goals').select('*').eq('user_id',_uid).eq('is_active',true).order('sort_order').limit(6)
+(async()=>{ await boot(async()=>{
+  const [hR,hdR,gR]=await Promise.allSettled([
+    SB.from('habits').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order').limit(8),
+    SB.from('habit_completions').select('habit_id').eq('user_id',UID).eq('completed_date',TODAY),
+    SB.from('user_goals').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order').limit(6)
   ]);
-  
-  const habits = (habitsR.status==='fulfilled'?habitsR.value?.data:null)||[];
-  const done   = new Set(((doneR.status==='fulfilled'?doneR.value?.data:null)||[]).map(x=>x.habit_id));
-  const goals  = (goalsR.status==='fulfilled'?goalsR.value?.data:null)||[];
-  
-  const hEl = document.getElementById('today-habits');
-  hEl.innerHTML = !habits.length ? '<div style="font-size:13px;color:var(--smoke)">Add habits in <a href="/tracker" style="color:var(--gold)">Tracker →</a></div>' :
-    habits.map(h=>{
-      const isDone=done.has(h.id);
-      return '<div class="habit-row"><button class="habit-toggle '+(isDone?'done':'')+'" onclick="toggleH(''+h.id+'')">'+(isDone?'✓':'')+'</button><span class="habit-name '+(isDone?'done':'')+'">'+(h.emoji||'')+'&nbsp;'+esc(h.title)+'</span></div>';
-    }).join('');
-  
-  const gEl = document.getElementById('today-goals');
-  gEl.innerHTML = !goals.length ? '<div style="font-size:13px;color:var(--smoke)">Add goals in <a href="/tracker" style="color:var(--gold)">Tracker →</a></div>' :
+  const habits=(hR.status==='fulfilled'?hR.value?.data:null)||[];
+  const doneSet=new Set(((hdR.status==='fulfilled'?hdR.value?.data:null)||[]).map(x=>x.habit_id));
+  const goals=(gR.status==='fulfilled'?gR.value?.data:null)||[];
+  const hEl=document.getElementById('cal-habits');
+  hEl.innerHTML=!habits.length?`<div style="font-size:12px;color:var(--smoke)">Add habits in <a href="/tracker" style="color:var(--gold)">Tracker →</a></div>`:
+    habits.map(h=>{const d=doneSet.has(h.id);
+      return`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)" id="ch-${h.id}"><button onclick="toggleH('${h.id}')" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${d?'var(--green2)':'rgba(255,255,255,0.15)'};background:${d?'var(--green2)':'transparent'};color:white;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">${d?'✓':''}</button><span style="font-size:12px;color:${d?'var(--smoke)':'var(--parchment)'};${d?'text-decoration:line-through':''}">${h.emoji||''} ${esc(h.title)}</span></div>`;}).join('');
+  const gEl=document.getElementById('cal-goals');
+  gEl.innerHTML=!goals.length?`<div style="font-size:12px;color:var(--smoke)">Add goals in <a href="/tracker" style="color:var(--gold)">Tracker →</a></div>`:
     goals.map(g=>{const pct=g.target_value>0?Math.min(100,Math.round(g.current_value/g.target_value*100)):0;const fin=pct>=100;
-      return '<div class="goal-row"><div class="goal-top"><span class="goal-name">'+esc(g.title)+'</span><span class="goal-val"'+(fin?' style="color:var(--green)"':'')+'>'+(g.current_value||0).toLocaleString()+' / '+(g.target_value||0).toLocaleString()+' '+(g.unit||'')+(fin?' ✓':'')+'</span></div><div class="goal-bar"><div class="goal-fill"'+(fin?' style="background:var(--green);width:100%"':' style="width:'+pct+'%"')+'></div></div></div>';
-    }).join('');
-})();
-
-async function toggleH(id) {
-  try {
-  const btn=document.querySelector('[onclick*="\''+id+'\'"]');
-  const isDone=btn.classList.contains('done');
-  if (isDone) await _db.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',_today).eq('user_id',_uid);
-  else await _db.from('habit_completions').upsert({habit_id:id,user_id:_uid,completed_date:_today},{onConflict:'habit_id,completed_date'});
-  btn.classList.toggle('done',!isDone);
-  btn.textContent=isDone?'':'✓';
-  const nameEl=btn.nextElementSibling;
-  if(nameEl){nameEl.classList.toggle('done',!isDone);}
-  } catch(e){console.error('toggleH:',e);}
+      return`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;color:var(--parchment)">${esc(g.title)}</span><span style="font-size:10px;font-family:'DM Mono',monospace;color:${fin?'var(--green2)':'var(--gold)'}">${pct}%${fin?' ✓':''}</span></div><div class="pbar"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div></div>`;}).join('');
+}); })();
+async function toggleH(id){
+  const row=document.getElementById('ch-'+id);if(!row)return;
+  const btn=row.querySelector('button');const was=btn.style.background.includes('green');
+  btn.style.background=was?'transparent':'var(--green2)';btn.style.borderColor=was?'rgba(255,255,255,0.15)':'var(--green2)';btn.textContent=was?'':'✓';
+  const sp=row.querySelector('span');if(sp){sp.style.color=was?'var(--parchment)':'var(--smoke)';sp.style.textDecoration=was?'none':'line-through';}
+  try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);
+  else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}
+  catch(e){console.error(e);}
 }
 
 </script>

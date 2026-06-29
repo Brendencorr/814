@@ -3,620 +3,320 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Tracker — Riley · The 8:14 Project</title>
+<title>Daily Tracker — Riley</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;
-  --gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);
-  --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink)}
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.06)}
-.sidebar-logo{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:20px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);margin-top:2px}
-.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin:16px 0 4px}
-.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:9px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
-.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:16px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.user-name{font-size:12px;color:var(--parchment);font-weight:500}
-.user-plan{font-size:10px;color:var(--gold)}
-.sign-out-btn{margin-left:auto;background:none;border:none;color:var(--smoke);font-size:16px;cursor:pointer}
-.sign-out-btn:hover{color:var(--red)}
-.dash-main{overflow-y:auto}
-.dash-topbar{padding:20px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
-.topbar-sub{font-size:13px;color:var(--smoke);margin-top:2px}
-.topbar-btn{background:var(--ink);color:var(--parchment);border:none;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-block}
-.topbar-btn.gold{background:var(--gold);color:var(--ink)}
-.dash-content{padding:28px 32px;max-width:1100px}
-.two-col{display:grid;grid-template-columns:1fr 380px;gap:24px}
-.section-card{background:white;border:1px solid var(--mist);border-radius:2px;padding:24px;margin-bottom:20px}
-.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:4px}
-.card-sub{font-size:13px;color:var(--smoke);margin-bottom:20px;line-height:1.5}
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.field label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em}
-.field input,.field select,.field textarea{background:var(--warm-white);border:1px solid var(--mist);border-radius:2px;padding:9px 12px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;transition:border-color .15s;width:100%}
-.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
-.field textarea{resize:vertical;min-height:72px}
-.field-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:14px}
-.btn{padding:10px 22px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--warm:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--mist:rgba(255,255,255,0.06);--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.tb-actions{display:flex;gap:8px}
+.btn{display:inline-block;padding:7px 16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none;letter-spacing:0.04em}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
 .btn-gold{background:var(--gold);color:var(--ink)}
-.btn-gold:hover{opacity:.88}
-.btn-gold:disabled{opacity:.45;cursor:default}
-.btn-outline{background:none;border:1px solid var(--mist);color:var(--ink)}
-.btn-outline:hover{border-color:var(--smoke)}
-.alert{padding:10px 14px;border-radius:2px;font-size:13px;margin-top:10px;display:none;border:1px solid}
-.alert-ok{background:rgba(74,124,89,0.1);color:var(--green);border-color:rgba(74,124,89,0.3)}
-.alert-err{background:rgba(139,58,58,0.1);color:var(--red);border-color:rgba(139,58,58,0.3)}
-.mood-row{display:flex;gap:8px;margin:12px 0}
-.mood-btn{flex:1;padding:10px 4px;background:var(--warm-white);border:1.5px solid var(--mist);border-radius:2px;cursor:pointer;font-size:22px;text-align:center;transition:all .15s}
-.mood-btn:hover{border-color:var(--gold);transform:scale(1.08)}
-.mood-btn.active{border-color:var(--gold);background:var(--gold-dim)}
-.habit-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--mist)}
-.habit-row:last-child{border-bottom:none}
-.habit-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--mist);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;transition:all .15s}
-.habit-check.done{background:var(--green);border-color:var(--green);color:white}
-.habit-label{flex:1;font-size:14px;color:var(--ink)}
-.habit-label.done{text-decoration:line-through;color:var(--smoke)}
-.remove-btn{background:none;border:none;color:var(--smoke);font-size:18px;cursor:pointer;padding:2px 6px;line-height:1}
-.remove-btn:hover{color:var(--red)}
-.prog-bar{height:5px;background:var(--mist);border-radius:3px;margin-top:6px;overflow:hidden}
-.prog-bar-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .4s}
-.prog-bar-fill.done{background:var(--green)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px}
-.cal-dot{width:100%;aspect-ratio:1;border-radius:50%;background:var(--mist)}
-.cal-dot.done{background:var(--gold)}
-.cal-dot.today{background:var(--green)}
-.sober-count{font-family:'DM Serif Display',serif;font-size:56px;color:var(--ink);line-height:1}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
-@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dash-content{padding:16px}.two-col{grid-template-columns:1fr}}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.content{padding:24px 28px}
+.card{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:22px;margin-bottom:16px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--smoke);margin-bottom:18px;line-height:1.5}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.12em}
+.field input,.field select,.field textarea{background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .15s;width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field input::placeholder,.field textarea::placeholder{color:var(--smoke2)}
+.field select option{background:var(--ink3)}
+.field textarea{resize:vertical;min-height:72px}
+.fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px}
+.alert{padding:10px 14px;border-radius:2px;font-size:12px;margin-top:10px;display:none;border:1px solid;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.alert-ok{background:rgba(74,173,114,0.1);color:var(--green2);border-color:rgba(74,173,114,0.25)}
+.alert-err{background:rgba(139,58,58,0.1);color:#e07070;border-color:rgba(139,58,58,0.25)}
+.divider{border-top:1px solid rgba(255,255,255,0.06);margin:18px 0;padding-top:18px}
+.mini-head{font-size:11px;font-weight:600;color:var(--parchment);margin-bottom:12px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:16px}
+.sv{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);line-height:1;margin-bottom:4px}
+.sl{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em}
+.log-list{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.03);border-radius:3px;overflow:hidden;margin-top:12px}
+.log-row{background:var(--ink2);padding:11px 16px;display:flex;align-items:center;gap:12px;transition:background .12s}
+.log-row:hover{background:var(--ink3)}
+.log-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.log-info{flex:1;min-width:0}
+.log-title{font-size:12px;font-weight:500;color:var(--parchment)}
+.log-detail{font-size:11px;color:var(--smoke);margin-top:2px}
+.log-date{font-size:10px;color:var(--smoke2);font-family:'DM Mono',monospace;white-space:nowrap}
+.pbar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pbf{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
+.pbf.g{background:var(--green2)}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.tag{display:inline-block;font-size:8px;background:var(--gold-dim);color:var(--gold);padding:2px 5px;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;margin-right:3px;border-radius:1px}
+.empty{padding:20px;text-align:center;color:var(--smoke);font-size:12px;line-height:1.7}
+.empty a{color:var(--gold);text-decoration:none}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}}
 </style>
 </head>
 <body>
-<div class="dash-layout">
+<div class="layout">
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Morning Brief</a><a href="/chat" class="sni"><span class="sni-icon">💬</span>Chat with Riley</a><a href="/tracker" class="sni active"><span class="sni-icon">✅</span>Daily Check-In</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">📁</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">📊</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🏋️</span>Workouts</a><a href="/nutrition" class="sni"><span class="sni-icon">🍳</span>Nutrition</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Enrollments</a><a href="/roadmap" class="sni"><span class="sni-icon">🗺️</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">😴</span>Sleep</a><a href="/finance" class="sni"><span class="sni-icon">💰</span>Financial Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<main class="main">
+<div class="topbar">
+  <div><div class="tb-title" id="tb-greeting">Daily Tracker</div><div class="tb-sub" id="tb-date"></div></div>
+  <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Dashboard</a><a href="/chat" class="btn btn-gold">Talk to Riley</a></div>
+</div>
+<div class="content">
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
-    </div>
-    <div class="sidebar-section-label">Today</div>
-    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
-    <a href="/chat" class="sidebar-nav-item">💬 Chat with Riley</a>
-    <a href="/tracker" class="sidebar-nav-item active">✅ Daily Check-In</a>
-    <div class="sidebar-section-label">History</div>
-    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
-    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
-    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
-    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
-    <div class="sidebar-section-label">Programs</div>
-    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
-    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
-    <div class="sidebar-section-label">Life Data</div>
-    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
-    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
-    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
-    <div class="sidebar-spacer"></div>
-    <div class="sidebar-user">
-      <div class="user-avatar" id="user-avatar">?</div>
-      <div>
-        <div class="user-name" id="user-name">Loading…</div>
-        <div class="user-plan">Life Coach · Active</div>
-      </div>
-      <button class="sign-out-btn" onclick="doSignOut()" title="Sign out">↪</button>
-    </div>
-  </aside>
-
-  <!-- Main -->
-  <main class="dash-main">
-    <div class="dash-topbar">
-      <div>
-        <div class="topbar-title" id="greeting">Daily Tracker</div>
-        <div class="topbar-sub" id="topbar-date">Track your sobriety, mood, habits and goals</div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <a href="/dashboard" class="topbar-btn">← Dashboard</a>
-        <a href="/chat" class="topbar-btn gold">Talk to Riley</a>
-      </div>
-    </div>
-
-    <div class="dash-content">
-      <div class="two-col">
-
-        <!-- LEFT COLUMN -->
+<div class="two-col">
+<div>
+  <!-- SOBRIETY -->
+  <div class="card">
+    <div class="card-title">Sobriety Tracker</div>
+    <div class="card-sub">Riley tracks your streak and celebrates every milestone with you.</div>
+    <div id="sob-display" style="display:none">
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
         <div>
-
-          <!-- SOBRIETY -->
-          <div class="section-card">
-            <div class="card-title">Sobriety Tracker</div>
-            <div class="card-sub">Set your start date — Riley tracks your streak and celebrates milestones with you.</div>
-
-            <!-- Display (shown when date is set) -->
-            <div id="sober-display" style="display:none">
-              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
-                <div class="sober-count" id="sober-num">0</div>
-                <div style="font-size:18px;color:var(--smoke)">days sober</div>
-              </div>
-              <div style="font-size:14px;color:var(--smoke);margin-bottom:16px" id="sober-msg"></div>
-              <div class="cal-grid" id="sober-grid"></div>
-              <div style="font-size:10px;color:var(--smoke);font-family:'DM Mono',monospace;margin-top:6px">Last 28 days · gold = check-in logged</div>
-              <button class="btn btn-outline" style="margin-top:16px;font-size:12px" onclick="document.getElementById('sober-display').style.display='none';document.getElementById('sober-form').style.display='block'">Change date</button>
-            </div>
-
-            <!-- Form (shown until date is set) -->
-            <div id="sober-form">
-              <div class="field">
-                <label>Sobriety start date</label>
-                <input type="date" id="sober-date" max="">
-              </div>
-              <button class="btn btn-gold" id="sober-btn" onclick="saveSobriety()">Save Start Date</button>
-              <div class="alert" id="sober-alert"></div>
-            </div>
-          </div>
-
-          <!-- MOOD CHECK-IN -->
-          <div class="section-card">
-            <div class="card-title">Daily Check-In</div>
-            <div class="card-sub">How are you feeling? Riley uses this to personalize your experience and brief.</div>
-
-            <div style="font-size:12px;color:var(--smoke);margin-bottom:6px">Mood today</div>
-            <div class="mood-row" id="mood-row">
-              <button class="mood-btn" data-n="1" onclick="pickMood(1)">😔</button>
-              <button class="mood-btn" data-n="2" onclick="pickMood(2)">😐</button>
-              <button class="mood-btn" data-n="3" onclick="pickMood(3)">🙂</button>
-              <button class="mood-btn" data-n="4" onclick="pickMood(4)">😊</button>
-              <button class="mood-btn" data-n="5" onclick="pickMood(5)">🔥</button>
-            </div>
-
-            <div class="field-row">
-              <div class="field"><label>Water (oz)</label><input type="number" id="ci-water" placeholder="64" min="0" max="300"></div>
-              <div class="field"><label>Sleep (hrs)</label><input type="number" id="ci-sleep" placeholder="7.5" min="0" max="24" step="0.5"></div>
-              <div class="field"><label>Screen time (min)</label><input type="number" id="ci-screen" placeholder="90" min="0"></div>
-            </div>
-            <div class="field"><label>Notes (optional)</label><textarea id="ci-notes" rows="2" placeholder="Anything on your mind today…"></textarea></div>
-            <button class="btn btn-gold" id="ci-btn" onclick="saveCheckin()">Save Check-In</button>
-            <div class="alert" id="ci-alert"></div>
-          </div>
-
-          <!-- HABITS -->
-          <div class="section-card">
-            <div class="card-title">Daily Habits</div>
-            <div class="card-sub">Click to toggle complete for today. Riley tracks your streaks.</div>
-            <div id="habit-list" style="margin-bottom:20px"></div>
-            <div style="border-top:1px solid var(--mist);padding-top:20px">
-              <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">Add a habit</div>
-              <div class="field-row">
-                <div class="field"><label>Habit name</label><input type="text" id="h-title" placeholder="Morning meditation"></div>
-                <div class="field"><label>Emoji</label><input type="text" id="h-emoji" placeholder="🧘" style="max-width:80px"></div>
-              </div>
-              <button class="btn btn-gold" id="h-btn" onclick="addHabit()">Add Habit</button>
-              <div class="alert" id="h-alert"></div>
-            </div>
-          </div>
-
+          <div style="font-family:'DM Serif Display',serif;font-size:52px;color:var(--parchment);line-height:1" id="sob-num">0</div>
+          <div style="font-size:11px;color:var(--smoke);margin-top:4px" id="sob-label"></div>
         </div>
-
-        <!-- RIGHT COLUMN -->
         <div>
-
-          <!-- GOALS -->
-          <div class="section-card">
-            <div class="card-title">Weekly Goals</div>
-            <div class="card-sub">Track what matters most this week. Update your progress anytime.</div>
-            <div id="goal-list" style="margin-bottom:20px"></div>
-            <div style="border-top:1px solid var(--mist);padding-top:20px">
-              <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px">Add a goal</div>
-              <div class="field"><label>Goal title</label><input type="text" id="g-title" placeholder="Email subscribers"></div>
-              <div class="field-row" style="margin-top:10px">
-                <div class="field"><label>Current</label><input type="number" id="g-current" placeholder="412"></div>
-                <div class="field"><label>Target</label><input type="number" id="g-target" placeholder="500"></div>
-                <div class="field"><label>Unit</label><input type="text" id="g-unit" placeholder="subscribers"></div>
-              </div>
-              <button class="btn btn-gold" id="g-btn" onclick="addGoal()">Add Goal</button>
-              <div class="alert" id="g-alert"></div>
-            </div>
-          </div>
-
+          <div style="font-size:13px;color:var(--gold);font-weight:500;margin-bottom:4px" id="sob-milestone"></div>
+          <div style="font-size:12px;color:var(--smoke)" id="sob-msg"></div>
         </div>
       </div>
+      <div id="sob-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:280px;margin-bottom:16px"></div>
+      <div style="font-size:9px;color:var(--smoke2);font-family:'DM Mono',monospace;letter-spacing:0.08em">LAST 28 DAYS · GOLD = CHECK-IN</div>
+      <button class="btn btn-ghost" style="margin-top:14px;font-size:11px" onclick="showSobForm()">Change date</button>
     </div>
-  </main>
+    <div id="sob-form">
+      <div class="field"><label>Start date</label><input type="date" id="sob-date"></div>
+      <button class="btn btn-gold" id="sob-btn" onclick="saveSobriety()">Save Start Date</button>
+    </div>
+    <div class="alert" id="sob-alert"></div>
+  </div>
+  <!-- CHECK-IN -->
+  <div class="card">
+    <div class="card-title">Daily Check-In</div>
+    <div class="card-sub">Log your mood, water, sleep, and notes. Riley uses this every day.</div>
+    <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px">Mood today</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button style="flex:1;padding:10px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;cursor:pointer;font-size:20px;transition:all .15s" class="mb" data-n="1" onclick="pickMood(1,this)">😔</button>
+      <button style="flex:1;padding:10px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;cursor:pointer;font-size:20px;transition:all .15s" class="mb" data-n="2" onclick="pickMood(2,this)">😐</button>
+      <button style="flex:1;padding:10px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;cursor:pointer;font-size:20px;transition:all .15s" class="mb" data-n="3" onclick="pickMood(3,this)">🙂</button>
+      <button style="flex:1;padding:10px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;cursor:pointer;font-size:20px;transition:all .15s" class="mb" data-n="4" onclick="pickMood(4,this)">😊</button>
+      <button style="flex:1;padding:10px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;cursor:pointer;font-size:20px;transition:all .15s" class="mb" data-n="5" onclick="pickMood(5,this)">🔥</button>
+    </div>
+    <div class="fr">
+      <div class="field"><label>Water (oz)</label><input type="number" id="ci-water" placeholder="64" min="0"></div>
+      <div class="field"><label>Sleep (hrs)</label><input type="number" id="ci-sleep" placeholder="7.5" step="0.5" min="0" max="24"></div>
+      <div class="field"><label>Screen (min)</label><input type="number" id="ci-screen" placeholder="90" min="0"></div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="ci-notes" rows="2" placeholder="What's on your mind today?"></textarea></div>
+    <button class="btn btn-gold" id="ci-btn" onclick="saveCheckin()">Save Check-In</button>
+    <div class="alert" id="ci-alert"></div>
+  </div>
+  <!-- HABITS -->
+  <div class="card">
+    <div class="card-title">Daily Habits</div>
+    <div class="card-sub">Click to toggle complete for today.</div>
+    <div id="habit-list"></div>
+    <div class="divider">
+      <div class="mini-head">Add a habit</div>
+      <div class="fr">
+        <div class="field"><label>Name</label><input type="text" id="h-name" placeholder="Morning meditation"></div>
+        <div class="field"><label>Emoji</label><input type="text" id="h-emoji" placeholder="🧘" style="max-width:80px"></div>
+      </div>
+      <button class="btn btn-gold" id="h-btn" onclick="addHabit()">Add Habit</button>
+      <div class="alert" id="h-alert"></div>
+    </div>
+  </div>
+</div>
+<div>
+  <!-- GOALS -->
+  <div class="card">
+    <div class="card-title">Weekly Goals</div>
+    <div class="card-sub">Update your progress — Riley tracks trends over time.</div>
+    <div id="goal-list"></div>
+    <div class="divider">
+      <div class="mini-head">Add a goal</div>
+      <div class="field"><label>Title</label><input type="text" id="g-name" placeholder="Email subscribers"></div>
+      <div class="fr" style="margin-top:10px">
+        <div class="field"><label>Current</label><input type="number" id="g-cur" placeholder="412"></div>
+        <div class="field"><label>Target</label><input type="number" id="g-tgt" placeholder="500"></div>
+        <div class="field"><label>Unit</label><input type="text" id="g-unit" placeholder="subscribers"></div>
+      </div>
+      <button class="btn btn-gold" id="g-btn" onclick="addGoal()">Add Goal</button>
+      <div class="alert" id="g-alert"></div>
+    </div>
+  </div>
+</div>
 </div>
 
+</div>
+</main>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// ── Config ────────────────────────────────────────────────────────────────────
-const SB   = supabase.createClient(
+
+const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
+let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let USER = null, UID = null, TODAY = new Date().toISOString().slice(0,10);
-let MOOD = null;
-
-// ── Alert helper ──────────────────────────────────────────────────────────────
-function alert2(id, msg, ok) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'alert ' + (ok ? 'alert-ok' : 'alert-err');
-  el.style.display = 'block';
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.style.display = 'none', 5000);
+function A(id,msg,ok){
+  const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
+  el.textContent=msg;el.className='alert '+(ok?'alert-ok':'alert-err');el.style.display='block';
+  clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',5000);
 }
-
-function setBtn(id, loading, label) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.disabled = loading;
-  el.textContent = loading ? 'Saving…' : label;
+function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+async function boot(cb){
+  try{
+    const {data:{session}}=await SB.auth.getSession();
+    if(!session){window.location.href='https://riley.eight14.us';return;}
+    USER=session.user;UID=USER.id;
+    const meta=USER.user_metadata||{};
+    const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+    const firstName=fullName.split(' ')[0];
+    const avatarUrl=meta.avatar_url||meta.picture||'';
+    const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+    const h=new Date().getHours();
+    const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
+    const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+    const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
+    await cb();
+  }catch(e){console.error('Boot:',e);}
 }
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
-(async () => {
-  try {
-    const { data: { session } } = await SB.auth.getSession();
-    if (!session) { window.location.href = 'https://riley.eight14.us'; return; }
 
-    USER = session.user;
-    UID  = USER.id;
+let MOOD=null;
+(async()=>{ await boot(async()=>{
+  document.getElementById('sob-date').max=TODAY;
+  await Promise.all([loadSobriety(),loadCheckin(),loadHabits(),loadGoals()]);
+}); })();
 
-    // Sidebar user info
-    const meta      = USER.user_metadata || {};
-    const fullName  = meta.full_name || meta.name || USER.email.split('@')[0];
-    const firstName = fullName.split(' ')[0];
-    const avatarUrl = meta.avatar_url || meta.picture || '';
-    const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-
-    const h = new Date().getHours();
-    document.getElementById('greeting').textContent =
-      (h<12?'Good morning':h<17?'Good afternoon':'Good evening') + ', ' + firstName + '. ☀️';
-    document.getElementById('topbar-date').textContent =
-      new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-
-    const av = document.getElementById('user-avatar');
-    if (avatarUrl) av.innerHTML = `<img src="${avatarUrl}" alt="${initials}">`;
-    else av.textContent = initials;
-    document.getElementById('user-name').textContent = fullName;
-
-    // Set today as max for date picker
-    document.getElementById('sober-date').max = TODAY;
-
-    // Load everything in parallel
-    await Promise.all([ loadSobriety(), loadCheckin(), loadHabits(), loadGoals() ]);
-
-  } catch (e) {
-    console.error('Boot error:', e);
-  }
-})();
-
-// ── Sign out ──────────────────────────────────────────────────────────────────
-async function doSignOut() {
-  await SB.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
+async function loadSobriety(){
+  const {data}=await SB.from('sobriety_tracker').select('*').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
+  if(!data){document.getElementById('sob-display').style.display='none';document.getElementById('sob-form').style.display='block';return;}
+  const days=Math.max(0,Math.floor((Date.now()-new Date(data.start_date))/86400000));
+  document.getElementById('sob-num').textContent=days;
+  const yrs=Math.floor(days/365),mos=Math.floor((days%365)/30);
+  document.getElementById('sob-label').textContent=yrs>0?(yrs+'yr '+(mos>0?mos+'mo ':'')+' sober'):'days sober';
+  document.getElementById('sob-milestone').textContent=days>=365?'🏆 '+yrs+' year'+(yrs>1?'s':'')+' sober':days>=90?'💫 Personal best':days>=30?'⭐ 1 month':days>=7?'🌱 1 week':'🔥 Keep going';
+  document.getElementById('sob-msg').textContent=days>=365?'Absolutely extraordinary. Riley is with you.':days>=90?'Personal best territory. Keep going.':days>=30?'A full month. You're really doing this.':days>=7?'One week strong.':'Every single day counts.';
+  document.getElementById('sob-display').style.display='block';document.getElementById('sob-form').style.display='none';
+  document.getElementById('sob-date').value=data.start_date;
+  const {data:cis}=await SB.from('daily_checkins').select('checkin_date').eq('user_id',UID).gte('checkin_date',dAgo(27));
+  const ciSet=new Set((cis||[]).map(c=>c.checkin_date));
+  let g='';for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
+    const col=ds===TODAY?'var(--green2)':ciSet.has(ds)?'var(--gold)':'rgba(255,255,255,0.08)';
+    g+=`<div style="aspect-ratio:1;border-radius:50%;background:${col}" title="${ds}"></div>`;}
+  document.getElementById('sob-grid').innerHTML=g;
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// SOBRIETY
-// ══════════════════════════════════════════════════════════════════════════════
-async function loadSobriety() {
-  try {
-    const { data } = await SB.from('sobriety_tracker')
-      .select('*').eq('user_id', UID).eq('is_active', true)
-      .order('created_at', { ascending: false }).limit(1).maybeSingle();
-
-    if (!data) {
-      document.getElementById('sober-display').style.display = 'none';
-      document.getElementById('sober-form').style.display    = 'block';
-      return;
-    }
-
-    const days = Math.max(0, Math.floor((Date.now() - new Date(data.start_date)) / 86400000));
-    document.getElementById('sober-num').textContent = days;
-    const yrs  = Math.floor(days / 365);
-    const mons = Math.floor((days % 365) / 30);
-    const soberMsg =
-      yrs >= 5  ? yrs + ' years sober. Truly extraordinary. Ryan would be proud.' :
-      yrs >= 2  ? yrs + ' years and ' + mons + ' months. You are living proof.' :
-      yrs >= 1  ? '1 year and ' + mons + ' months sober. A complete transformation.' :
-      days >= 90 ? days + ' days — personal best territory. Keep going.' :
-      days >= 30 ? 'A full month sober. You\'re really doing this.' :
-      days >= 7  ? 'One week down. Keep building.' :
-                   'Every single day counts.';
-    document.getElementById('sober-msg').textContent = soberMsg;
-
-    document.getElementById('sober-display').style.display = 'block';
-    document.getElementById('sober-form').style.display    = 'none';
-    document.getElementById('sober-date').value = data.start_date;
-
-    // 28-day check-in grid
-    const { data: cis } = await SB.from('daily_checkins')
-      .select('checkin_date').eq('user_id', UID)
-      .gte('checkin_date', dAgo(27));
-    const ciSet = new Set((cis||[]).map(c => c.checkin_date));
-    let dots = '';
-    for (let i = 27; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
-      const ds = d.toISOString().slice(0,10);
-      dots += `<div class="cal-dot ${ds===TODAY?'today':ciSet.has(ds)?'done':''}" title="${ds}"></div>`;
-    }
-    document.getElementById('sober-grid').innerHTML = dots;
-
-  } catch (e) { console.error('loadSobriety:', e); }
+function showSobForm(){document.getElementById('sob-display').style.display='none';document.getElementById('sob-form').style.display='block';}
+async function saveSobriety(){
+  const dt=document.getElementById('sob-date').value;if(!dt)return A('sob-alert','Pick a date',false);
+  setBtn('sob-btn',true,'Save Start Date');
+  try{
+    await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
+    const {error}=await SB.from('sobriety_tracker').insert({user_id:UID,start_date:dt,is_active:true,milestone_days:[]});
+    if(error)throw error;
+    A('sob-alert','✓ Saved!',true);await loadSobriety();
+  }catch(e){A('sob-alert','Error: '+e.message,false);}finally{setBtn('sob-btn',false,'Save Start Date');}
 }
-
-async function saveSobriety() {
-  const dt = document.getElementById('sober-date').value;
-  if (!dt) return alert2('sober-alert', 'Please pick a start date.', false);
-
-  setBtn('sober-btn', true, 'Save Start Date');
-  try {
-    // Deactivate existing entries, then insert new
-    await SB.from('sobriety_tracker').update({ is_active: false }).eq('user_id', UID);
-    const { error } = await SB.from('sobriety_tracker').insert({
-      user_id: UID, start_date: dt, is_active: true, milestone_days: []
-    });
-    if (error) throw error;
-    alert2('sober-alert', '✓ Sobriety date saved!', true);
-    await loadSobriety();
-  } catch (e) {
-    alert2('sober-alert', 'Error: ' + e.message, false);
-    console.error('saveSobriety:', e);
-  } finally {
-    setBtn('sober-btn', false, 'Save Start Date');
-  }
+async function loadCheckin(){
+  const {data}=await SB.from('daily_checkins').select('*').eq('user_id',UID).eq('checkin_date',TODAY).maybeSingle();
+  if(!data)return;
+  if(data.mood){MOOD=data.mood;document.querySelectorAll('.mb').forEach(b=>{b.style.borderColor=parseInt(b.dataset.n)===data.mood?'var(--gold)':'rgba(255,255,255,0.1)';b.style.background=parseInt(b.dataset.n)===data.mood?'var(--gold-dim)':'var(--ink3)';});}
+  if(data.water_oz)document.getElementById('ci-water').value=data.water_oz;
+  if(data.sleep_hours)document.getElementById('ci-sleep').value=data.sleep_hours;
+  if(data.screen_time_min)document.getElementById('ci-screen').value=data.screen_time_min;
+  if(data.notes)document.getElementById('ci-notes').value=data.notes;
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// MOOD / CHECK-IN
-// ══════════════════════════════════════════════════════════════════════════════
-async function loadCheckin() {
-  try {
-    const { data } = await SB.from('daily_checkins')
-      .select('*').eq('user_id', UID).eq('checkin_date', TODAY).maybeSingle();
-    if (!data) return;
-    if (data.mood)           { MOOD = data.mood; highlightMood(data.mood); }
-    if (data.water_oz)       document.getElementById('ci-water').value  = data.water_oz;
-    if (data.sleep_hours)    document.getElementById('ci-sleep').value  = data.sleep_hours;
-    if (data.screen_time_min) document.getElementById('ci-screen').value = data.screen_time_min;
-    if (data.notes)          document.getElementById('ci-notes').value  = data.notes;
-  } catch (e) { console.error('loadCheckin:', e); }
+function pickMood(n,btn){
+  MOOD=n;
+  document.querySelectorAll('.mb').forEach(b=>{b.style.borderColor='rgba(255,255,255,0.1)';b.style.background='var(--ink3)';});
+  btn.style.borderColor='var(--gold)';btn.style.background='var(--gold-dim)';
 }
-
-function pickMood(n) {
-  MOOD = n;
-  highlightMood(n);
+async function saveCheckin(){
+  setBtn('ci-btn',true,'Save Check-In');
+  try{
+    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:MOOD||null,water_oz:parseInt(document.getElementById('ci-water').value)||null,sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||null,screen_time_min:parseInt(document.getElementById('ci-screen').value)||null,notes:document.getElementById('ci-notes').value.trim()||null,sobriety_day:true},{onConflict:'user_id,checkin_date'});
+    if(error)throw error;A('ci-alert','✓ Check-in saved! Riley will use this in your brief.',true);
+  }catch(e){A('ci-alert','Error: '+e.message,false);}finally{setBtn('ci-btn',false,'Save Check-In');}
 }
-function highlightMood(n) {
-  document.querySelectorAll('.mood-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.querySelector(`.mood-btn[data-n="${n}"]`);
-  if (btn) btn.classList.add('active');
+async function loadHabits(){
+  const {data:habits}=await SB.from('habits').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order');
+  const {data:done}=await SB.from('habit_completions').select('habit_id').eq('user_id',UID).eq('completed_date',TODAY);
+  const dSet=new Set((done||[]).map(x=>x.habit_id));
+  const el=document.getElementById('habit-list');
+  if(!habits||!habits.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No habits yet — add one below.</div>';return;}
+  el.innerHTML=habits.map(h=>{const d=dSet.has(h.id);return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)" id="hr-${h.id}"><button onclick="toggleHabit('${h.id}')" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${d?'var(--green2)':'rgba(255,255,255,0.15)'};background:${d?'var(--green2)':'transparent'};color:white;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">${d?'✓':''}</button><span style="flex:1;font-size:13px;color:${d?'var(--smoke)':'var(--parchment)'};${d?'text-decoration:line-through':''}">${h.emoji||''} ${esc(h.title)}</span><button onclick="deleteHabit('${h.id}')" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div>`;}).join('');
 }
-
-async function saveCheckin() {
-  setBtn('ci-btn', true, 'Save Check-In');
-  try {
-    const { error } = await SB.from('daily_checkins').upsert({
-      user_id:         UID,
-      checkin_date:    TODAY,
-      mood:            MOOD || null,
-      water_oz:        parseInt(document.getElementById('ci-water').value)  || null,
-      sleep_hours:     parseFloat(document.getElementById('ci-sleep').value) || null,
-      screen_time_min: parseInt(document.getElementById('ci-screen').value)  || null,
-      notes:           document.getElementById('ci-notes').value.trim()      || null,
-      sobriety_day:    true
-    }, { onConflict: 'user_id,checkin_date' });
-
-    if (error) throw error;
-    alert2('ci-alert', '✓ Check-in saved! Riley will use this in your brief.', true);
-  } catch (e) {
-    alert2('ci-alert', 'Error: ' + e.message, false);
-    console.error('saveCheckin:', e);
-  } finally {
-    setBtn('ci-btn', false, 'Save Check-In');
-  }
+async function toggleHabit(id){
+  const row=document.getElementById('hr-'+id);if(!row)return;
+  const btn=row.querySelector('button');const was=btn.style.background.includes('green');
+  btn.style.background=was?'transparent':'var(--green2)';btn.style.borderColor=was?'rgba(255,255,255,0.15)':'var(--green2)';btn.textContent=was?'':'✓';
+  const span=row.querySelector('span');if(span){span.style.color=was?'var(--parchment)':'var(--smoke)';span.style.textDecoration=was?'none':'line-through';}
+  try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);
+  else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}
+  catch(e){btn.style.background=was?'var(--green2)':'transparent';console.error(e);}
 }
-
-// ══════════════════════════════════════════════════════════════════════════════
-// HABITS
-// ══════════════════════════════════════════════════════════════════════════════
-async function loadHabits() {
-  try {
-    const { data: habits } = await SB.from('habits')
-      .select('*').eq('user_id', UID).eq('is_active', true).order('sort_order');
-    const { data: done } = await SB.from('habit_completions')
-      .select('habit_id').eq('user_id', UID).eq('completed_date', TODAY);
-
-    const doneSet = new Set((done||[]).map(x => x.habit_id));
-    const list = document.getElementById('habit-list');
-
-    if (!habits || !habits.length) {
-      list.innerHTML = '<div style="font-size:13px;color:var(--smoke);padding:8px 0">No habits yet — add your first one below.</div>';
-      return;
-    }
-
-    list.innerHTML = habits.map(h => {
-      const isDone = doneSet.has(h.id);
-      return `<div class="habit-row" id="hrow-${h.id}">
-        <button class="habit-check ${isDone?'done':''}" onclick="toggleHabit('${h.id}')">${isDone?'✓':''}</button>
-        <span class="habit-label ${isDone?'done':''}">${h.emoji||''} ${esc(h.title)}</span>
-        <button class="remove-btn" onclick="deleteHabit('${h.id}')" title="Remove">×</button>
-      </div>`;
-    }).join('');
-  } catch (e) { console.error('loadHabits:', e); }
+async function addHabit(){
+  const title=document.getElementById('h-name').value.trim();if(!title)return A('h-alert','Enter a name',false);
+  setBtn('h-btn',true,'Add Habit');
+  try{const {error}=await SB.from('habits').insert({user_id:UID,title,emoji:document.getElementById('h-emoji').value.trim()||null,category:'general',frequency:'daily',is_active:true,sort_order:0});
+  if(error)throw error;document.getElementById('h-name').value='';document.getElementById('h-emoji').value='';A('h-alert','✓ Habit added!',true);await loadHabits();}
+  catch(e){A('h-alert','Error: '+e.message,false);}finally{setBtn('h-btn',false,'Add Habit');}
 }
-
-async function toggleHabit(id) {
-  const row   = document.getElementById('hrow-' + id);
-  if (!row) return;
-  const check = row.querySelector('.habit-check');
-  const label = row.querySelector('.habit-label');
-  const isDone = check.classList.contains('done');
-
-  // Instant UI feedback
-  check.classList.toggle('done', !isDone);
-  check.textContent = isDone ? '' : '✓';
-  if (label) label.classList.toggle('done', !isDone);
-
-  try {
-    if (isDone) {
-      await SB.from('habit_completions').delete()
-        .eq('habit_id', id).eq('completed_date', TODAY).eq('user_id', UID);
-    } else {
-      await SB.from('habit_completions').upsert(
-        { habit_id: id, user_id: UID, completed_date: TODAY },
-        { onConflict: 'habit_id,completed_date' }
-      );
-    }
-  } catch (e) {
-    // Roll back UI on error
-    check.classList.toggle('done', isDone);
-    check.textContent = isDone ? '✓' : '';
-    if (label) label.classList.toggle('done', isDone);
-    console.error('toggleHabit:', e);
-  }
+async function deleteHabit(id){try{await SB.from('habits').update({is_active:false}).eq('id',id);await loadHabits();}catch(e){console.error(e);}}
+async function loadGoals(){
+  const {data}=await SB.from('user_goals').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order');
+  const el=document.getElementById('goal-list');
+  if(!data||!data.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No goals yet — add one below.</div>';return;}
+  el.innerHTML=data.map(g=>{const pct=g.target_value>0?Math.min(100,Math.round(g.current_value/g.target_value*100)):0;const fin=pct>=100;
+    return`<div style="margin-bottom:16px" id="gr-${g.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px;color:var(--parchment)">${esc(g.title)}</span><button onclick="deleteGoal('${g.id}')" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div><div style="display:flex;align-items:center;gap:10px"><input type="number" value="${g.current_value||0}" style="width:90px;padding:6px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:2px;font-size:13px;font-family:'DM Mono',monospace;color:var(--parchment);background:var(--ink3)" onchange="updateGoal('${g.id}',this.value)" onblur="updateGoal('${g.id}',this.value)"><span style="font-size:11px;color:var(--smoke)">/ ${(g.target_value||0).toLocaleString()} ${g.unit||''}</span><span style="font-size:13px;font-family:'DM Mono',monospace;color:${fin?'var(--green2)':'var(--gold)'};margin-left:auto">${pct}%${fin?' ✓':''}</span></div><div class="pbar" style="margin-top:8px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div></div>`;
+  }).join('');
 }
-
-async function addHabit() {
-  const title = document.getElementById('h-title').value.trim();
-  if (!title) return alert2('h-alert', 'Please enter a habit name.', false);
-
-  setBtn('h-btn', true, 'Add Habit');
-  try {
-    const { error } = await SB.from('habits').insert({
-      user_id: UID, title,
-      emoji:     document.getElementById('h-emoji').value.trim() || null,
-      category:  'general',
-      frequency: 'daily',
-      is_active: true,
-      sort_order: 0
-    });
-    if (error) throw error;
-    document.getElementById('h-title').value = '';
-    document.getElementById('h-emoji').value = '';
-    alert2('h-alert', '✓ Habit added!', true);
-    await loadHabits();
-  } catch (e) {
-    alert2('h-alert', 'Error: ' + e.message, false);
-    console.error('addHabit:', e);
-  } finally {
-    setBtn('h-btn', false, 'Add Habit');
-  }
+async function updateGoal(id,val){try{await SB.from('user_goals').update({current_value:parseFloat(val)||0}).eq('id',id);A('g-alert','✓ Updated!',true);}catch(e){A('g-alert','Error: '+e.message,false);}}
+async function addGoal(){
+  const title=document.getElementById('g-name').value.trim();if(!title)return A('g-alert','Enter a title',false);
+  setBtn('g-btn',true,'Add Goal');
+  try{const {error}=await SB.from('user_goals').insert({user_id:UID,title,category:'weekly',current_value:parseFloat(document.getElementById('g-cur').value)||0,target_value:parseFloat(document.getElementById('g-tgt').value)||0,unit:document.getElementById('g-unit').value.trim()||null,period:'weekly',period_start:TODAY,is_active:true,sort_order:0});
+  if(error)throw error;['g-name','g-cur','g-tgt','g-unit'].forEach(i=>document.getElementById(i).value='');A('g-alert','✓ Goal added!',true);await loadGoals();}
+  catch(e){A('g-alert','Error: '+e.message,false);}finally{setBtn('g-btn',false,'Add Goal');}
 }
+async function deleteGoal(id){try{await SB.from('user_goals').update({is_active:false}).eq('id',id);await loadGoals();}catch(e){console.error(e);}}
 
-async function deleteHabit(id) {
-  try {
-    await SB.from('habits').update({ is_active: false }).eq('id', id);
-    await loadHabits();
-  } catch (e) { console.error('deleteHabit:', e); }
-}
-
-// ══════════════════════════════════════════════════════════════════════════════
-// GOALS
-// ══════════════════════════════════════════════════════════════════════════════
-async function loadGoals() {
-  try {
-    const { data: goals } = await SB.from('user_goals')
-      .select('*').eq('user_id', UID).eq('is_active', true).order('sort_order');
-
-    const list = document.getElementById('goal-list');
-    if (!goals || !goals.length) {
-      list.innerHTML = '<div style="font-size:13px;color:var(--smoke);padding:8px 0">No goals yet — add your first one below.</div>';
-      return;
-    }
-
-    list.innerHTML = goals.map(g => {
-      const pct = g.target_value > 0 ? Math.min(100, Math.round(g.current_value/g.target_value*100)) : 0;
-      const fin = pct >= 100;
-      return `<div style="margin-bottom:18px" id="grow-${g.id}">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:14px;font-weight:500;color:var(--ink)">${esc(g.title)}</span>
-          <button class="remove-btn" onclick="deleteGoal('${g.id}')">×</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <input type="number" value="${g.current_value||0}"
-            style="width:100px;padding:7px 10px;border:1px solid var(--mist);border-radius:2px;font-size:14px;font-family:'DM Mono',monospace;color:var(--ink);background:var(--warm-white)"
-            onchange="updateGoal('${g.id}', this.value)"
-            onblur="updateGoal('${g.id}', this.value)">
-          <span style="font-size:12px;color:var(--smoke)">/ ${(g.target_value||0).toLocaleString()} ${g.unit||''}</span>
-          <span style="font-size:13px;font-family:'DM Mono',monospace;color:${fin?'var(--green)':'var(--gold)'};margin-left:auto">${pct}%${fin?' ✓':''}</span>
-        </div>
-        <div class="prog-bar"><div class="prog-bar-fill ${fin?'done':''}" style="width:${pct}%"></div></div>
-      </div>`;
-    }).join('');
-  } catch (e) { console.error('loadGoals:', e); }
-}
-
-async function updateGoal(id, val) {
-  try {
-    const { error } = await SB.from('user_goals')
-      .update({ current_value: parseFloat(val)||0 }).eq('id', id);
-    if (error) throw error;
-    alert2('g-alert', '✓ Goal updated!', true);
-    await loadGoals();
-  } catch (e) {
-    alert2('g-alert', 'Error: ' + e.message, false);
-    console.error('updateGoal:', e);
-  }
-}
-
-async function addGoal() {
-  const title = document.getElementById('g-title').value.trim();
-  if (!title) return alert2('g-alert', 'Please enter a goal title.', false);
-
-  setBtn('g-btn', true, 'Add Goal');
-  try {
-    const { error } = await SB.from('user_goals').insert({
-      user_id:       UID,
-      title,
-      category:      'weekly',
-      current_value: parseFloat(document.getElementById('g-current').value) || 0,
-      target_value:  parseFloat(document.getElementById('g-target').value)  || 0,
-      unit:          document.getElementById('g-unit').value.trim() || null,
-      period:        'weekly',
-      period_start:  TODAY,
-      is_active:     true,
-      sort_order:    0
-    });
-    if (error) throw error;
-    ['g-title','g-current','g-target','g-unit'].forEach(id => document.getElementById(id).value='');
-    alert2('g-alert', '✓ Goal added!', true);
-    await loadGoals();
-  } catch (e) {
-    alert2('g-alert', 'Error: ' + e.message, false);
-    console.error('addGoal:', e);
-  } finally {
-    setBtn('g-btn', false, 'Add Goal');
-  }
-}
-
-async function deleteGoal(id) {
-  try {
-    await SB.from('user_goals').update({ is_active: false }).eq('id', id);
-    await loadGoals();
-  } catch (e) { console.error('deleteGoal:', e); }
-}
-
-// ── Utilities ─────────────────────────────────────────────────────────────────
-function dAgo(n) {
-  const d = new Date(); d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0,10);
-}
-function esc(s) {
-  if (!s) return '';
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
 </script>
 </body>
 </html>

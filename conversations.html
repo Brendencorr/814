@@ -3,96 +3,103 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conversations — Riley · The 8:14 Project</title>
+<title>Conversations — Riley</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.15);--mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;}
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink)}
-.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.06)}
-.sidebar-logo{padding:0 24px 28px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:20px}
-.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
-.sidebar-logo-mark span{color:var(--gold)}
-.sidebar-logo-sub{font-size:11px;color:var(--smoke);margin-top:2px}
-.snl{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin:16px 0 4px}
-.sni{display:flex;align-items:center;gap:10px;padding:9px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
-.sni:hover,.sni.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
-.sidebar-spacer{flex:1}
-.sidebar-user{padding:16px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:10px}
-.uav{width:30px;height:30px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
-.uav img{width:100%;height:100%;object-fit:cover;border-radius:50%}
-.unm{font-size:12px;color:var(--parchment);font-weight:500}
-.upl{font-size:10px;color:var(--gold)}
-.sob{margin-left:auto;background:none;border:none;color:var(--smoke);font-size:16px;cursor:pointer}
-.sob:hover{color:var(--red)}
-.dash-main{overflow-y:auto}
-.dash-topbar{padding:20px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.tbt{font-family:'DM Serif Display',serif;font-size:20px;color:var(--ink)}
-.tbs{font-size:13px;color:var(--smoke);margin-top:2px}
-.btn{display:inline-block;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none}
-.btn-dark{background:var(--ink);color:var(--parchment)}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--warm:#faf8f4;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--mist:rgba(255,255,255,0.06);--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.tb-actions{display:flex;gap:8px}
+.btn{display:inline-block;padding:7px 16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none;letter-spacing:0.04em}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
 .btn-gold{background:var(--gold);color:var(--ink)}
-.btn:hover{opacity:.88}
-.btn:disabled{opacity:.45;cursor:default}
-.dc{padding:28px 32px}
-.card{background:white;border:1px solid var(--mist);border-radius:2px;padding:24px;margin-bottom:20px}
-.ct{font-family:'DM Serif Display',serif;font-size:18px;color:var(--ink);margin-bottom:4px}
-.cs{font-size:13px;color:var(--smoke);margin-bottom:18px;line-height:1.5}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.content{padding:24px 28px}
+.card{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:22px;margin-bottom:16px}
+.card-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);margin-bottom:4px}
+.card-sub{font-size:12px;color:var(--smoke);margin-bottom:18px;line-height:1.5}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.field label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em}
-.field input,.field select,.field textarea{background:var(--warm-white);border:1px solid var(--mist);border-radius:2px;padding:9px 12px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);outline:none;transition:border-color .15s;width:100%}
+.field label{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.12em}
+.field input,.field select,.field textarea{background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:2px;padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .15s;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold)}
+.field input::placeholder,.field textarea::placeholder{color:var(--smoke2)}
+.field select option{background:var(--ink3)}
 .field textarea{resize:vertical;min-height:72px}
 .fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:14px}
-.alert{padding:10px 14px;border-radius:2px;font-size:13px;margin-top:10px;display:none;border:1px solid}
-.ok{background:rgba(74,124,89,0.1);color:var(--green);border-color:rgba(74,124,89,0.3)}
-.err{background:rgba(139,58,58,0.1);color:var(--red);border-color:rgba(139,58,58,0.3)}
-.divider{border-top:1px solid var(--mist);margin:20px 0;padding-top:20px}
-.mini-head{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:12px}
-.log-list{display:flex;flex-direction:column;gap:1px;background:var(--mist);border-radius:2px;overflow:hidden;margin-top:12px}
-.log-row{background:white;padding:11px 16px;display:flex;align-items:center;gap:12px}
-.log-row:hover{background:var(--warm-white)}
-.log-icon{font-size:20px;width:32px;text-align:center;flex-shrink:0}
+.alert{padding:10px 14px;border-radius:2px;font-size:12px;margin-top:10px;display:none;border:1px solid;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.alert-ok{background:rgba(74,173,114,0.1);color:var(--green2);border-color:rgba(74,173,114,0.25)}
+.alert-err{background:rgba(139,58,58,0.1);color:#e07070;border-color:rgba(139,58,58,0.25)}
+.divider{border-top:1px solid rgba(255,255,255,0.06);margin:18px 0;padding-top:18px}
+.mini-head{font-size:11px;font-weight:600;color:var(--parchment);margin-bottom:12px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:16px}
+.sv{font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);line-height:1;margin-bottom:4px}
+.sl{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em}
+.log-list{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.03);border-radius:3px;overflow:hidden;margin-top:12px}
+.log-row{background:var(--ink2);padding:11px 16px;display:flex;align-items:center;gap:12px;transition:background .12s}
+.log-row:hover{background:var(--ink3)}
+.log-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
 .log-info{flex:1;min-width:0}
-.log-title{font-size:13px;font-weight:500;color:var(--ink)}
+.log-title{font-size:12px;font-weight:500;color:var(--parchment)}
 .log-detail{font-size:11px;color:var(--smoke);margin-top:2px}
-.log-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;white-space:nowrap}
-.pbar{height:5px;background:var(--mist);border-radius:3px;margin-top:6px;overflow:hidden}
-.pbf{height:100%;background:var(--gold);border-radius:3px;transition:width .4s}
-.pbf.g{background:var(--green)}
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.stat{background:white;border:1px solid var(--mist);padding:18px;border-radius:2px;text-align:center}
-.sv{font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);line-height:1}
-.sl{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-top:6px}
-.two-col{display:grid;grid-template-columns:1fr 360px;gap:24px}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.12);border-radius:2px}
-@media(max-width:700px){.dash-layout{grid-template-columns:1fr}.sidebar{display:none}.dc{padding:16px}.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
+.log-date{font-size:10px;color:var(--smoke2);font-family:'DM Mono',monospace;white-space:nowrap}
+.pbar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden}
+.pbf{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
+.pbf.g{background:var(--green2)}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.tag{display:inline-block;font-size:8px;background:var(--gold-dim);color:var(--gold);padding:2px 5px;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;margin-right:3px;border-radius:1px}
+.empty{padding:20px;text-align:center;color:var(--smoke);font-size:12px;line-height:1.7}
+.empty a{color:var(--gold);text-decoration:none}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}}
 </style>
 </head>
 <body>
-<div class="dash-layout">
-<aside class="sidebar"><div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni">🌅 Morning Brief</a><a href="/chat" class="sni">💬 Chat with Riley</a><a href="/tracker" class="sni">✅ Daily Check-In</a><div class="snl">HISTORY</div><a href="/conversations" class="sni active">📁 Conversations</a><a href="/progress" class="sni">📊 Progress</a><a href="/workouts" class="sni">🏋️ Workouts</a><a href="/nutrition" class="sni">🍳 Nutrition</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni">🎯 Enrollments</a><a href="/roadmap" class="sni">🗺️ Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni">😴 Sleep</a><a href="/finance" class="sni">💰 Financial Goals</a><a href="/calendar" class="sni">📅 Calendar</a><div class="sidebar-spacer"></div><div class="sidebar-user"><div class="uav" id="uav">?</div><div><div class="unm" id="unm">…</div><div class="upl">Life Coach · Active</div></div><button class="sob" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
-<main class="dash-main">
-<div class="dash-topbar">
-  <div><div class="tbt" id="greeting">Conversations</div><div class="tbs" id="topbar-date"></div></div>
-  <div style="display:flex;gap:8px"><a href="/dashboard" class="btn btn-dark">← Dashboard</a><a href="/chat" class="btn btn-gold">New Chat</a></div>
+<div class="layout">
+<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Morning Brief</a><a href="/chat" class="sni"><span class="sni-icon">💬</span>Chat with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">✅</span>Daily Check-In</a><div class="snl">HISTORY</div><a href="/conversations" class="sni active"><span class="sni-icon">📁</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">📊</span>Progress</a><a href="/workouts" class="sni"><span class="sni-icon">🏋️</span>Workouts</a><a href="/nutrition" class="sni"><span class="sni-icon">🍳</span>Nutrition</a><div class="snl">PROGRAMS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Enrollments</a><a href="/roadmap" class="sni"><span class="sni-icon">🗺️</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">😴</span>Sleep</a><a href="/finance" class="sni"><span class="sni-icon">💰</span>Financial Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Life Coach · Active</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<main class="main">
+<div class="topbar">
+  <div><div class="tb-title" id="tb-greeting">Conversations</div><div class="tb-sub" id="tb-date"></div></div>
+  <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Dashboard</a><a href="/chat" class="btn btn-gold">+ New Chat</a></div>
 </div>
-<div class="dc">
+<div class="content">
 
-<div style="display:grid;grid-template-columns:300px 1fr;gap:20px;height:calc(100vh - 130px)">
-  <div style="background:white;border:1px solid var(--mist);border-radius:2px;overflow-y:auto">
-    <div style="padding:14px 16px;border-bottom:1px solid var(--mist);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:13px;font-weight:600;color:var(--ink)">Riley Sessions</div>
-      <a href="/chat" class="btn btn-gold" style="font-size:11px;padding:5px 12px">+ New</a>
-    </div>
+<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 120px)">
+  <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow-y:auto">
+    <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:600;color:var(--parchment)">Riley Sessions</div>
     <div id="cv-list"></div>
   </div>
-  <div id="cv-thread" style="background:white;border:1px solid var(--mist);border-radius:2px;padding:24px;overflow-y:auto">
-    <div style="text-align:center;padding:40px 0;color:var(--smoke)"><div style="font-size:32px;margin-bottom:12px">💬</div><div style="font-size:14px">Select a conversation to read it</div></div>
+  <div id="cv-thread" style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:22px;overflow-y:auto">
+    <div class="empty" style="padding:40px 0"><div style="font-size:32px;margin-bottom:12px">💬</div>Select a conversation</div>
   </div>
 </div>
+
 </div>
 </main>
 </div>
@@ -107,19 +114,15 @@ let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
-  el.textContent=msg;el.className='alert '+(ok?'ok':'err');el.style.display='block';
+  el.textContent=msg;el.className='alert '+(ok?'alert-ok':'alert-err');el.style.display='block';
   clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',5000);
 }
-function setBtn(id,loading,label){
-  const el=document.getElementById(id);if(!el)return;
-  el.disabled=loading;el.textContent=loading?'Saving…':label;
-}
+function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
-
-async function boot(onReady){
+async function boot(cb){
   try{
     const {data:{session}}=await SB.auth.getSession();
     if(!session){window.location.href='https://riley.eight14.us';return;}
@@ -130,76 +133,48 @@ async function boot(onReady){
     const avatarUrl=meta.avatar_url||meta.picture||'';
     const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
     const h=new Date().getHours();
-    const el=document.getElementById('greeting');
-    if(el)el.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'. ☀️';
-    const dtEl=document.getElementById('topbar-date');
-    if(dtEl)dtEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    const av=document.getElementById('uav');
-    if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
-    const nm=document.getElementById('unm');if(nm)nm.textContent=fullName;
-    await onReady();
-  }catch(e){console.error('Boot error:',e);}
+    const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
+    const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+    const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
+    await cb();
+  }catch(e){console.error('Boot:',e);}
 }
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 
 
-let _sessions={};
-(async()=>{ await boot(async()=>{ await loadConversations(); }); })();
+let _sess={};
+(async()=>{ await boot(async()=>{
+  const {data:msgs}=await SB.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',UID).order('created_at',{ascending:false}).limit(400);
+  const el=document.getElementById('cv-list');
+  if(!msgs||!msgs.length){el.innerHTML='<div class="empty">No conversations yet.<br><a href="/chat">Start one →</a></div>';return;}
+  const sessions={};
+  for(const m of msgs){if(!sessions[m.session_id]){sessions[m.session_id]={id:m.session_id,msgs:[],created_at:m.created_at,title:m.title,tags:m.tags||[]};}sessions[m.session_id].msgs.push(m);}
+  _sess=sessions;
+  const list=Object.values(sessions).sort((a,b)=>b.created_at.localeCompare(a.created_at));
+  const byMonth={};for(const s of list){const mo=new Date(s.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'});if(!byMonth[mo])byMonth[mo]=[];byMonth[mo].push(s);}
+  let html='';
+  for(const [mo,ss] of Object.entries(byMonth)){
+    html+=`<div style="padding:6px 16px 3px;font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;border-bottom:1px solid rgba(255,255,255,0.04)">${mo}</div>`;
+    for(const s of ss){const first=s.msgs.find(m=>m.role==='user');const preview=s.title||first?.content?.slice(0,50)||'Riley Session';
+      html+=`<div onclick="openSess('${s.id}')" id="si-${s.id}" style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'"><div style="font-size:12px;font-weight:500;color:var(--parchment);margin-bottom:2px">${esc(preview)}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`;}
+  }
+  el.innerHTML=html;
+  if(list.length)openSess(list[0].id);
+}); })();
+function openSess(sid){
+  document.querySelectorAll('[id^="si-"]').forEach(e=>e.style.background='transparent');
+  const el=document.getElementById('si-'+sid);if(el)el.style.background='rgba(255,255,255,0.03)';
+  const s=_sess[sid];if(!s)return;
+  const msgs=[...s.msgs].sort((a,b)=>a.created_at.localeCompare(b.created_at));
+  document.getElementById('cv-thread').innerHTML=
+    `<div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">${esc(s.title||'Riley Session')}</div>`+
+    `<div style="font-size:10px;color:var(--smoke2);font-family:'DM Mono',monospace;margin-bottom:20px;letter-spacing:0.04em">${new Date(s.created_at).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>`+
+    `<div style="display:flex;flex-direction:column;gap:10px">`+
+    msgs.map(m=>{const u=m.role==='user';return`<div style="display:flex;${u?'justify-content:flex-end':'justify-content:flex-start'}"><div style="max-width:75%;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;background:${u?'var(--gold)':'var(--ink3)'};color:${u?'var(--ink)':'var(--parchment)'};border:${u?'none':'1px solid rgba(255,255,255,0.07)'};border-bottom-${u?'right':'left'}-radius:3px">${esc(m.content)}</div></div>`;}).join('')+
+    '</div>';
+}
 
-async function loadConversations(){
-  try{
-    const {data:msgs}=await SB.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',UID).order('created_at',{ascending:false}).limit(400);
-    const list=document.getElementById('cv-list');
-    if(!msgs||!msgs.length){
-      list.innerHTML='<div style="padding:24px;text-align:center;color:var(--smoke);font-size:13px">No conversations yet.<br><br><a href="/chat" style="color:var(--gold)">Start one now →</a></div>';
-      return;
-    }
-    // Group by session
-    const sessions={};
-    for(const m of msgs){
-      if(!sessions[m.session_id]){sessions[m.session_id]={id:m.session_id,messages:[],created_at:m.created_at,title:m.title||null,tags:m.tags||[]};}
-      sessions[m.session_id].messages.push(m);
-    }
-    _sessions=sessions;
-    const sessionList=Object.values(sessions).sort((a,b)=>b.created_at.localeCompare(a.created_at));
-    // Group by month
-    const byMonth={};
-    for(const s of sessionList){
-      const mo=new Date(s.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'});
-      if(!byMonth[mo])byMonth[mo]=[];
-      byMonth[mo].push(s);
-    }
-    let html='';
-    for(const [mo,ss] of Object.entries(byMonth)){
-      html+='<div style="padding:7px 16px 3px;font-size:9px;font-family:DM Mono,monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.12em;background:var(--warm-white);border-bottom:1px solid var(--mist)">'+mo+'</div>';
-      for(const s of ss){
-        const first=s.messages.find(m=>m.role==='user');
-        const preview=s.title||first?.content?.slice(0,55)||'Riley Session';
-        html+='<div onclick="openSession(''+s.id+'')" id="si-'+s.id+'" style="padding:12px 16px;border-bottom:1px solid var(--mist);cursor:pointer;transition:background .12s" onmouseover="this.style.background='var(--warm-white)'" onmouseout="this.style.background='white'">'+
-          '<div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:3px">'+esc(preview)+'</div>'+
-          (s.tags.length?s.tags.slice(0,2).map(t=>'<span style="font-size:9px;background:var(--gold-dim);color:var(--gold);padding:2px 6px;letter-spacing:0.08em;text-transform:uppercase;margin-right:3px">'+esc(t)+'</span>').join(''):'')+'</div>';
-      }
-    }
-    list.innerHTML=html;
-    if(sessionList.length)openSession(sessionList[0].id);
-  }catch(e){console.error('loadConversations:',e);}
-}
-function openSession(sid){
-  document.querySelectorAll('[id^="si-"]').forEach(el=>el.style.background='white');
-  const el=document.getElementById('si-'+sid);if(el)el.style.background='var(--warm-white)';
-  const session=_sessions[sid];if(!session)return;
-  const msgs=[...session.messages].sort((a,b)=>a.created_at.localeCompare(b.created_at));
-  const thread=document.getElementById('cv-thread');
-  thread.innerHTML=
-    '<div style="font-family:DM Serif Display,serif;font-size:20px;margin-bottom:4px">'+esc(session.title||'Riley Session')+'</div>'+
-    '<div style="font-size:12px;color:var(--smoke);margin-bottom:20px;font-family:DM Mono,monospace">'+new Date(session.created_at).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'})+'</div>'+
-    '<div style="display:flex;flex-direction:column;gap:10px">'+
-    msgs.map(m=>{const isUser=m.role==='user';
-      return '<div style="display:flex;'+(isUser?'justify-content:flex-end':'justify-content:flex-start')+'">'+
-        '<div style="max-width:75%;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;background:'+(isUser?'var(--gold)':'white')+';color:var(--ink);border:'+(isUser?'none':'1px solid var(--mist)')+';border-bottom-'+(isUser?'right':'left')+'-radius:3px">'+esc(m.content)+'</div></div>';
-    }).join('')+'</div>';
-  thread.scrollTop=0;
-}
 </script>
 </body>
 </html>

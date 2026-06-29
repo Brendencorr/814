@@ -90,14 +90,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
-<div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow:hidden;margin-bottom:20px">
-  <div style="padding:22px 24px;background:linear-gradient(135deg,rgba(201,168,76,0.1) 0%,transparent 70%);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:flex-start">
-    <div><div id="br-label" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px">Daily Intelligence Brief</div><div id="br-title" style="font-family:'DM Serif Display',serif;font-size:24px;color:var(--parchment);margin-bottom:6px">Your Daily Blueprint</div><div id="br-sub" style="font-size:12px;color:var(--smoke);line-height:1.5">Loading today's brief…</div></div>
-    <div style="text-align:right;flex-shrink:0;padding-left:16px"><div id="br-prog" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin-bottom:6px"></div>
-    <svg viewBox="0 0 52 52" width="48" height="48" style="transform:rotate(-90deg)"><circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/><circle id="br-ring" cx="26" cy="26" r="20" fill="none" stroke="var(--gold)" stroke-width="4" stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round"/></svg></div>
+<!-- ── CLARITY SCORE ─────────────────────────────────────────── -->
+<div class="card" style="margin-bottom:16px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+    <div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px">Clarity Score</div>
+      <div id="cl-phrase" style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);margin-bottom:4px">Loading…</div>
+      <div id="cl-note" style="font-size:11px;color:var(--smoke);line-height:1.5"></div>
+    </div>
+    <div style="text-align:center;flex-shrink:0;padding-left:20px">
+      <svg viewBox="0 0 52 52" width="64" height="64" style="transform:rotate(-90deg);display:block">
+        <circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+        <circle id="cl-ring" cx="26" cy="26" r="20" fill="none" stroke="var(--gold)" stroke-width="5" stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round" style="transition:stroke-dashoffset 1s ease"/>
+      </svg>
+      <div id="cl-pct" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--smoke2);margin-top:4px"></div>
+    </div>
   </div>
-  <div id="br-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.04)"></div>
-  <div style="padding:12px 24px;border-top:1px solid rgba(255,255,255,0.05)"><span id="br-footer" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">Brief engine coming soon · Briefs delivered at 6:00 AM</span></div>
+  <div id="cl-dims" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+</div>
+
+<!-- ── MORNING BRIEF ──────────────────────────────────────────── -->
+<div class="card" id="brief-card">
+  <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:16px" id="br-label">Morning Brief</div>
+  <div id="br-body">
+    <div style="font-size:12px;color:var(--smoke);line-height:1.8;margin-bottom:20px">Your brief is personalized to your check-ins, streak, and goals. Generate it below.</div>
+    <button id="br-gen-btn" onclick="generateBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:10px 22px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate Today's Brief</button>
+  </div>
 </div>
 
 </div>
@@ -144,32 +162,151 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 
 (async()=>{ await boot(async()=>{
-  document.getElementById('br-label').textContent='Daily Intelligence Brief · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
-  const {data:brief}=await SB.from('daily_briefs').select('*').eq('user_id',UID).eq('brief_date',TODAY).maybeSingle();
-  const icons={mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚',linkedin:'🎥',calendar:'📅',podcast:'🎧',journaling:'📖',goals:'🎯'};
-  const order=['mindset','meditation','hydration','workout','nutrition','reading','linkedin','calendar'];
-  if(brief&&brief.modules&&Object.keys(brief.modules).length){
-    const mods=brief.modules,done=brief.completion||{};const total=brief.total_modules||Object.keys(mods).length;const comp=brief.completed_modules||0;const pct=total>0?comp/total:0;
-    document.getElementById('br-title').textContent='Your '+new Date().toLocaleDateString('en-US',{weekday:'long'})+' Blueprint';
-    document.getElementById('br-sub').textContent='Click a module to mark it complete.';
-    document.getElementById('br-prog').textContent=comp+' / '+total+' complete';
-    document.getElementById('br-ring').setAttribute('stroke-dashoffset',(125.7*(1-pct)).toFixed(1));
-    document.getElementById('br-footer').textContent=comp===total?'All done — great day!':comp+' of '+total+' modules complete';
-    window._brief=brief;
-    const keys=[...order.filter(k=>mods[k]),...Object.keys(mods).filter(k=>!order.includes(k))];
-    document.getElementById('br-grid').innerHTML=keys.map(k=>`<div onclick="markDone(this,'${k}')" style="background:rgba(10,9,8,0.9);padding:16px;cursor:pointer;position:relative;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,0.05)'" onmouseout="this.style.background='rgba(10,9,8,0.9)'">${done[k]?'<span style="position:absolute;top:8px;right:10px;font-size:10px;color:var(--green2);font-weight:700">✓</span>':''}<div style="font-size:18px;margin-bottom:6px">${icons[k]||'•'}</div><div style="font-size:9px;font-family:DM Mono,monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${k}</div><div style="font-size:11px;color:var(--parchment);line-height:1.4;opacity:0.8">${esc(String(mods[k]).slice(0,75))}</div></div>`).join('');
-  }else{
-    document.getElementById('br-title').textContent='Your brief isn't ready yet';
-    document.getElementById('br-sub').textContent='Briefs are assembled at 6:00 AM each morning — personalized to your life, goals, and schedule.';
-    const preview=['🧠 Mindset','🙏 Meditation','💧 Hydration','🏋️ Workout','🍳 Nutrition','📚 Reading','🎥 LinkedIn','📅 Calendar'];
-    document.getElementById('br-grid').innerHTML=preview.map(m=>`<div style="background:rgba(10,9,8,0.9);padding:16px;opacity:0.4"><div style="font-size:18px;margin-bottom:6px">${m.split(' ')[0]}</div><div style="font-size:9px;font-family:DM Mono,monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${m.split(' ').slice(1).join(' ')}</div><div style="font-size:11px;color:var(--parchment);opacity:0.5">Coming in your daily brief</div></div>`).join('');
-  }
+  document.getElementById('br-label').textContent='Morning Brief · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  await Promise.all([loadClarityScore(), loadBrief()]);
 }); })();
-async function markDone(el,key){
-  if(!window._brief)return;const b=window._brief;const comp=b.completion||{};comp[key]=!comp[key];
-  const n=Object.values(comp).filter(Boolean).length;
-  const {error}=await SB.from('daily_briefs').update({completion:comp,completed_modules:n}).eq('id',b.id);
-  if(!error){b.completion=comp;b.completed_modules=n;const ck=el.querySelector('span');if(comp[key]&&!ck)el.insertAdjacentHTML('afterbegin','<span style="position:absolute;top:8px;right:10px;font-size:10px;color:var(--green2);font-weight:700">✓</span>');else if(!comp[key]&&ck)ck.remove();document.getElementById('br-prog').textContent=n+' / '+(b.total_modules||1)+' complete';}
+
+// ── CLARITY SCORE ────────────────────────────────────────────────────────────
+async function loadClarityScore(){
+  const sevenAgo=dAgo(7);
+  const [ciR,fitR,nutR,habR,hdR,sobR]=await Promise.allSettled([
+    SB.from('daily_checkins').select('checkin_date,mood,sleep_hours,notes,water_oz').eq('user_id',UID).gte('checkin_date',sevenAgo).order('checkin_date',{ascending:false}),
+    SB.from('fitness_logs').select('logged_date').eq('user_id',UID).gte('logged_date',sevenAgo),
+    SB.from('nutrition_logs').select('logged_date').eq('user_id',UID).eq('logged_date',TODAY),
+    SB.from('habits').select('id').eq('user_id',UID).eq('is_active',true),
+    SB.from('habit_completions').select('habit_id').eq('user_id',UID).gte('completed_date',sevenAgo),
+    SB.from('sobriety_tracker').select('start_date').eq('user_id',UID).eq('is_active',true).maybeSingle()
+  ]);
+  const g=r=>r.status==='fulfilled'?r.value?.data:null;
+  const checkins=g(ciR)||[],workouts=g(fitR)||[],nutrition=g(nutR)||[],habits=g(habR)||[],done=g(hdR)||[],sober=g(sobR);
+
+  const todayCI=checkins.find(c=>c.checkin_date===TODAY);
+  const lastCI=checkins[0];
+
+  // Score each dimension 0-100
+  const sleepScore=(()=>{
+    const recent=checkins.filter(c=>c.sleep_hours).slice(0,3);
+    if(!recent.length)return 40;
+    const avg=recent.reduce((s,c)=>s+c.sleep_hours,0)/recent.length;
+    return Math.min(100,Math.round(avg/8*100));
+  })();
+  const moveScore=Math.min(100,workouts.length*25);
+  const nutriScore=nutrition.length>0?80:checkins.some(c=>c.checkin_date===TODAY)?40:20;
+  const reflectScore=(()=>{
+    const notedDays=checkins.filter(c=>c.notes&&c.notes.trim().length>5).length;
+    return Math.min(100,notedDays*20);
+  })();
+  const purposeScore=(()=>{
+    if(!habits.length)return 40;
+    const possible=habits.length*7;
+    return possible?Math.min(100,Math.round(done.length/possible*100)):40;
+  })();
+  const stressScore=(()=>{
+    if(!lastCI?.mood)return 50;
+    return Math.round(lastCI.mood/5*100);
+  })();
+  const recovScore=(()=>{
+    if(!sober?.start_date)return 50;
+    const days=Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000));
+    return days===0?30:days<7?60:days<30?80:100;
+  })();
+  const connectionScore=checkins.filter(c=>c.checkin_date>=dAgo(3)).length>0?65:40;
+
+  const dims=[
+    {k:'Sleep',     s:sleepScore,    note:sleepScore>=80?'Resting well':'Room to improve'},
+    {k:'Movement',  s:moveScore,     note:moveScore>=50?'Moving regularly':'Get the body going'},
+    {k:'Nourishment',s:nutriScore,   note:nutriScore>=60?'Logged and aware':'Log what you eat'},
+    {k:'Reflection',s:reflectScore,  note:reflectScore>=60?'Writing regularly':'Journal your thoughts'},
+    {k:'Purpose',   s:purposeScore,  note:purposeScore>=60?'Habits strong':'Build consistency'},
+    {k:'Ease',      s:stressScore,   note:stressScore>=60?'Feeling steady':'Be gentle today'},
+    {k:'Recovery',  s:recovScore,    note:recovScore>=80?'Streak strong':'Every day counts'},
+    {k:'Connection',s:connectionScore,note:'Check-in streak'},
+  ];
+
+  const avg=Math.round(dims.reduce((s,d)=>s+d.s,0)/dims.length);
+  const phrase=avg>=80?'You\'re in a great rhythm.':avg>=60?'You\'re building momentum.':avg>=40?'One step at a time.':avg>=20?'You\'re rebuilding.':'Every day counts.';
+  const note=avg>=80?'Keep showing up.':avg>=60?'Small actions are adding up.':avg>=40?'Progress is still progress.':'You came back. That\'s everything.';
+
+  document.getElementById('cl-phrase').textContent=phrase;
+  document.getElementById('cl-note').textContent=note;
+  document.getElementById('cl-pct').textContent=avg+'%';
+  document.getElementById('cl-ring').setAttribute('stroke-dashoffset',(125.7*(1-avg/100)).toFixed(1));
+  const goldPct=avg>=80?'var(--green2)':'var(--gold)';
+  document.getElementById('cl-ring').setAttribute('stroke',goldPct);
+
+  document.getElementById('cl-dims').innerHTML=dims.map(d=>{
+    const col=d.s>=70?'var(--green2)':d.s>=40?'var(--gold)':'var(--smoke)';
+    return`<div style="display:flex;flex-direction:column;gap:4px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.04em">${d.k}</span>
+        <span style="font-size:10px;color:${col};font-family:'DM Mono',monospace">${d.s}%</span>
+      </div>
+      <div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${d.s}%;background:${col};border-radius:2px;transition:width 1s ease"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MORNING BRIEF ─────────────────────────────────────────────────────────────
+async function loadBrief(){
+  const {data:brief}=await SB.from('daily_briefs').select('*').eq('user_id',UID).eq('brief_date',TODAY).maybeSingle();
+  if(brief&&brief.modules&&Object.keys(brief.modules).length){
+    renderBrief(brief);
+  }
+}
+
+async function generateBrief(){
+  const btn=document.getElementById('br-gen-btn');
+  if(btn){btn.disabled=true;btn.textContent='Generating…';}
+  try{
+    const res=await fetch('/.netlify/functions/daily-brief',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
+    const {brief}=await res.json();
+    if(brief&&brief.modules)renderBrief(brief);
+    else throw new Error('No brief returned');
+  }catch(e){
+    const b=document.getElementById('br-body');
+    if(b)b.innerHTML='<div style="font-size:12px;color:var(--red)">Could not generate brief — try again.</div><button onclick="generateBrief()" style="margin-top:12px;background:var(--gold);color:var(--ink);border:none;padding:8px 18px;font-size:11px;font-weight:600;border-radius:2px;cursor:pointer">Retry</button>';
+  }
+}
+
+function renderBrief(brief){
+  const m=brief.modules||{};
+  const icons={mood_note:'🌅',encouragement:'✨',focus:'🎯',action:'→',mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚'};
+  const labels={mood_note:'Where you are',encouragement:'Today\'s encouragement',focus:'Today\'s focus',action:'One action'};
+
+  // New format (mood_note, encouragement, focus, action)
+  if(m.mood_note||m.encouragement||m.focus||m.action){
+    const html=`
+      ${m.mood_note?`<div style="font-size:14px;color:var(--parchment);line-height:1.7;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.03);border-left:2px solid var(--gold);border-radius:0 2px 2px 0">${esc(m.mood_note)}</div>`:''}
+      ${m.encouragement?`<div style="margin-bottom:16px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px">Encouragement</div><div style="font-size:13px;color:var(--parchment);line-height:1.6">${esc(m.encouragement)}</div></div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+        ${m.focus?`<div style="padding:14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Today's Focus</div><div style="font-size:13px;color:var(--parchment)">${esc(m.focus)}</div></div>`:''}
+        ${m.action?`<div id="action-card" style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:3px;cursor:pointer" onclick="markActionDone(this)" title="Click when done"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">One Action</div><div style="font-size:13px;color:var(--parchment)">${esc(m.action)}</div></div>`:''}
+      </div>
+      <div style="margin-top:20px;font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">Generated today · Click "One Action" when complete</div>`;
+    document.getElementById('br-body').innerHTML=html;
+  } else {
+    // Legacy module format
+    const order=['mindset','meditation','hydration','workout','nutrition','reading'];
+    const keys=[...order.filter(k=>m[k]),...Object.keys(m).filter(k=>!order.includes(k))];
+    document.getElementById('br-body').innerHTML=
+      `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px">`+
+      keys.map(k=>`<div style="padding:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:3px">
+        <div style="font-size:16px;margin-bottom:6px">${icons[k]||'•'}</div>
+        <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">${labels[k]||k}</div>
+        <div style="font-size:11px;color:var(--parchment);line-height:1.5">${esc(String(m[k]).slice(0,100))}</div>
+      </div>`).join('')+`</div>`;
+  }
+}
+
+function markActionDone(el){
+  const isDone=el.dataset.done==='1';
+  el.dataset.done=isDone?'0':'1';
+  el.style.background=isDone?'rgba(255,255,255,0.03)':'rgba(74,173,114,0.1)';
+  el.style.borderColor=isDone?'rgba(255,255,255,0.08)':'rgba(74,173,114,0.3)';
+  const label=el.querySelector('div:first-child');
+  if(label)label.style.color=isDone?'var(--smoke2)':'var(--green2)';
 }
 
 </script>

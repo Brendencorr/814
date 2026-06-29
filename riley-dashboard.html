@@ -923,16 +923,16 @@ async function loadSobriety() {
   document.getElementById('since-date').innerHTML =
     `Since <span>${start.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}</span>`;
 
-  // Check-in status
+  // Check-in status — reads from daily_checkins (the correct table)
   const today = now.toISOString().slice(0, 10);
   const { data: checkins } = await db
-    .from('sobriety_checkins')
-    .select('check_in_date')
+    .from('daily_checkins')
+    .select('checkin_date')
     .eq('user_id', currentUser.id)
-    .gte('check_in_date', new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10))
-    .order('check_in_date', { ascending: false });
+    .gte('checkin_date', new Date(Date.now() - 27 * 86400000).toISOString().slice(0, 10))
+    .order('checkin_date', { ascending: false });
 
-  const checkinDates = new Set((checkins || []).map(c => c.check_in_date));
+  const checkinDates = new Set((checkins || []).map(c => c.checkin_date));
   checkedInToday = checkinDates.has(today);
 
   // Update check-in button
@@ -965,8 +965,8 @@ async function doCheckIn() {
   btn.textContent = 'Saving…';
 
   const { error } = await db
-    .from('sobriety_checkins')
-    .upsert({ user_id: currentUser.id, check_in_date: today }, { onConflict: 'user_id,check_in_date' });
+    .from('daily_checkins')
+    .upsert({ user_id: currentUser.id, checkin_date: today, sobriety_day: true }, { onConflict: 'user_id,checkin_date' });
 
   if (error) {
     btn.textContent = 'Error — try again';

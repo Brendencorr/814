@@ -234,9 +234,35 @@ function buildUserContext(profile, clientData) {
     }
   }
 
+  // ── ENTITLEMENTS — shapes what Riley sells and how she talks ──
+  if (clientData && clientData.tier) {
+    const PRODUCT_NAMES = {
+      reset_free:"the free 7-Day Rebuild Reset", companion:"Riley Companion ($19/mo)",
+      concierge:"Riley Concierge ($39/mo)", prog_sobriety_90:"the 90-Day Sobriety Challenge",
+      prog_grief:"Carry Both (grief)", prog_body_90:"Move & Nourish (body)",
+      prog_first30:"First 30 Days", prog_eat:"Eat to Rebuild", prog_move:"Move to Rebuild"
+    };
+    const owns = (clientData.ownedProducts || []).map(p => PRODUCT_NAMES[p] || p);
+    lines.push("\nACCESS & ENTITLEMENTS:");
+    lines.push(`Tier: ${clientData.tier.toUpperCase()}`);
+    lines.push(owns.length ? `Owns: ${owns.join(", ")}` : "Owns: nothing yet (free visitor)");
+    lines.push("\nSELLING RULES — follow exactly:");
+    if (clientData.tier === "concierge") {
+      lines.push("- This is a CONCIERGE member. They have EVERYTHING. NEVER sell or upsell anything. Just coach and support.");
+    } else if (clientData.tier === "companion") {
+      lines.push("- Companion subscriber. They have check-ins + community but NOT the full program library.");
+      lines.push("- Only mention a specific à la carte program if it directly fits what they're working through. Concierge is the natural upgrade if they want everything — but never push.");
+    } else if (clientData.tier === "alacarte") {
+      lines.push("- They bought program(s) but have NO subscription — so no community/daily check-ins.");
+      lines.push("- If they want ongoing support or check-ins, Companion is the fit. Don't re-sell what they already own.");
+    } else {
+      lines.push("- FREE visitor, owns nothing. Start them on the free 7-Day Reset. Run the 3-question prescription if they're unsure, then recommend ONE next step — never a list.");
+    }
+    lines.push("- NEVER pitch a program they already own. Reference what they have by name.");
+  }
+
   lines.push("");
   lines.push("Use their name naturally (not every message). Reference their data when relevant to what they say.");
-  lines.push("If they have no programs yet, the free 7-Day Rebuild Reset is the right first suggestion.");
   return lines.join("\n");
 }
 
@@ -255,13 +281,14 @@ async function getClientData(supabase, userId) {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
       supabase.from("habits").select("id,title,emoji").eq("user_id", userId).eq("is_active", true),
       supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", sevenISO),
       supabase.from("user_program_progress").select("*, programs(title,duration_days,emoji)").eq("user_id", userId).eq("status", "active").limit(5),
+      supabase.from("user_active_products").select("product_key").eq("user_id", userId),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -274,12 +301,19 @@ async function getClientData(supabase, userId) {
       names: habits.map(h => (h.emoji || "") + " " + h.title),
     };
 
+    const ownedProducts = (entRes.value?.data || []).map(r => r.product_key);
+    const tier = ownedProducts.includes("concierge") ? "concierge"
+               : ownedProducts.includes("companion") ? "companion"
+               : ownedProducts.length ? "alacarte" : "free";
+
     return {
       sobriety: soberRes.value?.data?.[0] || null,
       todayCheckin: checkinRes.value?.data?.[0] || null,
       goals: goalsRes.value?.data || [],
       habitSummary,
       programs: programsRes.value?.data || [],
+      ownedProducts,
+      tier,
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);

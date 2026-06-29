@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard — Riley · The 8:14 Project</title>
+<title>Home — The 8:14 Project</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -508,8 +508,8 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     let stTxt='';
     if(sleepLast2&&sleepLast2>=7.5)stTxt='Your mind is rested. <span style="color:var(--smoke)">Seven-plus hours gave your clarity room to recharge. Good foundation.</span>';
     else if(sleepLast2&&sleepLast2<6)stTxt='Running on less than you needed. <span style="color:var(--smoke)">Last night was short. Slower is still forward today.</span>';
-    else if(moodToday&&moodToday<=2)stTxt="Today feels heavy, and that's allowed. <span style="color:var(--smoke)">You don't have to fix it. Being here counts.</span>";
-    else if(moodToday&&moodToday>=4)stTxt="There's some lightness in you today. <span style="color:var(--smoke)">Whatever's feeding it — protect it.</span>";
+    else if(moodToday&&moodToday<=2)stTxt="Today feels heavy, and that’s allowed. <span style='color:var(--smoke)'>You don’t have to fix it. Being here counts.</span>";
+    else if(moodToday&&moodToday>=4)stTxt="There’s some lightness in you today. <span style='color:var(--smoke)'>Whatever’s feeding it — protect it.</span>";
     else if(dateStreak>=7)stTxt=dateStreak+' days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>';
     else if(SOBER_DAYS>0)stTxt='Another morning, sober. <span style="color:var(--smoke)">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>';
     else stTxt='Today is a fresh page. <span style="color:var(--smoke)">No quiz to pass. Just you, here, beginning.</span>';

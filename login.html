@@ -116,7 +116,7 @@ html, body {
       Sign in to save your conversations with Riley, track your progress, and access your programs.
     </p>
 
-    <button class="google-btn" id="google-btn" onclick="signInWithGoogle()" disabled>
+    <button class="google-btn" id="google-btn" onclick="signInWithGoogle()">
       <!-- Google "G" SVG logo -->
       <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -148,37 +148,40 @@ html, body {
   let supabase = null;
 
   // ── Boot: fetch config then initialise Supabase ────────────────────────────
-  async function boot() {
-    let cfg;
+  // Initialise Supabase immediately with fallback keys
+  // (site-config is tried first; if it fails we use the public publishable key)
+  async function getConfig() {
     try {
       const res = await fetch('/.netlify/functions/site-config');
-      cfg = await res.json();
-      if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
-    } catch (e) {
-      setStatus('Configuration error — please try again later.', 'error');
-      return;
-    }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const cfg = await res.json();
+      if (cfg.supabaseUrl && cfg.supabaseAnonKey) return cfg;
+    } catch (e) { /* fall through to inline fallback */ }
+    return {
+      supabaseUrl: 'https://tglljvjixlolaguycvbb.supabase.co',
+      supabaseAnonKey: 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+    };
+  }
 
+  async function boot() {
+    const cfg = await getConfig();
     supabase = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
 
-    // Check if already logged in
+    // If already signed in → go straight to dashboard
     const { data: { session } } = await supabase.auth.getSession();
     if (session) {
-      setStatus('Already signed in — redirecting…', '');
-      setTimeout(() => window.location.href = REDIRECT_URL, 800);
+      setStatus('Already signed in — taking you to your dashboard…', 'success');
+      setTimeout(() => window.location.href = REDIRECT_URL, 600);
       return;
     }
 
-    // Handle OAuth return (hash-based session)
+    // Listen for successful OAuth return
     supabase.auth.onAuthStateChange((event, session) => {
       if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-        setStatus('Signed in! Redirecting…', 'success');
-        setTimeout(() => window.location.href = REDIRECT_URL, 800);
+        setStatus('Signed in — welcome. Taking you home…', 'success');
+        setTimeout(() => window.location.href = REDIRECT_URL, 600);
       }
     });
-
-    // Enable sign-in button now that Supabase is ready
-    document.getElementById('google-btn').disabled = false;
   }
   boot();
 

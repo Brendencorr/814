@@ -31,6 +31,10 @@
 [functions."weekly-pipeline"]
   timeout = 26
 
+[functions."admin-users"]
+  timeout = 26
+
+
 [functions."site-config"]
   timeout = 10
 

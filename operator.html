@@ -149,6 +149,56 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
 .aab:hover{opacity:.88}.aab:disabled{opacity:.4;cursor:default}
 .dbn{padding:.75rem 1rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:.8rem;cursor:pointer;white-space:nowrap}
 .dbn:hover{color:var(--text)}
+/* USERS SCREEN */
+#su{flex-direction:column;overflow:hidden}
+.users-top{padding:.85rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;flex-shrink:0;background:var(--card)}
+.user-search{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:.55rem .85rem;font-size:.85rem;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s}
+.user-search:focus{border-color:var(--gold)}
+.users-list{flex:1;overflow-y:auto}
+.user-row{display:grid;grid-template-columns:32px 1fr 80px 80px 100px 80px;gap:.75rem;padding:.75rem 1.25rem;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background .12s}
+.user-row:hover{background:rgba(201,168,76,.05)}
+.user-row.uh{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.12em;cursor:default;background:var(--bg)}
+.user-row.uh:hover{background:var(--bg)}
+.uav{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:12px;color:#000;font-weight:700;flex-shrink:0;overflow:hidden}
+.uav img{width:100%;height:100%;object-fit:cover}
+.uname{font-size:.82rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uemail{font-size:.72rem;color:var(--muted2);margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.utag{font-size:.68rem;color:var(--muted2)}
+.utag.active{color:var(--green)}
+/* USER DETAIL PANEL */
+#udpn{position:fixed;top:0;right:-620px;width:580px;height:100dvh;background:var(--card);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1)}
+#udpn.open{right:0}
+.udph{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.85rem;flex-shrink:0;background:var(--header)}
+.udav{width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:16px;color:#000;flex-shrink:0;overflow:hidden}
+.udav img{width:100%;height:100%;object-fit:cover}
+.udname{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--gold);letter-spacing:.08em}
+.udemail{font-size:.72rem;color:var(--muted2);margin-top:.1rem}
+.udclose{margin-left:auto;background:transparent;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;padding:.3rem}
+.udclose:hover{color:var(--text)}
+.udbody{flex:1;overflow-y:auto}
+.ud-section{padding:.9rem 1.25rem;border-bottom:1px solid var(--border)}
+.ud-section-label{font-family:'Bebas Neue',sans-serif;font-size:10px;color:var(--gold);letter-spacing:.18em;margin-bottom:.65rem;opacity:.8}
+.ud-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.6rem}
+.ud-stat{background:var(--bg);border:1px solid var(--border);padding:.6rem .75rem}
+.ud-stat-l{font-family:'Bebas Neue',sans-serif;font-size:8px;color:var(--muted2);letter-spacing:.15em;margin-bottom:.2rem}
+.ud-stat-v{font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--gold);line-height:1}
+.ud-prog{display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.78rem}
+.ud-prog:last-child{border-bottom:none}
+.ud-prog-name{flex:1;color:var(--text)}
+.ud-prog-day{color:var(--gold);font-weight:600}
+.session-block{background:var(--bg);border:1px solid var(--border);margin-bottom:.65rem;overflow:hidden}
+.session-hd{padding:.55rem .85rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .12s}
+.session-hd:hover{background:rgba(201,168,76,.05)}
+.session-date{font-family:'Bebas Neue',sans-serif;font-size:11px;color:var(--gold);letter-spacing:.1em}
+.session-ct{font-size:.68rem;color:var(--muted2)}
+.session-msgs{display:none;max-height:320px;overflow-y:auto;padding:.5rem .85rem;border-top:1px solid var(--border)}
+.session-msgs.open{display:block}
+.conv-msg{margin-bottom:.5rem;display:flex;flex-direction:column}
+.conv-msg.user .conv-bubble{background:var(--gold);color:#000;align-self:flex-end;border-radius:10px 10px 2px 10px}
+.conv-msg.riley .conv-bubble{background:var(--card2);color:var(--text);align-self:flex-start;border:1px solid var(--border);border-radius:10px 10px 10px 2px}
+.conv-bubble{padding:.5rem .75rem;font-size:.78rem;line-height:1.55;max-width:85%;word-break:break-word;white-space:pre-wrap}
+.conv-time{font-size:.62rem;color:var(--muted);margin-top:.15rem;padding:0 .25rem}
+.conv-msg.user .conv-time{align-self:flex-end}
 /* WEEK DETAIL PANEL */
 #wkpn{position:fixed;top:0;right:-520px;width:500px;height:100dvh;background:var(--card);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1)}
 #wkpn.open{right:0}
@@ -246,6 +296,7 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
       <button class="ht active" data-s="h" onclick="gs('h',this)">Home</button>
       <button class="ht" data-s="p" onclick="spl(this)">Pipeline</button>
       <button class="ht" data-s="r" onclick="gs('r',this)">Review</button>
+      <button class="ht" data-s="u" onclick="loadUsers(this)">Users</button>
     </nav>
     <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
   </header>
@@ -325,6 +376,35 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
     </div>
   </div>
 </div>
+<!-- USERS SCREEN -->
+<div class="sc" id="su">
+  <div class="users-top">
+    <input class="user-search" id="user-search" placeholder="Search by name or email…" oninput="filterUsers(this.value)">
+    <button class="bg" onclick="loadUsers(null)">&#8635; Refresh</button>
+  </div>
+  <div class="users-list" id="users-list">
+    <div class="user-row uh">
+      <span></span><span>User</span><span>Sober Days</span><span>Programs</span><span>Last Active</span><span>Messages</span>
+    </div>
+    <div class="em" id="users-empty">Loading users…</div>
+  </div>
+</div>
+
+<!-- USER DETAIL PANEL -->
+<div id="udpn">
+  <div class="udph">
+    <div class="udav" id="ud-av">?</div>
+    <div>
+      <div class="udname" id="ud-name">User</div>
+      <div class="udemail" id="ud-email"></div>
+    </div>
+    <button class="udclose" onclick="closeUserPanel()">&#215;</button>
+  </div>
+  <div class="udbody" id="ud-body">
+    <div class="em">Select a user to view their details.</div>
+  </div>
+</div>
+
 <!-- WEEK DETAIL PANEL -->
 <div id="wkpn">
   <div class="wkph">
@@ -395,7 +475,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['h','p','r'].forEach(function(s){document.getElementById('s'+s).classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
+function gs(n,btn){['h','p','r','u'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
 function tgs(){document.getElementById('stpn').classList.toggle('open');}
 function init(){scd();ls();ldst();}
 async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
@@ -731,6 +811,205 @@ function openWk(run){
       body.innerHTML='<div class="em" style="color:var(--red)">Error loading data: '+x(e.message)+'</div>';
     });
   }
+}
+
+// ── Users Screen ─────────────────────────────────────────────────────────────
+var _allUsers = [];
+var _usersLoaded = false;
+
+function loadUsers(btn){
+  if(btn){gs('u',btn);}
+  document.getElementById('users-empty').textContent='Loading users…';
+  document.getElementById('users-empty').style.display='block';
+  // Remove old rows (keep header)
+  var list=document.getElementById('users-list');
+  var rows=list.querySelectorAll('.user-row:not(.uh)');
+  rows.forEach(function(r){r.remove();});
+
+  fetch(B+'/admin-users').then(function(r){return r.json();}).then(function(d){
+    _allUsers=d.users||[];
+    _usersLoaded=true;
+    renderUserList(_allUsers);
+  }).catch(function(e){
+    document.getElementById('users-empty').textContent='Error loading users: '+e.message;
+  });
+}
+
+function filterUsers(q){
+  if(!_usersLoaded)return;
+  var filtered=q?_allUsers.filter(function(u){
+    var s=(u.full_name||'')+(u.email||'');
+    return s.toLowerCase().indexOf(q.toLowerCase())>=0;
+  }):_allUsers;
+  renderUserList(filtered);
+}
+
+function renderUserList(users){
+  var list=document.getElementById('users-list');
+  // Remove old data rows
+  var rows=list.querySelectorAll('.user-row:not(.uh)');
+  rows.forEach(function(r){r.remove();});
+  var empty=document.getElementById('users-empty');
+  if(!users.length){empty.textContent='No users found.';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  users.forEach(function(u){
+    var row=document.createElement('div');
+    row.className='user-row';
+    row.onclick=function(){openUserPanel(u.id);};
+
+    var initials=((u.full_name||u.email||'?').slice(0,1)).toUpperCase();
+    var avHtml=u.avatar_url
+      ?'<div class="uav"><img src="'+x(u.avatar_url)+'" alt=""></div>'
+      :'<div class="uav">'+initials+'</div>';
+
+    var sobDays='—';
+    if(u.sobriety_date){
+      var days=Math.floor((Date.now()-new Date(u.sobriety_date))/86400000);
+      sobDays=days+'d';
+    }
+
+    var programs=(u.programs_purchased&&u.programs_purchased.length)?u.programs_purchased.length:'—';
+
+    var lastActive=u.updated_at?fd(u.updated_at):'—';
+
+    row.innerHTML=avHtml+
+      '<div><div class="uname">'+x(u.full_name||'—')+'</div><div class="uemail">'+x(u.email||'')+'</div></div>'+
+      '<div class="utag">'+sobDays+'</div>'+
+      '<div class="utag">'+programs+'</div>'+
+      '<div class="utag">'+lastActive+'</div>'+
+      '<div class="utag '+(u.message_count>0?'active':'')+'">'+(u.message_count||0)+'</div>';
+    list.appendChild(row);
+  });
+}
+
+function closeUserPanel(){document.getElementById('udpn').classList.remove('open');}
+
+function openUserPanel(userId){
+  document.getElementById('udpn').classList.add('open');
+  document.getElementById('ud-name').textContent='Loading…';
+  document.getElementById('ud-email').textContent='';
+  document.getElementById('ud-av').innerHTML='…';
+  document.getElementById('ud-body').innerHTML='<div class="em" style="padding:1.5rem">Loading…</div>';
+
+  fetch(B+'/admin-users?user_id='+encodeURIComponent(userId))
+    .then(function(r){return r.json();})
+    .then(function(d){renderUserDetail(d);})
+    .catch(function(e){
+      document.getElementById('ud-body').innerHTML='<div class="em" style="color:var(--red);padding:1.5rem">Error: '+x(e.message)+'</div>';
+    });
+}
+
+function renderUserDetail(d){
+  var profile=d.profile||{};
+  var sessions=d.sessions||[];
+  var progress=d.progress||[];
+
+  // Header
+  var initials=((profile.full_name||profile.email||'?').slice(0,1)).toUpperCase();
+  var avEl=document.getElementById('ud-av');
+  if(profile.avatar_url){avEl.innerHTML='<img src="'+x(profile.avatar_url)+'" alt="">';}
+  else{avEl.textContent=initials;}
+  document.getElementById('ud-name').textContent=profile.full_name||profile.email||'Unknown';
+  document.getElementById('ud-email').textContent=profile.email||'';
+
+  // Body
+  var html='';
+
+  // Stats
+  var sobDays='Not set';
+  var sobLabel='';
+  if(profile.sobriety_date){
+    var days=Math.floor((Date.now()-new Date(profile.sobriety_date))/86400000);
+    var months=Math.floor(days/30);
+    sobDays=days+'';
+    sobLabel=months>=2?months+' months':'';
+  }
+  var totalMsgs=sessions.reduce(function(a,s){return a+s.message_count;},0);
+
+  html+='<div class="ud-section">';
+  html+='<div class="ud-section-label">Overview</div>';
+  html+='<div class="ud-stats">';
+  html+='<div class="ud-stat"><div class="ud-stat-l">Sober Days</div><div class="ud-stat-v">'+sobDays+'</div>'+(sobLabel?'<div style="font-size:.65rem;color:var(--muted2)">'+sobLabel+'</div>':'')+'</div>';
+  html+='<div class="ud-stat"><div class="ud-stat-l">Riley Messages</div><div class="ud-stat-v">'+totalMsgs+'</div></div>';
+  html+='<div class="ud-stat"><div class="ud-stat-l">Sessions</div><div class="ud-stat-v">'+sessions.length+'</div></div>';
+  html+='</div>';
+
+  // Profile fields
+  html+='<div style="font-size:.78rem;color:var(--text);line-height:1.8">';
+  html+='<div><span style="color:var(--muted2)">Email: </span>'+x(profile.email||'—')+'</div>';
+  html+='<div><span style="color:var(--muted2)">Member since: </span>'+fd(profile.created_at)+'</div>';
+  html+='<div><span style="color:var(--muted2)">Last active: </span>'+fd(profile.updated_at)+'</div>';
+  html+='<div><span style="color:var(--muted2)">Community member: </span>'+(profile.community_member?'<span style="color:var(--green)">Yes</span>':'No')+'</div>';
+  html+='</div>';
+  html+='</div>';
+
+  // Programs purchased
+  if(profile.programs_purchased&&profile.programs_purchased.length){
+    html+='<div class="ud-section">';
+    html+='<div class="ud-section-label">Programs Purchased ('+profile.programs_purchased.length+')</div>';
+    profile.programs_purchased.forEach(function(p){
+      html+='<div style="font-size:.78rem;color:var(--sage);padding:.2rem 0;border-bottom:1px solid var(--border)">&#10003; '+x(p)+'</div>';
+    });
+    html+='</div>';
+  }
+
+  // Program progress
+  if(progress.length){
+    html+='<div class="ud-section">';
+    html+='<div class="ud-section-label">Program Progress</div>';
+    progress.forEach(function(p){
+      html+='<div class="ud-prog">';
+      html+='<span class="ud-prog-name">'+x(p.program_name)+'</span>';
+      html+='<span class="ud-prog-day">Day '+p.day_completed+'</span>';
+      html+='<span style="font-size:.65rem;color:var(--muted2)">'+fd(p.last_activity)+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  // Conversation sessions
+  if(sessions.length){
+    html+='<div class="ud-section">';
+    html+='<div class="ud-section-label">Riley Conversations ('+sessions.length+' sessions, '+totalMsgs+' messages)</div>';
+    sessions.forEach(function(s,si){
+      var sid='sess-'+si;
+      html+='<div class="session-block">';
+      html+='<div class="session-hd" onclick="toggleSession(\''+sid+'\')">';
+      html+='<span class="session-date">'+fdt(s.last_message_at)+'</span>';
+      html+='<span class="session-ct">'+s.message_count+' messages</span>';
+      html+='<span style="font-size:.7rem;color:var(--muted2)">&#9660;</span>';
+      html+='</div>';
+      html+='<div class="session-msgs" id="'+sid+'">';
+      s.messages.forEach(function(m){
+        html+='<div class="conv-msg '+m.role+'">';
+        html+='<div class="conv-bubble">'+x(m.content)+'</div>';
+        html+='<div class="conv-time">'+fdt(m.created_at)+'</div>';
+        html+='</div>';
+      });
+      html+='</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }else{
+    html+='<div class="ud-section"><div class="em">No Riley conversations yet.</div></div>';
+  }
+
+  document.getElementById('ud-body').innerHTML=html;
+}
+
+function toggleSession(id){
+  var el=document.getElementById(id);
+  if(el)el.classList.toggle('open');
+}
+
+function fdt(s){
+  if(!s)return'—';
+  try{
+    var d=new Date(s);
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+
+           d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  }catch(e){return s;}
 }
 
 </script>

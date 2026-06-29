@@ -34,6 +34,10 @@
 [functions."site-config"]
   timeout = 10
 
+# HTTP-triggered background pipeline — no timeout, runs full Scout->Sage->Atlas
+# The -background suffix tells Netlify to return 202 immediately and keep running
+[functions."manual-pipeline-background"]
+
 # Runs every Sunday 6am MT (12:00 UTC) as a background function
 [functions."weekly-pipeline-cron"]
   schedule = "0 12 * * 0"

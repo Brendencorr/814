@@ -242,34 +242,32 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
   </div>
   <div class="sc" id="sp">
     <div class="pli">
-      <div class="pgb">
-        <div class="pbs"><div class="pbd pa" id="pb1">1</div><span class="pbl pa" id="pl1">Scout</span></div>
-        <div class="pln" id="ln1"></div>
-        <div class="pbs"><div class="pbd pn" id="pb2">2</div><span class="pbl" id="pl2">Sage</span></div>
-        <div class="pln" id="ln2"></div>
-        <div class="pbs"><div class="pbd pn" id="pb3">3</div><span class="pbl" id="pl3">Atlas</span></div>
-        <div class="pln" id="ln3"></div>
-        <div class="pbs"><div class="pbd pn" id="pb4">&#9679;</div><span class="pbl" id="pl4">Review</span></div>
-      </div>
+      <!-- Background pipeline launcher -->
       <div class="phc scout" id="psc">
-        <div class="pht">&#128269; Scout &#8212; Research</div>
-        <textarea class="pta" id="scp" rows="4">What are the trending topics this week across sobriety, mental health, addiction, grief, fitness, nutrition, burnout, anxiety, life transitions, relationships, and community? Return the full structured SCOUT REPORT with all sections.</textarea>
-        <div class="pha"><button class="bg" id="bsc" onclick="rsc()">Run Scout &#8594;</button><button class="bo" onclick="document.getElementById('scp').focus()">Edit Prompt</button></div>
-        <div class="run" id="scr" style="display:none"><div class="pls"></div><span class="rxt">Scout is researching&#8230;</span></div>
-        <div id="scrs"></div>
-        <div id="scra" class="pha" style="display:none"><button class="bg" onclick="rsg()">Send to Sage &#8594;</button><button class="bo" onclick="esc2()">Edit Report</button></div>
+        <div class="pht">&#128269; Scout &#8594; Sage &#8594; Atlas</div>
+        <p style="font-size:.82rem;color:var(--muted2);line-height:1.6;margin-bottom:.85rem">
+          Click to run the full pipeline as a background job. Scout researches trending topics, Sage writes 12 posts, Atlas builds the publishing schedule. Runs in the background &#8212; no timeout.
+        </p>
+        <div class="pha"><button class="bg" id="bsc" onclick="runBgPipeline()">&#9654; Start Full Pipeline</button></div>
       </div>
+
+      <!-- Running state -->
       <div class="phc sage" id="psg" style="display:none">
-        <div class="pht">&#9997;&#65039; Sage &#8212; Writing 12 Posts</div>
-        <div class="run" id="sgr"><div class="pls"></div><span class="rxt">Sage is writing this week's content&#8230;</span></div>
-        <div id="sgrs" style="display:none"></div>
-        <div id="sgra" class="pha" style="display:none"><button class="bg" onclick="rat()">Send to Atlas &#8594;</button><button class="bo" onclick="jr()">Review Posts Early</button></div>
+        <div class="pht">&#128340; Pipeline Running</div>
+        <div class="run" style="display:flex;margin-top:0"><div class="pls"></div><span class="rxt" id="pipe-status-txt">Scout &#8594; Sage &#8594; Atlas running in background&#8230;</span></div>
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--muted2)">
+          Results will appear here automatically. Usually takes 1&#8211;3 minutes.
+        </div>
+        <div id="pipe-elapsed" style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--gold);margin-top:.75rem">0:00</div>
+        <div style="font-size:.68rem;color:var(--muted2);margin-top:.2rem">elapsed</div>
+        <div id="pipe-error" style="display:none;color:var(--red);font-size:.8rem;margin-top:.85rem"></div>
       </div>
+
+      <!-- Done state -->
       <div class="phc atlas" id="pat2" style="display:none">
-        <div class="pht">&#128197; Atlas &#8212; Building Schedule</div>
-        <div class="run" id="atr"><div class="pls"></div><span class="rxt">Atlas is building your publishing calendar&#8230;</span></div>
-        <div id="atrs" style="display:none"></div>
-        <div id="atra" class="pha" style="display:none"><button class="bg" onclick="jr()">Review 12 Posts &#8594;</button></div>
+        <div class="pht">&#10003; Pipeline Complete</div>
+        <div id="pipe-summary" style="font-size:.82rem;color:var(--text);line-height:1.6;margin-bottom:.85rem"></div>
+        <div class="pha"><button class="bg" onclick="jr()">Review Posts &#8594;</button><button class="bo" onclick="rpl()">Run Again</button></div>
       </div>
     </div>
   </div>
@@ -367,15 +365,114 @@ function cnm(){document.getElementById('nm').style.display='none';document.getEl
 async function sbn(){var nv=function(id){var v=document.getElementById(id)&&document.getElementById(id).value;return v?Number(v):null;};var td=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});var msg='Please analyze this week\'s performance data for The 8:14 Project and return the full structured ECHO REPORT.\n\nWEEK OF: '+td+'\nEmail signups this week: '+(nv('ns')!=null?nv('ns'):'not provided')+'\nTotal email list size: '+(nv('nl')!=null?nv('nl'):'not provided')+'\nRiley chatbot opens: '+(nv('nc')!=null?nv('nc'):'not provided')+'\nInstagram saves: '+(nv('nsv')!=null?nv('nsv'):'not provided')+'\nLink clicks to eight14.us: '+(nv('ncl')!=null?nv('ncl'):'not provided')+'\nInstagram reach: '+(nv('nr')!=null?nv('nr'):'not provided')+'\nFacebook engagement: '+(nv('nf2')!=null?nv('nf2'):'not provided')+'\nNew subscribers this month: '+(nv('nm2')!=null?nv('nm2'):'not provided');document.getElementById('ecr').style.display='flex';document.getElementById('bsn').disabled=true;try{var reply=await ca('echo',msg);cnm();rea(reply);if(nv('ns')!=null)document.getElementById('ms').textContent=nv('ns');if(nv('nc')!=null)document.getElementById('mc2').textContent=nv('nc');if(nv('nsv')!=null)document.getElementById('msv').textContent=nv('nsv');if(nv('ncl')!=null)document.getElementById('mcl').textContent=nv('ncl');if(nv('nl')!=null)document.getElementById('ml').textContent=nv('nl');}catch(e){document.getElementById('ecr').style.display='none';document.getElementById('bsn').disabled=false;alert('Echo error: '+e.message);}}
 function rea(text){var p=document.getElementById('ep');document.getElementById('ee').style.display='none';p.innerHTML='';var scs=[["WHAT WORKED","WHAT WORKED","w"],["WHAT DIDN'T WORK","WHAT DIDN'T","d"],["THE SINGLE BIGGEST LEVER","BIGGEST LEVER","l"],["SCOUT BRIEF FOR NEXT WEEK","NEXT WEEK FOCUS","f"],["GROWTH TRAJECTORY","GROWTH","l"]];scs.forEach(function(a){var c=exs(text,a[0]);if(!c)return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(c.trim())+'</div>';p.appendChild(d);});}
 var P={s:'',sg:'',a:''};
+var pipeRunId=null, pipeTimer=null, pipeStartTime=null, pipePoller=null;
+
 function spl(btn){rpl();gs('p',btn);}
-function rpl(){P={s:'',sg:'',a:''};['2','3','4'].forEach(function(n){spb2(n,'pn');});['ln1','ln2','ln3'].forEach(function(id){document.getElementById(id).classList.remove('pd2');});spb2('1','pa');sh2('psc');hi2('psg');hi2('pat2');hi2('scr');hi2('scra');document.getElementById('scrs').innerHTML='';document.getElementById('bsc').disabled=false;}
-function spb2(n,st){var dot=document.getElementById('pb'+n),lbl=document.getElementById('pl'+n);dot.className='pbd '+st;lbl.className='pbl'+(st!=='pn'?' '+st:'');if(st==='pd2')dot.innerHTML='&#10003;';else if(st==='pa')dot.textContent=n;}
-async function rsc(){var pr=document.getElementById('scp').value.trim();if(!pr)return;document.getElementById('bsc').disabled=true;sh2('scr');hi2('scra');document.getElementById('scrs').innerHTML='';try{var r=await ca('scout',pr);P.s=r;hi2('scr');var c=document.getElementById('scrs');var heads=['TOP THEME','TRENDING NOW','HIGH-VALUE SEARCH TERMS','CONTENT GAPS THIS WEEK','SAGE BRIEF — POST 1'];heads.forEach(function(h){var ct=exs(r,h);if(!ct)return;c.innerHTML+='<div class="rs"><div class="rsl">'+h+'</div><div class="rst">'+x(ct)+'</div></div>';});if(!c.innerHTML)c.innerHTML='<div class="rs"><div class="rst">'+x(r)+'</div></div>';sh2('scra');}catch(e){hi2('scr');document.getElementById('bsc').disabled=false;document.getElementById('scrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';}}
-function esc2(){var c=document.getElementById('scrs');c.innerHTML='';var ta=document.createElement('textarea');ta.className='pta';ta.style.minHeight='200px';ta.value=P.s;ta.oninput=function(){P.s=ta.value;};c.appendChild(ta);document.getElementById('scra').innerHTML='<button class="bg" onclick="rsg()">Send to Sage &#8594;</button>';}
-async function rsg(){spb2('1','pd2');document.getElementById('ln1').classList.add('pd2');spb2('2','pa');sh2('psg');document.getElementById('sgrs').style.display='none';hi2('sgra');sh2('sgr');document.getElementById('psg').scrollIntoView({behavior:'smooth',block:'start'});try{var r=await ca('sage',"Here is Scout's research report for this week. Please produce all 12 posts in the full SAGE OUTPUT format.\n\n"+P.s);P.sg=r;hi2('sgr');var res=document.getElementById('sgrs');res.style.display='block';var lines=r.split('\n').filter(function(l){return /^POST [123] /.test(l.trim());}).slice(0,3).map(function(l){return x(l.trim().replace(/^POST \d+ [^\s]+ /,''));});res.innerHTML='<div class="phs"><div><div class="phsn">12</div><div class="phss">posts written</div></div><div style="flex:1;font-size:.78rem;color:var(--muted2);line-height:1.6">'+(lines.join('<br>')||'Posts ready')+'</div></div>';sh2('sgra');rat();}catch(e){hi2('sgr');document.getElementById('sgrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';document.getElementById('sgrs').style.display='block';sh2('sgra');}}
-async function rat(){spb2('2','pd2');document.getElementById('ln2').classList.add('pd2');spb2('3','pa');sh2('pat2');document.getElementById('atrs').style.display='none';hi2('atra');sh2('atr');document.getElementById('pat2').scrollIntoView({behavior:'smooth',block:'start'});var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});try{var r=await ca('atlas',"Here is Sage's content output for the week of "+td+". Please build the full ATLAS REPORT.\n\n"+P.sg);P.a=r;hi2('atr');var res=document.getElementById('atrs');res.style.display='block';var cal=exs(r,'WEEKLY CALENDAR');res.innerHTML='<div class="rs"><div class="rsl">'+(cal?'WEEKLY CALENDAR':'ATLAS REPORT')+'</div><div class="rst">'+x(cal||r.slice(0,600))+'</div></div>';sh2('atra');spb2('3','pd2');document.getElementById('ln3').classList.add('pd2');spb2('4','pa');setTimeout(jr,1800);}catch(e){hi2('atr');document.getElementById('atrs').innerHTML='<div class="rs" style="border-left:2px solid var(--red)"><div class="rst" style="color:var(--red)">'+x(e.message)+'</div></div>';document.getElementById('atrs').style.display='block';sh2('atra');}}
-var RP=[];
-function jr(){br();gs('r',document.querySelector('[data-s="r"]'));}
+function rpl(){
+  clearInterval(pipeTimer);clearInterval(pipePoller);
+  pipeRunId=null;pipeStartTime=null;
+  sh2('psc');hi2('psg');hi2('pat2');
+  document.getElementById('bsc').disabled=false;
+  document.getElementById('pipe-error').style.display='none';
+  document.getElementById('pipe-elapsed').textContent='0:00';
+}
+
+async function runBgPipeline(){
+  document.getElementById('bsc').disabled=true;
+  hi2('psc');sh2('psg');hi2('pat2');
+  document.getElementById('pipe-status-txt').textContent='Starting Scout → Sage → Atlas…';
+  document.getElementById('pipe-error').style.display='none';
+
+  // Start elapsed timer
+  pipeStartTime=Date.now();
+  pipeTimer=setInterval(function(){
+    var s=Math.floor((Date.now()-pipeStartTime)/1000);
+    var m=Math.floor(s/60),sec=s%60;
+    document.getElementById('pipe-elapsed').textContent=m+':'+(sec<10?'0':'')+sec;
+  },1000);
+
+  try{
+    // Fire the background function — returns 202 immediately
+    var r=await fetch(B+'/manual-pipeline-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});
+    if(r.status!==202 && !r.ok){
+      var txt=await r.text();
+      throw new Error('HTTP '+r.status+': '+txt.slice(0,100));
+    }
+    document.getElementById('pipe-status-txt').textContent='Pipeline running in background (Scout → Sage → Atlas)…';
+    // Poll pipeline-status every 12 seconds for a new completed run
+    var lastRunId=null;
+    // Get current latest run id so we know when a NEW one appears
+    try{var init=await fetch(B+'/pipeline-status');var id=await init.json();lastRunId=(id.pipeline_runs&&id.pipeline_runs[0]&&id.pipeline_runs[0].id)||null;}catch(e){}
+    pipePoller=setInterval(async function(){
+      try{
+        var sr=await fetch(B+'/pipeline-status');
+        var sd=await sr.json();
+        var runs=sd.pipeline_runs||[];
+        if(!runs.length)return;
+        var latest=runs[0];
+        // New run that didn't exist before, and it's done
+        if(latest.id!==lastRunId&&(latest.status==='success'||latest.status==='partial')){
+          clearInterval(pipePoller);clearInterval(pipeTimer);
+          var elapsed=Math.floor((Date.now()-pipeStartTime)/1000);
+          var m=Math.floor(elapsed/60),s=elapsed%60;
+          document.getElementById('pipe-elapsed').textContent=m+':'+(s<10?'0':'')+s;
+          hi2('psg');sh2('pat2');
+          document.getElementById('pipe-summary').innerHTML=
+            '<strong style="color:var(--gold)">'+latest.status.toUpperCase()+'</strong><br>'+
+            (latest.sage_posts_count||0)+' posts written &middot; '+
+            (latest.buffer_posts_scheduled||0)+' scheduled in Buffer<br>'+
+            (latest.echo_top_pillar?'Top pillar: '+x(latest.echo_top_pillar)+'<br>':'')+
+            (latest.error_message?'<span style="color:var(--red)">'+x(latest.error_message)+'</span>':'');
+          // Load fresh data into home screen
+          ls();
+        }else if(latest.id!==lastRunId&&latest.status==='failed'){
+          clearInterval(pipePoller);clearInterval(pipeTimer);
+          document.getElementById('pipe-error').style.display='block';
+          document.getElementById('pipe-error').textContent='Pipeline failed: '+(latest.error_message||'Unknown error');
+        }
+      }catch(e){console.warn('poll error:',e.message);}
+    },12000);
+  }catch(e){
+    clearInterval(pipeTimer);
+    hi2('psg');sh2('psc');
+    document.getElementById('bsc').disabled=false;
+    document.getElementById('pipe-error').style.display='block';
+    document.getElementById('pipe-error').textContent='Could not start pipeline: '+e.message;
+  }
+}
+
+function jr(){
+  // Load review from published_posts via pipeline-status
+  fetch(B+'/pipeline-status').then(function(r){return r.json();}).then(function(d){
+    var posts=d.published_posts||[];
+    if(posts.length){
+      RP=posts.map(function(p,i){
+        return{num:String(i+1),type:ptype(p.post_type||''),headline:p.post_type||'Post '+(i+1),caption:p.caption_preview||'',hashtags:'',platform:p.platform||'Instagram',dayTime:'',approved:true};
+      });
+    }else{RP=dp();}
+    var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    document.getElementById('rvh').textContent='Your '+RP.length+' Posts';
+    document.getElementById('rvs').textContent='Week of '+td+'. Review, edit, and approve before scheduling.';
+    var g=document.getElementById('pgr');g.innerHTML='';
+    var pi=function(p){var m={instagram:'📷',facebook:'🔵',youtube:'►️'};return m[(p||'').toLowerCase()]||'📄';};
+    var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};
+    RP.forEach(function(p,i){
+      var c=document.createElement('div');c.className='pca'+(p.approved?'':' excl');c.id='pc'+i;
+      c.innerHTML='<div class="pct2"><span class="pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span><div class="pcm"><div class="ppl">'+pi(p.platform)+' '+x(p.platform)+'</div><div class="phd">'+x(p.headline)+'</div></div><button class="atg'+(p.approved?'':' off')+'" id="tg'+i+'" onclick="ta('+i+')">'+(p.approved?'&#10003;':'&#9675;')+'</button></div><div class="cpt" id="ct'+i+'">'+x(p.caption||'(No caption preview available.)')+'</div>'+(p.hashtags?'<div class="phs2">'+x(p.hashtags)+'</div>':'')+'<div class="pca2"><button class="bt" onclick="te('+i+')">Expand</button></div>';
+      g.appendChild(c);
+    });
+    document.getElementById('tct').textContent=RP.length;uac();
+    gs('r',document.querySelector('[data-s="r"]'));
+  }).catch(function(e){
+    RP=dp();
+    gs('r',document.querySelector('[data-s="r"]'));
+  });
+}
+
+function ptype(raw){
+  var u=(raw||'').toUpperCase();
+  return u.indexOf('CAROUSEL')>=0?'carousel':u.indexOf('QUOTE')>=0?'quote':u.indexOf('REPOST')>=0?'repost':(u.indexOf('COMMUNITY')>=0||u.indexOf('GROUP')>=0)?'community':'caption';
+}
 function br(){RP=pp(P.sg);var td=new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});document.getElementById('rvh').textContent='Your '+RP.length+' Posts';document.getElementById('rvs').textContent='Week of '+td+'. Review, edit, and approve before scheduling.';var g=document.getElementById('pgr');g.innerHTML='';var pi=function(p){var m={instagram:'📷',facebook:'🔵',youtube:'►️'};return m[(p||'').toLowerCase()]||'📄';};var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};RP.forEach(function(p,i){var c=document.createElement('div');c.className='pca'+(p.approved?'':' excl');c.id='pc'+i;c.innerHTML='<div class="pct2"><span class="pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span><div class="pcm"><div class="ppl">'+pi(p.platform)+' '+x(p.platform)+' · '+x(p.dayTime)+'</div><div class="phd">'+x(p.headline)+'</div></div><button class="atg'+(p.approved?'':' off')+'" id="tg'+i+'" onclick="ta('+i+')">'+(p.approved?'&#10003;':'&#9675;')+'</button></div><div class="cpt" id="ct'+i+'">'+x(p.caption||'(Run pipeline to generate copy.)')+'</div><textarea class="cpe" id="ce'+i+'" onchange="uc('+i+',this.value)">'+x(p.caption)+'</textarea>'+(p.hashtags?'<div class="phs2">'+x(p.hashtags)+'</div>':'')+'<div class="pca2"><button class="bt" onclick="te('+i+')">Expand</button><button class="bt" onclick="ted('+i+')">&#9999; Edit</button></div>';g.appendChild(c);});document.getElementById('tct').textContent=RP.length;uac();}
 function pp(text){if(!text)return dp();var lines=text.split('\n'),blocks=[],cur='';lines.forEach(function(l){if(/^POST \d+/.test(l.trim())&&cur.trim()){blocks.push(cur);cur=l;}else{cur+='\n'+l;}});if(cur.trim())blocks.push(cur);var posts=[];blocks.forEach(function(block,i){if(!block.trim())return;var tM=block.match(/^POST (\d+)\s*[^\w\n]*(.+)/m);var pM=block.match(/Platform:\s*(.+)/);var dtM=block.match(/Day\/Time:\s*(.+)/);var s1M=block.match(/SLIDE 1[^:]*:\s*(.*)/);var lines2=block.split('\n'),capLines=[],hashLines=[],inCap=false,inHash=false;lines2.forEach(function(l){if(/^CAPTION:/.test(l)){inCap=true;var after=l.replace(/^CAPTION:\s*/,'');if(after)capLines.push(after);}else if(/^HASHTAGS:/.test(l)){inCap=false;inHash=true;var after=l.replace(/^HASHTAGS:\s*/,'');if(after)hashLines.push(after);}else if(inCap&&!/^SLIDE |^---|^POST \d/.test(l)){capLines.push(l);}else if(inHash&&!/^---|^POST \d/.test(l)){hashLines.push(l);}else if(/^SLIDE |^---/.test(l)){inCap=false;}});var raw=tM?tM[2].trim():'Post '+(i+1);var u=raw.toUpperCase();posts.push({num:tM?tM[1]:String(i+1),type:u.indexOf('CAROUSEL')>=0?'carousel':u.indexOf('QUOTE')>=0?'quote':u.indexOf('REPOST')>=0?'repost':(u.indexOf('COMMUNITY')>=0||u.indexOf('GROUP')>=0)?'community':'caption',headline:s1M?s1M[1].trim():raw,caption:capLines.join('\n').trim(),hashtags:hashLines.join('\n').trim(),platform:pM?pM[1].trim():'Instagram',dayTime:dtM?dtM[1].trim():'',approved:true});});return posts.length>=3?posts:dp();}
 function dp(){return [{num:'1',type:'carousel',platform:'Instagram',dayTime:'Monday 8am MT',headline:'Educational Carousel',caption:'',hashtags:'',approved:true},{num:'2',type:'quote',platform:'Instagram',dayTime:'Monday 6pm MT',headline:'Quote Graphic',caption:'',hashtags:'',approved:true},{num:'3',type:'caption',platform:'Facebook',dayTime:'Tuesday 10am MT',headline:'Facebook Caption',caption:'',hashtags:'',approved:true},{num:'4',type:'carousel',platform:'Instagram',dayTime:'Wednesday 8am MT',headline:'Tool Carousel',caption:'',hashtags:'',approved:true},{num:'5',type:'repost',platform:'Instagram',dayTime:'Wednesday 12pm MT',headline:'Stories Repost',caption:'',hashtags:'',approved:true},{num:'6',type:'community',platform:'Facebook',dayTime:'Wednesday 6pm MT',headline:'Group Check-In',caption:'',hashtags:'',approved:true},{num:'7',type:'community',platform:'YouTube',dayTime:'Thursday 9am MT',headline:'YouTube Community Post',caption:'',hashtags:'',approved:true},{num:'8',type:'carousel',platform:'Instagram',dayTime:'Thursday 6pm MT',headline:'Story Arc Carousel',caption:'',hashtags:'',approved:true},{num:'9',type:'repost',platform:'Facebook',dayTime:'Friday 10am MT',headline:'Facebook Repost',caption:'',hashtags:'',approved:true},{num:'10',type:'caption',platform:'Instagram',dayTime:'Friday 6pm MT',headline:'Weekend Reflection',caption:'',hashtags:'',approved:true},{num:'11',type:'carousel',platform:'Instagram',dayTime:'Saturday 9am MT',headline:'Myth vs Reality',caption:'',hashtags:'',approved:true},{num:'12',type:'community',platform:'Facebook',dayTime:'Sunday 8am MT',headline:'Weekly Check-In',caption:'',hashtags:'',approved:true}];}

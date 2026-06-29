@@ -11,9 +11,11 @@ When editing any file in netlify/functions/, always verify the model string is c
 
 ## CRITICAL: max_tokens
 - riley-chat.js (streaming): max_tokens = 1000 — short conversational replies, streams in real time
-- Agent functions (scout, sage, atlas, echo, pipeline): max_tokens = 2000
-- Never raise agent max_tokens above 2000 without testing for timeout first
+- Agent functions (scout, sage, atlas, echo): max_tokens = 4000 — Netlify Pro removes CDN inactivity timeout
+- Pipeline background functions (weekly-pipeline-cron, manual-pipeline-background): max_tokens = 4000
 - Riley streaming bypasses the synchronous timeout — max_tokens 1000 comfortably finishes within 30s
+- On Netlify Pro, synchronous agent functions can handle 4000 tokens within the 26-second function limit
+- Dashboard pipeline uses manual-pipeline-background.js (-background suffix = no timeout)
 
 ## riley-chat.js response format
 riley-chat.js is a STANDARD Netlify serverless function (no streaming wrapper).

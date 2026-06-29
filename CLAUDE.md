@@ -193,3 +193,18 @@ Supabase tables used by dashboard (no RLS — anon key reads work):
 - Sage reads echo_scores format performance and injects it before writing
 - Riley reads latest scout_history + echo_scores + published_posts on every conversation
 - Echo saves format_winner and worst_pillar — fill these in manually after reviewing each week's data
+
+## DEFERRED WORK — come back to this
+### Canva auto-design in Atlas (PAUSED 2026-06-29)
+Goal: after Sage writes copy, Atlas auto-designs ALL social posts in Canva, fully automated.
+Decision made: "Fully automated in Atlas" (server-side Canva Connect API, not the chat plugin).
+Blockers to resolve before building:
+1. Canva Connect API OAuth token (from Canva Developer portal integration)
+2. Brand Templates with named autofill fields — one per post type (carousel, quote, caption)
+3. Plan tier — Autofill + Brand Template APIs are likely Canva Enterprise only. MUST confirm
+   the account exposes the Autofill API before building, or pivot to me-in-the-loop flow.
+Planned build (once unblocked):
+- New canva-publish.js: template ID + copy -> create autofill job -> poll -> return design + export URL
+- Wire into the BACKGROUND pipeline (manual-pipeline-background.js / weekly-pipeline-cron.js),
+  NOT synchronous atlas.js (autofill is async, would exceed timeout)
+- Store canva_url in published_posts; surface designs in operator Review screen

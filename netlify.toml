@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html"
 
 [functions]
   directory = "netlify/functions"
@@ -219,17 +219,34 @@
 
 [[redirects]]
   from = "https://riley.eight14.us/roadmap"
-  to   = "/roadmap.html"
+  to   = "/roadmap.html,chat.html"
   status = 200
 
 [[redirects]]
   from = "https://riley.eight14.us/roadmap/"
-  to   = "/roadmap.html"
+  to   = "/roadmap.html,chat.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/roadmap.html"
-  to     = "/roadmap.html"
+  from   = "https://riley.eight14.us/roadmap.html,chat.html"
+  to     = "/roadmap.html,chat.html"
+  status = 200
+  force  = true
+
+
+[[redirects]]
+  from = "https://riley.eight14.us/chat"
+  to   = "/chat.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.eight14.us/chat/"
+  to   = "/chat.html"
+  status = 200
+
+[[redirects]]
+  from   = "https://riley.eight14.us/chat.html"
+  to     = "/chat.html"
   status = 200
   force  = true
 

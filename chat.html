@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat with Riley — The 8:14 Project</title>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;
+  --gold:#c9a84c;--gold-light:#e8d5a3;--gold-dim:rgba(201,168,76,0.15);
+  --riley-blue:#2a4a6e;--riley-blue-light:#4a7ab0;
+  --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
+}
+
+body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+
+/* ── LAYOUT ── */
+.dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--ink);padding:32px 0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,0.06);position:sticky;top:0;height:100vh;overflow-y:auto}
+.sidebar-logo{padding:0 24px 32px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:24px}
+.sidebar-logo-mark{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
+.sidebar-logo-mark span{color:var(--gold)}
+.sidebar-logo-sub{font-size:11px;color:var(--smoke);letter-spacing:0.05em;margin-top:2px}
+.sidebar-section-label{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke);letter-spacing:0.18em;text-transform:uppercase;padding:0 24px;margin-bottom:6px;margin-top:20px}
+.sidebar-nav-item{display:flex;align-items:center;gap:10px;padding:10px 24px;text-decoration:none;font-size:13px;color:var(--smoke);transition:color .15s,background .15s;border-left:2px solid transparent}
+.sidebar-nav-item:hover,.sidebar-nav-item.active{color:var(--parchment);background:rgba(255,255,255,0.04);border-left-color:var(--gold)}
+.sidebar-spacer{flex:1}
+.sidebar-user{padding:20px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+.user-name{font-size:12px;color:var(--parchment);font-weight:500}
+.user-plan{font-size:10px;color:var(--gold)}
+.sign-out-btn{margin-left:auto;background:transparent;border:none;color:var(--smoke);font-size:14px;cursor:pointer;padding:4px;transition:color .15s}
+.sign-out-btn:hover{color:var(--red)}
+
+/* ── MAIN ── */
+.dash-main{overflow-y:auto;min-height:100vh}
+.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.topbar-btn{background:var(--ink);color:var(--parchment);border:none;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.04em;text-decoration:none;display:inline-block}
+.topbar-btn.gold{background:var(--gold);color:var(--ink)}
+
+.dash-content{padding:32px}
+
+/* ── BRIEF CARD ── */
+.briefing-card{background:var(--ink);border-radius:2px;overflow:hidden;margin-bottom:28px}
+.briefing-card-header{padding:24px 28px;background:linear-gradient(135deg,rgba(201,168,76,0.12) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:flex-start;justify-content:space-between}
+.bc-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px}
+.bc-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--parchment);margin-bottom:6px}
+.bc-subtitle{font-size:13px;color:var(--smoke);line-height:1.5;max-width:440px}
+.bc-progress-label{font-size:11px;color:var(--smoke);margin-bottom:6px;font-family:'DM Mono',monospace;text-align:right}
+.briefing-modules-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.05)}
+.bmod{background:rgba(15,14,13,0.97);padding:20px;cursor:pointer;transition:background .15s;position:relative}
+.bmod:hover{background:rgba(201,168,76,0.05)}
+.bmod.done::after{content:'✓';position:absolute;top:12px;right:14px;font-size:11px;color:var(--green);font-weight:700}
+.bmod.coming{opacity:0.45;cursor:default}
+.bmod-icon{font-size:20px;margin-bottom:8px}
+.bmod-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px}
+.bmod-content{font-size:13px;color:var(--parchment);line-height:1.45}
+.brief-footer{padding:14px 24px;border-top:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between}
+
+/* ── STATS ── */
+.section-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;color:var(--smoke);text-transform:uppercase;margin-bottom:12px;margin-top:28px;display:flex;align-items:center;gap:10px}
+.section-label::after{content:'';flex:1;height:1px;background:var(--mist)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+.stat-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
+.stat-label{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px}
+.stat-value{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);line-height:1}
+.stat-sub{font-size:11px;color:var(--smoke);margin-top:4px}
+.stat-trend{display:inline-block;font-size:11px;color:var(--green);font-weight:600;margin-left:4px}
+
+/* ── TWO COL ── */
+.two-col{display:grid;grid-template-columns:1fr 320px;gap:20px}
+.panel{background:white;border:1px solid var(--mist);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.panel-header{padding:16px 20px;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:600;color:var(--ink)}
+.panel-action{font-size:12px;color:var(--riley-blue-light);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;text-decoration:none}
+
+/* ── CONVERSATIONS ── */
+.conv-item{padding:14px 20px;border-bottom:1px solid var(--mist);cursor:pointer;transition:background .12s;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;text-decoration:none;color:inherit}
+.conv-item:hover{background:var(--warm-white)}
+.conv-item:last-child{border-bottom:none}
+.conv-title{font-size:13px;color:var(--ink);font-weight:500;margin-bottom:3px}
+.conv-preview{font-size:12px;color:var(--smoke);line-height:1.4}
+.conv-date{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;text-align:right;white-space:nowrap}
+.conv-tag{display:inline-block;font-size:9px;background:var(--gold-dim);color:var(--gold);padding:2px 6px;letter-spacing:0.08em;text-transform:uppercase;margin-top:4px;margin-right:3px}
+
+/* ── PROGRAMS ── */
+.prog-list{padding:0 20px}
+.prog-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--mist)}
+.prog-item:last-child{border-bottom:none}
+.prog-icon{width:36px;height:36px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;border-radius:2px}
+.prog-name{font-size:13px;color:var(--ink);font-weight:500}
+.prog-status{font-size:11px;color:var(--smoke);margin-top:2px}
+.prog-progress{margin-left:auto;text-align:right;flex-shrink:0}
+.prog-pct{font-family:'DM Mono',monospace;font-size:18px;color:var(--gold);font-weight:500;line-height:1}
+.prog-bar-wrap{width:60px;height:3px;background:var(--mist);border-radius:2px;margin-top:4px;margin-left:auto}
+.prog-bar-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* ── CHECK-IN PANEL ── */
+.checkin-panel{display:flex;flex-direction:column;gap:12px}
+.checkin-card{background:white;border:1px solid var(--mist);padding:20px;border-radius:2px}
+.checkin-label{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px}
+.mood-scale{display:flex;gap:6px;margin-top:8px}
+.mood-btn{flex:1;padding:8px 4px;background:var(--warm-white);border:1px solid var(--mist);border-radius:1px;cursor:pointer;font-size:18px;text-align:center;transition:border-color .12s,transform .1s}
+.mood-btn:hover{border-color:var(--gold);transform:scale(1.1)}
+.mood-btn.selected{border-color:var(--gold);background:var(--gold-dim)}
+.streak-display{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.streak-num{font-family:'DM Serif Display',serif;font-size:48px;color:var(--ink);line-height:1}
+.streak-unit{font-size:14px;color:var(--smoke)}
+.streak-dots{display:flex;gap:4px;margin-top:10px}
+.streak-dot{width:10px;height:10px;border-radius:50%;background:var(--mist)}
+.streak-dot.done{background:var(--gold)}
+.streak-dot.today{background:var(--green)}
+.todo-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--mist);cursor:pointer}
+.todo-item:last-child{border-bottom:none}
+.todo-check{width:18px;height:18px;border:1.5px solid var(--mist);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .15s}
+.todo-check.done{border-color:var(--green);color:var(--green)}
+.todo-text{font-size:13px;color:var(--ink)}
+.todo-text.done{color:var(--smoke);text-decoration:line-through}
+.goal-row{margin-bottom:12px}
+.goal-row:last-child{margin-bottom:0}
+.goal-top{display:flex;justify-content:space-between;margin-bottom:5px}
+.goal-name{font-size:12px;color:var(--ink)}
+.goal-val{font-family:'DM Mono',monospace;font-size:11px;color:var(--gold)}
+.goal-bar{height:3px;background:var(--mist);border-radius:2px}
+.goal-fill{height:100%;background:var(--gold);border-radius:2px;transition:width .4s}
+
+/* ── EMPTY STATES ── */
+.empty{padding:24px 20px;text-align:center}
+.empty-icon{font-size:28px;margin-bottom:8px}
+.empty-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--smoke);line-height:1.5;margin-bottom:14px}
+.btn-sm{display:inline-block;padding:8px 16px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;text-decoration:none;letter-spacing:0.04em}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn-dark{background:var(--ink);color:var(--parchment)}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .two-col{grid-template-columns:1fr}
+  .briefing-modules-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .dash-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .dash-content{padding:20px 16px}
+}
+
+.starter-btn { padding:9px 16px; background:white; border:1px solid var(--mist); border-radius:20px; font-size:13px; color:var(--ink); cursor:pointer; transition:border-color .15s; font-family:'DM Sans',sans-serif; }
+.starter-btn:hover { border-color:var(--gold); color:var(--gold); }
+.sign-out-btn { margin-left:auto; background:transparent; border:none; color:var(--smoke); font-size:14px; cursor:pointer; padding:4px; }
+.sign-out-btn:hover { color:var(--red); }
+.topbar-btn { background:var(--ink); color:var(--parchment); border:none; padding:9px 18px; font-size:12px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; letter-spacing:0.04em; text-decoration:none; display:inline-block; }
+.topbar-btn.gold { background:var(--gold); color:var(--ink); }
+
+</style>
+</head>
+<body>
+<div class="dash-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="sidebar-logo-mark">Riley<span>.</span></div><div class="sidebar-logo-sub">The 8:14 Project</div></div>
+    <div class="sidebar-section-label">Today</div>
+    <a href="/dashboard" class="sidebar-nav-item">🌅 Morning Brief</a>
+    <a href="/chat" class="sidebar-nav-item active">💬 Chat with Riley</a>
+    <a href="/tracker" class="sidebar-nav-item">✅ Daily Check-In</a>
+    <div class="sidebar-section-label">History</div>
+    <a href="/conversations" class="sidebar-nav-item">📁 Conversations</a>
+    <a href="/progress" class="sidebar-nav-item">📊 Progress</a>
+    <a href="/workouts" class="sidebar-nav-item">🏋️ Workouts</a>
+    <a href="/nutrition" class="sidebar-nav-item">🍳 Nutrition</a>
+    <div class="sidebar-section-label">Programs</div>
+    <a href="/programs" class="sidebar-nav-item">🎯 Enrollments</a>
+    <a href="/roadmap" class="sidebar-nav-item">🗺️ Roadmap</a>
+    <div class="sidebar-section-label">Life Data</div>
+    <a href="/sleep" class="sidebar-nav-item">😴 Sleep</a>
+    <a href="/finance" class="sidebar-nav-item">💰 Financial Goals</a>
+    <a href="/calendar" class="sidebar-nav-item">📅 Calendar</a>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div><div class="user-name" id="user-name">…</div><div class="user-plan">Life Coach · Active</div></div>
+      <button class="sign-out-btn" onclick="signOut()" title="Sign out">↪</button>
+    </div>
+  </aside>
+
+  <!-- Chat main -->
+  <main style="display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--warm-white)">
+    <!-- Topbar -->
+    <div class="dash-topbar" style="flex-shrink:0">
+      <div>
+        <div class="topbar-greeting" id="greeting">Riley</div>
+        <div class="topbar-date">Your AI Chief of Staff · Ask anything</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="/dashboard" class="topbar-btn">← Dashboard</a>
+        <button class="topbar-btn gold" onclick="newConversation()">New Conversation</button>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div id="messages" style="flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:12px">
+      <!-- Welcome -->
+      <div id="welcome" style="max-width:600px;margin:40px auto;text-align:center">
+        <div style="font-size:40px;margin-bottom:16px">🤝</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);margin-bottom:12px">Good to see you.</div>
+        <div style="font-size:14px;color:var(--smoke);line-height:1.7;margin-bottom:28px">Ask me anything — your recovery, your workouts, your goals, your mindset. I already know your context.</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="starters">
+          <button class="starter-btn" onclick="starter(this)">How am I doing on my goals?</button>
+          <button class="starter-btn" onclick="starter(this)">Give me a mindset check-in</button>
+          <button class="starter-btn" onclick="starter(this)">What should I focus on today?</button>
+          <button class="starter-btn" onclick="starter(this)">Review my week with me</button>
+          <button class="starter-btn" onclick="starter(this)">I'm struggling and need support</button>
+          <button class="starter-btn" onclick="starter(this)">Help me plan tomorrow</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div style="flex-shrink:0;padding:16px 32px;background:white;border-top:1px solid var(--mist)">
+      <div style="display:flex;gap:10px;max-width:800px;margin:0 auto">
+        <textarea id="msg-input" placeholder="Message Riley…" rows="1"
+          style="flex:1;background:var(--warm-white);border:1px solid var(--mist);border-radius:8px;color:var(--ink);font-size:14px;padding:10px 14px;resize:none;outline:none;height:44px;max-height:140px;overflow-y:auto;font-family:DM Sans,sans-serif;line-height:1.4;transition:border-color .15s"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"
+          oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,140)+'px'"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--mist)'"></textarea>
+        <button id="send-btn" onclick="send()"
+          style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
+      </div>
+      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley knows your sobriety streak, goals, habits, and programs</div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
+const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+const RILEY_URL = '/.netlify/functions/riley-chat';
+
+let _db, _user, _uid, _sessionId, _history = [];
+
+(async function() {
+  _db = supabase.createClient(SB_URL, SB_KEY);
+  const { data } = await _db.auth.getSession();
+  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return; }
+  _user = data.session.user;
+  _uid  = _user.id;
+  _sessionId = crypto.randomUUID();
+
+  const meta = _user.user_metadata || {};
+  const fullName = meta.full_name || meta.name || _user.email.split('@')[0] || 'Member';
+  const firstName = fullName.split(' ')[0];
+  const avatarUrl = meta.avatar_url || meta.picture || '';
+  const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+  document.getElementById('greeting').textContent = 'Riley · Hey, ' + firstName;
+  const av = document.getElementById('user-avatar');
+  if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+  else av.textContent = initials;
+  document.getElementById('user-name').textContent = fullName;
+
+  // Load most recent session to restore context
+  const { data: recent } = await _db.from('riley_conversations')
+    .select('role, content, session_id, created_at')
+    .eq('user_id', _uid)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  if (recent && recent.length) {
+    // Group by most recent session_id
+    const latestSid = recent[0].session_id;
+    const latestMsgs = recent.filter(m => m.session_id === latestSid).reverse();
+    _sessionId = latestSid;
+    _history = latestMsgs.map(m => ({ role: m.role, content: m.content }));
+    if (_history.length) {
+      document.getElementById('welcome').style.display = 'none';
+      _history.forEach(m => appendMsg(m.role, m.content));
+    }
+  }
+})();
+
+function newConversation() {
+  _sessionId = crypto.randomUUID();
+  _history = [];
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('messages').appendChild(document.getElementById('welcome') || createWelcome());
+  document.getElementById('welcome').style.display = 'block';
+}
+
+function starter(btn) {
+  document.getElementById('msg-input').value = btn.textContent;
+  send();
+}
+
+function appendMsg(role, text) {
+  const el = document.getElementById('welcome');
+  if (el) el.style.display = 'none';
+
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;' + (role==='user' ? 'justify-content:flex-end' : 'justify-content:flex-start') + ';max-width:100%';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'max-width:72%;padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.6;word-break:break-word;white-space:pre-wrap;' +
+    (role==='user'
+      ? 'background:var(--gold);color:var(--ink);font-weight:500;border-bottom-right-radius:4px'
+      : 'background:white;color:var(--ink);border:1px solid var(--mist);border-bottom-left-radius:4px');
+  bubble.textContent = text;
+  wrap.appendChild(bubble);
+  document.getElementById('messages').appendChild(wrap);
+  document.getElementById('messages').scrollTop = 999999;
+  return bubble;
+}
+
+async function send() {
+  const input = document.getElementById('msg-input');
+  const btn   = document.getElementById('send-btn');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = ''; input.style.height = '44px';
+  appendMsg('user', text);
+  btn.disabled = true; btn.style.opacity = '.4';
+
+  _history.push({ role: 'user', content: text });
+
+  // Typing bubble
+  const typingWrap = document.createElement('div');
+  typingWrap.style.cssText = 'display:flex;justify-content:flex-start';
+  const typingBubble = document.createElement('div');
+  typingBubble.style.cssText = 'padding:11px 15px;border-radius:12px;font-size:14px;color:var(--smoke);background:white;border:1px solid var(--mist);border-bottom-left-radius:4px';
+  typingBubble.textContent = 'Riley is thinking…';
+  typingWrap.appendChild(typingBubble);
+  document.getElementById('messages').appendChild(typingWrap);
+  document.getElementById('messages').scrollTop = 999999;
+
+  let reply = '';
+  try {
+    const res = await fetch(RILEY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: text, messages: _history, user_id: _uid, session_id: _sessionId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+
+    // Stream or plain text
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    typingBubble.textContent = '';
+    typingBubble.style.color = 'var(--ink)';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      reply += decoder.decode(value, { stream: true });
+      typingBubble.textContent = reply;
+      document.getElementById('messages').scrollTop = 999999;
+    }
+    if (!reply.trim()) throw new Error('Empty reply');
+  } catch (e) {
+    reply = 'Sorry, I had trouble connecting. Please try again.';
+    typingBubble.textContent = reply;
+  }
+
+  _history.push({ role: 'assistant', content: reply });
+  if (_history.length > 40) _history = _history.slice(-40);
+  btn.disabled = false; btn.style.opacity = '1';
+}
+
+async function signOut() {
+  await _db.auth.signOut();
+  window.location.href = 'https://riley.eight14.us';
+}
+</script>
+</body>
+</html>

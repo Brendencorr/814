@@ -52,12 +52,12 @@
 # ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
 [[redirects]]
   from = "https://riley.eight14.us/dashboard"
-  to   = "/dashboard.html"
+  to   = "/riley-dashboard.html"
   status = 200
 
 [[redirects]]
   from = "https://riley.eight14.us/dashboard/"
-  to   = "/dashboard.html"
+  to   = "/riley-dashboard.html"
   status = 200
 
 [[redirects]]

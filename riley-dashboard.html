@@ -621,7 +621,7 @@ let checkedInToday = false;
 // ── Init ──────────────────────────────────────────────────────────────────
 async function init() {
   const { data: { session }, error } = await db.auth.getSession();
-  if (!session) { window.location.href = 'riley-auth.html'; return; }
+  if (!session) { window.location.href = 'https://login.eight14.us'; return; }
 
   currentUser = session.user;
 
@@ -668,13 +668,31 @@ async function init() {
 
   // Load default tab content
   loadChat();
+
+  // Start the inactivity timeout
+  resetIdleTimer();
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────
 async function signOut() {
+  clearTimeout(idleTimer);
   await db.auth.signOut();
-  window.location.href = 'riley-auth.html';
+  window.location.href = 'https://www.eight14.us';
 }
+
+// ── Inactivity timeout — auto sign-out after 30 min idle ────────────────────
+let idleTimer = null;
+const IDLE_LIMIT = 30 * 60 * 1000; // 30 minutes
+function resetIdleTimer() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(async () => {
+    await db.auth.signOut();
+    window.location.href = 'https://login.eight14.us?timeout=1';
+  }, IDLE_LIMIT);
+}
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach((evt) =>
+  document.addEventListener(evt, resetIdleTimer, { passive: true })
+);
 
 // ── Tab Switching ─────────────────────────────────────────────────────────
 const tabLoaders = {

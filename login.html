@@ -143,7 +143,8 @@ html, body {
   // ── Configuration loaded at runtime from /.netlify/functions/site-config ───
   // No credentials are hardcoded here. The site-config function reads
   // SUPABASE_URL and SUPABASE_ANON_KEY from Netlify environment variables.
-  const REDIRECT_URL = window.location.origin + '/dashboard.html';
+  // Land on the premium client dashboard after auth (cross-subdomain)
+  const REDIRECT_URL = 'https://riley.eight14.us/dashboard';
   let supabase = null;
 
   // ── Boot: fetch config then initialise Supabase ────────────────────────────
@@ -190,7 +191,11 @@ html, body {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: REDIRECT_URL },
+        options: {
+          redirectTo: REDIRECT_URL,
+          // Force Google to prompt account selection every time — user must verify
+          queryParams: { prompt: 'select_account' },
+        },
       });
       if (error) throw error;
       // Browser will redirect to Google — no further action needed here

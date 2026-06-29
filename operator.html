@@ -149,6 +149,33 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
 .aab:hover{opacity:.88}.aab:disabled{opacity:.4;cursor:default}
 .dbn{padding:.75rem 1rem;background:transparent;border:1px solid var(--border2);color:var(--muted2);font-size:.8rem;cursor:pointer;white-space:nowrap}
 .dbn:hover{color:var(--text)}
+/* WEEK DETAIL PANEL */
+#wkpn{position:fixed;top:0;right:-520px;width:500px;height:100dvh;background:var(--card);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1)}
+#wkpn.open{right:0}
+.wkph{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--header)}
+.wkpt{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);letter-spacing:.15em}
+.wkpc{background:transparent;border:none;color:var(--muted2);font-size:1.2rem;cursor:pointer;padding:.3rem}
+.wkpc:hover{color:var(--text)}
+.wkbody{flex:1;overflow-y:auto;padding:1.1rem}
+.wk-scores{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.1rem}
+.wk-sc{background:var(--bg);border:1px solid var(--border);padding:.65rem .8rem}
+.wk-sc-lbl{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.15em;margin-bottom:.3rem}
+.wk-sc-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);line-height:1}
+.wk-post{background:var(--bg);border:1px solid var(--border);padding:.85rem;margin-bottom:.6rem}
+.wk-post-hd{display:flex;align-items:flex-start;gap:.6rem;margin-bottom:.5rem}
+.wk-post-type{font-family:'Bebas Neue',sans-serif;font-size:9px;letter-spacing:.1em;padding:.15rem .45rem}
+.wk-post-meta{flex:1;min-width:0}
+.wk-post-plat{font-size:.68rem;color:var(--muted2)}
+.wk-post-head{font-family:'Playfair Display',serif;font-style:italic;font-size:.85rem;color:var(--text);margin-top:.15rem;line-height:1.4}
+.wk-post-cap{font-size:.78rem;color:var(--text);line-height:1.6;margin-top:.5rem;white-space:pre-wrap;word-break:break-word}
+.wk-post-hash{font-size:.68rem;color:var(--sage);font-family:monospace;margin-top:.35rem}
+.wk-slides{border-left:2px solid var(--border2);padding-left:.65rem;margin:.5rem 0;display:flex;flex-direction:column;gap:.35rem}
+.wk-slide{font-size:.75rem;color:var(--text);line-height:1.5}
+.wk-slide-n{font-family:'Bebas Neue',sans-serif;font-size:8px;color:var(--muted2);letter-spacing:.12em;margin-bottom:.1rem}
+.wk-expand{font-family:'Bebas Neue',sans-serif;font-size:9px;color:var(--muted2);letter-spacing:.1em;background:transparent;border:none;cursor:pointer;padding:0;margin-top:.35rem}
+.wk-expand:hover{color:var(--gold)}
+.rr.clickable{cursor:pointer;transition:background .12s}
+.rr.clickable:hover{background:rgba(201,168,76,.06)}
 /* SETTINGS */
 #stpn{position:fixed;top:0;right:-380px;width:360px;height:100dvh;background:var(--card);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1);overflow-y:auto}
 #stpn.open{right:0}
@@ -298,6 +325,17 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
     </div>
   </div>
 </div>
+<!-- WEEK DETAIL PANEL -->
+<div id="wkpn">
+  <div class="wkph">
+    <span class="wkpt" id="wk-title">Week Detail</span>
+    <button class="wkpc" onclick="closeWk()">&#215;</button>
+  </div>
+  <div class="wkbody" id="wk-body">
+    <div class="em">Select a week from the pipeline runs list.</div>
+  </div>
+</div>
+
 <div id="stpn">
   <div class="sph"><span class="spt">Settings</span><button class="spc" onclick="tgs()">&#215;</button></div>
   <div class="sps">
@@ -360,8 +398,8 @@ if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.
 function gs(n,btn){['h','p','r'].forEach(function(s){document.getElementById('s'+s).classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
 function tgs(){document.getElementById('stpn').classList.toggle('open');}
 function init(){scd();ls();ldst();}
-async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
-function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r){var row=document.createElement('div');row.className='rr';row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}
+async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
+function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r,i){var row=document.createElement('div');row.className='rr clickable';row.title='Click to view this week\'s posts and numbers';row.onclick=function(){openWk(r);};row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}
 function recho(s){if(!s)return;var p=document.getElementById('ep');document.getElementById('ee').style.display='none';var scs=[['biggest_lever','BIGGEST LEVER','l'],['best_pillar','BEST PILLAR','w'],['worst_pillar','WORST PILLAR','d']];scs.forEach(function(a){if(!s[a[0]])return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(s[a[0]])+'</div>';p.appendChild(d);});if(s.email_signups!=null){document.getElementById('ms').textContent=s.email_signups;document.getElementById('mc2').textContent=s.chatbot_opens||'—';document.getElementById('msv').textContent=s.instagram_saves||'—';document.getElementById('mcl').textContent=s.link_clicks||'—';}}
 function rh(posts){if(!posts.length)return;var l=document.getElementById('hl');l.innerHTML='';var ic={instagram:'📷',facebook:'🔵',youtube:'►️'};posts.slice(0,20).forEach(function(p){var d=document.createElement('div');d.className='pe';d.innerHTML='<span class="pico">'+(ic[(p.platform||'').toLowerCase()]||'📄')+'</span><div class="pnfo"><div class="pty">'+x(p.post_type||'Post')+'</div><div class="pmt">'+fd(p.week_of)+'</div></div><div class="pd '+(p.buffer_update_id?'g':'a')+'"></div>';l.appendChild(d);});}
 function scd(){function t(){var now=new Date(),nx=new Date(now);nx.setUTCDate(now.getUTCDate()+((7-now.getUTCDay())%7||7));nx.setUTCHours(12,0,0,0);var ms=nx-now,days=Math.floor(ms/864e5),hrs=Math.floor((ms%864e5)/36e5);var el=document.getElementById('cdn');if(el)el.textContent=days>0?days+'d '+hrs+'h':hrs+'h';}t();setInterval(t,60000);}
@@ -586,6 +624,115 @@ function fd(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-U
 function nxs(){var d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7||7));return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
 function sh2(id){var el=document.getElementById(id);if(el)el.style.display='';}
 function hi2(id){var el=document.getElementById(id);if(el)el.style.display='none';}
+// ── Week Detail Panel ─────────────────────────────────────────────────────────
+var _statusCache = null; // cache from last ls() call
+
+function closeWk(){document.getElementById('wkpn').classList.remove('open');}
+
+function openWk(run){
+  document.getElementById('wkpn').classList.add('open');
+  document.getElementById('wk-title').textContent=fd(run.run_date)+' Pipeline';
+  var body=document.getElementById('wk-body');
+  body.innerHTML='<div class="em" style="padding:1rem">Loading&#8230;</div>';
+
+  // Use cached pipeline-status data so we don't need another fetch
+  var doRender=function(d){
+    var weekOf=run.run_date; // "YYYY-MM-DD"
+    // Match echo scores for this week
+    var scores=(d.echo_scores||[]).filter(function(s){return s.week_of&&s.week_of.slice(0,10)===weekOf.slice(0,10)});
+    var score=scores[0]||null;
+    // Posts for this week
+    var posts=(d.published_posts||[]).filter(function(p){return p.week_of&&p.week_of.slice(0,10)===weekOf.slice(0,10)});
+    // Build HTML
+    var html='';
+
+    // Status banner
+    html+='<div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">';
+    html+='<span class="sb s'+(run.status==='success'?'s':run.status==='partial'?'p':'f')+'">'+x(run.status||'unknown')+'</span>';
+    html+='<span style="font-size:.78rem;color:var(--muted2)">';
+    html+=x(run.sage_posts_count||0)+' posts written';
+    if(run.echo_top_pillar)html+=' &middot; '+x(run.echo_top_pillar)+' pillar';
+    html+='</span></div>';
+
+    // Echo scores grid
+    if(score){
+      html+='<div class="sh" style="margin-bottom:.6rem">Echo Numbers</div>';
+      html+='<div class="wk-scores">';
+      var metrics=[
+        ['Email Signups',score.email_signups],
+        ['Chatbot Opens',score.chatbot_opens],
+        ['Instagram Saves',score.instagram_saves],
+        ['Link Clicks',score.link_clicks],
+      ];
+      metrics.forEach(function(m){
+        if(m[1]==null)return;
+        html+='<div class="wk-sc"><div class="wk-sc-lbl">'+m[0]+'</div><div class="wk-sc-val">'+m[1]+'</div></div>';
+      });
+      html+='</div>';
+      if(score.biggest_lever){
+        html+='<div style="background:var(--bg);border-left:3px solid var(--gold);padding:.7rem .9rem;margin-bottom:1rem;font-size:.78rem;color:var(--text);line-height:1.5">';
+        html+='<div class="sh" style="margin-bottom:.35rem">Biggest Lever</div>'+x(score.biggest_lever);
+        html+='</div>';
+      }
+    }
+
+    // Posts section
+    if(run.sage_output&&run.sage_output.length>50){
+      // Parse from full Sage output
+      var parsedPosts=parseSageFull(run.sage_output);
+      html+='<div class="sh" style="margin-bottom:.6rem">'+parsedPosts.length+' Posts</div>';
+      parsedPosts.forEach(function(p,i){
+        var pi={instagram:'📷',facebook:'🔵',youtube:'►️'};
+        var icon=pi[(p.platform||'').toLowerCase()]||'📄';
+        var bl={carousel:'Carousel',quote:'Quote',caption:'Caption',repost:'Repost',community:'Community'};
+        html+='<div class="wk-post">';
+        html+='<div class="wk-post-hd">';
+        html+='<span class="wk-post-type pbg b'+p.type.slice(0,3)+'">'+(bl[p.type]||p.type)+'</span>';
+        html+='<div class="wk-post-meta"><div class="wk-post-plat">'+icon+' '+x(p.platform)+(p.dayTime?' · '+x(p.dayTime):'')+'</div>';
+        html+='<div class="wk-post-head">'+x(p.headline)+'</div></div>';
+        html+='</div>';
+        if(p.slides&&p.slides.length){
+          html+='<div class="wk-slides">';
+          p.slides.forEach(function(s){if(s.text){html+='<div class="wk-slide"><div class="wk-slide-n">SLIDE '+s.num+'</div>'+x(s.text)+'</div>';}});
+          html+='</div>';
+        }
+        if(p.caption){html+='<div class="wk-post-cap">'+x(p.caption)+'</div>';}
+        if(p.hashtags){html+='<div class="wk-post-hash">'+x(p.hashtags)+'</div>';}
+        html+='</div>';
+      });
+    }else if(posts.length){
+      // Fall back to published_posts previews
+      html+='<div class="sh" style="margin-bottom:.6rem">'+posts.length+' Posts</div>';
+      posts.forEach(function(p){
+        var pi={instagram:'📷',facebook:'🔵',youtube:'►️'};
+        var icon=pi[(p.platform||'').toLowerCase()]||'📄';
+        html+='<div class="wk-post">';
+        html+='<div class="wk-post-hd">';
+        html+='<div class="wk-post-meta"><div class="wk-post-plat">'+icon+' '+x(p.platform||'')+'</div>';
+        html+='<div class="wk-post-head">'+x(p.post_type||'Post')+'</div></div></div>';
+        if(p.caption_preview){html+='<div class="wk-post-cap">'+x(p.caption_preview)+'</div>';}
+        html+='</div>';
+      });
+    }else{
+      html+='<div class="em">No post data stored for this week. Run the pipeline again to capture full posts.</div>';
+    }
+
+    body.innerHTML=html;
+  };
+
+  // Use cached data if available, else fetch
+  if(_statusCache){
+    doRender(_statusCache);
+  }else{
+    fetch(B+'/pipeline-status').then(function(r){return r.json();}).then(function(d){
+      _statusCache=d;
+      doRender(d);
+    }).catch(function(e){
+      body.innerHTML='<div class="em" style="color:var(--red)">Error loading data: '+x(e.message)+'</div>';
+    });
+  }
+}
+
 </script>
 </body>
 </html>

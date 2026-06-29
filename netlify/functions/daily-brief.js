@@ -80,6 +80,18 @@ exports.handler = async (event) => {
     const habitsCompletedToday = doneToday.length;
     const habitTotal = habits.length;
 
+    // Season detection
+    const mo = new Date().getMonth();
+    const season = mo>=2&&mo<=4?'Spring':mo>=5&&mo<=7?'Summer':mo>=8&&mo<=10?'Fall':'Winter';
+    const seasonTheme = {Spring:'Build — new starts, momentum, growth.',Summer:'Explore — energy, adventure, expand.',Fall:'Reflect — slow down, harvest, deepen.',Winter:'Restore — rest, quiet, renew.'};
+
+    // Mood pattern check
+    const recentLowMoods = checkins.filter(c => c.mood && c.mood <= 2).length;
+    const moodTrend = recentLowMoods >= 5 ? 'struggling (5+ low mood days recently)'
+                    : recentLowMoods >= 3 ? 'uneven (some difficult days recently)'
+                    : checkins.filter(c => c.mood && c.mood >= 4).length >= 4 ? 'strong (many good days recently)'
+                    : 'mixed';
+
     const ctx = [
       `Name: ${firstName}`,
       soberDays !== null ? `Sobriety: ${soberDays} days sober` : "",
@@ -90,6 +102,8 @@ exports.handler = async (event) => {
       habitTotal               ? `Habits today: ${habitsCompletedToday}/${habitTotal} done` : "",
       goals.length             ? `Goals: ${goals.slice(0, 3).map(g => `${g.title} — ${g.current_value}/${g.target_value} ${g.unit || ""}`).join("; ")}` : "",
       programs.length          ? `Active programs: ${programs.map(p => `${p.programs?.title || "Program"} (day ${p.days_completed})`).join(", ")}` : "",
+      `Season: ${season} — theme: ${seasonTheme[season]}`,
+      `Recent mood trend: ${moodTrend}`,
     ].filter(Boolean).join("\n");
 
     // Generate brief with Claude
@@ -100,17 +114,19 @@ Never preachy. Never corporate. Never generic. No motivational poster energy.
 Always hopeful. Reference their actual data — sobriety days, sleep, mood, habits, programs.
 Numbers support. Stories inspire.
 
-Return ONLY valid JSON with exactly these 9 keys — no other text:
+Return ONLY valid JSON with exactly these 11 keys — no other text:
 {
-  "riley_note": "Riley's specific observation from their data. Start with 'I noticed...' or 'You've...' — something concrete from what you know. 1 sentence.",
-  "mood_note": "One sentence acknowledging where they are right now based on their data. Warm. Real.",
-  "encouragement": "One sentence of genuine encouragement tied to something specific about their journey. Not generic.",
-  "focus": "Today's single focus area. One short phrase. (e.g. 'Keep the streak going', 'Rest and rebuild', 'Move and nourish')",
-  "quote": "One short quote — under 15 words. Something that feels true for their journey right now. No attribution needed.",
-  "challenge": "One small challenge for today. Specific. Doable in the next few hours. Under 15 words.",
-  "reflection_prompt": "One question to sit with today. Something that invites quiet thought, not pressure. Under 15 words.",
-  "nutrition_tip": "One practical nutrition note relevant to recovery or their current state. 1 short sentence.",
-  "action": "The single most important action they can take today. Concrete. Under 15 words."
+  "riley_note": "Riley's specific observation from their data. Start with 'I noticed...' or 'You've...' — something concrete. 1 sentence.",
+  "mood_note": "One sentence acknowledging where they are right now. Warm. Real. Informed by their mood trend.",
+  "encouragement": "One sentence of genuine encouragement tied to something specific. Not generic. Not preachy.",
+  "focus": "Today's single focus area — shaped by their season and mood trend. One short phrase.",
+  "quote": "One short quote under 15 words — true for their journey right now. No attribution needed.",
+  "challenge": "One small challenge. Specific. Doable in the next few hours. Calibrated to their mood — gentle if struggling, ambitious if thriving. Under 15 words.",
+  "reflection_prompt": "One question to sit with. Invites quiet thought. Never pressuring. Informed by recent mood and season. Under 15 words.",
+  "nutrition_tip": "One practical nutrition note for recovery. 1 short sentence. Relevant to time of day and season.",
+  "action": "The single most important action today. Concrete. Calibrated to their mood — if struggling, make it tiny. Under 15 words.",
+  "book_rec": "One book title and a single-sentence reason it fits them right now. Format: 'Title — reason.'",
+  "music_mood": "One music mood or playlist type for today. 4 words max. (e.g. 'Gentle acoustic for quiet mornings', 'Upbeat for building momentum')"
 }`;
 
     const apiResp = await fetch(ANTHROPIC_API_URL, {
@@ -122,7 +138,7 @@ Return ONLY valid JSON with exactly these 9 keys — no other text:
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-6",
-        max_tokens: 700,
+        max_tokens: 900,
         system:     systemPrompt,
         messages:   [{ role: "user", content: `USER CONTEXT:\n${ctx}\n\nGenerate the morning brief.` }],
       }),
@@ -146,6 +162,8 @@ Return ONLY valid JSON with exactly these 9 keys — no other text:
         reflection_prompt: "What would make today feel worth it?",
         nutrition_tip:     "Eat something with protein in the first hour of your morning.",
         action:            "Drink a glass of water and take three slow breaths.",
+        book_rec:          "The Body Keeps the Score — a clear-eyed look at how recovery lives in the body.",
+        music_mood:        "Quiet instrumental for a focused morning",
       };
     }
 

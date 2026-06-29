@@ -333,7 +333,49 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10),MOOD=null,SOBER_DAYS=0;
+let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
+
+// ── SEASON ────────────────────────────────────────────────────────────────────
+function getSeason(){const m=new Date().getMonth();return m>=2&&m<=4?'spring':m>=5&&m<=7?'summer':m>=8&&m<=10?'fall':'winter';}
+const SEASON_WARMS={spring:["Spring. Time to build.","New season. New chapter.","Growth season. Let's begin."],summer:["Summer. Explore.","The days are long. Use them.","Energy season. Let's go."],fall:["Fall. Time to reflect.","The world is slowing down. Follow it.","Reflection season."],winter:["Winter. Rest and restore.","The quiet season. Honor it.","Slow down. That's the work."]};
+
+// ── MOOD ENGINE ───────────────────────────────────────────────────────────────
+const MOOD_CONFIG={
+  5:{story:"You're bringing real energy today. <span style='color:var(--smoke)'>Whatever's feeding it — build on it.</span>",insight:"Real momentum right now. Use it intentionally today.",response:"Wonderful. Let's build on that.",choices:false,challenge:"Push one thing slightly further than feels comfortable today.",mode:'thriving'},
+  4:{story:"A good day ahead. <span style='color:var(--smoke)'>Steady and solid. That consistency matters more than most people realize.</span>",insight:"Good energy. Keep the habits going — this is what momentum feels like.",response:"Good. That's a solid foundation.",choices:false,challenge:"One thing slightly outside your comfort zone today.",mode:'building'},
+  3:{story:"Okay is honest. <span style='color:var(--smoke)'>Start here — no need to force anything. Show up, and that's enough.</span>",insight:"Okay days are still days. Show up as you are — Riley's here with you.",response:"Okay is honest. That's where we begin.",choices:false,challenge:"Just one small thing today. That's enough.",mode:'steady'},
+  2:{story:"Today feels heavy, and that's allowed. <span style='color:var(--smoke)'>You don't have to fix anything. Being here counts.</span>",insight:"I'm glad you checked in. That takes something on a hard day.",response:"I hear you. I'm glad you're here.",choices:true,challenge:"A short walk — even ten minutes — tends to loosen the heavy days.",mode:'struggling'},
+  1:{story:"Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>",insight:"Thank you for telling me. That's not easy. I'm here — what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:"Move. Breathe. Reflect. That's the whole day.",mode:'struggling'}
+};
+
+function applyMoodEngine(n){
+  const cfg=MOOD_CONFIG[n]||MOOD_CONFIG[3];
+  // Update story card
+  const stSlot=document.getElementById('story-slot');
+  if(stSlot){stSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8">Today\'s Story</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em">'+cfg.story+'</div></div>';}
+  // Update Riley insight
+  const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
+  if(insightEl&&insightTx){insightTx.textContent=cfg.insight;insightEl.style.display='flex';}
+  // Show mood response card
+  let mr=document.getElementById('mood-response');
+  if(!mr){mr=document.createElement('div');mr.id='mood-response';const mp=document.querySelector('.mood-row')?.closest('.panel');if(mp)mp.parentNode.insertBefore(mr,mp);}
+  let html=`<div style="background:rgba(16,14,12,0.5);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:16px 18px;margin-bottom:12px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Riley</div><div style="font-size:13px;color:var(--parchment);line-height:1.6;margin-bottom:12px">${cfg.response}</div>`;
+  if(cfg.choices){html+=`<div style="display:flex;flex-direction:column;gap:6px"><a href="/chat" style="padding:9px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:3px;font-size:12px;color:var(--gold);text-decoration:none;display:block">Talk with Riley</a><button onclick="applyEncourageMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Just encourage me today</button><button onclick="applyUpliftMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Give me something uplifting</button></div>`;}
+  else{html+=`<div style="font-size:11px;color:var(--smoke);font-style:italic;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;margin-top:4px">${cfg.challenge}</div>`;}
+  html+='</div>';mr.innerHTML=html;
+}
+
+function applyEncourageMode(){
+  const slot=document.getElementById('notices-slot');
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">🕊</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing — four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
+  const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
+}
+
+function applyUpliftMode(){
+  const slot=document.getElementById('notices-slot');
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">✨</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:6px">Hope isn\'t pretending everything is okay. Hope is believing tomorrow can be better.</div><div style="font-size:11px;color:var(--smoke)">You showed up today. That\'s not nothing — that\'s everything.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🎵</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s music</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Gentle acoustic. Calming piano. Something that asks nothing of you.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">📖</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s reflection</div><div style="font-size:13px;color:var(--smoke);line-height:1.55;font-style:italic">What is one thing — however small — that I am grateful for right now?</div></div></div></div>';
+  const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
+}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
@@ -363,9 +405,12 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const h=new Date().getHours();
     const tod=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
     document.getElementById('greeting').textContent=tod+', '+firstName+'.';
-    // Warm sub-greeting from Riley
-    const warms=["I'm glad you're here.","Take a breath. You made it today.","However today feels — we'll meet it together.","It's good to see you.","One quiet moment, then we begin."];
-    const warmLine=warms[new Date().getDate()%warms.length];
+    // Warm sub-greeting — seasonally aware
+    const season=getSeason();
+    const seasonWarms=SEASON_WARMS[season]||[];
+    const baseWarms=["I'm glad you're here.","Take a breath. You made it today.","However today feels — we'll meet it together.","It's good to see you.","One quiet moment, then we begin."];
+    const allWarms=[...baseWarms,...seasonWarms];
+    const warmLine=allWarms[new Date().getDate()%allWarms.length];
     const greetEl=document.getElementById('greeting');
     greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">— Riley</div>');
     document.getElementById('tbdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
@@ -387,6 +432,14 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[];
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
+    CHECKINS=checkins;
+
+    // Pattern detection — struggling 5+ days in 14
+    const lowMoodDays=checkins.filter(c=>c.mood&&c.mood<=2&&c.checkin_date>=dAgo(14)).length;
+    if(lowMoodDays>=5&&!todayCI?.mood){
+      const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
+      if(insightEl&&insightTx){insightTx.textContent="I've noticed this has been a difficult couple of weeks. Thank you for continuing to show up. Would you like me to help build a lighter week together?";insightEl.style.display='flex';}
+    }
 
     SOBER_DAYS=sobriety?Math.max(0,Math.floor((Date.now()-new Date(sobriety.start_date))/86400000)):0;
     const dateStreak=(()=>{const s=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));let n=0,exp=TODAY;for(const d of s){if(d.checkin_date===exp){n++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else break;}return n;})();
@@ -501,7 +554,19 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // MILESTONE
     const mSlot=document.getElementById('milestone-slot');
-    if(SOBER_DAYS>0){const mDefs={7:'One week. The first foundation stone.',30:'A full month. The hardest part is behind you.',90:'Ninety days — where identity begins to shift.',180:'Half a year rebuilt.',365:'One full year. A complete transformation.',730:'Two years of choosing this.',1095:'Three years. A whole new version of yourself.',1825:'Five years. Half a decade.',2190:'Six years. Extraordinary.',2555:'Seven years of showing up.'};const specials=[100,200,300,400,500,600,700,800,900,1000,1500,2000,2500,3000];const yrs=Math.floor(SOBER_DAYS/365);const msLine=mDefs[SOBER_DAYS]||(SOBER_DAYS%365===0&&yrs>0?yrs+' year'+(yrs>1?'s':'')+' sober today.':specials.includes(SOBER_DAYS)?'Day '+SOBER_DAYS.toLocaleString()+'. A milestone worth pausing on.':null);if(msLine)mSlot.innerHTML='<div style="text-align:center;background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(16,14,12,0.3));border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:28px;margin-bottom:18px"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-family:DM Serif Display,serif;font-size:52px;font-weight:300;color:var(--parchment);line-height:1;letter-spacing:-0.02em">'+SOBER_DAYS.toLocaleString()+'</div><div style="font-size:10px;font-family:DM Mono,monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-top:6px">days sober</div><div style="font-family:DM Serif Display,serif;font-size:16px;font-style:italic;font-weight:300;color:var(--gold);margin-top:14px">'+msLine+'</div></div>';}
+    if(SOBER_DAYS>0){
+      const mDefs={7:'One week. The first foundation stone.',30:'A full month. The hardest part is behind you.',90:'Ninety days — where identity begins to shift.',180:'Half a year rebuilt.',365:'One full year. A complete transformation.',730:'Two years of choosing this.',1095:'Three years. A whole new version of yourself.',1825:'Five years. Half a decade.',2190:'Six years. Extraordinary.',2555:'Seven years of showing up.'};
+      const specials=[200,300,400,500,600,700,800,900,1000,1500,2000,2500,3000];
+      const yrs=Math.floor(SOBER_DAYS/365);
+
+      // Cardinal feather — day 100 is quiet, special
+      if(SOBER_DAYS===100){
+        mSlot.innerHTML='<div style="text-align:center;padding:28px 20px;margin-bottom:18px"><div style="font-size:44px;margin-bottom:12px">🪶</div><div style="font-family:\'DM Serif Display\',serif;font-size:20px;font-style:italic;font-weight:300;color:var(--smoke);line-height:1.6">100 days.</div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;font-weight:300;color:var(--smoke);margin-top:8px">Look how far you\'ve come.</div></div>';
+      } else {
+        const msLine=mDefs[SOBER_DAYS]||(SOBER_DAYS%365===0&&yrs>0?yrs+' year'+(yrs>1?'s':'')+' sober today.':specials.includes(SOBER_DAYS)?'Day '+SOBER_DAYS.toLocaleString()+'. A milestone worth pausing on.':null);
+        if(msLine)mSlot.innerHTML='<div style="text-align:center;background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(16,14,12,0.3));border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:28px;margin-bottom:18px"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-family:DM Serif Display,serif;font-size:52px;font-weight:300;color:var(--parchment);line-height:1;letter-spacing:-0.02em">'+SOBER_DAYS.toLocaleString()+'</div><div style="font-size:10px;font-family:DM Mono,monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-top:6px">days sober</div><div style="font-family:DM Serif Display,serif;font-size:16px;font-style:italic;font-weight:300;color:var(--gold);margin-top:14px">'+msLine+'</div></div>';
+      }
+    }
     // STORY
     const stSlot=document.getElementById('story-slot');
     const sleepLast2=checkins.find(x=>x.sleep_hours)?.sleep_hours||null;
@@ -531,7 +596,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     }catch(e){console.error('Dashboard:',e);}
 })();
 
-function pickMood(n){MOOD=n;hlMood(n);saveMood(n);}
+function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
 async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}catch(e){ck.classList.toggle('done',was);console.error(e);}}

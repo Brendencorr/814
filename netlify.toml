@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html,login.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html,login.html,community.html"
 
 [functions]
   directory = "netlify/functions"

@@ -513,12 +513,12 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     else if(dateStreak>=7)stTxt=dateStreak+' days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>';
     else if(SOBER_DAYS>0)stTxt='Another morning, sober. <span style="color:var(--smoke)">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>';
     else stTxt='Today is a fresh page. <span style="color:var(--smoke)">No quiz to pass. Just you, here, beginning.</span>';
-    stSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8">Today's Story</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em">'+stTxt+'</div></div>';
+    stSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8">Today\'s Story</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em">'+stTxt+'</div></div>';
     // NOTICES
     const nSlot=document.getElementById('notices-slot');
     const sleepWin=checkins.filter(x=>x.sleep_hours>=7).length;
     const nItems=[];
-    if(sleepWin>=3)nItems.push({ico:'🌙',text:'I noticed you've slept 7+ hours on '+sleepWin+' nights recently. Your body is finding its rhythm.'});
+    if(sleepWin>=3)nItems.push({ico:'🌙',text:"I noticed you've slept 7+ hours on "+sleepWin+" nights recently. Your body is finding its rhythm."});
     if(habitsTotal>0&&habitsDoneToday===habitsTotal&&habitsTotal>=2)nItems.push({ico:'🌿',text:'Every habit done already today. That kind of morning carries forward.'});
     const daysSinceCI=checkins.length?Math.floor((Date.now()-new Date(checkins[0].checkin_date))/86400000):99;
     if(daysSinceCI>=5)nItems.push({ico:'📖',text:"You haven't journaled in a few days. Whenever you're ready — I'm here."});

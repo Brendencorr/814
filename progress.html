@@ -378,6 +378,7 @@ function showMsg(id, text, type='success') {
 
 
 (async function() {
+  try {
   if (!(await authInit())) return;
   
   const [sobrietyR, checkinsR, habitsR, habitDoneR, goalsR, workoutsR, progsR] = await Promise.allSettled([
@@ -460,6 +461,7 @@ function showMsg(id, text, type='success') {
     '<div class="log-list">'+progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));
       return '<div class="log-item" style="flex-direction:column;align-items:stretch"><div style="display:flex;align-items:center;gap:10px;margin-bottom:6px"><span style="font-size:20px">'+(pr.emoji||'🎯')+'</span><div><div class="log-title">'+esc(pr.title||e.program_name||'Program')+'</div><div class="log-detail">Day '+d+' of '+t+'</div></div><div class="log-date">'+pct+'%</div></div><div class="prog-bar-bg"><div class="prog-bar-fill" style="width:'+pct+'%"></div></div></div>';
     }).join('')+'</div>';
+  } catch(e) { console.error('Progress error:',e); }
 })();
 
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}

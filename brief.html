@@ -363,49 +363,16 @@ function fmtTime(ts) {
   if (!ts) return '';
   return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
 }
-function showMsg(id, text, type='success') {
+function showMsg(id, text, type) {
   const el = document.getElementById(id);
-  if (!el) return;
+  if (!el) { console.log(type||'info', text); return; }
   el.textContent = text;
-  el.className = 'msg ' + type;
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display='none'; }, 3500);
-}
-
-
-(async function() {
-  if (!(await authInit())) return;
-  const today = _today;
-  document.getElementById('bc-label').textContent='Daily Intelligence Brief · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
-  
-  const {data:brief} = await _db.from('daily_briefs').select('*').eq('user_id',_uid).eq('brief_date',today).maybeSingle();
-  
-  if (brief && brief.modules && Object.keys(brief.modules).length) {
-    const mods=brief.modules, done=brief.completion||{};
-    const total=brief.total_modules||Object.keys(mods).length;
-    const comp=brief.completed_modules||Object.values(done).filter(Boolean).length;
-    const pct=total>0?comp/total:0;
-    document.getElementById('bc-title').textContent='Your '+new Date().toLocaleDateString('en-US',{weekday:'long'})+' Blueprint';
-    document.getElementById('bc-subtitle').textContent='Click any module to mark it complete.';
-    document.getElementById('bc-progress').textContent=comp+' / '+total+' complete';
-    document.getElementById('prog-ring').setAttribute('stroke-dashoffset',(138.2*(1-pct)).toFixed(1));
-    document.getElementById('brief-footer-msg').textContent=comp===total?'Brief complete — great work today!':''+comp+' of '+total+' modules completed';
-    
-    const order=['mindset','meditation','hydration','workout','nutrition','reading','linkedin','calendar','podcast','journaling','goals'];
-    const icons={mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚',linkedin:'🎥',calendar:'📅',podcast:'🎧',journaling:'📖',goals:'🎯'};
-    const keys=[...order.filter(k=>mods[k]),...Object.keys(mods).filter(k=>!order.includes(k))];
-    
-    document.getElementById('modules-grid').innerHTML=keys.map(k=>'<div class="bmod'+(done[k]?' done':'')+'" onclick="markDone(''+k+'')"><div class="bmod-icon">'+(icons[k]||'•')+'</div><div class="bmod-label">'+k+'</div><div class="bmod-content">'+esc(String(mods[k]).slice(0,80))+'</div></div>').join('');
-    window._brief=brief;
-  } else {
-    document.getElementById('bc-title').textContent='Your brief isn't ready yet';
-    document.getElementById('bc-subtitle').textContent='Briefs are assembled at 6:00 AM and delivered to your dashboard every morning. The brief engine is coming soon.';
-    document.getElementById('bc-progress').textContent='';
-    document.getElementById('brief-footer-msg').textContent='Brief engine launches soon · Check back tomorrow at 6:00 AM';
-    const icons=['🧠','🏋️','🍳','🎥','📚','🙏','📅','🎯','💧','🎧','📖','💰','😴','📱','🚶','📷','📖','🗓️','💬','🌟'];
-    const labels=['Mindset','Workout','Nutrition','LinkedIn','Reading','Meditation','Calendar','Goals','Hydration','Podcast','Journal','Financial','Sleep','Screen Time','Recovery Walk','Photo Challenge','Reflection','Weekly Review','Chat with Riley','Wins of the Day'];
-    document.getElementById('modules-grid').innerHTML=icons.map((ic,i)=>'<div class="bmod coming" style="opacity:0.4"><div class="bmod-icon">'+ic+'</div><div class="bmod-label">'+labels[i]+'</div><div class="bmod-content">Coming in your daily brief</div></div>').join('');
-  }
+  el.style.cssText = 'display:block;padding:10px 14px;border-radius:4px;font-size:13px;margin-top:10px;border:1px solid;' +
+    (type==='error'
+      ? 'background:rgba(139,58,58,0.1);color:#8b3a3a;border-color:rgba(139,58,58,0.3)'
+      : 'background:rgba(74,124,89,0.1);color:#4a7c59;border-color:rgba(74,124,89,0.3)');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display='none'; }, 4500);
 })();
 
 async function markDone(key) {

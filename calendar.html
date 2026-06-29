@@ -406,6 +406,7 @@ function showMsg(id, text, type='success') {
 })();
 
 async function toggleH(id) {
+  try {
   const btn=document.querySelector('[onclick*="\''+id+'\'"]');
   const isDone=btn.classList.contains('done');
   if (isDone) await _db.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',_today).eq('user_id',_uid);
@@ -414,6 +415,7 @@ async function toggleH(id) {
   btn.textContent=isDone?'':'✓';
   const nameEl=btn.nextElementSibling;
   if(nameEl){nameEl.classList.toggle('done',!isDone);}
+  } catch(e){console.error('toggleH:',e);}
 }
 
 </script>

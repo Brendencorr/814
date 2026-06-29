@@ -368,6 +368,7 @@ function showMsg(id, text, type='success') {
 
 
 (async function() {
+  try {
   if (!(await authInit())) return;
   
   const [progsR, sobrietyR, allProgsR] = await Promise.allSettled([

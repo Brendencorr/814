@@ -428,7 +428,9 @@ async function addFinanceGoal() {
 }
 async function updateGoal(id) {
   const val = parseFloat(document.getElementById('f-cur-'+id).value)||0;
-  await _db.from('user_goals').update({current_value:val}).eq('id',id);
+  const {error} = await _db.from('user_goals').update({current_value:val}).eq('id',id);
+  if(!error) showMsg('msg-finance','✓ Updated!','success');
+  else showMsg('msg-finance','Error: '+error.message,'error');
   showMsg('msg-finance','Updated!');
   await loadFinance();
 }

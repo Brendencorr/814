@@ -450,7 +450,13 @@ async function logSleep() {
   
   // Save goal if changed
   const goalHrs = parseFloat(document.getElementById('sl-goal-in').value)||8;
-  await _db.from('user_goals').upsert({user_id:_uid,title:'Sleep goal',category:'sleep',target_value:goalHrs,current_value:hrs,unit:'hours',period:'daily',period_start:_today,is_active:true},{onConflict:'user_id,category'});
+  // Check if sleep goal exists, then update or insert
+  const {data:existGoal} = await _db.from('user_goals').select('id').eq('user_id',_uid).eq('category','sleep').eq('is_active',true).maybeSingle();
+  if(existGoal) {
+    await _db.from('user_goals').update({current_value:hrs,target_value:goalHrs}).eq('id',existGoal.id);
+  } else {
+    await _db.from('user_goals').insert({user_id:_uid,title:'Sleep goal',category:'sleep',target_value:goalHrs,current_value:hrs,unit:'hours',period:'daily',period_start:_today,is_active:true,sort_order:99});
+  }
   
   if (error) return showMsg('msg-sleep','Error: '+error.message,'error');
   document.getElementById('sl-hours').value='';

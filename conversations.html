@@ -370,6 +370,7 @@ function showMsg(id, text, type='success') {
 
 
 (async function() {
+  try {
   if (!(await authInit())) return;
   
   const {data:msgs} = await _db.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',_uid).order('created_at',{ascending:false});

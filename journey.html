@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Journey — The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.btn{display:inline-block;padding:7px 16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none;letter-spacing:0.04em}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.content{padding:32px 28px;max-width:680px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:20px 16px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div>
+  <div class="snl">TODAY</div>
+  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a>
+  <a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a>
+  <div class="snl">HISTORY</div>
+  <a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a>
+  <a href="/progress" class="sni"><span class="sni-icon">🌲</span>My Story</a>
+  <a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a>
+  <a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a>
+  <div class="snl">JOURNEYS</div>
+  <a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a>
+  <a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Life Timeline</a>
+  <div class="snl">LIFE DATA</div>
+  <a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a>
+  <a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a>
+  <a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a>
+  <div class="snl">COMMUNITY</div>
+  <a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a>
+  <div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><div class="tb-title" id="tb-title">Your Journey</div><div class="tb-sub" id="tb-sub"></div></div>
+    <a href="/programs" class="btn btn-ghost">← Journeys</a>
+  </div>
+  <div class="content" id="content">
+    <div style="color:var(--smoke);font-size:13px">Loading your journey…</div>
+  </div>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10),ENROLL=null,STEP=null,PROGRAM=null;
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function qs(k){return new URLSearchParams(location.search).get(k);}
+
+async function boot(){
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){window.location.href='https://riley.eight14.us';return;}
+  USER=session.user;UID=USER.id;
+  const meta=USER.user_metadata||{};
+  const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+  const avatarUrl=meta.avatar_url||meta.picture||'';
+  const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+  document.getElementById('sb-name').textContent=fullName;
+  await loadJourney();
+}
+
+async function loadJourney(){
+  const slug=qs('slug');
+  // Find the user's active enrollment (by slug if provided, else most recent active)
+  let q=SB.from('user_program_progress').select('*,programs(id,slug,title,emoji,duration_days,tagline,completion_message,next_program_slug)').eq('user_id',UID).eq('status','active');
+  const {data:enrolls}=await q.order('enrolled_at',{ascending:false});
+  let enroll=(enrolls||[]).find(e=>!slug||e.programs?.slug===slug)||(enrolls||[])[0];
+  if(!enroll||!enroll.programs){
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:40px 0"><div style="font-family:\'DM Serif Display\',serif;font-size:22px;margin-bottom:12px">No active journey yet</div><div style="font-size:13px;color:var(--smoke);margin-bottom:24px;line-height:1.6">Every journey is a series of small steps, walked one day at a time.<br>Begin one whenever you''re ready.</div><a href="/programs" class="btn btn-gold">Browse Journeys →</a></div>';
+    return;
+  }
+  ENROLL=enroll;PROGRAM=enroll.programs;
+  const pslug=PROGRAM.slug,dur=PROGRAM.duration_days||7,done=enroll.days_completed||0;
+  const currentDay=Math.min(done+1,dur);
+  document.getElementById('tb-title').textContent=PROGRAM.tagline||PROGRAM.title;
+  document.getElementById('tb-sub').textContent='DAY '+currentDay+' OF '+dur;
+
+  // Already completed the whole journey?
+  if(done>=dur){renderCompletion();return;}
+
+  // Already completed today's step?
+  const {data:todayDone}=await SB.from('journey_step_completions').select('day_number').eq('user_id',UID).eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
+
+  // Fetch the step content
+  const {data:step}=await SB.from('journey_steps').select('*').eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
+  if(!step){
+    document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">This journey''s daily steps are being written. Check back soon — or talk with Riley in the meantime.</div>';
+    return;
+  }
+  STEP=step;
+  renderStep(step,currentDay,dur,!!todayDone);
+}
+
+function renderStep(step,day,dur,alreadyDone){
+  const pct=Math.round((day-1)/dur*100);
+  const ct={breathwork:'🫁',walk:'🚶',journal_prompt:'📖',music:'🎵',podcast:'🎧',recipe:'🍳',workout:'🏋️',community_prompt:'🤝',celebration:'✨'};
+  const recs=(step.recommended_content_types||[]).map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;font-size:11px;color:var(--smoke)">${ct[t]||'•'} ${t.replace(/_/g,' ')}</span>`).join('');
+  document.getElementById('content').innerHTML=`
+    <!-- progress -->
+    <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-bottom:28px"><div style="height:100%;width:${pct}%;background:var(--gold);border-radius:2px;transition:width .6s"></div></div>
+
+    <!-- Riley's message -->
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:18px 20px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(20,18,16,0.4));border:1px solid rgba(201,168,76,0.15);border-radius:6px;margin-bottom:28px">
+      <span style="font-size:20px;flex-shrink:0">💛</span>
+      <div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:6px">Riley</div><div style="font-size:14px;color:var(--parchment);line-height:1.7;font-style:italic">${esc(step.riley_message||'')}</div></div>
+    </div>
+
+    <!-- Title + lesson -->
+    <div style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--parchment);margin-bottom:16px">${esc(step.title)}</div>
+    <div style="font-size:15px;color:var(--parchment);line-height:1.8;margin-bottom:28px;opacity:0.9">${esc(step.lesson||'')}</div>
+
+    <!-- Action -->
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:20px 22px;margin-bottom:18px">
+      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Today''s one action</div>
+      <div style="font-size:15px;color:var(--parchment);line-height:1.6">${esc(step.action||'')}</div>
+    </div>
+
+    ${recs?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px">${recs}</div>`:''}
+
+    <!-- Journal -->
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:20px 22px;margin-bottom:24px">
+      <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px">Today''s reflection</div>
+      <div style="font-size:14px;color:var(--parchment);font-style:italic;margin-bottom:14px;line-height:1.6">${esc(step.journal_prompt||'')}</div>
+      <textarea id="journal" placeholder="Write as much or as little as you want…" style="width:100%;min-height:90px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:12px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;resize:vertical;line-height:1.6" ${alreadyDone?'disabled':''}>${alreadyDone?'(completed)':''}</textarea>
+    </div>
+
+    <div id="complete-area">
+      ${alreadyDone
+        ? '<div style="display:flex;align-items:center;gap:8px;color:var(--green2);font-size:13px;font-weight:500"><span>✓</span> Day '+day+' complete. Come back tomorrow for the next step.</div>'
+        : '<button class="btn btn-gold" id="complete-btn" style="font-size:13px;padding:11px 26px" onclick="completeStep('+day+')">Complete Day '+day+' →</button>'}
+    </div>
+  `;
+}
+
+async function completeStep(day){
+  const btn=document.getElementById('complete-btn');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const journal=document.getElementById('journal')?.value?.trim()||null;
+  const pslug=PROGRAM.slug,dur=PROGRAM.duration_days||7;
+  try{
+    // Record the step completion + journal
+    await SB.from('journey_step_completions').upsert({user_id:UID,program_slug:pslug,day_number:day,journal_response:journal,completed_at:new Date().toISOString()},{onConflict:'user_id,program_slug,day_number'});
+    // Advance the enrollment
+    const next=Math.min(day,dur);
+    await SB.from('user_program_progress').update({days_completed:next,day_completed:next,last_activity:new Date().toISOString(),status:next>=dur?'completed':'active'}).eq('id',ENROLL.id);
+    // Also mirror journal into reflection (daily_checkins notes) if written — non-fatal
+    if(journal){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,notes:journal},{onConflict:'user_id,checkin_date'});}catch(e){}}
+    // Reload — shows completion or next-day-locked state
+    document.getElementById('complete-area').innerHTML='<div style="display:flex;align-items:center;gap:8px;color:var(--green2);font-size:13px;font-weight:500"><span>✓</span> Day '+day+' complete. '+(next>=dur?'You finished the journey.':'Come back tomorrow for the next step.')+'</div>';
+    if(next>=dur)setTimeout(()=>{ENROLL.days_completed=next;renderCompletion();},1200);
+  }catch(e){if(btn){btn.disabled=false;btn.textContent='Complete Day '+day+' →';}console.error(e);}
+}
+
+function renderCompletion(){
+  const msg=PROGRAM.completion_message||'You finished. Look how far you have come.';
+  const nextSlug=PROGRAM.next_program_slug;
+  document.getElementById('tb-sub').textContent='COMPLETE';
+  document.getElementById('content').innerHTML=`
+    <div style="text-align:center;padding:32px 0">
+      <div style="font-size:44px;margin-bottom:16px">🪶</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:8px">${esc(PROGRAM.tagline||PROGRAM.title)}</div>
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:24px">Journey complete</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;font-style:italic;color:var(--parchment);line-height:1.7;max-width:480px;margin:0 auto 32px;opacity:0.9">${esc(msg)}</div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        ${nextSlug?`<a href="/programs?unlock=${nextSlug}" class="btn btn-gold" style="font-size:13px;padding:11px 24px">Begin What''s Next →</a>`:''}
+        <a href="/roadmap" class="btn btn-ghost" style="font-size:13px;padding:11px 24px">See Your Timeline</a>
+      </div>
+    </div>`;
+}
+
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+boot();
+</script>
+</body>
+</html>

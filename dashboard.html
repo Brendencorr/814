@@ -428,7 +428,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       SB.from('habits').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order'),
       SB.from('habit_completions').select('habit_id,completed_date').eq('user_id',UID).gte('completed_date',dAgo(6)),
       SB.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',UID).order('created_at',{ascending:false}).limit(40),
-      SB.from('user_program_progress').select('*,programs(title,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}).limit(4),
+      SB.from('user_program_progress').select('*,programs(slug,title,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}).limit(4),
       SB.from('fitness_logs').select('logged_date,duration_minutes').eq('user_id',UID).gte('logged_date',dAgo(13)).order('logged_date',{ascending:false})
     ]);
     const g=r=>r.status==='fulfilled'?r.value?.data:null;
@@ -552,7 +552,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // ── PROGRAMS ──
     const pEl=document.getElementById('prog-list');
-    if(progs.length)pEl.innerHTML=progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));return `<div class="prog"><div class="prog-ico">${pr.emoji||'🎯'}</div><div><div class="prog-n">${esc(pr.title||e.program_name||'Program')}</div><div class="prog-s">Day ${d} of ${t}</div></div><div class="prog-p" style="${pct>=100?'color:var(--green2)':''}">${pct>=100?'✓':pct+'%'}</div></div>`;}).join('');
+    if(progs.length)pEl.innerHTML=progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const slug=pr.slug||'';return `<a href="/journey${slug?'?slug='+slug:''}" class="prog" style="text-decoration:none;color:inherit;cursor:pointer"><div class="prog-ico">${pr.emoji||'🎯'}</div><div style="flex:1"><div class="prog-n">${esc(pr.title||e.program_name||'Program')}</div><div class="prog-s">${pct>=100?'Complete ✓':'Day '+d+' of '+t+' · Continue →'}</div></div><div class="prog-p" style="${pct>=100?'color:var(--green2)':''}">${pct>=100?'✓':pct+'%'}</div></a>`;}).join('');
 
 
     // MILESTONE

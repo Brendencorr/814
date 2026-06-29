@@ -142,7 +142,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 (async()=>{ await boot(async()=>{await loadPrograms();}); })();
 async function loadPrograms(){
   const [eR,aR]=await Promise.allSettled([
-    SB.from('user_program_progress').select('*,programs(id,title,description,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}),
+    SB.from('user_program_progress').select('*,programs(id,slug,title,description,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}),
     SB.from('programs').select('*').eq('is_active',true).order('sort_order')
   ]);
   const enrolled=(eR.status==='fulfilled'?eR.value?.data:null)||[];
@@ -152,7 +152,8 @@ async function loadPrograms(){
   const acEl=document.getElementById('pg-active');
   if(!active.length){acEl.innerHTML='<div class="card"><div class="empty" style="padding:20px 0">No active programs — enroll below.</div></div>';}
   else{acEl.innerHTML=active.map(e=>{const pr=e.programs||{};const d=e.days_completed||e.day_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const fin=pct>=100;
-    return`<div class="card"><div style="font-size:36px;margin-bottom:10px">${pr.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(pr.title||e.program_name||'Program')}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:14px">Day ${d} of ${t} · ${fin?'Complete ✓':'Active'}</div><div class="pbar" style="height:6px;margin-bottom:10px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'DM Mono',monospace;font-size:22px;color:${fin?'var(--green2)':'var(--gold)'}">${fin?'✓':pct+'%'}</span>${fin?'':'<button class="btn btn-gold" style="font-size:11px;padding:6px 14px" onclick="logDay(''+e.id+'','+d+','+t+')">Log Day '+(d+1)+'</button>'}</div></div>`;
+    const slug=pr.slug||'';
+    return`<div class="card"><div style="font-size:36px;margin-bottom:10px">${pr.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(pr.title||e.program_name||'Program')}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:14px">Day ${d} of ${t} · ${fin?'Complete ✓':'Active'}</div><div class="pbar" style="height:6px;margin-bottom:10px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'DM Mono',monospace;font-size:22px;color:${fin?'var(--green2)':'var(--gold)'}">${fin?'✓':pct+'%'}</span>${fin?'<a href="/roadmap" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">View Timeline</a>':'<a href="/journey'+(slug?'?slug='+slug:'')+'" class="btn btn-gold" style="font-size:11px;padding:6px 14px">Open Today''s Step →</a>'}</div></div>`;
   }).join('');}
   const avEl=document.getElementById('pg-avail');
   const avail=all.filter(p=>!eIds.has(p.id));

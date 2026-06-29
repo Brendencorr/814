@@ -35,6 +35,9 @@
   timeout = 26
 
 
+[functions."entitlements"]
+  timeout = 10
+
 [functions."site-config"]
   timeout = 10
 
@@ -227,17 +230,17 @@
 
 [[redirects]]
   from = "https://riley.eight14.us/roadmap"
-  to   = "/roadmap.html,chat.html"
+  to   = "/roadmap.html"
   status = 200
 
 [[redirects]]
   from = "https://riley.eight14.us/roadmap/"
-  to   = "/roadmap.html,chat.html"
+  to   = "/roadmap.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/roadmap.html,chat.html"
-  to     = "/roadmap.html,chat.html"
+  from   = "https://riley.eight14.us/roadmap.html"
+  to     = "/roadmap.html"
   status = 200
   force  = true
 

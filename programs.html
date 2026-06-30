@@ -157,8 +157,28 @@ async function loadPrograms(){
   }).join('');}
   const avEl=document.getElementById('pg-avail');
   const avail=all.filter(p=>!eIds.has(p.id));
-  if(!avail.length){avEl.innerHTML='<div style="font-size:12px;color:var(--smoke)">You're enrolled in all programs!</div>';}
-  else{avEl.innerHTML=avail.map(p=>`<div class="card"><div style="font-size:36px;margin-bottom:10px">${p.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(p.title)}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:6px;line-height:1.5">${esc(p.description||'')}</div><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin-bottom:16px">${p.duration_days||'?'} DAYS${p.price_cents>0?' · $'+Math.round(p.price_cents/100):' · FREE'}</div><button class="btn btn-gold" style="width:100%;text-align:center" onclick="enroll('${p.id}','${esc(p.title)}')">Begin This Journey →</button></div>`).join('');}
+  // ── Entitlement gating: owned/free programs are enrollable; the rest render a
+  // locked preview with an upsell. Respects free-access mode automatically —
+  // entitlements grants every product when it's on, so all cards are enrollable. ──
+  let ownedProds=new Set();
+  try{
+    const k='ent_'+UID;let ent=null;const c=sessionStorage.getItem(k);
+    if(c){ent=JSON.parse(c);}else{const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});ent=await r.json();sessionStorage.setItem(k,JSON.stringify(ent));}
+    ownedProds=new Set((ent&&ent.products)||[]);
+  }catch(e){}
+  const PROG_PRODUCT={'7-day-reset':'reset_free','recovery-journey':'prog_sobriety_90','move-and-nourish':'prog_body_90','carry-both':'prog_grief','companion':'companion','concierge':'concierge'};
+  const hasAccess=p=>{const pk=PROG_PRODUCT[p.slug];if(!pk||p.price_cents===0||pk==='reset_free')return true;return ownedProds.has(pk);};
+  const priceLabel=p=>{const sub=(p.slug==='companion'||p.slug==='concierge');return p.price_cents>0?('$'+Math.round(p.price_cents/100)+(sub?'/mo':'')):'FREE';};
+  if(!avail.length){avEl.innerHTML='<div style="font-size:12px;color:var(--smoke)">You are enrolled in all programs!</div>';}
+  else{avEl.innerHTML=avail.map(p=>{
+    const meta=(p.duration_days||'?')+' DAYS · '+priceLabel(p);
+    const head=`<div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(p.title)}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:6px;line-height:1.5">${esc(p.description||'')}</div><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin-bottom:16px">${meta}</div>`;
+    if(hasAccess(p)){
+      return `<div class="card"><div style="font-size:36px;margin-bottom:10px">${p.emoji||'🎯'}</div>${head}<button class="btn btn-gold" style="width:100%;text-align:center" onclick="enroll('${p.id}','${esc(p.title)}')">Begin This Journey →</button></div>`;
+    }
+    // Locked preview — visible, dimmed, with an upsell to the storefront.
+    return `<div class="card" style="position:relative"><div style="position:absolute;top:14px;right:16px;font-size:15px;opacity:0.75">🔒</div><div style="font-size:36px;margin-bottom:10px;opacity:0.5;filter:grayscale(0.4)">${p.emoji||'🎯'}</div>${head}<a href="https://www.eight14.us" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;text-align:center;display:block;border-color:rgba(201,168,76,0.45);color:var(--gold)">Unlock · ${priceLabel(p)} →</a></div>`;
+  }).join('');}
 }
 async function enroll(id,name){try{const {error}=await SB.from('user_program_progress').insert({user_id:UID,program_id:id,program_name:name,day_completed:0,days_completed:0,status:'active',enrolled_at:new Date().toISOString()});if(error)throw error;A('pg-alert','✓ Enrolled in '+name+'!',true);await loadPrograms();}catch(e){A('pg-alert','Error: '+e.message,false);}}
 async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {error}=await SB.from('user_program_progress').update({days_completed:next,day_completed:next,last_activity:new Date().toISOString(),status:next>=tot?'completed':'active'}).eq('id',eid);if(error)throw error;A('pg-alert','✓ Day '+next+' logged!',true);await loadPrograms();}catch(e){A('pg-alert','Error: '+e.message,false);}}

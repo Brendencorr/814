@@ -1,0 +1,200 @@
+/**
+ * state-engine.js — Dashboard State Engine v1.0, Section 6 (the core mechanism)
+ *
+ * Every Tier 1 (state-changing) event fires this exact sequence:
+ *   Step 0 — Crisis Check (ALWAYS first; inherits Trust & Crisis Architecture)
+ *   Step 1 — Save Event
+ *   Step 2 — Update user_daily_state
+ *   Step 3 — Recalculate Clarity Score (+ "why did this change" explainer)
+ *   Steps 4-7 (module re-rank, Riley message, recommendations, brief) READ the
+ *     state this engine persists — they live in riley-brain.js / daily-brief.js
+ *     and are layered on in the next phase.
+ *
+ * If Step 0 detects a Level 2/3 trigger, clarity/recommendation/re-rank are
+ * SUSPENDED for this cycle (suspended:true) and the response routes the client
+ * to the Crisis Support Workflow instead of content — exactly as §5.1 specifies.
+ *
+ * Tier 2 (engagement) events are logged and return immediately — no recompute.
+ * That split is the 5,000-user scaling fix (§2).
+ *
+ * Request (POST JSON): { user_id, token?, event_type, event_data?, text? }
+ * Response (JSON): { tier, recompute, crisis, suspended, state, clarity_delta, explainer }
+ */
+
+const { getSupabaseClient } = require("./supabase-client");
+const { detectCrisis } = require("./crisis-detection");
+const { sendOperatorAlert } = require("./safety-alert");
+const { isTier1, computeDimensions, computeClarity, explainChange } = require("./clarity");
+
+const CORS = {
+  "Access-Control-Allow-Origin":  "*",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+const json = (statusCode, data) => ({ statusCode, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data) });
+const todayUTC = () => new Date().toISOString().slice(0, 10);
+const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+
+// Restricted safety write (mirrors riley-chat / checkin-scan). Non-fatal.
+async function logCrisis(supabase, userId, level, matches, snippet, via) {
+  try {
+    await supabase.from("crisis_log").insert({
+      user_id: userId, session_id: via, level,
+      matched_rules: Array.isArray(matches) ? matches.slice(0, 8) : [],
+      message_excerpt: typeof snippet === "string" ? snippet.slice(0, 500) : null,
+      followup_stage: 0, resolved: false,
+    });
+    supabase.from("user_profiles")
+      .update({ last_crisis_at: new Date().toISOString(), last_crisis_level: level })
+      .eq("id", userId).then(() => {}, () => {});
+  } catch (e) { console.warn("state-engine logCrisis failed (non-fatal):", e.message); }
+}
+
+// Gather the raw signals the clarity dimensions are derived from. Runs only on
+// Tier 1 events, so the query fan-out is bounded by the scaling principle.
+async function gatherSignals(supabase, userId) {
+  const week = daysAgoISO(7), ten = daysAgoISO(10);
+  const [ci, fit, nut, habits, habitComp, sober, prog] = await Promise.allSettled([
+    supabase.from("daily_checkins").select("mood,sleep_hours,notes,checkin_date").eq("user_id", userId).gte("checkin_date", ten).order("checkin_date", { ascending: false }),
+    supabase.from("fitness_logs").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("logged_date", week),
+    supabase.from("nutrition_logs").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("logged_date", week),
+    supabase.from("habits").select("id").eq("user_id", userId).eq("is_active", true),
+    supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", week),
+    supabase.from("sobriety_tracker").select("start_date").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
+    supabase.from("user_program_progress").select("program_name,programs(title)").eq("user_id", userId).eq("status", "active").limit(1),
+  ]);
+
+  const checkins = (ci.status === "fulfilled" && ci.value.data) || [];
+  const recentMoods = checkins.filter(c => c.mood != null).map(c => c.mood);
+  const latestMood = recentMoods.length ? recentMoods[0] : null;
+  const latestSleep = (checkins.find(c => c.sleep_hours != null) || {}).sleep_hours ?? null;
+  const reflectionsThisWeek = checkins.filter(c => c.checkin_date >= week && c.notes && String(c.notes).trim()).length;
+  const checkinDays7 = new Set(checkins.filter(c => c.checkin_date >= week).map(c => c.checkin_date)).size;
+
+  const habitList = (habits.status === "fulfilled" && habits.value.data) || [];
+  const comps = (habitComp.status === "fulfilled" && habitComp.value.data) || [];
+  const habitRate = habitList.length ? Math.min(100, (comps.length / (habitList.length * 7)) * 100) : null;
+
+  const soberRow = (sober.status === "fulfilled" && sober.value.data && sober.value.data[0]) || null;
+  const soberDays = soberRow && soberRow.start_date ? Math.max(0, Math.floor((Date.now() - new Date(soberRow.start_date)) / 86400000)) : null;
+
+  const progRow = (prog.status === "fulfilled" && prog.value.data && prog.value.data[0]) || null;
+  const activeJourney = progRow ? ((progRow.programs && progRow.programs.title) || progRow.program_name || null) : null;
+
+  return {
+    mood: latestMood,
+    sleepHours: latestSleep,
+    workoutsThisWeek: fit.status === "fulfilled" ? (fit.value.count || 0) : null,
+    mealsThisWeek: nut.status === "fulfilled" ? (nut.value.count || 0) : null,
+    reflectionsThisWeek,
+    habitRate,
+    checkinDays7,
+    soberDays,
+    activeJourney,
+    recentMoods,
+  };
+}
+
+// Reconstruct the dimension object from a stored state row (raw mood → 0-100).
+function dimsFromRow(r) {
+  if (!r) return {};
+  return {
+    mood_score: r.mood != null ? Math.round((r.mood / 5) * 100) : null,
+    sleep_score: r.sleep_score, movement_score: r.movement_score,
+    nourishment_score: r.nourishment_score, reflection_score: r.reflection_score,
+    goal_score: r.goal_score, community_score: r.community_score, recovery_score: r.recovery_score,
+  };
+}
+
+exports.handler = async function (event) {
+  if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  if (event.httpMethod !== "POST")    return json(405, { error: "Method not allowed" });
+
+  let body;
+  try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
+  const { event_type, event_data, text } = body;
+  let userId = body.user_id || null;
+  if (!event_type) return json(400, { error: "event_type is required" });
+
+  let supabase;
+  try { supabase = getSupabaseClient(); } catch (e) { return json(500, { error: "Server configuration error" }); }
+
+  // Verify token if provided; trust its user id over the body's.
+  if (body.token) {
+    try { const { data } = await supabase.auth.getUser(body.token); if (data?.user?.id) userId = data.user.id; } catch (_) {}
+  }
+  if (!userId) return json(400, { error: "user_id (or a valid token) is required" });
+
+  const tier = isTier1(event_type) ? 1 : 2;
+
+  // Step 1 — Save Event (always logged, tier tagged).
+  try {
+    await supabase.from("engagement_events").insert({ user_id: userId, event_type, event_data: { ...(event_data || {}), tier } });
+  } catch (e) { console.warn("state-engine save event failed (non-fatal):", e.message); }
+
+  // Tier 2 — log only, no recompute. This is the scaling fix.
+  if (tier === 2) return json(200, { tier: 2, recompute: false });
+
+  const today = todayUTC();
+  const [sig, prevRes] = await Promise.all([
+    gatherSignals(supabase, userId),
+    supabase.from("user_daily_state").select("*").eq("user_id", userId).lte("date", today).order("date", { ascending: false }).limit(1),
+  ]);
+  const prev = (prevRes && prevRes.data && prevRes.data[0]) || null;
+  const flaggedToday = !!(prev && prev.date === today && prev.crisis_flag);
+
+  // ── Step 0 — Crisis Check (always first) ──────────────────────────────────
+  let crisis = { flag: false, level: 0, source: null, matches: null };
+  if (text) {
+    let c = { level: 0, matches: [] };
+    try { c = detectCrisis(text); } catch (_) {}
+    if (c.level >= 2) crisis = { flag: true, level: c.level, source: "text", matches: c.matches };
+  }
+  // Repeated lowest-mood selection routes here too (§5.1). Lowest = mood 1.
+  if (!crisis.flag && event_type === "mood_checked_in") {
+    const currentMood = (event_data && event_data.mood != null) ? event_data.mood : sig.mood;
+    const lowestInLast5 = sig.recentMoods.slice(0, 5).filter(m => m === 1).length;
+    if (currentMood === 1 && lowestInLast5 >= 3) crisis = { flag: true, level: 2, source: "mood-pattern", matches: ["repeated-lowest-mood"] };
+  }
+  // Handle a fresh crisis — log + alert the operator, deduped to once per day.
+  if (crisis.flag && !flaggedToday) {
+    await logCrisis(supabase, userId, crisis.level, crisis.matches, text || "Repeated lowest-mood selection", "state-engine");
+    if (supabase && userId) {
+      await sendOperatorAlert(supabase, {
+        userId, level: crisis.level, matches: crisis.matches,
+        excerpt: text || "Repeated lowest-mood selection (no text)", source: "state-engine:" + event_type,
+      });
+    }
+  }
+
+  // ── Step 2 — Update user_daily_state ──────────────────────────────────────
+  const dims = computeDimensions(sig);
+
+  // ── Step 3 — Recalculate Clarity (+ explainer, unless suspended by crisis) ─
+  const clarity = computeClarity(dims);
+  const prevClarity = prev ? prev.clarity_score : null;
+  const explainer = crisis.flag ? null : explainChange(dimsFromRow(prev), dims, prevClarity, clarity, { checkpoint: !!body.checkpoint });
+
+  const crisisFlag = crisis.flag || flaggedToday;
+  const row = {
+    user_id: userId, date: today,
+    mood: sig.mood, sleep_score: dims.sleep_score ?? null, movement_score: dims.movement_score ?? null,
+    nourishment_score: dims.nourishment_score ?? null, reflection_score: dims.reflection_score ?? null,
+    goal_score: dims.goal_score ?? null, community_score: dims.community_score ?? null,
+    recovery_score: dims.recovery_score ?? null, clarity_score: clarity,
+    active_journey: sig.activeJourney || null, crisis_flag: crisisFlag,
+    last_updated: new Date().toISOString(),
+  };
+  try { await supabase.from("user_daily_state").upsert(row, { onConflict: "user_id,date" }); }
+  catch (e) { console.warn("state-engine upsert failed (non-fatal):", e.message); }
+
+  return json(200, {
+    tier: 1,
+    recompute: true,
+    crisis: { flag: crisis.flag, level: crisis.level, source: crisis.source },
+    suspended: crisis.flag,                 // §5.1 — content/clarity narration suspended this cycle
+    state: { clarity_score: clarity, crisis_flag: crisisFlag, ...dims },
+    clarity_delta: (clarity != null && prevClarity != null) ? clarity - prevClarity : null,
+    explainer,
+  });
+};

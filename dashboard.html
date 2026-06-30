@@ -818,6 +818,17 @@ function dcShow(i){
 }
 function dcAns(i,val){DC[DAILY_Q[i].key]=val;dcShow(i+1);}
 function dcAnsText(i){const el=document.getElementById('dc-in');DC[DAILY_Q[i].key]=el&&el.value.trim()?el.value.trim():null;dcShow(i+1);}
+// Fire a Tier 1 (state-changing) event into the State Engine. Fire-and-forget —
+// never blocks the UI; the engine persists user_daily_state + clarity server-side.
+// Note: free-text crisis still flows through checkin-scan, so we do NOT pass the
+// check-in note here (avoids double crisis processing).
+async function fireState(eventType,data){
+  try{
+    var tok=(await SB.auth.getSession()).data.session?.access_token;
+    fetch('/.netlify/functions/state-engine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,event_type:eventType,event_data:data||{}})}).catch(function(){});
+  }catch(e){}
+}
+
 async function dcFinish(){
   try{localStorage.setItem('dc_'+UID,TODAY);}catch(e){}
   const log={sleep:DC.sleep||null,last_night:DC.last_night||null,water:DC.water,breakfast:DC.breakfast,dinner:DC.dinner||null};
@@ -826,6 +837,7 @@ async function dcFinish(){
   if(DC.note)row.notes=DC.note;
   try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
   track('daily_checkin',{});
+  if(DC.mood)fireState('mood_checked_in',{mood:DC.mood});
   if(DC.mood){MOOD=DC.mood;try{hlMood(DC.mood);applyMoodEngine(DC.mood);}catch(e){}}
   // Safety scan of the free-text — closes the gap where check-in notes bypass
   // Riley's crisis detection. Deterministic, server-side. Crisis overrides the
@@ -855,8 +867,8 @@ function dcSupportCard(){
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
-async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
-async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}catch(e){ck.classList.toggle('done',was);console.error(e);}}
+async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
+async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else{await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});fireState('goal_completed',{habit_id:id});}}catch(e){ck.classList.toggle('done',was);console.error(e);}}
 // ── Trust & privacy (Trust architecture §1.1 / §1.4) ─────────────────────────
 async function authToken(){try{return (await SB.auth.getSession()).data.session?.access_token||null;}catch(e){return null;}}
 

@@ -50,6 +50,10 @@
 [functions."riley-brain"]
   timeout = 10
 
+# State-Change Engine — runs on Tier 1 events; persists user_daily_state + clarity.
+[functions."state-engine"]
+  timeout = 10
+
 # Daily check-in free-text crisis scan — deterministic, no LLM, fast.
 [functions."checkin-scan"]
   timeout = 10

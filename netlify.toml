@@ -34,6 +34,9 @@
 [functions."admin-users"]
   timeout = 26
 
+[functions."admin-engagement"]
+  timeout = 26
+
 
 [functions."entitlements"]
   timeout = 10

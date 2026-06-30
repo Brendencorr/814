@@ -42,7 +42,7 @@ exports.handler = async function (event) {
 
     const [usersRes, eventsRes, checkinsRes] = await Promise.all([
       supabase.from("user_profiles")
-        .select("id,full_name,preferred_name,email,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at")
+        .select("id,full_name,preferred_name,email,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at")
         .eq("onboarding_completed", true)
         .order("last_active_at", { ascending: false, nullsFirst: false })
         .limit(5000),
@@ -66,13 +66,18 @@ exports.handler = async function (event) {
     const latestMood = {};
     for (const c of checkins) { if (latestMood[c.user_id] === undefined) latestMood[c.user_id] = c.mood; }
 
-    // Week event tallies
-    let briefOpens7d = 0, rileyMsgs7d = 0, appOpens7d = 0;
+    // Week event tallies + per-user latest email/open times for win-back detection
+    let briefOpens7d = 0, rileyMsgs7d = 0, appOpens7d = 0, reengEmails7d = 0;
+    const lastEmailAt = {}, lastOpenAt = {};
     for (const e of events) {
       if (e.event_type === "brief_opened")  briefOpens7d++;
       else if (e.event_type === "riley_message") rileyMsgs7d++;
-      else if (e.event_type === "app_open")  appOpens7d++;
+      else if (e.event_type === "app_open")  { appOpens7d++; const t = new Date(e.created_at); if (!lastOpenAt[e.user_id] || t > lastOpenAt[e.user_id]) lastOpenAt[e.user_id] = t; }
+      else if (e.event_type === "reengagement_email_sent") { reengEmails7d++; const t = new Date(e.created_at); if (!lastEmailAt[e.user_id] || t > lastEmailAt[e.user_id]) lastEmailAt[e.user_id] = t; }
     }
+    // Win-backs: emailed in the window, then opened the app AFTER the email
+    let winBacks7d = 0;
+    for (const uid in lastEmailAt) { if (lastOpenAt[uid] && lastOpenAt[uid] > lastEmailAt[uid]) winBacks7d++; }
 
     // Per-user rows + aggregate state counts
     const counts = { active: 0, cooling: 0, dormant: 0, new: 0 };
@@ -95,6 +100,9 @@ exports.handler = async function (event) {
         session_count: u.session_count || 0,
         sober_days: soberDays,
         recent_mood: latestMood[u.id] ?? null,
+        reengaged: !!u.reengagement_sent_at,             // currently lapsed + emailed
+        reengaged_at: u.reengagement_sent_at || null,
+        won_back: !!(lastEmailAt[u.id] && lastOpenAt[u.id] && lastOpenAt[u.id] > lastEmailAt[u.id]),
       };
     });
 
@@ -115,6 +123,8 @@ exports.handler = async function (event) {
       app_opens_7d: appOpens7d,
       new_signups_7d: newSignups7d,
       avg_brief_opens: users.length ? Math.round(totalBriefOpens / users.length * 10) / 10 : 0,
+      reeng_emails_7d: reengEmails7d,
+      win_backs_7d: winBacks7d,
     };
 
     return {

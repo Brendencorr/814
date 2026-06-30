@@ -509,26 +509,28 @@ async function loadEngagement(btn){
 function engRow(u){
   var col=engColor(u.state);
   var moodC=u.recent_mood==null?'var(--muted2)':(u.recent_mood<=2?'var(--red)':u.recent_mood>=4?'var(--green)':'var(--muted)');
-  return '<div style="display:grid;grid-template-columns:1.7fr .8fr .8fr .5fr .5fr .7fr;gap:.5rem;padding:.6rem .9rem;border-bottom:1px solid var(--border);align-items:center;font-size:.8rem">'+
+  var reeng=u.won_back?'<span style="color:var(--green);font-size:.68rem">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold);font-size:.68rem">✉ emailed</span>':'<span style="color:var(--muted2)">—</span>');
+  return '<div style="display:grid;grid-template-columns:1.6fr .7fr .75fr .45fr .45fr .6fr .8fr;gap:.5rem;padding:.6rem .9rem;border-bottom:1px solid var(--border);align-items:center;font-size:.8rem">'+
     '<div style="min-width:0"><div style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(u.name)+'</div><div style="font-size:.65rem;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(u.email||'')+'</div></div>'+
     '<span><span style="display:inline-block;padding:.12rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span></span>'+
     '<span style="color:var(--muted);font-size:.72rem">'+engAgo(u.last_active_at)+'</span>'+
     '<span style="color:var(--muted)">'+(u.brief_open_count||0)+'</span>'+
     '<span style="color:var(--muted)">'+(u.riley_msg_count||0)+'</span>'+
     '<span style="color:'+moodC+';font-size:.74rem">'+(u.recent_mood==null?'—':engMood(u.recent_mood))+'</span>'+
+    '<span>'+reeng+'</span>'+
   '</div>';
 }
 function renderEngagement(d){
   var a=d.aggregate||{};
   var states=[['active','Active','var(--green)','last 2 days'],['cooling','Cooling','var(--gold)','3–7 days'],['dormant','Dormant','var(--red)','7+ days away'],['new','New','var(--blue)','not yet active']];
   var sc=states.map(function(s){return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid '+s[2]+';padding:1rem 1.1rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.5rem">'+s[1]+'</div><div style="font-family:Playfair Display,serif;font-size:34px;color:'+s[2]+';line-height:1">'+(a[s[0]]||0)+'</div><div style="font-size:.64rem;color:var(--muted2);margin-top:.25rem">'+s[3]+'</div></div>';}).join('');
-  var mets=[['Brief opens · 7d',a.brief_opens_7d||0],['Riley messages · 7d',a.riley_msgs_7d||0],['App opens · 7d',a.app_opens_7d||0],['New signups · 7d',a.new_signups_7d||0]];
-  var mc=mets.map(function(m){return '<div style="background:var(--bg);border:1px solid var(--border);padding:.8rem .9rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.4rem">'+m[0]+'</div><div style="font-family:Playfair Display,serif;font-size:25px;color:var(--gold);line-height:1">'+m[1]+'</div></div>';}).join('');
-  document.getElementById('eng-stats').innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:.7rem">'+sc+'</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1.6rem">'+mc+'</div>';
+  var mets=[['Brief opens · 7d',a.brief_opens_7d||0,'var(--gold)'],['Riley messages · 7d',a.riley_msgs_7d||0,'var(--gold)'],['App opens · 7d',a.app_opens_7d||0,'var(--gold)'],['New signups · 7d',a.new_signups_7d||0,'var(--blue)'],['Win-back emails · 7d',a.reeng_emails_7d||0,'var(--muted)'],['Came back after email',a.win_backs_7d||0,'var(--green)']];
+  var mc=mets.map(function(m){return '<div style="background:var(--bg);border:1px solid var(--border);padding:.8rem .9rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.4rem">'+m[0]+'</div><div style="font-family:Playfair Display,serif;font-size:25px;color:'+m[2]+';line-height:1">'+m[1]+'</div></div>';}).join('');
+  document.getElementById('eng-stats').innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:.7rem">'+sc+'</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin-bottom:1.6rem">'+mc+'</div>';
   var na=d.needs_attention||[];
   document.getElementById('eng-attention').innerHTML=na.length?('<div class="sh" style="margin-bottom:.6rem;color:var(--red)">Needs a Check-In ('+na.length+')</div><div style="background:var(--card);border:1px solid var(--border);margin-bottom:1.6rem">'+na.map(engRow).join('')+'</div>'):'';
   var users=d.users||[];
-  var head='<div style="display:grid;grid-template-columns:1.7fr .8fr .8fr .5fr .5fr .7fr;gap:.5rem;padding:.55rem .9rem;font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)"><span>Client</span><span>State</span><span>Last active</span><span>Briefs</span><span>Msgs</span><span>Mood</span></div>';
+  var head='<div style="display:grid;grid-template-columns:1.6fr .7fr .75fr .45fr .45fr .6fr .8fr;gap:.5rem;padding:.55rem .9rem;font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)"><span>Client</span><span>State</span><span>Last active</span><span>Briefs</span><span>Msgs</span><span>Mood</span><span>Re-engage</span></div>';
   document.getElementById('eng-table').innerHTML='<div class="sh" style="margin-bottom:.6rem">All Clients ('+users.length+')</div><div style="background:var(--card);border:1px solid var(--border)">'+head+users.map(engRow).join('')+'</div>';
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');}

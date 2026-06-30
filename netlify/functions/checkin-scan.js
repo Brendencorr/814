@@ -17,6 +17,7 @@
 
 const { getSupabaseClient } = require("./supabase-client");
 const { detectCrisis, LEVEL3_RESPONSE } = require("./crisis-detection");
+const { sendOperatorAlert } = require("./safety-alert");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -70,6 +71,7 @@ exports.handler = async function (event) {
 
   if (crisis.level >= 2 && supabase && userId) {
     await logCrisis(supabase, userId, crisis.level, crisis.matches, text);
+    await sendOperatorAlert(supabase, { userId, level: crisis.level, matches: crisis.matches, excerpt: text, source: "daily-checkin" });
   }
 
   return json(200, { level: crisis.level, response: crisis.level === 3 ? LEVEL3_RESPONSE : null });

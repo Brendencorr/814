@@ -26,6 +26,7 @@ const {
   LEVEL1_DIRECTIVE,
   DIAGNOSIS_DIRECTIVE,
 } = require("./crisis-detection");
+const { sendOperatorAlert } = require("./safety-alert");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -692,6 +693,12 @@ exports.handler = async function (event) {
         .update({ last_active_at: new Date().toISOString(), engagement_state: "active" })
         .eq("id", user_id).then(() => {}, () => {});
     }
+    // Notify the operator (email w/ client + convo). Awaited — there's no model
+    // call on this path, so the ~1s send still gets the member their 988 reply
+    // promptly while guaranteeing the alert goes out. Internally non-fatal.
+    if (supabase && user_id) {
+      await sendOperatorAlert(supabase, { userId: user_id, level: 3, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" });
+    }
     // Return the deterministic crisis response — NO model call.
     return {
       statusCode: 200,
@@ -706,6 +713,11 @@ exports.handler = async function (event) {
   if (crisis.level === 2) {
     safetyDirective += LEVEL2_DIRECTIVE + "\n\n";
     await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText);
+    // Fire-and-forget — runs during the awaited model call below, so the
+    // operator alert adds no latency to the member's Level-2 reply.
+    if (supabase && user_id) {
+      sendOperatorAlert(supabase, { userId: user_id, level: 2, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" }).catch(() => {});
+    }
   } else if (crisis.level === 1) {
     safetyDirective += LEVEL1_DIRECTIVE + "\n\n";
   }

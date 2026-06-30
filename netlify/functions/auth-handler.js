@@ -159,6 +159,73 @@ async function updateProfile(supabase, body) {
   return json(200, { profile: data });
 }
 
+// Tables holding a member's personal / journal data, keyed by user_id.
+// crisis_log is intentionally EXCLUDED — it's restricted safety data handled
+// only inside the safety workflow (Trust architecture §1.4), not self-service.
+const USER_DATA_TABLES = [
+  "daily_checkins", "riley_conversations", "riley_memory", "user_goals",
+  "habits", "habit_completions", "sobriety_tracker", "life_events",
+  "important_dates", "user_program_progress", "engagement_events",
+];
+
+// Personal fields cleared from the profile on delete (the shell stays so the
+// member can still sign in; email + consent + safety flags are preserved).
+const PROFILE_CLEAR = {
+  preferred_name: null, pronouns: null, birthday: null, city: null,
+  why_here: null, why_here_detail: null, one_year_vision: null, human_os: null,
+  primary_goals: null, communication_style: null, preferred_encouragement: null,
+  sobriety_date: null, avatar_url: null, full_name: null,
+  onboarding_completed: false, onboarding_step: 0, phase2_progress: null,
+};
+
+// ── Action: export_data — give the member everything stored about them ────────
+async function exportData(supabase, body) {
+  const user = await verifyToken(supabase, body.token);
+  const out = { exported_at: new Date().toISOString(), account: { id: user.id, email: user.email } };
+
+  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle();
+  out.profile = profile || null;
+
+  const results = await Promise.allSettled(
+    USER_DATA_TABLES.map((t) => supabase.from(t).select("*").eq("user_id", user.id))
+  );
+  out.data = {};
+  USER_DATA_TABLES.forEach((t, i) => {
+    out.data[t] = results[i].status === "fulfilled" ? (results[i].value.data || []) : [];
+  });
+
+  out.note = "This is everything Riley has stored for you. Crisis-safety records, if any, are kept separately and only used to keep you safe.";
+  return json(200, out);
+}
+
+// ── Action: delete_data — wipe the member's personal/journal data ─────────────
+async function deleteData(supabase, body) {
+  const user = await verifyToken(supabase, body.token);
+  if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete data" });
+
+  const results = await Promise.allSettled(
+    USER_DATA_TABLES.map((t) => supabase.from(t).delete().eq("user_id", user.id))
+  );
+  const cleared = [];
+  const failed = [];
+  USER_DATA_TABLES.forEach((t, i) => {
+    (results[i].status === "fulfilled" && !results[i].value.error ? cleared : failed).push(t);
+  });
+
+  // Reset the profile to a minimal shell (keep email, consent, safety flags).
+  try {
+    await supabase.from("user_profiles")
+      .update({ ...PROFILE_CLEAR, data_deleted_at: new Date().toISOString() })
+      .eq("id", user.id);
+  } catch (e) {
+    console.error("delete_data profile reset failed:", e.message);
+    failed.push("user_profiles");
+  }
+
+  console.log(`delete_data for ${user.id}: cleared ${cleared.length}, failed ${failed.length}`);
+  return json(200, { success: failed.length === 0, cleared, failed });
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -185,6 +252,8 @@ exports.handler = async function (event) {
       case "get_session":    return await getSession(supabase, body);
       case "save_message":   return await saveMessage(supabase, body);
       case "update_profile": return await updateProfile(supabase, body);
+      case "export_data":    return await exportData(supabase, body);
+      case "delete_data":    return await deleteData(supabase, body);
       default:               return json(400, { error: `Unknown action: ${action}` });
     }
   } catch (err) {

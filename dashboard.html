@@ -236,7 +236,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <a href="/sleep" class="sni"><span class="sni-ico">🌙</span>Rest</a>
   <a href="/finance" class="sni"><span class="sni-ico">🎯</span>Goals</a>
   <a href="/calendar" class="sni"><span class="sni-ico">📅</span>Calendar</a>
-  <div class="snl">Community</div><a href="/community" class="sni"><span class="sni-ico">🤝</span>Community</a><div class="sb-spacer"></div>
+  <div class="snl">Community</div><a href="/community" class="sni"><span class="sni-ico">🤝</span>Community</a>
+  <div class="snl">Trust</div>
+  <a href="#" class="sni" onclick="aboutRiley();return false;"><span class="sni-ico">🕊️</span>About Riley</a>
+  <a href="#" class="sni" onclick="yourData();return false;"><span class="sni-ico">🔒</span>Your Data</a>
+  <div class="sb-spacer"></div>
   <div class="sb-user"><div class="sb-av" id="av">?</div><div><div class="sb-name" id="uname">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
 </aside>
 
@@ -408,8 +412,11 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     track('app_open');
     // Onboarding guard — new users build their profile with Riley first.
     try{
-      const {data:ob}=await SB.from('user_profiles').select('onboarding_completed').eq('id',UID).maybeSingle();
+      const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
       if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.eight14.us/onboarding';return;}
+      // One-time consent for members who onboarded before consent existed.
+      // Blocks here (serial) so it never stacks with the daily check-in modal.
+      await requireConsent(ob.consent_at);
     }catch(e){/* if the check fails, let them through rather than trap them */}
     const meta=USER.user_metadata||{};
     const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
@@ -819,15 +826,119 @@ async function dcFinish(){
   if(DC.note)row.notes=DC.note;
   try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
   track('daily_checkin',{});
+  if(DC.mood){MOOD=DC.mood;try{hlMood(DC.mood);applyMoodEngine(DC.mood);}catch(e){}}
+  // Safety scan of the free-text — closes the gap where check-in notes bypass
+  // Riley's crisis detection. Deterministic, server-side. Crisis overrides the
+  // normal thank-you. Never blocks the check-in if the scan fails.
+  const scanText=[DC.note,DC.dinner].filter(Boolean).join('. ');
+  if(scanText){
+    try{
+      const tok=(await SB.auth.getSession()).data.session?.access_token;
+      const r=await fetch('/.netlify/functions/checkin-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,text:scanText})});
+      const j=await r.json();
+      if(j.level===3){return dcCrisisCard(j.response);}
+      if(j.level===2){return dcSupportCard();}
+    }catch(e){console.warn('checkin scan',e.message);}
+  }
   p2Modal(`<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for checking in.<br><span style="color:var(--smoke);font-size:15px">I've got it — and I'm paying attention.</span></div></div>`);
   setTimeout(closeP2,1900);
-  if(DC.mood){MOOD=DC.mood;try{hlMood(DC.mood);applyMoodEngine(DC.mood);}catch(e){}}
+}
+// Level 3 from a check-in note — deterministic crisis card, no auto-close.
+function dcCrisisCard(msg){
+  const safe=esc(msg||'').replace(/\n/g,'<br>');
+  p2Modal(`<div style="padding:4px 0"><div style="font-size:28px;margin-bottom:12px;text-align:center">🐦</div><div style="font-family:'DM Sans',sans-serif;font-size:15px;color:var(--parchment);line-height:1.65">${safe}</div><div style="display:flex;gap:12px;align-items:center;margin-top:20px"><a href="/chat" class="tbtn tbtn-gold" style="text-decoration:none">Talk with Riley</a><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Close</button></div></div>`);
+}
+// Level 2 from a check-in note — gentle presence + resource, no auto-close.
+function dcSupportCard(){
+  p2Modal(`<div style="padding:4px 0"><div style="font-size:28px;margin-bottom:12px;text-align:center">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for being honest with me.</div><div style="font-size:14.5px;color:var(--smoke);line-height:1.65;margin-top:10px">That pull is real, and you don't have to face it by yourself. If it gets heavy, you can call or text <b style="color:var(--parchment)">988</b> any time. I'm right here too.</div><div style="display:flex;gap:12px;align-items:center;margin-top:20px"><a href="/chat" class="tbtn tbtn-gold" style="text-decoration:none">Talk with Riley</a><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Close</button></div></div>`);
 }
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
 async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});}catch(e){ck.classList.toggle('done',was);console.error(e);}}
+// ── Trust & privacy (Trust architecture §1.1 / §1.4) ─────────────────────────
+async function authToken(){try{return (await SB.auth.getSession()).data.session?.access_token||null;}catch(e){return null;}}
+
+// One-time consent overlay for members who onboarded before consent existed.
+// Own DOM, NO click-outside close — so awaiting it in load() can never hang.
+function requireConsent(consentAt){
+  return new Promise(resolve=>{
+    if(consentAt){resolve();return;}
+    const ov=document.createElement('div');
+    ov.id='consent-ov';
+    ov.style.cssText='position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.93);backdrop-filter:blur(12px);padding:24px;overflow-y:auto';
+    ov.innerHTML=`<div style="max-width:480px;width:100%;background:linear-gradient(160deg,#16130f,#0f0d0b);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:30px;box-shadow:0 24px 80px rgba(0,0,0,0.6)">
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:14px">A note about your privacy</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);line-height:1.4;margin-bottom:14px">Here's what I keep, in plain words.</div>
+      <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:14px">· <b>What you tell me</b> — your name, your story, your goals<br>· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>· <b>Our conversations</b> — so I remember and you never repeat yourself</div>
+      <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:10px">I keep these only to know you and support you over time. <b style="color:var(--parchment)">Never sold. Never used for advertising.</b> If you ever share an unsafe moment, that stays private and is used only to keep you safe.</div>
+      <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:20px">You're in control — view or delete everything anytime under <b style="color:var(--parchment)">Your Data</b>.</div>
+      <button id="consent-ok" style="width:100%;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:13px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer">I understand — continue</button>
+    </div>`;
+    document.body.appendChild(ov);
+    document.getElementById('consent-ok').onclick=async()=>{
+      const b=document.getElementById('consent-ok');b.disabled=true;b.textContent='Thank you…';
+      try{await SB.from('user_profiles').update({consent_at:new Date().toISOString(),consent_version:'1.0'}).eq('id',UID);}catch(e){console.warn('consent',e.message);}
+      ov.remove();resolve();
+    };
+  });
+}
+
+// About Riley — persistent, plain-language transparency (§1.1)
+function aboutRiley(){
+  p2Modal(`<div style="padding:4px 0">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:26px">🕊️</span><div style="font-family:'DM Serif Display',serif;font-size:21px;color:var(--parchment)">About Riley</div></div>
+    <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:12px">I'm Riley — your coach and companion here at The 8:14 Project. I'm here every day to listen, encourage you, and help you take the next small step.</div>
+    <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:12px"><b style="color:var(--parchment)">Being honest about what I am:</b> I'm not a therapist, doctor, or medical or mental-health provider. I don't diagnose, and I'm not a replacement for professional care. I work best <i>alongside</i> the people and care already in your life.</div>
+    <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:12px"><b style="color:var(--parchment)">If you're ever in a hard or unsafe moment,</b> I'll always point you to real help. In the US you can call or text <b style="color:var(--parchment)">988</b> (Suicide &amp; Crisis Lifeline) any time, or call <b style="color:var(--parchment)">911</b> if you're in immediate danger.</div>
+    <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:18px"><b style="color:var(--parchment)">Your privacy.</b> What you share is kept so I can know and support you — never sold, never used for advertising. You control it anytime under Your Data.</div>
+    <div style="display:flex;gap:14px;align-items:center"><button onclick="yourData()" style="background:var(--ink3);border:1px solid rgba(201,168,76,0.3);color:var(--parchment);padding:10px 18px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Your Data →</button><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer;margin-left:auto">Close</button></div>
+  </div>`);
+}
+
+// Your Data — view / download / delete (§1.4)
+function yourData(){
+  p2Modal(`<div style="padding:4px 0">
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px">Your Data</div>
+    <div style="font-family:'DM Serif Display',serif;font-size:21px;color:var(--parchment);line-height:1.4;margin-bottom:10px">Your data, your control.</div>
+    <div style="font-size:14.5px;color:var(--smoke);line-height:1.65;margin-bottom:20px">Everything you share with me is yours. You can take a copy with you, or clear it completely, whenever you want.</div>
+    <button id="dl-btn" onclick="downloadData()" style="width:100%;background:var(--ink3);border:1px solid rgba(201,168,76,0.3);color:var(--parchment);padding:13px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer;margin-bottom:10px">Download my data</button>
+    <button onclick="confirmDeleteData()" style="width:100%;background:none;border:1px solid rgba(160,70,70,0.4);color:#c98a8a;padding:13px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer">Delete my data</button>
+    <div style="font-size:12px;color:var(--smoke2);line-height:1.5;margin-top:14px;text-align:center">Deleting clears your profile, check-ins, reflections, and conversations. It can't be undone. Your sign-in stays, so you can start fresh anytime.</div>
+    <div style="text-align:center;margin-top:16px"><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Close</button></div>
+  </div>`);
+}
+async function downloadData(){
+  const b=document.getElementById('dl-btn');if(b){b.disabled=true;b.textContent='Preparing…';}
+  try{
+    const tok=await authToken();
+    const r=await fetch('/.netlify/functions/auth-handler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'export_data',token:tok})});
+    if(!r.ok)throw new Error('export failed');
+    const data=await r.json();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='my-8-14-data.json';document.body.appendChild(a);a.click();a.remove();
+    URL.revokeObjectURL(url);
+    if(b){b.disabled=false;b.textContent='✓ Downloaded';}
+  }catch(e){console.warn('download',e.message);if(b){b.disabled=false;b.textContent='Try again';}}
+}
+function confirmDeleteData(){
+  p2Modal(`<div style="padding:4px 0"><div style="font-size:26px;margin-bottom:12px;text-align:center">⚠️</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.45;text-align:center">Delete everything?</div><div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-top:12px;text-align:center">This permanently clears your profile, check-ins, reflections, and conversations. It can't be undone.</div><div style="display:flex;gap:12px;justify-content:center;margin-top:22px"><button id="del-confirm-btn" onclick="doDeleteData()" style="background:#7a2e2e;color:#f5e8e8;border:none;padding:11px 22px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Yes, delete everything</button><button onclick="yourData()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Cancel</button></div></div>`);
+}
+async function doDeleteData(){
+  const b=document.getElementById('del-confirm-btn');if(b){b.disabled=true;b.textContent='Deleting…';}
+  try{
+    const tok=await authToken();
+    const r=await fetch('/.netlify/functions/auth-handler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete_data',token:tok,confirm:true})});
+    if(!r.ok)throw new Error('delete failed');
+    const j=await r.json();
+    if(j.failed&&j.failed.length)console.warn('delete partial — failed:',j.failed);
+    p2Modal(`<div style="text-align:center;padding:12px 0"><div style="font-size:28px;margin-bottom:12px">🕊️</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">Your data has been cleared.</div><div style="font-size:14px;color:var(--smoke);margin-top:10px;line-height:1.6">Thank you for trusting me with it. Signing you out now.</div></div>`);
+    setTimeout(async()=>{try{await SB.auth.signOut();}catch(e){}window.location.href='https://riley.eight14.us';},2800);
+  }catch(e){console.warn('delete',e.message);const bb=document.getElementById('del-confirm-btn');if(bb){bb.disabled=false;bb.textContent='Try again';}}
+}
+
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 </script>
 </body>

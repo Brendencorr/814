@@ -109,8 +109,36 @@ function renderWelcome(){
       <div class="riley-says" style="font-size:30px">Welcome.<br>I'm really glad you're here.</div>
       <div class="riley-sub" style="max-width:400px;margin:18px auto 0">Before we begin, I'd love to get to know you.<br>There's no rush. We'll build this together.</div>
       <div class="sig">— Riley</div>
-      <div style="margin-top:36px"><button class="btn" onclick="renderSection(1)">Begin</button></div>
+      <div style="margin-top:36px"><button class="btn" onclick="renderConsent()">Begin</button></div>
     </div>`;
+}
+
+// ── Consent gate — plain language, before Phase 1 begins (Trust doc §1.4) ──────
+function renderConsent(){
+  swap(`
+    <div class="section-label">Before we begin · Your privacy</div>
+    <div class="riley-says">First, an honest note about what I remember.</div>
+    <div class="riley-sub">So this never feels like fine print, here it is in plain words.</div>
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 20px;margin-bottom:18px">
+      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">What I keep, so I can know you</div>
+      <div style="font-size:14.5px;line-height:1.7;color:var(--parchment)">
+        · <b>What you tell me</b> — your name, your story, what you're reaching for<br>
+        · <b>How you're doing</b> — your check-ins, mood, sleep, and reflections<br>
+        · <b>Our conversations</b> — so I remember, and you never have to repeat yourself
+      </div>
+    </div>
+    <div class="riley-sub" style="margin-bottom:8px">I keep these for one reason: so I can actually know you and support you over time. <b style="color:var(--parchment);font-weight:600">Your information is never sold and never used for advertising.</b></div>
+    <div class="riley-sub" style="margin-bottom:8px">If you ever tell me you're in a hard or unsafe moment, that stays private — used only to keep you safe and follow up with care, never for anything else.</div>
+    <div class="riley-sub">You're always in control. You can see everything I've saved, or delete it, anytime from your settings.</div>
+    <div class="actions" style="flex-direction:column;align-items:stretch;gap:10px">
+      <button class="btn" id="consent-btn" onclick="acceptConsent()" style="width:100%">I understand — let's begin</button>
+      <div style="text-align:center;font-size:12px;color:var(--smoke2);line-height:1.5">By continuing, you're okay with me storing what you share so I can support you.</div>
+    </div>`);
+}
+async function acceptConsent(){
+  const b=document.getElementById('consent-btn');if(b){b.disabled=true;b.textContent='Thank you…';}
+  try{await save({consent_at:new Date().toISOString(),consent_version:'1.0'},0);}catch(e){console.warn('consent',e.message);}
+  renderSection(1);
 }
 
 function dots(n){return `<div class="progress-dots">${[1,2,3,4,5].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}

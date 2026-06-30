@@ -47,6 +47,10 @@
 [functions."riley-brain"]
   timeout = 10
 
+# Daily check-in free-text crisis scan — deterministic, no LLM, fast.
+[functions."checkin-scan"]
+  timeout = 10
+
 [functions."daily-brief"]
   timeout = 26
 

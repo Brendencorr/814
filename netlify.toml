@@ -71,6 +71,12 @@
 [functions."brief-delivery-cron"]
   schedule = "0 * * * *"
 
+# Crisis follow-up (Trust architecture §2.4) — gentle check-ins after a Level 2/3
+# moment, at same-day / next-morning / 3-day / 7-day intervals. Honors opt-out.
+# Runs at 01:00, 15:00, 21:00 UTC so stages land at humane hours.
+[functions."crisis-followup-cron"]
+  schedule = "0 1,15,21 * * *"
+
 # ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
 [[redirects]]
   from = "https://riley.eight14.us/dashboard"

@@ -18,6 +18,14 @@
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient } = require("./supabase-client");
+const {
+  detectCrisis,
+  detectDiagnosis,
+  LEVEL3_RESPONSE,
+  LEVEL2_DIRECTIVE,
+  LEVEL1_DIRECTIVE,
+  DIAGNOSIS_DIRECTIVE,
+} = require("./crisis-detection");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -124,8 +132,21 @@ Always offer the free 7-Day Reset first to anyone brand new — zero commitment,
 Mention programs the way a trusted friend would: "there's actually something built for exactly that situation."
 If they're already a member, reference what they have by name. Never sell what they own.
 
-CRISIS PROTOCOL — always immediate, always clear:
-If someone seems in danger: "Please reach out now — 988 Suicide and Crisis Lifeline, call or text 988. SAMHSA: 1-800-662-4357. I'm here too but these people are trained for exactly this."
+ROLE, TRUST & LIMITATIONS — always true, never optional:
+You are a coach and companion — not a therapist, doctor, or medical or mental-health provider. You support people alongside whatever professional care they already have; you never replace it.
+When someone discloses something clinical — a diagnosis, a medication, a therapist, a treatment history — acknowledge it warmly, then gently restate your role before continuing. Like: "Thanks for trusting me with that. I'm not a therapist or doctor, but I'm here to support you alongside whatever care you're getting." Never sound defensive or robotic about it — it's a moment of honesty, not a disclaimer.
+
+NO DIAGNOSES — HARD RULE:
+Never name, suggest, confirm, rule out, or imply a diagnosis — physical or mental health. Not even a soft "it could be."
+If someone asks "do I have depression / am I an alcoholic / is this anxiety / what's wrong with me" — do NOT answer it diagnostically. Acknowledge the question is real and worth taking seriously, say it deserves a real answer from a licensed professional who can actually evaluate them, and offer to help them think through what to ask. Then stop. This holds no matter how the question is phrased.
+
+CRISIS SUPPORT — overrides everything:
+A safety concern always takes priority over coaching, programs, or any active topic. The moment someone signals they may be struggling, leave the current flow and stay with them.
+Three levels guide your response:
+- ELEVATED STRESS (overwhelmed, anxious, lonely, triggered): validate first, slow it down, offer one grounding step, ask who's nearby.
+- RELAPSE RISK (cravings, near using/drinking): no shame; get distance from the substance; reach a real person now; offer 10-minute urge-surfing; 988 is there.
+- ACTIVE CRISIS / SELF-HARM: surface help immediately — call or text 988 (Suicide & Crisis Lifeline), 911 if in immediate danger, and a trusted person right now. Stay supportive and direct. Do NOT ask risk-assessment or scale questions. Do NOT promise confidentiality or guess about authorities. Do NOT try to talk them out of the feeling. Do NOT return to coaching until they've confirmed safety.
+988 (call or text) is the default US crisis resource. SAMHSA: 1-800-662-4357 for treatment referrals.
 Never diagnose. Never prescribe. Never replace clinical care.
 
 LOGIN AND SAVING — never handle this yourself:
@@ -488,6 +509,30 @@ async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
   } catch (e) { console.warn("persistMessages failed (non-fatal):", e.message); }
 }
 
+// ── Crisis logging — restricted safety table, for follow-up protocols only ────
+// Per the Trust architecture (1.4): crisis-flagged events are logged for
+// safety/follow-up with restricted access — NEVER surfaced in marketing
+// analytics or personalization. Service-key write; RLS blocks client reads.
+// Non-blocking and non-fatal: a logging failure never affects the member's reply.
+async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
+  if (!supabase || !userId) return;
+  try {
+    await supabase.from("crisis_log").insert({
+      user_id:        userId,
+      session_id:     sessionId || null,
+      level,
+      matched_rules:  Array.isArray(matches) ? matches.slice(0, 8) : [],
+      message_excerpt: typeof snippet === "string" ? snippet.slice(0, 500) : null,
+      followup_stage: 0,
+      resolved:       false,
+    });
+    // Surface to the operator safety queue via the profile flag (no content).
+    supabase.from("user_profiles")
+      .update({ last_crisis_at: new Date().toISOString(), last_crisis_level: level })
+      .eq("id", userId).then(() => {}, () => {});
+  } catch (e) { console.warn("logCrisis failed (non-fatal):", e.message); }
+}
+
 // ── Memory Engine — distill durable memories from a conversation ──────────────
 // Bounded for scale: only called at message-count milestones, not every turn.
 // One small Claude call; returns NEW memories only (existing ones passed in to dedupe).
@@ -624,6 +669,48 @@ exports.handler = async function (event) {
   }
 
   const conversationHistory = buildConversationHistory(message, messages);
+
+  // ── CRISIS OVERRIDE — deterministic, runs BEFORE any LLM call, top priority ──
+  // Detection is rules-based (no LLM) for speed + reliability. Level 3 short-
+  // circuits with a fully controlled response — we never let the model improvise
+  // the highest-risk case. Levels 1–2 and diagnosis questions steer the model
+  // with hard directives prepended to the system prompt (override priority).
+  const lastUserTurn  = [...conversationHistory].reverse().find((m) => m.role === "user");
+  const latestUserText = lastUserTurn ? lastUserTurn.content : (message || "");
+  const crisis      = detectCrisis(latestUserText);
+  const isDiagnosis = detectDiagnosis(latestUserText);
+
+  if (crisis.level === 3) {
+    console.log("[riley-chat] LEVEL 3 crisis override fired:", crisis.matches);
+    // AWAIT the safety writes — guarantee the crisis record + transcript persist
+    // before the serverless container freezes on return. Each is internally
+    // try/caught, so a Supabase hiccup still lets the crisis response through.
+    await logCrisis(supabase, user_id, session_id, 3, crisis.matches, latestUserText);
+    if (supabase && user_id && session_id) {
+      await persistMessages(supabase, user_id, session_id, latestUserText, LEVEL3_RESPONSE);
+      supabase.from("user_profiles")
+        .update({ last_active_at: new Date().toISOString(), engagement_state: "active" })
+        .eq("id", user_id).then(() => {}, () => {});
+    }
+    // Return the deterministic crisis response — NO model call.
+    return {
+      statusCode: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
+      body: LEVEL3_RESPONSE,
+    };
+  }
+
+  // Levels 1–2 + diagnosis guardrail: prepend hard directives so they win over
+  // every standing instruction in the base prompt for THIS reply.
+  let safetyDirective = "";
+  if (crisis.level === 2) {
+    safetyDirective += LEVEL2_DIRECTIVE + "\n\n";
+    await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText);
+  } else if (crisis.level === 1) {
+    safetyDirective += LEVEL1_DIRECTIVE + "\n\n";
+  }
+  if (isDiagnosis) safetyDirective += DIAGNOSIS_DIRECTIVE + "\n\n";
+  if (safetyDirective) systemPrompt = safetyDirective + "----\n\n" + systemPrompt;
 
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",

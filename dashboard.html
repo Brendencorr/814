@@ -360,19 +360,21 @@ const MOOD_CONFIG={
 
 function applyMoodEngine(n){
   const cfg=MOOD_CONFIG[n]||MOOD_CONFIG[3];
-  // Update story card
+  // ── RILEY SUGGESTS — one card, two beats. Beat 1 = reflection (was "Today's
+  // Story"); Beat 2 = the actionable suggestion. One continuous thought. ──
   const stSlot=document.getElementById('story-slot');
-  if(stSlot){stSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8">Today\'s Story</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em">'+cfg.story+'</div></div>';}
-  // Update Riley insight
-  const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
-  if(insightEl&&insightTx){insightTx.textContent=cfg.insight;insightEl.style.display='flex';}
-  // Show mood response card
+  if(stSlot){
+    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+cfg.story+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+cfg.challenge+'</div></div>';
+    try{track('riley_suggests_shown',{mood:n,card_id:'riley_suggests'});}catch(e){}
+  }
+  // Conversational support — only on harder days (the choice buttons). Good days
+  // are fully covered by the two-beat card above; we don't stack a third Riley line.
   let mr=document.getElementById('mood-response');
-  if(!mr){mr=document.createElement('div');mr.id='mood-response';const mp=document.querySelector('.mood-row')?.closest('.panel');if(mp)mp.parentNode.insertBefore(mr,mp);}
-  let html=`<div style="background:rgba(16,14,12,0.5);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:16px 18px;margin-bottom:12px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Riley</div><div style="font-size:13px;color:var(--parchment);line-height:1.6;margin-bottom:12px">${cfg.response}</div>`;
-  if(cfg.choices){html+=`<div style="display:flex;flex-direction:column;gap:6px"><a href="/chat" style="padding:9px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:3px;font-size:12px;color:var(--gold);text-decoration:none;display:block">Talk with Riley</a><button onclick="applyEncourageMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Just encourage me today</button><button onclick="applyUpliftMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Give me something uplifting</button></div>`;}
-  else{html+=`<div style="font-size:11px;color:var(--smoke);font-style:italic;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px;margin-top:4px">${cfg.challenge}</div>`;}
-  html+='</div>';mr.innerHTML=html;
+  if(cfg.choices){
+    if(!mr){mr=document.createElement('div');mr.id='mood-response';const mp=document.querySelector('.mood-row')?.closest('.panel');if(mp)mp.parentNode.insertBefore(mr,mp);}
+    mr.style.display='block';
+    mr.innerHTML=`<div style="background:rgba(16,14,12,0.5);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:16px 18px;margin-bottom:12px"><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:8px">Riley</div><div style="font-size:13px;color:var(--parchment);line-height:1.6;margin-bottom:12px">${cfg.response}</div><div style="display:flex;flex-direction:column;gap:6px"><a href="/chat" style="padding:9px 14px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:3px;font-size:12px;color:var(--gold);text-decoration:none;display:block">Talk with Riley</a><button onclick="applyEncourageMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Just encourage me today</button><button onclick="applyUpliftMode()" style="padding:9px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:3px;font-size:12px;color:var(--parchment);cursor:pointer;text-align:left;font-family:inherit">Give me something uplifting</button></div></div>`;
+  } else if(mr){ mr.style.display='none'; }
 }
 
 function applyEncourageMode(){
@@ -602,7 +604,15 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     else if(dateStreak>=7)stTxt=dateStreak+' days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>';
     else if(SOBER_DAYS>0)stTxt='Another morning, sober. <span style="color:var(--smoke)">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>';
     else stTxt='Today is a fresh page. <span style="color:var(--smoke)">No quiz to pass. Just you, here, beginning.</span>';
-    stSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8">Today\'s Story</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em">'+stTxt+'</div></div>';
+    // Beat 2 — the actionable suggestion (was the standalone "Riley suggests" notice).
+    let rec='Take ten quiet minutes before opening your phone. The day will still be there.';
+    if(sleepLast2&&sleepLast2<6)rec='Easy on the caffeine today. Try to be in bed a little earlier tonight.';
+    else if(moodToday&&moodToday<=2)rec='A short walk outside — even ten minutes — tends to loosen the heavy days.';
+    // ── RILEY SUGGESTS — one card, two beats (Today screen consolidation) ──
+    // Beat 1 = reflection (was "Today's Story"); Beat 2 = the suggestion. One
+    // continuous thought — no divider, no second card.
+    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+rec+'</div></div>';
+    try{track('riley_suggests_shown',{card_id:'riley_suggests'});}catch(e){}
     // NOTICES
     const nSlot=document.getElementById('notices-slot');
     const sleepWin=checkins.filter(x=>x.sleep_hours>=7).length;
@@ -611,10 +621,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(habitsTotal>0&&habitsDoneToday===habitsTotal&&habitsTotal>=2)nItems.push({ico:'🌿',text:'Every habit done already today. That kind of morning carries forward.'});
     const daysSinceCI=checkins.length?Math.floor((Date.now()-new Date(checkins[0].checkin_date))/86400000):99;
     if(daysSinceCI>=5)nItems.push({ico:'📖',text:"You haven't journaled in a few days. Whenever you're ready — I'm here."});
-    let rec='Take ten quiet minutes before opening your phone. The day will still be there.';
-    if(sleepLast2&&sleepLast2<6)rec='Easy on the caffeine today. Try to be in bed a little earlier tonight.';
-    else if(moodToday&&moodToday<=2)rec='A short walk outside — even ten minutes — tends to loosen the heavy days.';
-    nItems.push({ico:'🕊',label:'Riley suggests',text:rec});
+    // "Riley suggests" merged into the two-beat Riley Suggests card above (Beat 2).
     const noteHtml=nItems.slice(0,3).map(function(n){return '<div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:11px 14px"><span style="font-size:14px;flex-shrink:0;margin-top:1px">'+n.ico+'</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">'+(n.label||'Riley noticed')+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">'+n.text+'</div></div></div>';}).join('');
     if(noteHtml)nSlot.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">'+noteHtml+'</div>';
 

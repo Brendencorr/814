@@ -87,7 +87,7 @@ exports.handler = async (event) => {
     // ── Pull every signal in parallel — all non-fatal ──
     const [
       profileR, checkinsR, soberR, programsR, memoryR,
-      lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR,
+      lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR, lastVisitR,
     ] = await Promise.allSettled([
       supabase.from("user_profiles").select("full_name,preferred_name,subscription_tier,do_not_recommend,risk_flags,communication_style,current_focus,one_year_vision,human_os,last_engagement_note,notification_schedule").eq("id", user_id).maybeSingle(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours").eq("user_id", user_id).gte("checkin_date", fourteenAgo).order("checkin_date", { ascending: false }),
@@ -99,6 +99,8 @@ exports.handler = async (event) => {
       supabase.from("emotional_calendar").select("label,is_sensitive,riley_strategy").eq("event_month", month).eq("event_day", day),
       supabase.from("module_registry").select("*").eq("is_active", true),
       supabase.from("recommendation_history").select("content_id,reaction").eq("user_id", user_id).gte("recommended_on", fourteenAgo),
+      // Last app open BEFORE today — robust dormancy signal (today's open is already logged)
+      supabase.from("engagement_events").select("created_at").eq("user_id", user_id).eq("event_type", "app_open").lt("created_at", todayISO).order("created_at", { ascending: false }).limit(1),
     ]);
 
     const get = r => r.status === "fulfilled" ? r.value?.data : null;
@@ -112,6 +114,12 @@ exports.handler = async (event) => {
     const emotionalCal   = get(emotionalCalR) || [];
     const modules        = get(modulesR) || [];
     const recentRecs     = get(recentRecsR) || [];
+    const lastVisitRow   = get(lastVisitR) || [];
+
+    // Days since their previous visit (not counting today) — the re-engagement signal
+    const lastVisitAt = lastVisitRow[0]?.created_at ? new Date(lastVisitRow[0].created_at) : null;
+    const daysSinceVisit = lastVisitAt ? Math.floor((Date.now() - lastVisitAt) / 86400000) : null;
+    const returningFromAway = daysSinceVisit !== null && daysSinceVisit >= 7;
 
     const firstName = (profile.preferred_name || profile.full_name || "").split(" ")[0] || "there";
     const season    = getSeason();
@@ -234,7 +242,19 @@ exports.handler = async (event) => {
     if (profile.human_os?.proud) returnRefs.push(`You once told me what you're most proud of. Hold onto that today.`);
     if (profile.last_engagement_note && !returnRefs.length) returnRefs.push(`I've been holding what you shared when we started. I'm glad you're back.`);
     // Surface a specific return reference as its own field (the dashboard can lead with it)
-    const return_moment = returnRefs.length ? returnRefs[seed % returnRefs.length] : null;
+    let return_moment = returnRefs.length ? returnRefs[seed % returnRefs.length] : null;
+
+    // RE-ENGAGEMENT — they've been away. Lead with the brand's return language,
+    // never guilt ("we missed you"), and pair it with something specific they left behind.
+    if (returningFromAway) {
+      const back = daysSinceVisit >= 30
+        ? "Welcome back. It's been a little while — and that's completely okay. We saved your place."
+        : "Welcome back. We saved your place.";
+      const specific = profile.one_year_vision
+        ? " What you're working toward is still right here, waiting."
+        : (profile.human_os?.dream ? " I've still got what you shared with me." : "");
+      return_moment = back + specific;
+    }
 
     return {
       statusCode: 200,
@@ -252,7 +272,7 @@ exports.handler = async (event) => {
         recommended_content,
         riley_message,
         return_moment,
-        signals: { latest_mood: latestMood, low_mood_14d: lowMoodCount, recent_sleep: recentSleep, sober: !!sober },
+        signals: { latest_mood: latestMood, low_mood_14d: lowMoodCount, recent_sleep: recentSleep, sober: !!sober, days_since_visit: daysSinceVisit, returning_from_away: returningFromAway },
       }),
     };
 

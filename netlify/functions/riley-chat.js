@@ -647,6 +647,11 @@ exports.handler = async function (event) {
     const userMsg = message || conversationHistory[conversationHistory.length - 1]?.content || "";
     persistMessages(supabase, user_id, session_id, userMsg, reply);
 
+    // Engagement signal — chatting is engagement. Log it + keep them "active".
+    // (Service key here, so user_id is explicit; the client RPC path needs auth.uid.)
+    supabase.from("engagement_events").insert({ user_id, event_type: "riley_message", event_data: { session_id } }).then(() => {}, () => {});
+    supabase.from("user_profiles").update({ last_active_at: new Date().toISOString(), engagement_state: "active" }).eq("id", user_id).then(() => {}, () => {});
+
     // Memory Engine — distill durable memories at conversation milestones.
     // Bounded for scale: runs ~once per 6 messages, not every turn. Non-blocking.
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];

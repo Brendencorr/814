@@ -147,6 +147,7 @@ function A(id,msg,ok){
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
@@ -172,6 +173,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 
 (async()=>{ await boot(async()=>{
+  track('brief_opened');
   document.getElementById('br-label').textContent='Morning Brief · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
   await Promise.all([loadClarityScore(), loadBrief()]);
 }); })();
@@ -267,6 +269,7 @@ async function loadBrief(){
 }
 
 async function generateBrief(forceNew){
+  track('brief_generated',{regenerate:!!forceNew});
   const btn=document.getElementById('br-gen-btn');
   const regen=document.getElementById('br-regen');
   if(btn){btn.disabled=true;btn.textContent='Generating…';}
@@ -359,6 +362,7 @@ function renderBrief(brief){
 
 function markActionDone(el){
   const isDone=el.dataset.done==='1';
+  if(!isDone)track('brief_action_done');
   el.dataset.done=isDone?'0':'1';
   el.style.background=isDone?'var(--gold-dim)':'rgba(74,173,114,0.1)';
   el.style.borderColor=isDone?'rgba(201,168,76,0.25)':'rgba(74,173,114,0.3)';

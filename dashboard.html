@@ -384,6 +384,8 @@ function applyUpliftMode(){
 }
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+// Engagement tracking — fire-and-forget, never blocks render. Logs event + bumps counters.
+function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 // Animated count-up
@@ -403,6 +405,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const {data:{session}}=await SB.auth.getSession();
     if(!session){window.location.href='https://riley.eight14.us';return;}
     USER=session.user;UID=USER.id;
+    track('app_open');
     // Onboarding guard — new users build their profile with Riley first.
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed').eq('id',UID).maybeSingle();
@@ -653,6 +656,7 @@ async function loadRileyBrain(){
 
 // Log that content was opened, so the Learning Engine knows what's been seen
 async function logRec(contentId,type){
+  track('rec_clicked',{content_id:contentId,type:type});
   try{await SB.from('recommendation_history').insert({user_id:UID,content_id:contentId,recommended_on:TODAY,reaction:'opened',reacted_at:new Date().toISOString()});}catch(e){}
 }
 

@@ -63,6 +63,18 @@ exports.handler = async function (event) {
     if (prodErr) throw prodErr;
     const owned = new Set((prodRows || []).map(r => r.product_key));
 
+    // Free-access mode (friends & family testing): grant everyone every product
+    // so testers see the whole app for free. Toggled in the operator Programs
+    // tab; flip off later to enforce real purchases. Pure read-time override, no
+    // per-user data changes, fully reversible.
+    try {
+      const { data: fa } = await sb.from('app_settings').select('value').eq('key', 'free_access_mode').maybeSingle();
+      if (fa && String(fa.value).toLowerCase() === 'true') {
+        const { data: allProds } = await sb.from('products').select('product_key');
+        (allProds || []).forEach(p => owned.add(p.product_key));
+      }
+    } catch (_) { /* settings table optional — fall back to real entitlements */ }
+
     // 2. Feature map config
     const { data: featRows, error: featErr } = await sb
       .from('feature_map')

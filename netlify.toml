@@ -40,6 +40,9 @@
 [functions."admin-safety"]
   timeout = 10
 
+[functions."admin-content"]
+  timeout = 10
+
 
 [functions."entitlements"]
   timeout = 10

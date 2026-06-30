@@ -300,6 +300,7 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
       <button class="ht" data-s="u" onclick="loadUsers(this)">Users</button>
       <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:#d9534f;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
+      <button class="ht" data-s="m" onclick="loadContent(this)">Content</button>
     </nav>
     <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
   </header>
@@ -411,6 +412,13 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
   </div>
 </div>
 
+<!-- CONTENT MANAGER SCREEN -->
+<div class="sc" id="sm">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1000px;margin:0 auto" id="content-body"><div class="em">Loading…</div></div>
+  </div>
+</div>
+
 <!-- USERS SCREEN -->
 <div class="sc" id="su">
   <div class="users-top">
@@ -511,7 +519,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
+function gs(n,btn){['o','h','p','r','u','e','s','m'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
 
 /* ── HOME · COMBINED OVERVIEW ─────────────────────────────────────────────── */
 async function loadOverview(btn){
@@ -673,6 +681,63 @@ async function checkSafetyAlerts(){
     if(fresh.length)showSafetyPopup(fresh);
   }catch(e){}
 }
+// ── Admin Content Manager (§8) — OPERATOR_KEY protected, reuses opKey() ──────
+async function contentApi(action,extra){
+  var k=opKey();
+  if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
+  var r=await fetch(B+'/admin-content',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
+  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===503)throw new Error('not-configured');
+  if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
+  return await r.json();
+}
+var _ctypes=[],CIN='width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;margin-bottom:6px',CFL='display:block;font-size:9px;font-family:DM Mono,monospace;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px';
+async function loadContent(btn){
+  gs('m',btn);
+  var el=document.getElementById('content-body');el.innerHTML='<div class="em">Loading…</div>';
+  try{var d=await contentApi('list');_ctypes=d.content_types||[];renderContent(d.items||[]);}
+  catch(e){
+    var msg=e.message==='bad-key'?'Operator key incorrect. <button class="bo" onclick="loadContent()">Try again</button>'
+      :e.message==='not-configured'?'Set <b>OPERATOR_KEY</b> in Netlify env, then reload.'
+      :e.message==='no-key'?'Enter your operator key. <button class="bo" onclick="loadContent()">Enter key</button>'
+      :'Could not load: '+engEsc(e.message);
+    el.innerHTML='<div class="em">'+msg+'</div>';
+  }
+}
+function cfield(id,label){return '<div><label style="'+CFL+'">'+label+'</label><input id="'+id+'" style="'+CIN+'"></div>';}
+function renderContent(items){
+  var typeOpts=_ctypes.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
+  var form='<div style="background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;margin-bottom:1.2rem"><div class="sh" style="margin-bottom:.7rem" id="cform-title">Add content</div><input type="hidden" id="cf-id"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">'+
+    cfield('cf-title','Title')+cfield('cf-creator','Creator / source')+
+    '<div><label style="'+CFL+'">Type</label><select id="cf-type" style="'+CIN+'">'+typeOpts+'</select></div>'+
+    cfield('cf-topic','Topic')+cfield('cf-mood','Moods (comma-sep)')+cfield('cf-duration','Duration (min)')+
+    cfield('cf-url','URL')+cfield('cf-intensity','Emotional intensity 1-5')+
+    '</div><label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'+
+    '<div style="display:flex;gap:.6rem;margin-top:.5rem;align-items:center"><button class="bg" onclick="saveContent()">Save</button><button class="bo" onclick="clearContentForm()">Clear</button><span id="cf-msg" style="color:var(--muted);font-size:.78rem"></span></div></div>';
+  var rows=items.length?items.map(contentRow).join(''):'<div class="em">No content yet. Add your first piece above.</div>';
+  document.getElementById('content-body').innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Content Library</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+items.length+' items</div></div>'+form+rows;
+  window._content=items;
+}
+function contentRow(c){
+  var dim=c.is_active?'':'opacity:.5;';
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+dim+'"><div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(c.title)+'</div><div style="font-size:.66rem;color:var(--muted2)">'+engEsc(c.content_type)+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.is_active?'':' · retired')+'</div></div><button class="bo" onclick="editContent(\''+c.id+'\')">Edit</button>'+(c.is_active?'<button class="bo" style="border-color:var(--red);color:#c98a8a" onclick="retireContent(\''+c.id+'\')">Retire</button>':'<button class="bo" style="border-color:var(--green);color:var(--green)" onclick="activateContent(\''+c.id+'\')">Restore</button>')+'</div>';
+}
+function editContent(id){
+  var c=(window._content||[]).find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('cf-id').value=c.id;document.getElementById('cf-title').value=c.title||'';document.getElementById('cf-creator').value=c.creator||'';document.getElementById('cf-type').value=c.content_type||'';document.getElementById('cf-topic').value=c.topic||'';document.getElementById('cf-mood').value=(c.mood||[]).join(', ');document.getElementById('cf-duration').value=c.duration_minutes||'';document.getElementById('cf-url').value=c.content_url||'';document.getElementById('cf-intensity').value=c.emotional_intensity||'';document.getElementById('cf-desc').value=c.description||'';
+  document.getElementById('cform-title').textContent='Edit content';window.scrollTo(0,0);
+}
+function clearContentForm(){['cf-id','cf-title','cf-creator','cf-topic','cf-mood','cf-duration','cf-url','cf-intensity','cf-desc'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});var t=document.getElementById('cform-title');if(t)t.textContent='Add content';var m=document.getElementById('cf-msg');if(m)m.textContent='';}
+async function saveContent(){
+  var g=function(i){var e=document.getElementById(i);return e?e.value.trim():'';};
+  var item={id:g('cf-id')||undefined,title:g('cf-title'),creator:g('cf-creator'),content_type:g('cf-type'),topic:g('cf-topic'),mood:g('cf-mood'),duration_minutes:g('cf-duration'),content_url:g('cf-url'),emotional_intensity:g('cf-intensity'),description:g('cf-desc')};
+  if(!item.title){document.getElementById('cf-msg').textContent='Title required';return;}
+  document.getElementById('cf-msg').textContent='Saving…';
+  try{await contentApi('upsert',{item:item});clearContentForm();loadContent();}catch(e){document.getElementById('cf-msg').textContent='Error: '+e.message;}
+}
+async function retireContent(id){if(!window.confirm('Retire this content? It stops being recommended but is kept.'))return;try{await contentApi('retire',{id:id});loadContent();}catch(e){window.alert(e.message);}}
+async function activateContent(id){try{await contentApi('activate',{id:id});loadContent();}catch(e){window.alert(e.message);}}
+
 function init(){scd();ls();ldst();loadOverview();checkSafetyAlerts();setInterval(checkSafetyAlerts,90000);}
 async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
 function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r,i){var row=document.createElement('div');row.className='rr clickable';row.title='Click to view this week\'s posts and numbers';row.onclick=function(){openWk(r);};row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}

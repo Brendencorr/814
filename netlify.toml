@@ -50,6 +50,9 @@
 [functions."daily-brief"]
   timeout = 26
 
+[functions."journey-step"]
+  timeout = 26
+
 # HTTP-triggered background pipeline — no timeout, runs full Scout->Sage->Atlas
 # The -background suffix tells Netlify to return 202 immediately and keep running
 [functions."manual-pipeline-background"]

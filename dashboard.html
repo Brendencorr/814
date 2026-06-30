@@ -610,8 +610,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // Riley Brain — non-blocking; assembles today's matched recommendations
     loadRileyBrain();
-    // Phase 2 — progressive discovery; surfaces one gentle question when timely
-    loadPhase2Discovery();
+    // Daily Check-In takes priority (the daily heartbeat). Phase 2 discovery only
+    // surfaces on days the check-in is already done, so we never stack two modals.
+    loadDailyCheckin().then(function(shown){ if(!shown) loadPhase2Discovery(); });
     }catch(e){console.error('Dashboard:',e);}
 })();
 
@@ -770,6 +771,58 @@ async function wbSave(){
   }catch(e){console.warn('wbSave',e.message);closeP2();}
 }
 async function p2skipBaseline(){await markP2('wellness_baseline','skipped');closeP2();}
+
+// ── DAILY CHECK-IN — the daily learning heartbeat (once per 24h) ────────────
+const DAILY_Q=[
+  {key:'mood',type:'mood',q:"How are you feeling this morning?",sub:"No wrong answer — just honest."},
+  {key:'sleep',type:'choice',q:"How did you sleep?",opts:[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']]},
+  {key:'last_night',type:'choice',q:"How was last night?",opts:[['hard','Hard'],['quiet','Quiet'],['good','Good'],['great','Great']]},
+  {key:'water',type:'yn',q:"Had any water yet today?"},
+  {key:'breakfast',type:'yn',q:"Eaten anything this morning?"},
+  {key:'dinner',type:'text',q:"What did you have for dinner last night?",ph:"No judgment — just curious.",optional:true},
+  {key:'note',type:'text',q:"Anything on your mind today?",ph:"As much or as little as you want.",optional:true}
+];
+let DC={};
+async function loadDailyCheckin(){
+  try{
+    if(localStorage.getItem('dc_'+UID)===TODAY)return false;            // already shown today
+    const {data:ci}=await SB.from('daily_checkins').select('checkin_completed').eq('user_id',UID).eq('checkin_date',TODAY).maybeSingle();
+    if(ci&&ci.checkin_completed)return false;                            // already completed today
+    DC={};dcShow(0);return true;
+  }catch(e){return false;}
+}
+function dcShow(i){
+  if(i>=DAILY_Q.length)return dcFinish();
+  const q=DAILY_Q[i];
+  let input='';
+  if(q.type==='mood'){
+    input=`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">${[[1,'😔'],[2,'😐'],[3,'🙂'],[4,'😊'],[5,'🔥']].map(m=>`<button onclick="dcAns(${i},${m[0]})" style="flex:1;padding:14px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:24px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${m[1]}</button>`).join('')}</div>`;
+  }else if(q.type==='choice'){
+    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${q.opts.map(o=>`<button onclick="dcAns(${i},'${o[0]}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${o[1]}</button>`).join('')}</div>`;
+  }else if(q.type==='yn'){
+    input=`<div style="display:flex;gap:10px;margin-bottom:18px"><button onclick="dcAns(${i},true)" style="flex:1;padding:12px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:4px;font-size:14px;color:var(--gold2);cursor:pointer">Yes</button><button onclick="dcAns(${i},false)" style="flex:1;padding:12px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:14px;color:var(--parchment);cursor:pointer">Not yet</button></div>`;
+  }else if(q.type==='text'){
+    input=`<input type="text" id="dc-in" placeholder="${q.ph||''}" autofocus style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:12px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">`;
+  }
+  const skipBtn=q.optional?`<button onclick="dcAns(${i},null)" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Skip</button>`:'';
+  const nextBtn=q.type==='text'?`<button onclick="dcAnsText(${i})" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Continue</button>`:'';
+  p2Modal(`<div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:28px">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">Daily Check-In · ${i+1} of ${DAILY_Q.length}</div><div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment);line-height:1.4">${q.q}</div>${q.sub?`<div style="font-size:12px;color:var(--smoke);margin-top:5px">${q.sub}</div>`:''}</div></div>${input}<div style="display:flex;align-items:center;gap:14px">${nextBtn}${skipBtn}</div>`);
+  if(q.type==='text')setTimeout(()=>{const el=document.getElementById('dc-in');if(el)el.focus();},120);
+}
+function dcAns(i,val){DC[DAILY_Q[i].key]=val;dcShow(i+1);}
+function dcAnsText(i){const el=document.getElementById('dc-in');DC[DAILY_Q[i].key]=el&&el.value.trim()?el.value.trim():null;dcShow(i+1);}
+async function dcFinish(){
+  try{localStorage.setItem('dc_'+UID,TODAY);}catch(e){}
+  const log={sleep:DC.sleep||null,last_night:DC.last_night||null,water:DC.water,breakfast:DC.breakfast,dinner:DC.dinner||null};
+  const row={user_id:UID,checkin_date:TODAY,checkin_completed:true,daily_log:log,sobriety_day:SOBER_DAYS>0};
+  if(DC.mood)row.mood=DC.mood;
+  if(DC.note)row.notes=DC.note;
+  try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
+  track('daily_checkin',{});
+  p2Modal(`<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for checking in.<br><span style="color:var(--smoke);font-size:15px">I've got it — and I'm paying attention.</span></div></div>`);
+  setTimeout(closeP2,1900);
+  if(DC.mood){MOOD=DC.mood;try{hlMood(DC.mood);applyMoodEngine(DC.mood);}catch(e){}}
+}
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}

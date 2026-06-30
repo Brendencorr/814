@@ -280,6 +280,14 @@ function buildUserContext(profile, clientData) {
       const c = clientData.todayCheckin;
       const moodLabels = ["","Hard","Low","OK","Good","Great"];
       lines.push(`\nTODAY'S CHECK-IN: mood ${c.mood ? moodLabels[c.mood] + " (" + c.mood + "/5)" : "not logged"}, water ${c.water_oz || 0} oz, sleep ${c.sleep_hours || 0} hrs${c.notes ? ", notes: " + c.notes.slice(0,100) : ""}`);
+      const dl = c.daily_log || {};
+      const dailyBits = [];
+      if (dl.sleep)      dailyBits.push(`slept: ${dl.sleep}`);
+      if (dl.last_night) dailyBits.push(`last night: ${dl.last_night}`);
+      if (dl.water === false)     dailyBits.push("hasn't had water yet today");
+      if (dl.breakfast === false) dailyBits.push("hasn't eaten this morning");
+      if (dl.dinner)     dailyBits.push(`dinner last night: ${dl.dinner}`);
+      if (dailyBits.length) lines.push(`TODAY'S DAILY CHECK-IN DETAIL: ${dailyBits.join("; ")}. Reference these naturally and gently if relevant — never interrogate.`);
     } else {
       lines.push("\nTODAY'S CHECK-IN: not completed yet today");
     }
@@ -388,7 +396,7 @@ async function getClientData(supabase, userId) {
 
     const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
-      supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
+      supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
       supabase.from("habits").select("id,title,emoji").eq("user_id", userId).eq("is_active", true),
       supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", sevenISO),

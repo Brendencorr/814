@@ -54,6 +54,10 @@
 [functions."state-engine"]
   timeout = 10
 
+# Content interaction + feedback (§7) — Tier 2, feeds the recommendation engine.
+[functions."content-event"]
+  timeout = 10
+
 # Daily check-in free-text crisis scan — deterministic, no LLM, fast.
 [functions."checkin-scan"]
   timeout = 10

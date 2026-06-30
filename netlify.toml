@@ -66,6 +66,11 @@
 [functions."reengagement-cron"]
   schedule = "0 16 * * *"
 
+# Brief delivery — runs hourly, emails each person's brief at their chosen
+# check-in time in THEIR timezone (morning/lunch/afternoon/evening).
+[functions."brief-delivery-cron"]
+  schedule = "0 * * * *"
+
 # ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
 [[redirects]]
   from = "https://riley.eight14.us/dashboard"

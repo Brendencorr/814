@@ -256,6 +256,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- Riley Notices — small alive observations -->
     <div id="notices-slot"></div>
 
+    <!-- Phase 2 — Riley's progressive discovery (one gentle question at a time) -->
+    <div id="phase2-slot"></div>
+
     <!-- For You Today — Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
@@ -604,6 +607,8 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // Riley Brain — non-blocking; assembles today's matched recommendations
     loadRileyBrain();
+    // Phase 2 — progressive discovery; surfaces one gentle question when timely
+    loadPhase2Discovery();
     }catch(e){console.error('Dashboard:',e);}
 })();
 
@@ -650,6 +655,103 @@ async function loadRileyBrain(){
 async function logRec(contentId,type){
   try{await SB.from('recommendation_history').insert({user_id:UID,content_id:contentId,recommended_on:TODAY,reaction:'opened',reacted_at:new Date().toISOString()});}catch(e){}
 }
+
+// ── PHASE 2 — Progressive Discovery (Days 1-7) ───────────────────────────────
+// Deferred onboarding questions, surfaced one at a time, conversationally —
+// never a second form. Each gated by days-since-onboarding, tracked so it never repeats.
+const PHASE2_BANK=[
+  // PHYSICAL (available from day 1)
+  {key:"p_age",bucket:"physical",day:0,store:"detail",prompt:"Hey — I realized I don't actually know how old you are. Mind sharing?",type:"text",ph:"Your age"},
+  {key:"p_occupation",bucket:"physical",day:0,store:"detail",prompt:"What do you do with your days? Work, school, caregiving — whatever fills them.",type:"text",ph:"What you do"},
+  {key:"p_exercise",bucket:"physical",day:1,store:"detail",prompt:"How often do you usually move your body in a week? No judgment — I just want your brief to fit your real life.",type:"choice",opts:["Rarely","1–2 times","3–4 times","5 or more"]},
+  {key:"p_sleep_dur",bucket:"physical",day:1,store:"detail",prompt:"On an average night, how many hours of sleep do you actually get?",type:"choice",opts:["Under 5","5–6","6–7","7–8","8 or more"]},
+  {key:"p_recovery",bucket:"physical",day:2,store:"detail",prompt:"You mentioned rebuilding earlier. Would you be comfortable sharing where you're at with recovery? Only if you want to — it helps me understand you.",type:"text",ph:"Only if you want to share",optional:true},
+  // PERSONALITY (day 2+)
+  {key:"pers_encouragement",bucket:"personality",day:2,store:"profile",col:"preferred_encouragement",prompt:"I want to show up for you the right way. How do you like to be encouraged?",type:"choice",opts:["Gently","Direct and honest","With some humor","A balance","Not sure yet"]},
+  {key:"pers_difficult",bucket:"personality",day:3,store:"detail",prompt:"When things get hard, what usually helps you most?",type:"text",ph:"What helps you"},
+  {key:"pers_learning",bucket:"personality",day:3,store:"detail",prompt:"How do you take in new things best?",type:"choice",opts:["Reading","Watching","Listening","Doing","A mix"]},
+  // PREFERENCES (day 3+) — light, to deepen the relationship
+  {key:"pref_music",bucket:"preferences",day:3,store:"detail",prompt:"What do you put on when you want to feel good?",type:"text",ph:"Music, artists, a vibe…"},
+  {key:"pref_outdoor",bucket:"preferences",day:4,store:"detail",prompt:"Favorite way to be outside?",type:"text",ph:"Hiking, the porch, anywhere…"},
+  {key:"pref_season",bucket:"preferences",day:4,store:"detail",prompt:"Favorite season? I ask because the whole experience shifts with it.",type:"choice",opts:["Spring","Summer","Fall","Winter"]},
+];
+
+async function loadPhase2Discovery(){
+  try{
+    const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_completed_at,phase2_progress').eq('id',UID).maybeSingle();
+    if(!p||!p.onboarding_completed)return; // only after Phase 1
+    const prog=p.phase2_progress||{};
+    const startedAt=p.onboarding_completed_at?new Date(p.onboarding_completed_at):new Date(Date.now()-86400000);
+    const daysSince=Math.max(0,Math.floor((Date.now()-startedAt)/86400000));
+
+    // Wellness baseline (day 4+) — the culmination. Show once if not done.
+    if(daysSince>=4&&!prog.wellness_baseline){
+      const {data:wb}=await SB.from('wellness_baseline').select('id').eq('user_id',UID).maybeSingle();
+      if(!wb){renderWellnessBaseline();return;}
+    }
+
+    // Otherwise surface the next unanswered, day-eligible question
+    const next=PHASE2_BANK.find(q=>daysSince>=q.day&&!prog[q.key]);
+    if(!next){return;} // all caught up
+    renderPhase2(next);
+  }catch(e){console.warn('phase2 (non-fatal):',e.message);}
+}
+
+function renderPhase2(q){
+  const slot=document.getElementById('phase2-slot');if(!slot)return;
+  let input='';
+  if(q.type==='text'){input=`<input type="text" id="p2-in" placeholder="${esc(q.ph||'')}" style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:11px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:12px">`;}
+  else if(q.type==='choice'){input=`<div id="p2-opts" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px">${q.opts.map(o=>`<button onclick="p2pick(this,'${esc(o)}')" style="padding:8px 14px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:13px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="if(!this.dataset.sel)this.style.borderColor='rgba(255,255,255,0.1)'">${esc(o)}</button>`).join('')}</div>`;}
+  slot.innerHTML=`<div style="background:linear-gradient(135deg,rgba(74,122,176,0.07),rgba(16,14,12,0.4));border:1px solid rgba(74,122,176,0.2);border-radius:8px;padding:18px 20px;margin-bottom:18px">
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px"><span style="font-size:18px;flex-shrink:0">💬</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley wants to know</div><div style="font-size:14px;color:var(--parchment);line-height:1.6">${esc(q.prompt)}</div></div></div>
+    ${input}
+    <div style="display:flex;align-items:center;gap:12px"><button onclick="p2save('${q.key}','${q.store}','${q.col||''}','${q.bucket}')" style="background:var(--gold);color:var(--ink);border:none;padding:8px 18px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer">Share</button><button onclick="p2skip('${q.key}')" style="background:none;border:none;color:var(--smoke);font-size:12px;cursor:pointer">Maybe later</button></div>
+  </div>`;
+  window._p2val=null;
+}
+function p2pick(btn,val){window._p2val=val;document.querySelectorAll('#p2-opts button').forEach(b=>{b.dataset.sel='';b.style.borderColor='rgba(255,255,255,0.1)';b.style.background='var(--ink3)';});btn.dataset.sel='1';btn.style.borderColor='var(--gold)';btn.style.background='var(--gold-dim)';}
+async function p2save(key,store,col,bucket){
+  const inp=document.getElementById('p2-in');
+  const val=inp?inp.value.trim():window._p2val;
+  if(!val){return p2skip(key);}
+  try{
+    if(store==='detail'){await SB.from('profile_details').upsert({user_id:UID,category:bucket,detail_key:key,detail_value:val,updated_at:new Date().toISOString()},{onConflict:'user_id,detail_key'});}
+    else if(store==='profile'&&col){const patch={};patch[col]=val;if(col==='preferred_encouragement')patch.communication_style=val;await SB.from('user_profiles').update(patch).eq('id',UID);}
+    // Mark answered in phase2_progress + write a memory so Riley uses it
+    await markP2(key);
+    await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:phase2MemoryLine(key,val),source:'phase2',confidence:0.95,is_active:true});
+    const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='<div style="background:rgba(74,173,114,0.08);border:1px solid rgba(74,173,114,0.2);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:13px;color:var(--green2)">✓ Thank you — I have got that. It helps more than you know.</div>';
+    setTimeout(loadPhase2Discovery,2200); // surface the next one shortly
+  }catch(e){console.warn('p2save',e.message);}
+}
+async function p2skip(key){await markP2(key,'skipped');const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='';setTimeout(loadPhase2Discovery,400);}
+async function markP2(key,status){
+  try{const {data:p}=await SB.from('user_profiles').select('phase2_progress').eq('id',UID).maybeSingle();const prog=(p&&p.phase2_progress)||{};prog[key]=status||'done';await SB.from('user_profiles').update({phase2_progress:prog}).eq('id',UID);}catch(e){}
+}
+function phase2MemoryLine(key,val){
+  const m={p_age:'Their age: '+val,p_occupation:'What they do: '+val,p_exercise:'Exercise frequency: '+val,p_sleep_dur:'Typical sleep: '+val,p_recovery:'Recovery context: '+val,pers_encouragement:'Prefers to be encouraged: '+val,pers_difficult:'What helps them when things are hard: '+val,pers_learning:'Learns best by: '+val,pref_music:'Music they love: '+val,pref_outdoor:'Favorite way to be outside: '+val,pref_season:'Favorite season: '+val};
+  return m[key]||(key+': '+val);
+}
+
+// Wellness baseline — the Day 5-7 culmination, 10 quick ratings
+function renderWellnessBaseline(){
+  const slot=document.getElementById('phase2-slot');if(!slot)return;
+  const dims=[['sleep','Sleep'],['stress','Stress'],['energy','Energy'],['motivation','Motivation'],['confidence','Confidence'],['purpose','Purpose'],['relationships','Relationships'],['nutrition','Nutrition'],['fitness','Fitness'],['overall_happiness','Overall happiness']];
+  slot.innerHTML=`<div style="background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(16,14,12,0.4));border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:20px 22px;margin-bottom:18px">
+    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px"><span style="font-size:18px">📊</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">A quick baseline</div><div style="font-size:14px;color:var(--parchment);line-height:1.6">I want to get a sense of where you're starting — so we can look back later and see how far you've come. Rate each from 1 to 10. No wrong answers.</div></div></div>
+    <div id="wb-grid" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">${dims.map(([k,l])=>`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--parchment);width:110px;flex-shrink:0">${l}</span><div style="display:flex;gap:3px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="wbPick('${k}',${n},this)" data-k="${k}" style="width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--smoke);font-size:10px;cursor:pointer;transition:all .12s">${n}</button>`).join('')}</div></div>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:12px"><button onclick="wbSave()" style="background:var(--gold);color:var(--ink);border:none;padding:9px 20px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer">Save my baseline</button><button onclick="p2skipBaseline()" style="background:none;border:none;color:var(--smoke);font-size:12px;cursor:pointer">Not now</button></div>
+  </div>`;
+  window._wb={};
+}
+function wbPick(k,n,btn){window._wb=window._wb||{};window._wb[k]=n;document.querySelectorAll(`#wb-grid button[data-k="${k}"]`).forEach(b=>{const v=+b.textContent;b.style.background=v<=n?'var(--gold)':'transparent';b.style.color=v<=n?'var(--ink)':'var(--smoke)';b.style.borderColor=v<=n?'var(--gold)':'rgba(255,255,255,0.12)';});}
+async function wbSave(){
+  const wb=window._wb||{};if(Object.keys(wb).length<3){return;} // need a few at least
+  try{await SB.from('wellness_baseline').upsert({user_id:UID,...wb},{onConflict:'user_id'});await markP2('wellness_baseline');
+    const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='<div style="background:rgba(74,173,114,0.08);border:1px solid rgba(74,173,114,0.2);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:13px;color:var(--green2)">✓ Your baseline is saved. This is day one of the story. We will look back on it.</div>';
+  }catch(e){console.warn('wbSave',e.message);}
+}
+async function p2skipBaseline(){await markP2('wellness_baseline','skipped');const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='';}
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}

@@ -215,6 +215,22 @@ exports.handler = async (event) => {
       .filter(m => (m.suppress_in_states || []).includes(stateForMatch))
       .map(m => m.module_key);
 
+    // ── §9 Entitlement states — surface gated modules as LOCKED PREVIEWS rather
+    // than hiding them, so a free member sees what's behind the next tier with an
+    // upgrade prompt (instead of never knowing it exists). companion/concierge
+    // unlock adaptive features; everything gated points to the upgrade path.
+    const PRODUCT_UPSELL = "companion";
+    const locked_modules = modules
+      .filter(m => !entitled(m) && !(m.suppress_in_states || []).includes(stateForMatch))
+      .filter(m => { const sm = m.state_match || []; return sm.length === 0 || sm.includes(stateForMatch); })
+      .sort((a, b) => (a.default_priority || 5) - (b.default_priority || 5))
+      .slice(0, 4)
+      .map(m => ({
+        module_key: m.module_key, title: m.title, type: m.module_type, icon: m.icon,
+        description: m.description, locked: true, unlock_tier: PRODUCT_UPSELL,
+        unlock_label: "Unlock with Companion",
+      }));
+
     // ── Content recommendations: match mood, exclude recently-seen (unless loved) ──
     const lovedIds   = new Set(recentRecs.filter(r => r.reaction === "loved").map(r => r.content_id));
     const recentIds  = new Set(recentRecs.filter(r => r.reaction !== "loved").map(r => r.content_id));
@@ -293,6 +309,8 @@ exports.handler = async (event) => {
         life_event: lifeEvents[0] ? { type: lifeEvents[0].event_type, strategy: lifeEvents[0].riley_strategy } : null,
         recommended_modules,
         suppressed_modules,
+        locked_modules,
+        tier,
         recommended_content,
         riley_message,
         return_moment,

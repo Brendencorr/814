@@ -108,8 +108,23 @@ Return ONLY valid JSON, no other text:
     });
     if (!resp.ok) throw new Error(`Claude ${resp.status}`);
     const data = await resp.json();
+    // Robust parse: strip markdown fences + extract the JSON object
+    let raw = (data.content?.[0]?.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const s = raw.indexOf("{"), e2 = raw.lastIndexOf("}");
+    if (s >= 0 && e2 > s) raw = raw.slice(s, e2 + 1);
     let step;
-    try { step = JSON.parse(data.content?.[0]?.text || "{}"); } catch { throw new Error("generation parse failed"); }
+    try { step = JSON.parse(raw); }
+    catch {
+      // Graceful fallback so a day never hard-fails
+      step = {
+        title: `Day ${day_number}`,
+        lesson: `${phase.theme}. ${phase.focus}`,
+        action: "Take one small step today. Then rest.",
+        journal_prompt: "What is one true thing about where you are right now?",
+        riley_message: `Day ${day_number}. You're still here, and that's what matters. I'm with you.`,
+        recommended_content_types: ["breathwork", "journal_prompt"],
+      };
+    }
 
     const row = {
       program_slug, day_number,

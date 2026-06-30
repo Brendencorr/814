@@ -170,7 +170,11 @@ Return ONLY valid JSON with exactly these 11 keys — no other text:
 
     if (!apiResp.ok) throw new Error(`Claude API ${apiResp.status}`);
     const apiData = await apiResp.json();
-    const rawText = apiData.content?.[0]?.text || "{}";
+    // Robust parse: strip markdown fences + extract the JSON object so a wrapped
+    // response never silently falls back to the generic brief.
+    let rawText = (apiData.content?.[0]?.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const _s = rawText.indexOf("{"), _e = rawText.lastIndexOf("}");
+    if (_s >= 0 && _e > _s) rawText = rawText.slice(_s, _e + 1);
 
     let modules;
     try {

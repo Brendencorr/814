@@ -509,7 +509,10 @@ Already known (do not repeat): ${known.length ? known.join(" | ") : "nothing yet
     if (!resp.ok) return;
     const d = await resp.json();
     let memories;
-    try { memories = JSON.parse(d.content?.[0]?.text || "[]"); } catch { return; }
+    let memRaw = (d.content?.[0]?.text || "[]").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const ms = memRaw.indexOf("["), me = memRaw.lastIndexOf("]");
+    if (ms >= 0 && me > ms) memRaw = memRaw.slice(ms, me + 1);
+    try { memories = JSON.parse(memRaw); } catch { return; }
     if (!Array.isArray(memories) || !memories.length) return;
 
     const rows = memories.slice(0, 5).filter(m => m.content && m.content.length > 3).map(m => ({

@@ -171,21 +171,45 @@ exports.handler = async (event) => {
     };
     const stateForMatch = griefActive ? "grieving" : priorityState === "emotional_support" ? "struggling" : moodState;
 
+    // §4.2 — pull today's persisted state so risk_level reflects the State Engine.
+    let stateCrisis = false, activeJourney = null;
+    try {
+      const { data: uds } = await supabase.from("user_daily_state")
+        .select("crisis_flag,active_journey").eq("user_id", user_id).eq("date", todayISO.slice(0, 10)).maybeSingle();
+      if (uds) { stateCrisis = !!uds.crisis_flag; activeJourney = uds.active_journey || null; }
+    } catch (e) { /* non-fatal */ }
+    const riskActive = crisisFlag || stateCrisis || griefActive
+      || ["grief_support", "emotional_support"].includes(priorityState)
+      || ["struggling", "grieving", "sad"].includes(stateForMatch);
+
+    // ── §4.2 Module Priority System — priority_score, risk_level dominant ──
+    // In any risk state, supportive content outranks everything regardless of
+    // journey relevance or freshness; upbeat/content is pushed down.
+    const SUPPORT_MODULES = new Set(["recovery_support","grief_support","breathwork","journal_prompt","meditation","riley_message","community_prompt","mood_check","important_date"]);
+    const UPBEAT_TYPES = new Set(["content","celebration"]);
     const scored = modules
       .filter(m => entitled(m))
       .filter(m => !(m.suppress_in_states || []).includes(stateForMatch))
       .map(m => {
         const matches = (m.state_match || []).length === 0 || (m.state_match || []).includes(stateForMatch);
-        // Universal modules (empty state_match) always eligible; state-matched get a priority boost
-        const stateBoost = (m.state_match || []).includes(stateForMatch) ? -2 : 0;
-        return { ...m, _eligible: matches, _score: (m.default_priority || 5) + stateBoost };
+        let risk_level = 0;
+        if (riskActive && SUPPORT_MODULES.has(m.module_key)) risk_level = 100;
+        else if (riskActive && UPBEAT_TYPES.has(m.module_type)) risk_level = -50;
+        const base              = (10 - (m.default_priority || 5)) * 4;                  // registry priority (1→36 … 6→16)
+        const journey_relevance = (m.module_key === "program_step" && activeJourney) ? 14 : 0;
+        const state_match_boost = (m.state_match || []).includes(stateForMatch) ? 10 : 0;
+        const time_sensitivity  = (m.module_key === "important_date" && sensitiveDate) ? 30
+                                : (m.module_type === "celebration") ? 6 : 0;
+        const priority_score = risk_level + base + journey_relevance + state_match_boost + time_sensitivity;
+        return { ...m, _eligible: matches, _priority: priority_score };
       })
       .filter(m => m._eligible)
-      .sort((a, b) => a._score - b._score);
+      .sort((a, b) => b._priority - a._priority);
 
     const recommended_modules = scored.slice(0, 12).map(m => ({
       module_key: m.module_key, title: m.title, type: m.module_type,
       cta: m.cta, icon: m.icon, duration_minutes: m.duration_minutes,
+      priority_score: m._priority,
     }));
     const suppressed_modules = modules
       .filter(m => (m.suppress_in_states || []).includes(stateForMatch))

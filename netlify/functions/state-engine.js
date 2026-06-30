@@ -182,6 +182,7 @@ exports.handler = async function (event) {
     nourishment_score: dims.nourishment_score ?? null, reflection_score: dims.reflection_score ?? null,
     goal_score: dims.goal_score ?? null, community_score: dims.community_score ?? null,
     recovery_score: dims.recovery_score ?? null, clarity_score: clarity,
+    clarity_note: explainer || null,
     active_journey: sig.activeJourney || null, crisis_flag: crisisFlag,
     last_updated: new Date().toISOString(),
   };

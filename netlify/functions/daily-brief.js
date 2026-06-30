@@ -34,6 +34,36 @@ exports.handler = async (event) => {
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const sevenAgo  = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
+    // ── §5.1 CRISIS INTERRUPT — Priority Zero ──────────────────────────────
+    // Checked before the cache and before any content. If today's state is
+    // crisis-flagged, the brief reflects the Crisis Support Workflow — never
+    // motivational content, never a "challenge." Deterministic, no LLM. Not
+    // cached, so it clears the moment the flag resolves.
+    try {
+      const { data: st } = await supabase.from("user_daily_state")
+        .select("crisis_flag").eq("user_id", user_id).eq("date", today).maybeSingle();
+      if (st && st.crisis_flag) {
+        const { data: p } = await supabase.from("user_profiles").select("preferred_name,full_name").eq("id", user_id).maybeSingle();
+        const nm = ((p && (p.preferred_name || p.full_name)) || "").split(" ")[0];
+        const crisisBrief = {
+          user_id, brief_date: today,
+          greeting: nm ? `Hi ${nm}. I'm really glad you're here.` : "I'm really glad you're here.",
+          mood_note: "Today, the most important thing isn't getting things done — it's that you're safe, and that you're not alone.",
+          focus: "Staying safe, one moment at a time.",
+          challenge: "", reflection_prompt: "", music_mood: "",
+          action: "If things feel heavy, call or text 988 — the Suicide & Crisis Lifeline, any time. I'm here too.",
+          crisis: true,
+          crisis_resources: [
+            "Call or text 988 — the Suicide & Crisis Lifeline, any time",
+            "Call 911 if you may be in immediate danger",
+            "Reach out to someone you trust, right now",
+          ],
+          modules: { crisis: true },
+        };
+        return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ brief: crisisBrief, cached: false, crisis: true }) };
+      }
+    } catch (e) { /* non-fatal — fall through to the normal brief */ }
+
     // Return cached brief if it exists and has content
     const { data: existing } = await supabase
       .from("daily_briefs")

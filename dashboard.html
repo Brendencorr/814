@@ -298,7 +298,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <!-- Brief -->
         <div class="brief">
           <div class="brief-head">
-            <div><div class="bc-label" id="bc-label">Daily Intelligence Brief</div><div class="bc-title" id="bc-title">Your Daily Blueprint</div><div class="bc-sub" id="bc-sub">Riley assembles your brief every morning at 6 AM.</div></div>
+            <div><div class="bc-label" id="bc-label">Daily Intelligence Brief</div><div class="bc-title" id="bc-title">Your Daily Blueprint</div><div class="bc-sub" id="bc-sub">Your brief, updating through the day as you check in.</div></div>
             <div style="text-align:right;flex-shrink:0;padding-left:16px"><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin-bottom:6px" id="bc-prog">— / —</div>
             <svg viewBox="0 0 52 52" width="48" height="48" style="transform:rotate(-90deg)"><circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/><circle id="brief-ring" cx="26" cy="26" r="20" fill="none" stroke="var(--gold)" stroke-width="4" stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round"/></svg></div>
           </div>
@@ -469,7 +469,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const goalsOnTrack=goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
     const habitsTotal=habits.length,habitsDoneToday=habits.filter(h=>habitDone.has(h.id)).length;
 
-    // ── CLARITY SCORE with weighted breakdown ──
+    // ── CLARITY SCORE — prefer the persisted State Engine value; fall back to
+    // the live client computation when the engine hasn't written state yet ──
+    let UDS=null;try{const _u=await SB.from('user_daily_state').select('clarity_score,clarity_note,crisis_flag').eq('user_id',UID).eq('date',TODAY).maybeSingle();UDS=_u&&_u.data||null;}catch(e){}
     const factors=[
       {key:'Sobriety',weight:30,val:sobriety?1:0,color:'#5bc488'},
       {key:'Sleep',weight:20,val:sleepLast?Math.min(1,sleepLast/8):0,color:'#5bc488'},
@@ -477,8 +479,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       {key:'Habits',weight:15,val:habitsTotal?habitsDoneToday/habitsTotal:0,color:'#c9a84c'},
       {key:'Goals',weight:15,val:goals.length?goalsOnTrack/goals.length:0,color:'#e8d5a3'}
     ];
-    let score=Math.round(factors.reduce((s,f)=>s+f.weight*f.val,0));
-    score=Math.min(100,score);
+    let clientScore=Math.round(factors.reduce((s,f)=>s+f.weight*f.val,0));
+    clientScore=Math.min(100,clientScore);
+    const score=(UDS&&UDS.clarity_score!=null)?UDS.clarity_score:clientScore;
     countUp(document.getElementById('hero-score'),score,1100);
     const ring=document.getElementById('hero-ring');setTimeout(()=>ring.style.transition='stroke-dashoffset 1.3s cubic-bezier(.4,0,.2,1)',50);
     setTimeout(()=>ring.style.strokeDashoffset=402*(1-score/100),100);
@@ -489,7 +492,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(moodToday)pills.push({t:['','Low','Off','OK','Good','Great'][moodToday]+' mood',c:moodToday>=4?'pill-green':'pill-gold'});
     if(habitsTotal)pills.push({t:habitsDoneToday+'/'+habitsTotal+' habits',c:habitsDoneToday>=habitsTotal*0.5?'pill-green':'pill-gold'});
     document.getElementById('hero-title').textContent=score>=80?'You\'re in a great rhythm.':score>=60?'You\'re building momentum.':score>=40?'One step at a time.':score>0?'You\'re rebuilding.':'Every day counts.';
-    document.getElementById('hero-msg').textContent=score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Add your sobriety date and a few habits in Reflection — Riley will take it from there.';
+    document.getElementById('hero-msg').textContent=(UDS&&UDS.clarity_note)?UDS.clarity_note:(score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Add your sobriety date and a few habits in Reflection — Riley will take it from there.');
     document.getElementById('hero-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('')+(score<100?'<a href="/tracker" class="pill pill-add">+ Add to your day</a>':'');
 
     // Hero breakdown bars
@@ -536,7 +539,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       const keys=[...order.filter(k=>mods[k]),...Object.keys(mods).filter(k=>!order.includes(k))];
       document.getElementById('mod-grid').innerHTML=keys.map(k=>`<div class="mod ${done[k]?'done':''}" onclick="location.href='/brief'"><div class="mod-ico">${icons[k]||'•'}</div><div class="mod-label">${k}</div><div class="mod-text">${esc(String(mods[k]).slice(0,70))}</div></div>`).join('');
     }else{
-      document.getElementById('mod-grid').innerHTML=order.map(k=>`<div class="mod" style="opacity:0.35" onclick="location.href='/brief'"><div class="mod-ico">${icons[k]}</div><div class="mod-label">${k}</div><div class="mod-text" style="color:var(--smoke)">Coming in your 6 AM brief</div></div>`).join('');
+      document.getElementById('mod-grid').innerHTML=order.map(k=>`<div class="mod" style="opacity:0.35" onclick="location.href='/brief'"><div class="mod-ico">${icons[k]}</div><div class="mod-label">${k}</div><div class="mod-text" style="color:var(--smoke)">In today's brief →</div></div>`).join('');
     }
 
     // ── CONVERSATIONS ──

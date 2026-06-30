@@ -89,7 +89,7 @@ exports.handler = async (event) => {
       profileR, checkinsR, soberR, programsR, memoryR,
       lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR,
     ] = await Promise.allSettled([
-      supabase.from("user_profiles").select("full_name,preferred_name,subscription_tier,do_not_recommend,risk_flags,communication_style,current_focus").eq("id", user_id).maybeSingle(),
+      supabase.from("user_profiles").select("full_name,preferred_name,subscription_tier,do_not_recommend,risk_flags,communication_style,current_focus,one_year_vision,human_os,last_engagement_note,notification_schedule").eq("id", user_id).maybeSingle(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours").eq("user_id", user_id).gte("checkin_date", fourteenAgo).order("checkin_date", { ascending: false }),
       supabase.from("sobriety_tracker").select("start_date").eq("user_id", user_id).eq("is_active", true).maybeSingle(),
       supabase.from("user_program_progress").select("*,programs(title,emoji,duration_days)").eq("user_id", user_id).eq("status", "active").limit(3),
@@ -221,6 +221,21 @@ exports.handler = async (event) => {
       riley_message = `${firstName} — ${riley_message.charAt(0).toLowerCase()}${riley_message.slice(1)}`;
     }
 
+    // ── THE RETURN MOMENT — reference something specific, never generic ──
+    // Spec: every return login, Riley references something real. No LLM needed —
+    // pull from signals, memory, and the Human OS captured in onboarding.
+    const returnRefs = [];
+    if (latestMood && latestMood <= 2) returnRefs.push("You mentioned energy has been low. How are you feeling this morning?");
+    if (recentSleep && recentSleep < 6) returnRefs.push(`You logged ${recentSleep} hours of sleep. Let's build today around that.`);
+    if (recentSleep && recentSleep >= 8) returnRefs.push(`${recentSleep} hours of sleep — your body got what it needed. Let's use it.`);
+    const dreamMem = memory.find(m => /dream/i.test(m.content));
+    if (dreamMem) returnRefs.push(`Last time, you shared something you've never given up on. I've been thinking about that. Ready to talk about it?`);
+    if (profile.one_year_vision) returnRefs.push(`You told me where you want to be a year from now. Every day like today is part of getting there.`);
+    if (profile.human_os?.proud) returnRefs.push(`You once told me what you're most proud of. Hold onto that today.`);
+    if (profile.last_engagement_note && !returnRefs.length) returnRefs.push(`I've been holding what you shared when we started. I'm glad you're back.`);
+    // Surface a specific return reference as its own field (the dashboard can lead with it)
+    const return_moment = returnRefs.length ? returnRefs[seed % returnRefs.length] : null;
+
     return {
       statusCode: 200,
       headers: { ...CORS, "Content-Type": "application/json" },
@@ -236,6 +251,7 @@ exports.handler = async (event) => {
         suppressed_modules,
         recommended_content,
         riley_message,
+        return_moment,
         signals: { latest_mood: latestMood, low_mood_14d: lowMoodCount, recent_sleep: recentSleep, sober: !!sober },
       }),
     };

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Welcome — The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(201,168,76,0.07) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 50% 110%,rgba(74,122,176,0.04) 0%,transparent 55%);pointer-events:none;z-index:0}
+.stage{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
+.moment{max-width:560px;width:100%;animation:rise .7s cubic-bezier(.2,.7,.2,1) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeout{to{opacity:0;transform:translateY(-12px)}}
+.section-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:18px;opacity:0.85}
+.riley-says{font-family:'DM Serif Display',serif;font-size:27px;line-height:1.4;color:var(--parchment);margin-bottom:8px;letter-spacing:-0.01em}
+.riley-sub{font-size:15px;color:var(--smoke);line-height:1.6;margin-bottom:28px}
+.sig{font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;margin-top:20px;opacity:0.8}
+input[type=text],input[type=date],select,textarea{width:100%;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .2s;margin-bottom:12px}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+input::placeholder,textarea::placeholder{color:var(--smoke2)}
+textarea{resize:vertical;min-height:96px;line-height:1.6}
+label.fld{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;margin-top:8px}
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.opt{padding:14px 16px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:15px;color:var(--parchment);cursor:pointer;transition:all .18s;text-align:left}
+.opt:hover{border-color:rgba(201,168,76,0.4);background:var(--ink3)}
+.opt.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.chip{padding:9px 15px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:24px;font-size:13px;color:var(--parchment);cursor:pointer;transition:all .18s}
+.chip:hover{border-color:rgba(201,168,76,0.4)}
+.chip.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold2)}
+.chip-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke2);margin:4px 0 16px}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+.actions{display:flex;align-items:center;gap:14px;margin-top:24px}
+.btn{padding:13px 32px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:3px;transition:all .2s;letter-spacing:0.02em;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);box-shadow:0 3px 16px rgba(201,168,76,0.25)}
+.btn:hover{box-shadow:0 5px 24px rgba(201,168,76,0.4)}
+.btn:disabled{opacity:0.4;cursor:default;box-shadow:none}
+.skip{background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:8px}
+.skip:hover{color:var(--parchment)}
+.progress-dots{display:flex;gap:6px;justify-content:center;margin-top:40px}
+.pdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.12);transition:all .3s}
+.pdot.on{background:var(--gold);width:18px;border-radius:3px}
+/* Building animation */
+.build-stage{text-align:center}
+.cardinal{font-size:48px;display:inline-block;animation:flyin 1.4s cubic-bezier(.2,.7,.2,1)}
+@keyframes flyin{from{opacity:0;transform:translateX(-120px) translateY(-30px)}to{opacity:1;transform:translateX(0) translateY(0)}}
+.feathers{display:flex;justify-content:center;gap:10px;margin:24px 0;min-height:30px}
+.feather{font-size:20px;opacity:0;animation:dropfeather .5s forwards}
+@keyframes dropfeather{from{opacity:0;transform:translateY(-14px) rotate(-20deg)}to{opacity:0.9;transform:translateY(0) rotate(0)}}
+.build-msg{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.55;color:var(--parchment);margin-top:20px;opacity:0;animation:rise .8s forwards}
+@media(max-width:560px){.riley-says{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="stage"><div class="moment" id="moment"><div style="color:var(--smoke);font-size:14px">Loading…</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+let USER=null,UID=null,FIRST='';
+const A={}; // collected answers
+const FOCUS=['Sleep','Nutrition','Fitness','Purpose','Mental Health','Stress','Relationships','Recovery','Leadership','Career','Adventure','Creativity','Community','Learning','Financial Wellness'];
+const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
+const TIMING=[['morning','Morning'],['lunch','Lunch'],['afternoon','Afternoon'],['evening','Evening'],['on_demand','Only when I ask']];
+const HUMAN_OS=[
+  {k:'energy',q:'What gives you energy?',sub:'The people, places, or moments that fill you up.'},
+  {k:'drains',q:'And what drains you?',sub:'No judgment. Just honesty.'},
+  {k:'proud',q:'What are you most proud of?',sub:'It can be big or quiet. Both count.'},
+  {k:'change',q:'What is one thing you would like to change?',sub:'The thing you think about when it is quiet.'},
+  {k:'dream',q:'What is one dream you have never given up on?',sub:'The one that is still there, underneath everything.'}
+];
+
+const el=()=>document.getElementById('moment');
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function swap(html){const m=el();m.style.animation='fadeout .3s forwards';setTimeout(()=>{m.innerHTML=html;m.style.animation='rise .7s cubic-bezier(.2,.7,.2,1) backwards';window.scrollTo(0,0);},300);}
+
+// ── Persist helpers ──────────────────────────────────────────────────────────
+async function save(patch,step){
+  try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,...patch,onboarding_step:step},{onConflict:'id'});}catch(e){console.warn('save',e.message);}
+}
+async function saveMemory(rows){
+  try{await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true})));}catch(e){console.warn('mem',e.message);}
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+async function boot(){
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){window.location.href='https://login.eight14.us';return;}
+  USER=session.user;UID=USER.id;
+  const meta=USER.user_metadata||{};
+  FIRST=(meta.full_name||meta.name||USER.email.split('@')[0]||'').split(' ')[0];
+  // Resume or start
+  const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_step,preferred_name').eq('id',UID).maybeSingle();
+  if(p&&p.onboarding_completed){window.location.href='https://riley.eight14.us/dashboard';return;}
+  if(p&&p.preferred_name)FIRST=p.preferred_name.split(' ')[0];
+  if(!p||!p.onboarding_started_at)await save({onboarding_started_at:new Date().toISOString()},0);
+  const step=(p&&p.onboarding_step)||0;
+  if(step>=1&&step<=5){renderSection(step);}else{renderWelcome();}
+}
+
+// ── Moment 0: Welcome ────────────────────────────────────────────────────────
+function renderWelcome(){
+  el().innerHTML=`
+    <div style="text-align:center">
+      <div style="font-size:40px;margin-bottom:24px">🐦</div>
+      <div class="riley-says" style="font-size:30px">Welcome.<br>I'm really glad you're here.</div>
+      <div class="riley-sub" style="max-width:400px;margin:18px auto 0">Before we begin, I'd love to get to know you.<br>There's no rush. We'll build this together.</div>
+      <div class="sig">— Riley</div>
+      <div style="margin-top:36px"><button class="btn" onclick="renderSection(1)">Begin</button></div>
+    </div>`;
+}
+
+function dots(n){return `<div class="progress-dots">${[1,2,3,4,5].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
+
+// ── Sections ─────────────────────────────────────────────────────────────────
+function renderSection(n){
+  if(n===1)return s1();if(n===2)return s2();if(n===3)return s3a();
+  if(n===4)return s4(0);if(n===5)return s5();
+}
+
+// Section 1 — Identity
+function s1(){
+  swap(`
+    <div class="section-label">Section 1 of 5 · Identity</div>
+    <div class="riley-says">Hi. What should I call you?</div>
+    <div class="riley-sub">Just your first name is perfect.</div>
+    <input type="text" id="i-name" placeholder="Your name" value="${esc(A.preferred_name||FIRST||'')}" autofocus>
+    <div class="row">
+      <div><label class="fld">Pronouns · optional</label><input type="text" id="i-pron" placeholder="she / he / they"></div>
+      <div><label class="fld">Birthday · optional</label><input type="date" id="i-bday"></div>
+    </div>
+    <label class="fld">Where are you? · optional</label>
+    <input type="text" id="i-city" placeholder="City, country">
+    <div class="actions"><button class="btn" id="b1" onclick="doneS1()">Continue</button></div>
+    ${dots(1)}`);
+}
+async function doneS1(){
+  const name=document.getElementById('i-name').value.trim();
+  if(!name){document.getElementById('i-name').style.borderColor='#8b3a3a';document.getElementById('i-name').focus();return;}
+  A.preferred_name=name;A.pronouns=document.getElementById('i-pron').value.trim()||null;
+  A.birthday=document.getElementById('i-bday').value||null;A.city=document.getElementById('i-city').value.trim()||null;
+  FIRST=name.split(' ')[0];
+  await save({preferred_name:A.preferred_name,pronouns:A.pronouns,birthday:A.birthday,city:A.city,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
+  // Riley acknowledges, then advances
+  swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">I'm glad we're doing this together.</div><div class="actions"><button class="btn" onclick="renderSection(2)">Continue</button></div>`);
+}
+
+// Section 2 — Story
+function s2(){
+  swap(`
+    <div class="section-label">Section 2 of 5 · Your Story</div>
+    <div class="riley-says">Which of these feels closest to why you're here?</div>
+    <div class="riley-sub">There's no wrong answer. You can change it later.</div>
+    <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
+    <div id="why-else" style="display:none;margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want."></textarea></div>
+    <div class="actions"><button class="btn" id="b2" onclick="doneS2()" disabled>Continue</button></div>
+    ${dots(2)}`);
+}
+function pickWhy(i){
+  A.why_i=i;
+  document.querySelectorAll('#why-opts .opt').forEach(o=>o.classList.toggle('sel',+o.dataset.i===i));
+  document.getElementById('why-else').style.display=(i===WHY.length-1)?'block':'none';
+  document.getElementById('b2').disabled=false;
+}
+async function doneS2(){
+  if(A.why_i==null)return;
+  A.why_here=WHY[A.why_i];A.why_here_detail=document.getElementById('why-text')?.value?.trim()||null;
+  await save({why_here:A.why_here,why_here_detail:A.why_here_detail},2);
+  await saveMemory([{content:`Why they came to 8:14: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
+  renderSection(3);
+}
+
+// Section 3 — Goals (vision then focus areas)
+function s3a(){
+  swap(`
+    <div class="section-label">Section 3 of 5 · What You're Reaching For</div>
+    <div class="riley-says">What would success look like, one year from today?</div>
+    <div class="riley-sub">Picture it honestly. This becomes one of the most important things I know about you.</div>
+    <textarea id="vision" placeholder="A year from now, I want to..." autofocus>${esc(A.one_year_vision||'')}</textarea>
+    <div class="actions"><button class="btn" onclick="doneS3a()">Continue</button><button class="skip" onclick="doneS3a(true)">Skip for now</button></div>
+    ${dots(3)}`);
+}
+async function doneS3a(skip){
+  A.one_year_vision=skip?null:(document.getElementById('vision').value.trim()||null);
+  if(A.one_year_vision){await save({one_year_vision:A.one_year_vision},3);await saveMemory([{content:`Their one-year vision: ${A.one_year_vision}`,type:'long_term'}]);}
+  s3b();
+}
+function s3b(){
+  A.focus=A.focus||[];
+  swap(`
+    <div class="section-label">Section 3 of 5 · What You're Reaching For</div>
+    <div class="riley-says">Where should we focus together?</div>
+    <div class="riley-sub">Choose up to five. We can always adjust.</div>
+    <div class="chips" id="focus-chips">${FOCUS.map(f=>`<button class="chip ${A.focus.includes(f)?'sel':''}" data-f="${esc(f)}" onclick="toggleFocus('${esc(f)}')">${esc(f)}</button>`).join('')}</div>
+    <div class="chip-count" id="focus-count">${A.focus.length}/5 selected</div>
+    <div class="actions"><button class="btn" onclick="doneS3b()">Continue</button></div>
+    ${dots(3)}`);
+}
+function toggleFocus(f){
+  A.focus=A.focus||[];
+  const idx=A.focus.indexOf(f);
+  if(idx>=0)A.focus.splice(idx,1);else{if(A.focus.length>=5)return;A.focus.push(f);}
+  document.querySelectorAll('#focus-chips .chip').forEach(c=>c.classList.toggle('sel',A.focus.includes(c.dataset.f)));
+  document.getElementById('focus-count').textContent=A.focus.length+'/5 selected';
+}
+async function doneS3b(){
+  await save({primary_goals:A.focus||[]},3);
+  if(A.focus&&A.focus.length)await saveMemory([{content:`Focus areas they chose: ${A.focus.join(', ')}`,type:'long_term'}]);
+  renderSection(4);
+}
+
+// Section 4 — Human OS (one question at a time)
+function s4(i){
+  if(i>=HUMAN_OS.length){return doneS4();}
+  const q=HUMAN_OS[i];
+  swap(`
+    <div class="section-label">Section 4 of 5 · The Heart of It</div>
+    <div class="riley-says">${esc(q.q)}</div>
+    <div class="riley-sub">${esc(q.sub)}</div>
+    <textarea id="os-ans" placeholder="Take your time." autofocus>${esc((A.human_os&&A.human_os[q.k])||'')}</textarea>
+    <div class="actions"><button class="btn" onclick="doneS4q(${i})">Continue</button><button class="skip" onclick="doneS4q(${i},true)">Skip</button></div>
+    <div class="progress-dots" style="margin-top:28px">${HUMAN_OS.map((_,j)=>`<div class="pdot ${j<=i?'on':''}"></div>`).join('')}</div>`);
+}
+function doneS4q(i,skip){
+  const q=HUMAN_OS[i];
+  A.human_os=A.human_os||{};
+  if(!skip){const v=document.getElementById('os-ans').value.trim();if(v)A.human_os[q.k]=v;}
+  s4(i+1);
+}
+async function doneS4(){
+  await save({human_os:A.human_os||{}},4);
+  // These become permanent memories — the foundation of every brief
+  const mem=[];const labels={energy:'What gives them energy',drains:'What drains them',proud:'What they are most proud of',change:'What they want to change',dream:'A dream they have never given up on'};
+  Object.keys(A.human_os||{}).forEach(k=>{if(A.human_os[k])mem.push({content:`${labels[k]}: ${A.human_os[k]}`,type:k==='change'||k==='dream'?'long_term':'long_term'});});
+  if(mem.length)await saveMemory(mem);
+  renderSection(5);
+}
+
+// Section 5 — Timing
+function s5(){
+  swap(`
+    <div class="section-label">Section 5 of 5 · Staying Close</div>
+    <div class="riley-says">When would you like me to check in?</div>
+    <div class="riley-sub">I'll show up when it helps — and stay quiet when it doesn't.</div>
+    <div class="opts" id="time-opts">${TIMING.map(([v,l])=>`<button class="opt" data-v="${v}" onclick="pickTime('${v}')">${esc(l)}</button>`).join('')}</div>
+    <div class="actions"><button class="btn" id="b5" onclick="doneS5()" disabled>Continue</button></div>
+    ${dots(5)}`);
+}
+function pickTime(v){A.notification_schedule=v;document.querySelectorAll('#time-opts .opt').forEach(o=>o.classList.toggle('sel',o.dataset.v===v));document.getElementById('b5').disabled=false;}
+async function doneS5(){
+  await save({notification_schedule:A.notification_schedule||'morning'},5);
+  buildHome();
+}
+
+// ── Building Your Home — the emotional peak ──────────────────────────────────
+async function buildHome(){
+  // Mark complete + write a last_engagement_note for the very first Return Moment
+  const note=A.human_os&&A.human_os.dream?`They shared a dream they have never given up on: ${A.human_os.dream}`:(A.one_year_vision?`Their one-year vision: ${A.one_year_vision}`:`They just began their journey.`);
+  await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_completed:true,onboarding_step:7,onboarding_completed_at:new Date().toISOString(),last_engagement_note:note},{onConflict:'id'});
+
+  const learned=['name','story','vision'].concat((A.focus||[]).slice(0,3).map(f=>f.toLowerCase()));
+  el().innerHTML=`<div class="build-stage">
+    <div class="cardinal">🐦</div>
+    <div class="feathers" id="feathers"></div>
+    <div class="build-msg" id="bmsg"></div>
+  </div>`;
+  // Drop feathers one by one — each represents something learned
+  const fc=document.getElementById('feathers');
+  let fi=0;const drop=setInterval(()=>{if(fi>=Math.min(6,learned.length+2)){clearInterval(drop);return;}const f=document.createElement('span');f.className='feather';f.textContent='🪶';f.style.animationDelay='0s';fc.appendChild(f);fi++;},420);
+
+  setTimeout(()=>{
+    document.getElementById('bmsg').innerHTML=`Perfect.<br>I think I know enough to get started.`;
+  },2600);
+  setTimeout(()=>{
+    document.getElementById('bmsg').innerHTML=`I promise I'll keep learning as we go.<br>You don't have to have everything figured out today.<br><span style="color:var(--gold)">Just keep showing up. I'll walk beside you.</span>`;
+  },5200);
+  setTimeout(()=>{
+    el().innerHTML=`<div class="build-stage"><div class="cardinal" style="animation:none;font-size:40px">🐦</div><div class="build-msg" style="opacity:1;animation:rise .8s">Welcome home, ${esc(FIRST)}.</div><div style="margin-top:32px"><button class="btn" onclick="enter()">Enter</button></div></div>`;
+  },8400);
+}
+function enter(){window.location.href='https://riley.eight14.us/dashboard';}
+
+boot();
+</script>
+</body>
+</html>

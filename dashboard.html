@@ -400,6 +400,11 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const {data:{session}}=await SB.auth.getSession();
     if(!session){window.location.href='https://riley.eight14.us';return;}
     USER=session.user;UID=USER.id;
+    // Onboarding guard — new users build their profile with Riley first.
+    try{
+      const {data:ob}=await SB.from('user_profiles').select('onboarding_completed').eq('id',UID).maybeSingle();
+      if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.eight14.us/onboarding';return;}
+    }catch(e){/* if the check fails, let them through rather than trap them */}
     const meta=USER.user_metadata||{};
     const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
     const firstName=fullName.split(' ')[0];
@@ -610,11 +615,12 @@ async function loadRileyBrain(){
     const brain=await res.json();
     window._brain=brain;
 
-    // If the brain has a sharper Riley message and the insight isn't already showing
-    // something specific, use the brain's message.
+    // The Return Moment leads when present (references something specific); else
+    // fall back to the brain's daily message. Only if nothing sharper is showing.
     const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
-    if(brain.riley_message&&insightEl&&insightTx&&insightEl.style.display==='none'){
-      insightTx.textContent=brain.riley_message;insightEl.style.display='flex';
+    const brainMsg=brain.return_moment||brain.riley_message;
+    if(brainMsg&&insightEl&&insightTx&&insightEl.style.display==='none'){
+      insightTx.textContent=brainMsg;insightEl.style.display='flex';
     }
 
     // Emotional date — gentle banner above everything

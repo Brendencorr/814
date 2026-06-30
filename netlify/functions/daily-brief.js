@@ -50,8 +50,8 @@ exports.handler = async (event) => {
     const briefDay   = new Date().getUTCDate();
 
     // Gather user context in parallel — all non-fatal
-    const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes, lifeEventsRes, importantRes, calRes] = await Promise.allSettled([
-      supabase.from("user_profiles").select("full_name").eq("id", user_id).single(),
+    const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes, lifeEventsRes, importantRes, calRes, memoryRes] = await Promise.allSettled([
+      supabase.from("user_profiles").select("full_name,preferred_name,why_here,one_year_vision,human_os,primary_goals,communication_style,preferred_encouragement").eq("id", user_id).single(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours,notes,water_oz").eq("user_id", user_id)
         .gte("checkin_date", sevenAgo).order("checkin_date", { ascending: false }).limit(7),
       supabase.from("sobriety_tracker").select("start_date").eq("user_id", user_id).eq("is_active", true).maybeSingle(),
@@ -62,6 +62,7 @@ exports.handler = async (event) => {
       supabase.from("life_events").select("event_type,notes,riley_strategy").eq("user_id", user_id).eq("active_support_needed", true).order("created_at", { ascending: false }).limit(2),
       supabase.from("important_dates").select("label,riley_strategy,is_sensitive").eq("user_id", user_id).eq("event_month", briefMonth).eq("event_day", briefDay),
       supabase.from("emotional_calendar").select("label,riley_strategy").eq("event_month", briefMonth).eq("event_day", briefDay),
+      supabase.from("riley_memory").select("memory_type,content").eq("user_id", user_id).eq("is_active", true).order("last_confirmed_at", { ascending: false }).limit(12),
     ]);
 
     const get   = r => r.status === "fulfilled" ? r.value?.data : null;
@@ -74,8 +75,9 @@ exports.handler = async (event) => {
     const programs  = get(programsRes) || [];
     const lifeEvents = get(lifeEventsRes) || [];
     const todaysDates = [...(get(importantRes) || []).filter(d => d.is_sensitive !== false), ...(get(calRes) || [])];
+    const memory = get(memoryRes) || [];
 
-    const firstName = profile?.full_name?.split(" ")[0] || "there";
+    const firstName = (profile?.preferred_name || profile?.full_name || "").split(" ")[0] || "there";
     const prevCheckin = checkins.find(c => c.checkin_date === yesterday) || checkins[0];
     const soberDays   = sober?.start_date
       ? Math.max(0, Math.floor((Date.now() - new Date(sober.start_date)) / 86400000))
@@ -100,8 +102,20 @@ exports.handler = async (event) => {
                     : checkins.filter(c => c.mood && c.mood >= 4).length >= 4 ? 'strong (many good days recently)'
                     : 'mixed';
 
+    // Onboarding context — who this person told us they are (Phase 1)
+    const hos = profile?.human_os || {};
     const ctx = [
       `Name: ${firstName}`,
+      profile?.why_here        ? `Why they came to 8:14: ${profile.why_here}` : "",
+      profile?.one_year_vision ? `Their one-year vision (use this — it's what they're reaching for): ${profile.one_year_vision}` : "",
+      (profile?.primary_goals && profile.primary_goals.length) ? `Focus areas they chose: ${profile.primary_goals.join(", ")}` : "",
+      hos.energy  ? `What gives them energy: ${hos.energy}` : "",
+      hos.drains  ? `What drains them: ${hos.drains}` : "",
+      hos.proud   ? `What they're most proud of: ${hos.proud}` : "",
+      hos.change  ? `What they want to change: ${hos.change}` : "",
+      hos.dream   ? `A dream they've never given up on: ${hos.dream}` : "",
+      profile?.preferred_encouragement ? `How they like to be encouraged: ${profile.preferred_encouragement} — match this tone` : "",
+      memory.length ? `What Riley remembers about them: ${memory.slice(0, 8).map(m => m.content).join(" | ")}` : "",
       soberDays !== null ? `Sobriety: ${soberDays} days sober` : "",
       prevCheckin?.mood        ? `Recent mood: ${moodLabels[prevCheckin.mood]}` : "",
       prevCheckin?.sleep_hours ? `Last recorded sleep: ${prevCheckin.sleep_hours}h` : "",

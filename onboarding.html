@@ -115,6 +115,12 @@ function renderWelcome(){
 
 function dots(n){return `<div class="progress-dots">${[1,2,3,4,5].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
 
+// Capture current input into A before navigating back, so nothing is lost.
+function capS1(){const n=document.getElementById('i-name');if(n&&n.value.trim())A.preferred_name=n.value.trim();const p=document.getElementById('i-pron');if(p)A.pronouns=p.value.trim()||A.pronouns;const b=document.getElementById('i-bday');if(b)A.birthday=b.value||A.birthday;const c=document.getElementById('i-city');if(c)A.city=c.value.trim()||A.city;}
+function capWhyText(){const t=document.getElementById('why-text');if(t)A.why_here_detail=t.value.trim()||A.why_here_detail;}
+function capVision(){const v=document.getElementById('vision');if(v)A.one_year_vision=v.value.trim()||A.one_year_vision;}
+function capOS(i){const a=document.getElementById('os-ans');if(a){A.human_os=A.human_os||{};const val=a.value.trim();if(val)A.human_os[HUMAN_OS[i].k]=val;}}
+
 // ── Sections ─────────────────────────────────────────────────────────────────
 function renderSection(n){
   if(n===1)return s1();if(n===2)return s2();if(n===3)return s3a();
@@ -129,12 +135,12 @@ function s1(){
     <div class="riley-sub">Just your first name is perfect.</div>
     <input type="text" id="i-name" placeholder="Your name" value="${esc(A.preferred_name||FIRST||'')}" autofocus>
     <div class="row">
-      <div><label class="fld">Pronouns · optional</label><input type="text" id="i-pron" placeholder="she / he / they"></div>
-      <div><label class="fld">Birthday · optional</label><input type="date" id="i-bday"></div>
+      <div><label class="fld">Pronouns · optional</label><input type="text" id="i-pron" placeholder="she / he / they" value="${esc(A.pronouns||'')}"></div>
+      <div><label class="fld">Birthday · optional</label><input type="date" id="i-bday" value="${A.birthday||''}"></div>
     </div>
     <label class="fld">Where are you? · optional</label>
-    <input type="text" id="i-city" placeholder="City, country">
-    <div class="actions"><button class="btn" id="b1" onclick="doneS1()">Continue</button></div>
+    <input type="text" id="i-city" placeholder="City, country" value="${esc(A.city||'')}">
+    <div class="actions"><button class="skip" onclick="capS1();renderWelcome()" style="margin-right:auto">← Back</button><button class="btn" id="b1" onclick="doneS1()">Continue</button></div>
     ${dots(1)}`);
 }
 async function doneS1(){
@@ -148,26 +154,31 @@ async function doneS1(){
   swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">I'm glad we're doing this together.</div><div class="actions"><button class="btn" onclick="renderSection(2)">Continue</button></div>`);
 }
 
-// Section 2 — Story
+// Section 2 — Story (multi-select: people often carry more than one thing)
 function s2(){
+  A.why_set=A.why_set||[];
+  const elseOpen=A.why_set.includes(WHY.length-1);
   swap(`
     <div class="section-label">Section 2 of 5 · Your Story</div>
-    <div class="riley-says">Which of these feels closest to why you're here?</div>
-    <div class="riley-sub">There's no wrong answer. You can change it later.</div>
-    <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
-    <div id="why-else" style="display:none;margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want."></textarea></div>
-    <div class="actions"><button class="btn" id="b2" onclick="doneS2()" disabled>Continue</button></div>
+    <div class="riley-says">What brings you here?</div>
+    <div class="riley-sub">Choose anything that fits — you can pick more than one. There's no wrong answer.</div>
+    <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt ${A.why_set.includes(i)?'sel':''}" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
+    <div id="why-else" style="display:${elseOpen?'block':'none'};margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want.">${esc(A.why_here_detail||'')}</textarea></div>
+    <div class="actions"><button class="skip" onclick="capWhyText();s1()" style="margin-right:auto">← Back</button><button class="btn" id="b2" onclick="doneS2()" ${A.why_set.length?'':'disabled'}>Continue</button></div>
     ${dots(2)}`);
 }
 function pickWhy(i){
-  A.why_i=i;
-  document.querySelectorAll('#why-opts .opt').forEach(o=>o.classList.toggle('sel',+o.dataset.i===i));
-  document.getElementById('why-else').style.display=(i===WHY.length-1)?'block':'none';
-  document.getElementById('b2').disabled=false;
+  A.why_set=A.why_set||[];
+  const idx=A.why_set.indexOf(i);
+  if(idx>=0)A.why_set.splice(idx,1);else A.why_set.push(i);
+  document.querySelectorAll('#why-opts .opt').forEach(o=>o.classList.toggle('sel',A.why_set.includes(+o.dataset.i)));
+  document.getElementById('why-else').style.display=A.why_set.includes(WHY.length-1)?'block':'none';
+  document.getElementById('b2').disabled=A.why_set.length===0;
 }
 async function doneS2(){
-  if(A.why_i==null)return;
-  A.why_here=WHY[A.why_i];A.why_here_detail=document.getElementById('why-text')?.value?.trim()||null;
+  if(!A.why_set||!A.why_set.length)return;
+  A.why_here=A.why_set.map(i=>WHY[i]).join('; ');
+  A.why_here_detail=document.getElementById('why-text')?.value?.trim()||null;
   await save({why_here:A.why_here,why_here_detail:A.why_here_detail},2);
   await saveMemory([{content:`Why they came to 8:14: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
   renderSection(3);
@@ -180,7 +191,7 @@ function s3a(){
     <div class="riley-says">What would success look like, one year from today?</div>
     <div class="riley-sub">Picture it honestly. This becomes one of the most important things I know about you.</div>
     <textarea id="vision" placeholder="A year from now, I want to..." autofocus>${esc(A.one_year_vision||'')}</textarea>
-    <div class="actions"><button class="btn" onclick="doneS3a()">Continue</button><button class="skip" onclick="doneS3a(true)">Skip for now</button></div>
+    <div class="actions"><button class="skip" onclick="capVision();s2()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS3a()">Continue</button><button class="skip" onclick="doneS3a(true)">Skip for now</button></div>
     ${dots(3)}`);
 }
 async function doneS3a(skip){
@@ -196,7 +207,7 @@ function s3b(){
     <div class="riley-sub">Choose up to five. We can always adjust.</div>
     <div class="chips" id="focus-chips">${FOCUS.map(f=>`<button class="chip ${A.focus.includes(f)?'sel':''}" data-f="${esc(f)}" onclick="toggleFocus('${esc(f)}')">${esc(f)}</button>`).join('')}</div>
     <div class="chip-count" id="focus-count">${A.focus.length}/5 selected</div>
-    <div class="actions"><button class="btn" onclick="doneS3b()">Continue</button></div>
+    <div class="actions"><button class="skip" onclick="s3a()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS3b()">Continue</button></div>
     ${dots(3)}`);
 }
 function toggleFocus(f){
@@ -221,7 +232,7 @@ function s4(i){
     <div class="riley-says">${esc(q.q)}</div>
     <div class="riley-sub">${esc(q.sub)}</div>
     <textarea id="os-ans" placeholder="Take your time." autofocus>${esc((A.human_os&&A.human_os[q.k])||'')}</textarea>
-    <div class="actions"><button class="btn" onclick="doneS4q(${i})">Continue</button><button class="skip" onclick="doneS4q(${i},true)">Skip</button></div>
+    <div class="actions"><button class="skip" onclick="capOS(${i});${i>0?'s4('+(i-1)+')':'s3b()'}" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS4q(${i})">Continue</button><button class="skip" onclick="doneS4q(${i},true)">Skip</button></div>
     <div class="progress-dots" style="margin-top:28px">${HUMAN_OS.map((_,j)=>`<div class="pdot ${j<=i?'on':''}"></div>`).join('')}</div>`);
 }
 function doneS4q(i,skip){
@@ -245,8 +256,8 @@ function s5(){
     <div class="section-label">Section 5 of 5 · Staying Close</div>
     <div class="riley-says">When would you like me to check in?</div>
     <div class="riley-sub">I'll show up when it helps — and stay quiet when it doesn't.</div>
-    <div class="opts" id="time-opts">${TIMING.map(([v,l])=>`<button class="opt" data-v="${v}" onclick="pickTime('${v}')">${esc(l)}</button>`).join('')}</div>
-    <div class="actions"><button class="btn" id="b5" onclick="doneS5()" disabled>Continue</button></div>
+    <div class="opts" id="time-opts">${TIMING.map(([v,l])=>`<button class="opt ${A.notification_schedule===v?'sel':''}" data-v="${v}" onclick="pickTime('${v}')">${esc(l)}</button>`).join('')}</div>
+    <div class="actions"><button class="skip" onclick="s4(${HUMAN_OS.length-1})" style="margin-right:auto">← Back</button><button class="btn" id="b5" onclick="doneS5()" ${A.notification_schedule?'':'disabled'}>Continue</button></div>
     ${dots(5)}`);
 }
 function pickTime(v){A.notification_schedule=v;document.querySelectorAll('#time-opts .opt').forEach(o=>o.classList.toggle('sel',o.dataset.v===v));document.getElementById('b5').disabled=false;}

@@ -676,8 +676,12 @@ const PHASE2_BANK=[
   {key:"pref_season",bucket:"preferences",day:4,store:"detail",prompt:"Favorite season? I ask because the whole experience shifts with it.",type:"choice",opts:["Spring","Summer","Fall","Winter"]},
 ];
 
-async function loadPhase2Discovery(){
+async function loadPhase2Discovery(force){
   try{
+    // Gentle gate: surface at most once per day, so it never nags. "force" bypasses (for chaining).
+    const gateKey='p2_last_'+UID;
+    if(!force&&localStorage.getItem(gateKey)===TODAY)return;
+
     const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_completed_at,phase2_progress').eq('id',UID).maybeSingle();
     if(!p||!p.onboarding_completed)return; // only after Phase 1
     const prog=p.phase2_progress||{};
@@ -687,29 +691,41 @@ async function loadPhase2Discovery(){
     // Wellness baseline (day 4+) — the culmination. Show once if not done.
     if(daysSince>=4&&!prog.wellness_baseline){
       const {data:wb}=await SB.from('wellness_baseline').select('id').eq('user_id',UID).maybeSingle();
-      if(!wb){renderWellnessBaseline();return;}
+      if(!wb){localStorage.setItem(gateKey,TODAY);renderWellnessBaseline();return;}
     }
 
     // Otherwise surface the next unanswered, day-eligible question
     const next=PHASE2_BANK.find(q=>daysSince>=q.day&&!prog[q.key]);
     if(!next){return;} // all caught up
+    localStorage.setItem(gateKey,TODAY);
     renderPhase2(next);
   }catch(e){console.warn('phase2 (non-fatal):',e.message);}
 }
 
-function renderPhase2(q){
-  const slot=document.getElementById('phase2-slot');if(!slot)return;
-  let input='';
-  if(q.type==='text'){input=`<input type="text" id="p2-in" placeholder="${esc(q.ph||'')}" style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:11px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:12px">`;}
-  else if(q.type==='choice'){input=`<div id="p2-opts" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px">${q.opts.map(o=>`<button onclick="p2pick(this,'${esc(o)}')" style="padding:8px 14px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:13px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="if(!this.dataset.sel)this.style.borderColor='rgba(255,255,255,0.1)'">${esc(o)}</button>`).join('')}</div>`;}
-  slot.innerHTML=`<div style="background:linear-gradient(135deg,rgba(74,122,176,0.07),rgba(16,14,12,0.4));border:1px solid rgba(74,122,176,0.2);border-radius:8px;padding:18px 20px;margin-bottom:18px">
-    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px"><span style="font-size:18px;flex-shrink:0">💬</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley wants to know</div><div style="font-size:14px;color:var(--parchment);line-height:1.6">${esc(q.prompt)}</div></div></div>
-    ${input}
-    <div style="display:flex;align-items:center;gap:12px"><button onclick="p2save('${q.key}','${q.store}','${q.col||''}','${q.bucket}')" style="background:var(--gold);color:var(--ink);border:none;padding:8px 18px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer">Share</button><button onclick="p2skip('${q.key}')" style="background:none;border:none;color:var(--smoke);font-size:12px;cursor:pointer">Maybe later</button></div>
-  </div>`;
-  window._p2val=null;
+// ── Phase 2 modal — a gentle popup, not an inline card ──
+function p2Modal(inner){
+  let ov=document.getElementById('p2-modal');
+  if(!ov){ov=document.createElement('div');ov.id='p2-modal';ov.style.cssText='position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.78);backdrop-filter:blur(10px);padding:24px;animation:p2fade .4s ease';document.body.appendChild(ov);
+    const st=document.createElement('style');st.textContent='@keyframes p2fade{from{opacity:0}to{opacity:1}}@keyframes p2rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}';document.head.appendChild(st);
+    ov.addEventListener('click',e=>{if(e.target===ov)closeP2();});
+  }
+  ov.innerHTML='<div style="max-width:460px;width:100%;background:linear-gradient(160deg,#16130f,#0f0d0b);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:30px 30px 26px;box-shadow:0 24px 80px rgba(0,0,0,0.6);animation:p2rise .5s cubic-bezier(.2,.7,.2,1)">'+inner+'</div>';
+  ov.style.display='flex';
 }
-function p2pick(btn,val){window._p2val=val;document.querySelectorAll('#p2-opts button').forEach(b=>{b.dataset.sel='';b.style.borderColor='rgba(255,255,255,0.1)';b.style.background='var(--ink3)';});btn.dataset.sel='1';btn.style.borderColor='var(--gold)';btn.style.background='var(--gold-dim)';}
+function closeP2(){const ov=document.getElementById('p2-modal');if(ov)ov.style.display='none';}
+
+function renderPhase2(q){
+  let input='';
+  if(q.type==='text'){input=`<input type="text" id="p2-in" placeholder="${esc(q.ph||'')}" autofocus style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">`;}
+  else if(q.type==='choice'){input=`<div id="p2-opts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">${q.opts.map(o=>`<button onclick="p2pick(this,'${esc(o)}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="if(!this.dataset.sel)this.style.borderColor='rgba(255,255,255,0.12)'">${esc(o)}</button>`).join('')}</div>`;}
+  p2Modal(`
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:30px;flex-shrink:0">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">${esc(q.prompt)}</div></div></div>
+    ${input}
+    <div style="display:flex;align-items:center;gap:14px;margin-top:4px"><button onclick="p2save('${q.key}','${q.store}','${q.col||''}','${q.bucket}')" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 26px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Share</button><button onclick="p2skip('${q.key}')" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Maybe later</button></div>`);
+  window._p2val=null;
+  setTimeout(()=>{const i=document.getElementById('p2-in');if(i)i.focus();},120);
+}
+function p2pick(btn,val){window._p2val=val;document.querySelectorAll('#p2-opts button').forEach(b=>{b.dataset.sel='';b.style.borderColor='rgba(255,255,255,0.12)';b.style.background='var(--ink3)';});btn.dataset.sel='1';btn.style.borderColor='var(--gold)';btn.style.background='var(--gold-dim)';}
 async function p2save(key,store,col,bucket){
   const inp=document.getElementById('p2-in');
   const val=inp?inp.value.trim():window._p2val;
@@ -717,14 +733,13 @@ async function p2save(key,store,col,bucket){
   try{
     if(store==='detail'){await SB.from('profile_details').upsert({user_id:UID,category:bucket,detail_key:key,detail_value:val,updated_at:new Date().toISOString()},{onConflict:'user_id,detail_key'});}
     else if(store==='profile'&&col){const patch={};patch[col]=val;if(col==='preferred_encouragement')patch.communication_style=val;await SB.from('user_profiles').update(patch).eq('id',UID);}
-    // Mark answered in phase2_progress + write a memory so Riley uses it
     await markP2(key);
     await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:phase2MemoryLine(key,val),source:'phase2',confidence:0.95,is_active:true});
-    const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='<div style="background:rgba(74,173,114,0.08);border:1px solid rgba(74,173,114,0.2);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:13px;color:var(--green2)">✓ Thank you — I have got that. It helps more than you know.</div>';
-    setTimeout(loadPhase2Discovery,2200); // surface the next one shortly
-  }catch(e){console.warn('p2save',e.message);}
+    p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you. I have got that.<br><span style="color:var(--smoke);font-size:15px">It helps more than you know.</span></div></div>');
+    setTimeout(closeP2,1800);
+  }catch(e){console.warn('p2save',e.message);closeP2();}
 }
-async function p2skip(key){await markP2(key,'skipped');const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='';setTimeout(loadPhase2Discovery,400);}
+async function p2skip(key){await markP2(key,'skipped');closeP2();}
 async function markP2(key,status){
   try{const {data:p}=await SB.from('user_profiles').select('phase2_progress').eq('id',UID).maybeSingle();const prog=(p&&p.phase2_progress)||{};prog[key]=status||'done';await SB.from('user_profiles').update({phase2_progress:prog}).eq('id',UID);}catch(e){}
 }
@@ -733,25 +748,24 @@ function phase2MemoryLine(key,val){
   return m[key]||(key+': '+val);
 }
 
-// Wellness baseline — the Day 5-7 culmination, 10 quick ratings
+// Wellness baseline — the Day 5-7 culmination, 10 quick ratings (modal)
 function renderWellnessBaseline(){
-  const slot=document.getElementById('phase2-slot');if(!slot)return;
   const dims=[['sleep','Sleep'],['stress','Stress'],['energy','Energy'],['motivation','Motivation'],['confidence','Confidence'],['purpose','Purpose'],['relationships','Relationships'],['nutrition','Nutrition'],['fitness','Fitness'],['overall_happiness','Overall happiness']];
-  slot.innerHTML=`<div style="background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(16,14,12,0.4));border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:20px 22px;margin-bottom:18px">
-    <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:16px"><span style="font-size:18px">📊</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">A quick baseline</div><div style="font-size:14px;color:var(--parchment);line-height:1.6">I want to get a sense of where you're starting — so we can look back later and see how far you've come. Rate each from 1 to 10. No wrong answers.</div></div></div>
-    <div id="wb-grid" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">${dims.map(([k,l])=>`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--parchment);width:110px;flex-shrink:0">${l}</span><div style="display:flex;gap:3px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="wbPick('${k}',${n},this)" data-k="${k}" style="width:24px;height:24px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--smoke);font-size:10px;cursor:pointer;transition:all .12s">${n}</button>`).join('')}</div></div>`).join('')}</div>
-    <div style="display:flex;align-items:center;gap:12px"><button onclick="wbSave()" style="background:var(--gold);color:var(--ink);border:none;padding:9px 20px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer">Save my baseline</button><button onclick="p2skipBaseline()" style="background:none;border:none;color:var(--smoke);font-size:12px;cursor:pointer">Not now</button></div>
-  </div>`;
+  p2Modal(`
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:30px;flex-shrink:0">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A quick baseline</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Where are you starting from? Rate each from 1 to 10 — so one day we can look back and see how far you've come.</div></div></div>
+    <div id="wb-grid" style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;max-height:46vh;overflow-y:auto">${dims.map(([k,l])=>`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--parchment);width:100px;flex-shrink:0">${l}</span><div style="display:flex;gap:3px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="wbPick('${k}',${n},this)" data-k="${k}" style="width:25px;height:25px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--smoke);font-size:10px;cursor:pointer;transition:all .12s">${n}</button>`).join('')}</div></div>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:14px"><button onclick="wbSave()" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Save my baseline</button><button onclick="p2skipBaseline()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Not now</button></div>`);
   window._wb={};
 }
 function wbPick(k,n,btn){window._wb=window._wb||{};window._wb[k]=n;document.querySelectorAll(`#wb-grid button[data-k="${k}"]`).forEach(b=>{const v=+b.textContent;b.style.background=v<=n?'var(--gold)':'transparent';b.style.color=v<=n?'var(--ink)':'var(--smoke)';b.style.borderColor=v<=n?'var(--gold)':'rgba(255,255,255,0.12)';});}
 async function wbSave(){
-  const wb=window._wb||{};if(Object.keys(wb).length<3){return;} // need a few at least
+  const wb=window._wb||{};if(Object.keys(wb).length<3){return;}
   try{await SB.from('wellness_baseline').upsert({user_id:UID,...wb},{onConflict:'user_id'});await markP2('wellness_baseline');
-    const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='<div style="background:rgba(74,173,114,0.08);border:1px solid rgba(74,173,114,0.2);border-radius:8px;padding:14px 18px;margin-bottom:18px;font-size:13px;color:var(--green2)">✓ Your baseline is saved. This is day one of the story. We will look back on it.</div>';
-  }catch(e){console.warn('wbSave',e.message);}
+    p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🪶</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Your baseline is saved.<br><span style="color:var(--smoke);font-size:15px">This is day one of the story. We will look back on it.</span></div></div>');
+    setTimeout(closeP2,2200);
+  }catch(e){console.warn('wbSave',e.message);closeP2();}
 }
-async function p2skipBaseline(){await markP2('wellness_baseline','skipped');const slot=document.getElementById('phase2-slot');if(slot)slot.innerHTML='';}
+async function p2skipBaseline(){await markP2('wellness_baseline','skipped');closeP2();}
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}

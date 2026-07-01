@@ -78,7 +78,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
     <div class="intro">This is who you are — the whole of it, not just one chapter.</div>
     <div class="intro-sub">Riley builds this quietly as you talk. Add anything you want her to hold. She'll never make you repeat it — and she'll bring it back exactly when it matters.</div>
     <div id="wheel-slot"></div>
+    <div id="insights-slot"></div>
+    <div id="manual-slot"></div>
     <div id="map-slot"><div class="empty">Loading your map…</div></div>
+    <div id="timeline-slot"></div>
   </div>
 </main>
 </div>
@@ -113,8 +116,67 @@ async function boot(){
   const av=document.getElementById('sb-av');if(av){if(meta.avatar_url||meta.picture)av.innerHTML='<img src="'+(meta.avatar_url||meta.picture)+'">';else av.textContent=initials;}
   document.getElementById('sb-name').textContent=fullName;
   document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
-  loadLifeScore();
+  loadLifeScore();loadInsights();loadManual();
   await loadMap();
+  loadTimeline();
+}
+// ── Habit Intelligence — patterns from the member's own data ────────────────
+async function loadInsights(){
+  const slot=document.getElementById('insights-slot');if(!slot)return;
+  let ci=[];
+  try{const {data}=await SB.from('daily_checkins').select('mood,sleep_hours,checkin_date').eq('user_id',UID).order('checkin_date',{ascending:false}).limit(90);ci=data||[];}catch(e){}
+  const both=ci.filter(c=>c.mood!=null&&c.sleep_hours!=null);
+  const ins=[];
+  if(both.length>=6){
+    const good=both.filter(c=>c.sleep_hours>=7.5),poor=both.filter(c=>c.sleep_hours<6);
+    if(good.length>=3&&poor.length>=3){const ag=good.reduce((a,c)=>a+c.mood,0)/good.length,ap=poor.reduce((a,c)=>a+c.mood,0)/poor.length;if(ag-ap>=0.4)ins.push("When you sleep <b>7.5+ hours</b>, your mood runs noticeably higher than on short nights. Sleep is one of your biggest levers.");}
+  }
+  const recent=ci.slice(0,7).filter(c=>c.mood!=null).map(c=>c.mood),prior=ci.slice(7,14).filter(c=>c.mood!=null).map(c=>c.mood);
+  if(recent.length>=3&&prior.length>=3){const ar=recent.reduce((a,b)=>a+b,0)/recent.length,ap=prior.reduce((a,b)=>a+b,0)/prior.length;if(ar-ap>=0.5)ins.push("Your mood has been <b>trending up</b> this past week versus the one before. Whatever you're doing — keep it.");else if(ap-ar>=0.5)ins.push("This week has been a little heavier than last. That happens — be gentle, and lean on what steadies you.");}
+  if(!ins.length){slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🔎</span><span class="ftitle">What Riley's Noticing</span></div><div class="fsub">Keep checking in and logging — Riley starts spotting your real patterns here (like how sleep moves your mood).</div></div>`;return;}
+  slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🔎</span><span class="ftitle">What Riley's Noticing</span></div><div class="fsub">Patterns from your own data — not advice, just what's true for you.</div>${ins.map(i=>`<div style="font-size:13.5px;color:var(--parchment);line-height:1.6;padding:8px 0;border-top:1px solid rgba(255,255,255,0.05)">${i}</div>`).join('')}</div>`;
+}
+// ── Personal Operating Manual ("My User Manual") ────────────────────────────
+async function loadManual(){
+  const slot=document.getElementById('manual-slot');if(!slot)return;
+  let doc=null;
+  try{const {data}=await SB.from('member_docs').select('body').eq('user_id',UID).eq('doc_type','manual').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();doc=data&&data.body;}catch(e){}
+  if(doc&&doc.sections)renderManual(slot,doc);
+  else slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📘</span><span class="ftitle">My User Manual</span></div><div class="fsub">Riley can write the manual to YOU that you've never written — how you work, what overwhelms you, how to be there for you. Built from everything she knows.</div><button class="btn btn-gold" onclick="generateManual()">Write my manual →</button></div>`;
+}
+function renderManual(slot,doc){
+  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:12px"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">${esc(s.title)}</div>${(s.items||[]).map(it=>`<div style="font-size:13px;color:var(--parchment);line-height:1.55;padding:1px 0">· ${esc(it)}</div>`).join('')}</div>`).join('');
+  slot.innerHTML=`<div class="fcard"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📘</span><span class="ftitle">My User Manual</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateManual()">↻ Refresh</button></div>${doc.summary?`<div style="font-size:13.5px;color:var(--parchment);line-height:1.65;font-style:italic;margin-top:4px">${esc(doc.summary)}</div>`:''}${secs}</div>`;
+}
+async function generateManual(){
+  const slot=document.getElementById('manual-slot');
+  slot.innerHTML=`<div class="fcard"><div class="fsub" style="text-align:center;padding:22px 0">📘 Riley is writing your manual — about 30 seconds…</div></div>`;
+  let prev=null;try{const {data}=await SB.from('member_docs').select('created_at').eq('user_id',UID).eq('doc_type','manual').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();prev=data&&data.created_at;}catch(e){}
+  try{const tok=(await SB.auth.getSession()).data.session?.access_token;fetch('/.netlify/functions/member-doc-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,doc_type:'manual'})}).catch(function(){});}catch(e){}
+  let tries=0;const poll=async()=>{tries++;let d=null;try{const {data}=await SB.from('member_docs').select('body,created_at').eq('user_id',UID).eq('doc_type','manual').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();d=data;}catch(e){}
+    if(d&&d.body&&d.body.sections&&d.created_at!==prev)return renderManual(slot,d.body);
+    if(tries>=22)return loadManual();
+    setTimeout(poll,4000);};
+  setTimeout(poll,6000);
+}
+// ── Life Timeline — the shape of the story so far ───────────────────────────
+async function loadTimeline(){
+  const slot=document.getElementById('timeline-slot');if(!slot)return;
+  let events=[],dates=[],sober=null;
+  try{const R=await Promise.allSettled([
+    SB.from('life_events').select('event_type,notes,created_at').eq('user_id',UID).order('created_at',{ascending:true}),
+    SB.from('important_dates').select('label,event_year,event_month,event_day').eq('user_id',UID),
+    SB.from('sobriety_tracker').select('start_date').eq('user_id',UID).eq('is_active',true).order('start_date',{ascending:true}).limit(1)
+  ]);const v=r=>r.status==='fulfilled'?r.value.data:null;events=v(R[0])||[];dates=v(R[1])||[];const s=(v(R[2])||[])[0];sober=s?s.start_date:null;}catch(e){}
+  const items=[];
+  if(USER&&USER.created_at)items.push({d:new Date(USER.created_at),t:'You started with Riley',e:'🐦'});
+  if(sober)items.push({d:new Date(sober),t:'Your sobriety began',e:'🌱'});
+  events.forEach(ev=>items.push({d:new Date(ev.created_at),t:(ev.notes||ev.event_type||'A life moment'),e:'•'}));
+  dates.forEach(dt=>{if(dt.event_year&&dt.event_month&&dt.event_day)items.push({d:new Date(dt.event_year,dt.event_month-1,dt.event_day),t:dt.label,e:'📅'});});
+  items.sort((a,b)=>a.d-b.d);
+  if(!items.length){slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🧭</span><span class="ftitle">Your Timeline</span></div><div class="fsub">As you share the moments that shaped you — losses, turning points, victories — Riley maps them here, so she understands your story, not just today.</div></div>`;return;}
+  const rows=items.map(it=>`<div style="display:flex;gap:12px;padding:8px 0"><div style="font-size:15px;width:22px;text-align:center;flex-shrink:0">${it.e}</div><div><div style="font-size:13.5px;color:var(--parchment);line-height:1.5">${esc(it.t)}</div><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">${isNaN(it.d)?'':it.d.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div></div></div>`).join('');
+  slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🧭</span><span class="ftitle">Your Timeline</span></div><div class="fsub">Context, not just facts — the shape of your story so far.</div><div style="border-left:1px solid rgba(201,168,76,0.2);padding-left:14px;margin-left:6px;margin-top:6px">${rows}</div></div>`;
 }
 // ── Life Score wheel — a mirror of life balance across the dimensions ────────
 async function loadLifeScore(){

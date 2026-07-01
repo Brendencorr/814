@@ -1,0 +1,72 @@
+<!--
+  ============================================================
+  RILEY-AUTH.HTML — POST-LOGIN REDIRECT PATCH
+  ============================================================
+  Find your existing auth state change handler in riley-auth.html.
+  It likely looks something like this:
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // currently shows the chat UI or does something else
+      }
+    });
+
+  Replace that block with the version below.
+  The key change: after SIGNED_IN, redirect to /dashboard.html
+  instead of showing the chat inline.
+  ============================================================
+-->
+
+<script>
+// ── Replace your existing onAuthStateChange with this ────────
+
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    // Redirect authenticated users to the dashboard
+    window.location.href = '/dashboard.html';
+    return;
+  }
+
+  if (event === 'SIGNED_OUT' || !session) {
+    // Show the login / anonymous chat UI
+    showLoginUI();
+  }
+});
+
+// ── Also handle page load (user returning with active session) ──
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    // Already logged in — send straight to dashboard
+    window.location.href = '/dashboard.html';
+  } else {
+    // Not logged in — show Riley chat (anonymous mode)
+    showLoginUI();
+  }
+})();
+
+function showLoginUI() {
+  // Your existing code to show the chat interface goes here.
+  // This function just prevents redirect when the user is logged out.
+  // If you already have this logic outside the auth handler, 
+  // wrap it in this function or call it from here.
+}
+</script>
+
+<!--
+  ============================================================
+  ALSO: Update your Google OAuth authorized redirect URIs
+  ============================================================
+  Now that we have multiple dashboard pages, confirm these are
+  all listed in Google Cloud Console → OAuth → Authorized redirect URIs:
+
+    https://tglljvjixlolaguycvbb.supabase.co/auth/v1/callback
+
+  That single Supabase callback URL handles all OAuth flows.
+  Supabase then sends the user back to whatever page triggered
+  the login. Since riley-auth.html is the login page, that's
+  the only one that needs to be the redirect target.
+
+  No additional Google OAuth changes needed for the new pages.
+  ============================================================
+-->

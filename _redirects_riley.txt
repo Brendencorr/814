@@ -1,0 +1,20 @@
+# ============================================================
+# _redirects — riley.eight14.us
+# Add this file to the root of your Netlify repo
+# (same level as riley-auth.html, dashboard.html, etc.)
+# ============================================================
+
+# Dashboard pages — clean URLs
+/dashboard      /dashboard.html       200
+/dashboard/     /dashboard.html       200
+/brief          /brief.html           200
+/brief/         /brief.html           200
+/conversations  /conversations.html   200
+/conversations/ /conversations.html   200
+/tracker        /tracker.html         200
+/tracker/       /tracker.html         200
+/programs       /programs.html        200
+/programs/      /programs.html        200
+
+# Root — login / Riley chat
+/               /riley-auth.html      200

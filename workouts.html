@@ -78,11 +78,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
 @media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
 @media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}}
+
+.sb-tier{border-top:1px solid rgba(255,255,255,0.04)}
+.sb-tier-head{display:flex;align-items:center;gap:6px;padding:10px 20px;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.16em;transition:color .15s;user-select:none}
+.sb-tier-head:hover{color:var(--smoke)}
+.sb-tier-head .sb-chev{margin-left:auto;font-size:8px;transition:transform .2s}
+.sb-tier-head.open .sb-chev{transform:rotate(90deg)}
+.sb-tier-head.locked{color:var(--smoke2)}
+.sb-tier-lock{font-size:9px;opacity:0.7}
+.sb-tier-items{display:none;flex-direction:column;overflow:hidden}
+.sb-tier-items.open{display:flex}
+.sb-tier-items .sni.locked{opacity:0.45;cursor:pointer}
+.sb-badge-soon{margin-left:auto;font-size:7px;font-family:'DM Mono',monospace;color:var(--gold);background:var(--gold-dim);padding:2px 5px;border-radius:8px;letter-spacing:0.06em;text-transform:uppercase}
 </style>
 </head>
 <body>
 <div class="layout">
-<aside class="sidebar"><div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div><div class="snl">TODAY</div><a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a><a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a><a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a><div class="snl">HISTORY</div><a href="/conversations" class="sni"><span class="sni-icon">💭</span>Conversations</a><a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a><a href="/workouts" class="sni active"><span class="sni-icon">🤍</span>Movement</a><a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a><div class="snl">JOURNEYS</div><a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a><a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a><div class="snl">LIFE DATA</div><a href="/sleep" class="sni"><span class="sni-icon">🌙</span>Rest</a><a href="/finance" class="sni"><span class="sni-icon">🎯</span>Goals</a><a href="/calendar" class="sni"><span class="sni-icon">📅</span>Calendar</a><div class="snl">COMMUNITY</div><a href="/community" class="sni"><span class="sni-icon">🤝</span>Community</a><div class="sb-spacer"></div><div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div></aside>
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div>
+  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a>
+  <div id="sb-tiers"></div>
+  <div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan" id="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+</aside>
 <main class="main">
 <div class="topbar">
   <div><div class="tb-title" id="tb-greeting">Workouts</div><div class="tb-sub" id="tb-date"></div></div>
@@ -277,15 +296,29 @@ async function logWorkout(){
 
 
 <script>
-/* ── ENTITLEMENT GATING (shared) ─────────────────────────────────────────── */
+/* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */
 (function(){
-  // Map sidebar hrefs → required feature key. Items not listed are always shown.
-  const NAV_FEAT = {
-    '/tracker':'daily_checkin', '/progress':'daily_checkin',
-    '/workouts':'tracker_fitness', '/nutrition':'tracker_nutrition',
-    '/sleep':'tracker_sleep', '/finance':'tracker_finance',
-    '/calendar':'tracker_calendar', '/roadmap':'roadmap', '/brief':'adaptive_programming'
+  const TIER_NAV = {
+    guide:    {label:'Guide',     items:[
+      {href:'/journey', icon:'🎯', label:'Your Journey', enrollOnly:true},
+      {href:'/programs', icon:'🗂️', label:'Journeys'},
+      {href:'/conversations', icon:'💭', label:'Conversations'}
+    ]},
+    companion:{label:'Companion', items:[
+      {href:'/tracker', icon:'📖', label:'Reflection', feat:'daily_checkin'},
+      {href:'/workouts', icon:'🤍', label:'Movement', feat:'tracker_fitness'},
+      {href:'/nutrition', icon:'🍃', label:'Nourishment', feat:'tracker_nutrition'},
+      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'},
+      {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'},
+      {href:'/progress', icon:'🌲', label:'My Story', feat:'daily_checkin'},
+      {href:'/community', icon:'🤝', label:'Community', comingSoon:true}
+    ]},
+    coach:    {label:'Coach',     items:[
+      {href:'/finance', icon:'💰', label:'Goals & Finance', feat:'tracker_finance'},
+      {href:'/lifemap', icon:'🗺️', label:'Life Map', feat:'knowledge_graph'}
+    ]}
   };
+  const TIER_ORDER = ['guide','companion','coach'];
   const PAGE_FEATURE = 'tracker_fitness';
 
   async function loadEnt(uid){
@@ -294,43 +327,62 @@ async function logWorkout(){
     try{
       const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
       const d=await r.json(); sessionStorage.setItem(k,JSON.stringify(d)); return d;
-    }catch(e){ return {products:[],tier:'free',features:{}}; }
+    }catch(e){ return {products:[],tier:'guide',features:{}}; }
   }
-  const can=(e,k)=>e&&e.features&&e.features[k]&&e.features[k].access===true;
+  const can=(e,k)=>!k||(e&&e.features&&e.features[k]&&e.features[k].access===true);
   const mode=(e,k)=>(e&&e.features&&e.features[k]&&e.features[k].gate_mode)||'hidden';
+  const tierIdx=t=>{const i=TIER_ORDER.indexOf(t);return i<0?0:i;};
 
-  function gateSidebar(ent){
-    document.querySelectorAll('aside a[href], nav.nav a[href]').forEach(a=>{
-      const href=a.getAttribute('href');
-      const feat=NAV_FEAT[href];
-      if(!feat) return;            // always-visible
-      if(can(ent,feat)) return;    // entitled
-      if(mode(ent,feat)==='hidden'){ a.style.display='none'; return; }
-      // locked_upsell — show dimmed + lock, intercept click
-      a.style.opacity='0.45';
-      if(!a.querySelector('.ent-lock')){
-        const l=document.createElement('span');
-        l.className='ent-lock'; l.textContent='🔒';
-        l.style.cssText='margin-left:auto;font-size:10px;opacity:0.8';
-        a.appendChild(l);
-      }
-      a.addEventListener('click',e=>{e.preventDefault();window.location.href='/programs?unlock='+feat;});
+  function renderSidebar(ent,enrolled){
+    const mount=document.getElementById('sb-tiers');
+    if(!mount)return;
+    const myIdx=tierIdx(ent.tier||'guide');
+    const path=location.pathname.replace(/\/$/,'')||'/dashboard';
+    mount.innerHTML=TIER_ORDER.map((key,idx)=>{
+      const tier=TIER_NAV[key];
+      const locked=idx>myIdx;
+      const items=tier.items.filter(it=>!it.enrollOnly||enrolled);
+      if(!items.length)return'';
+      const itemsHtml=items.map(it=>{
+        const isActive=path===it.href;
+        const itemLocked=locked&&!it.comingSoon;
+        const cls='sni'+(isActive?' active':'')+(itemLocked?' locked':'');
+        const badge=it.comingSoon?'<span class="sb-badge-soon">Soon</span>':(itemLocked?'<span class="sb-tier-lock">🔒</span>':'');
+        return `<a href="${itemLocked?'#':it.href}" class="${cls}" data-feat="${it.feat||''}" data-upsell="${itemLocked?'1':'0'}"><span class="sni-icon">${it.icon}</span>${it.label}${badge}</a>`;
+      }).join('');
+      const openDefault=idx===myIdx;
+      return `<div class="sb-tier">
+        <div class="sb-tier-head${openDefault?' open':''}${locked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${locked?'<span class="sb-tier-lock">🔒</span>':''}<span class="sb-chev">▸</span></div>
+        <div class="sb-tier-items${openDefault?' open':''}">${itemsHtml}</div>
+      </div>`;
+    }).join('');
+    mount.querySelectorAll('a[data-upsell="1"]').forEach(a=>{
+      a.addEventListener('click',e=>{e.preventDefault();window.location.href='/programs?unlock='+(a.dataset.feat||'');});
     });
+    document.querySelectorAll('.sidebar > a.sni').forEach(a=>{
+      a.classList.toggle('active',path===(a.getAttribute('href')||'').replace(/\/$/,''));
+    });
+    const planEl=document.getElementById('sb-plan');
+    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
   }
+  window.sbToggleTier=function(head){
+    head.classList.toggle('open');
+    const items=head.nextElementSibling;
+    if(items)items.classList.toggle('open');
+  };
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion',sub:'companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion',sub:'companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Coach',sub:'concierge'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
-      roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
+      knowledge_graph:{name:'Your Knowledge Graph',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
-    const main=document.querySelector('.main')||document.body;
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;left:220px;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
@@ -348,8 +400,12 @@ async function logWorkout(){
     try{
       const {data:{session}}=await SB.auth.getSession();
       if(!session)return;
-      const ent=await loadEnt(session.user.id);
-      gateSidebar(ent);
+      const uid=session.user.id;
+      const [ent,enrRes]=await Promise.all([
+        loadEnt(uid),
+        SB.from('user_program_progress').select('id').eq('user_id',uid).eq('status','active').limit(1)
+      ]);
+      renderSidebar(ent,!!(enrRes&&enrRes.data&&enrRes.data.length));
       if(PAGE_FEATURE && !can(ent,PAGE_FEATURE)){
         if(mode(ent,PAGE_FEATURE)==='hidden') window.location.href='/dashboard';
         else wall(ent,PAGE_FEATURE);

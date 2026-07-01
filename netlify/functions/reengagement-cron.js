@@ -102,7 +102,7 @@ exports.handler = async function () {
       .is("reengagement_sent_at", null)
       .lte("last_active_at", sevenAgo)
       .gte("last_active_at", tenAgo)
-      .limit(500);
+      .limit(2000);   // headroom for 5k-user scale; a day's lapsed pool stays well under this
     if (error) throw error;
 
     result.eligible = (users || []).length;

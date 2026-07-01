@@ -166,8 +166,9 @@ exports.handler = async (event) => {
     const tier = profile.subscription_tier || "free";
     const entitled = (m) => {
       if (!m.entitlement_required) return true;
-      // companion/concierge unlock adaptive features; free users see free modules
-      return tier === "companion" || tier === "concierge";
+      // companion/coach (concierge = legacy pre-v4 name, kept for back-compat)
+      // unlock adaptive features; guide/free users see free modules
+      return tier === "companion" || tier === "coach" || tier === "concierge";
     };
     const stateForMatch = griefActive ? "grieving" : priorityState === "emotional_support" ? "struggling" : moodState;
 
@@ -216,8 +217,8 @@ exports.handler = async (event) => {
       .map(m => m.module_key);
 
     // ── §9 Entitlement states — surface gated modules as LOCKED PREVIEWS rather
-    // than hiding them, so a free member sees what's behind the next tier with an
-    // upgrade prompt (instead of never knowing it exists). companion/concierge
+    // than hiding them, so a Guide member sees what's behind the next tier with
+    // an upgrade prompt (instead of never knowing it exists). companion/coach
     // unlock adaptive features; everything gated points to the upgrade path.
     const PRODUCT_UPSELL = "companion";
     const locked_modules = modules

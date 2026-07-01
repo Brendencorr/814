@@ -166,7 +166,9 @@ async function loadPrograms(){
     if(c){ent=JSON.parse(c);}else{const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});ent=await r.json();sessionStorage.setItem(k,JSON.stringify(ent));}
     ownedProds=new Set((ent&&ent.products)||[]);
   }catch(e){}
-  const PROG_PRODUCT={'7-day-reset':'reset_free','recovery-journey':'prog_sobriety_90','move-and-nourish':'prog_body_90','carry-both':'prog_grief','companion':'companion','concierge':'concierge'};
+  // NOTE: map KEYS are the `programs` table's content slugs (unchanged); map
+  // VALUES are `products` entitlement keys (v4: concierge -> coach post-migration).
+  const PROG_PRODUCT={'7-day-reset':'reset_free','recovery-journey':'prog_sobriety_90','move-and-nourish':'prog_body_90','carry-both':'prog_grief','companion':'companion','concierge':'coach'};
   const hasAccess=p=>{const pk=PROG_PRODUCT[p.slug];if(!pk||p.price_cents===0||pk==='reset_free')return true;return ownedProds.has(pk);};
   const priceLabel=p=>{const sub=(p.slug==='companion'||p.slug==='concierge');return p.price_cents>0?('$'+Math.round(p.price_cents/100)+(sub?'/mo':'')):'FREE';};
   if(!avail.length){avEl.innerHTML='<div style="font-size:12px;color:var(--smoke)">You are enrolled in all programs!</div>';}
@@ -235,7 +237,7 @@ async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {err
       tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Concierge',sub:'concierge'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach',sub:'concierge'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
       roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
     };

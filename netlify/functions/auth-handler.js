@@ -55,6 +55,14 @@ async function getSession(supabase, body) {
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     };
     await supabase.from("user_profiles").upsert(newProfile);
+    // v4 pricing — grantGuideOnSignup(): every new account gets Riley Guide
+    // immediately, no purchase needed. (entitlements.js also defends against
+    // any signup path that doesn't reach this function, so this is belt-and-
+    // suspenders for a clean audit row, not the only guarantee.)
+    try {
+      await supabase.from("entitlements")
+        .upsert({ user_id: user.id, product_key: "reset_free", status: "active", source: "implied" }, { onConflict: "user_id,product_key" });
+    } catch (e) { console.warn("grantGuideOnSignup failed (non-fatal):", e.message); }
     return json(200, { user: { id: user.id, email: user.email, ...newProfile }, messages: [] });
   }
 

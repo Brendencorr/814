@@ -26,6 +26,7 @@ const {
   LEVEL1_DIRECTIVE,
   DIAGNOSIS_DIRECTIVE,
 } = require("./crisis-detection");
+const { getRemaining, incrementUsage } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
 
 const CORS_HEADERS = {
@@ -136,18 +137,18 @@ The Phoenix model and evidence for sober community events
 How to find community when your old social circle was built around drinking
 Online community vs in-person: both matter, differently, for different reasons
 
-THE 8:14 PROGRAMS — recommend naturally when relevant, never list everything at once:
-Free: 7-Day Reset — always suggest first for anyone brand new, no commitment required
-Recovery: Recovery Journey $37 — structured daily support through the first 90 days
-Body + Nutrition: Move & Nourish $37 — home workouts + gut-brain recovery, practical and gentle
-Grief: Carry Both $37 — for those holding grief and recovery at the same time
-Subscription: Riley Companion $19/mo — daily check-ins, community, full program library access
-Full Support: Riley Concierge $39/mo — everything in Companion plus deeper personalization and priority support
+THE 8:14 MEMBERSHIPS — recommend naturally when relevant, never list everything at once:
+Free, forever: Riley Guide — the 7-Day Reset, limited chat, community previews, weekly check-in, a taste of the resource library. Not a trial. It never expires. Always the honest first offer to anyone brand new or hesitant.
+Primary membership: Riley Companion $29/mo — "You're not doing this alone." Unlimited Riley conversations, every domain (sobriety, grief, body, whatever they're carrying), full community, monthly workshops, full resource library.
+Deeper partnership: Riley Coach $49/mo — "Personalized guidance that grows with you." Everything in Companion, plus adaptive workout & nutrition plans, proactive check-ins (Riley reaches out first), the Knowledge Graph (Riley remembers who they're becoming), progress dashboards and trend analysis. The difference isn't more content — it's deeper partnership.
+Self-guided, no relationship: Sobriety / Grief & Life Transitions / Body Rebuild — $9 each, content only, lifetime access, no Riley, no tracking, no community. For someone who explicitly doesn't want an ongoing relationship with Riley — the book, not the coach.
 
-RILEY APPROACH — HOW TO RECOMMEND:
-Never push. Never list all programs at once. Recommend ONE thing based on what they just said.
-Always offer the free 7-Day Reset first to anyone brand new — zero commitment, real value.
-Mention programs the way a trusted friend would: "there's actually something built for exactly that situation."
+RILEY APPROACH — HOW TO RECOMMEND (no urgency games, ever):
+Never push. Never list all memberships at once. Recommend ONE thing based on what they just said.
+Guide is a real, legitimate destination — never talk about it like a lesser tier or a countdown. Someone can stay on it forever; that is fine.
+Recommendation signals: "just looking around" → stay on Guide, no push. Bumping into the chat limit / "I want to talk to you more" → Companion, because unlimited conversation is the exact thing they're bumping into. "I keep forgetting" / "check in on me" / wants a plan, not just chat → Coach, because proactive check-ins and adaptive plans are the differentiator. "I just want to read something, not talk to an AI" → the matching $9 self-guided program.
+If someone is in real distress, Coach's proactive check-ins are the ideal fit long-term — but never make someone feel unsupported on Guide or Companion in the moment, and never let a usage limit get in the way of crisis support (see CRISIS SUPPORT below — it always overrides any chat limit).
+Mention memberships the way a trusted friend would: "there's actually something built for exactly that situation."
 If they're already a member, reference what they have by name. Never sell what they own.
 
 ROLE, TRUST & LIMITATIONS — always true, never optional:
@@ -242,9 +243,9 @@ Score ranges use human language — never raw numbers:
 0-19: "Every day counts."
 When referencing someone's progress, use this language — never say "your score is X." Say things like "you've been in a great rhythm lately" or "it looks like sleep has been harder this week."
 
-BRAND TRUTH — what this is all for:
-The 8:14 Project exists to help people take one more step forward.
-You are not only a recovery guide — you are a companion for building a whole life worth staying present for: purpose, health, connection, resilience, meaning. Recovery is one important chapter, never the entire story. Meet people wherever they are — sobriety, grief, fitness, food, work, family, or simply becoming who they want to be. The goal is a life they don't want to escape from.
+MISSION — what this is all for (canonical, everything traces back to this):
+Riley exists to help people become who they were meant to become. Not simply help them recover, lose weight, eat healthier, or build habits — those are outcomes. The mission is helping people build a life they don't want to escape from.
+Why it all fits together, as one relationship, not separate products: workout plans support meaningful lives; nutrition changes energy; recovery gives people their future back; the Knowledge Graph is how you remember who someone is becoming, especially when they forget. Recovery is one important chapter, never the entire story. Meet people wherever they are — sobriety, grief, fitness, food, work, family, or simply becoming who they want to be.
 Tagline: "Live With Purpose."
 Every response should leave someone feeling more hopeful than before they sent their message.
 Always hopeful. Never preachy. Never corporate. Never manipulative. Never fear-based.
@@ -432,28 +433,31 @@ function buildUserContext(profile, clientData) {
   // ── ENTITLEMENTS — shapes what Riley sells and how she talks ──
   if (clientData && clientData.tier) {
     const PRODUCT_NAMES = {
-      reset_free:"the free 7-Day Reset", companion:"Riley Companion ($19/mo)",
-      concierge:"Riley Concierge ($39/mo)", prog_sobriety_90:"Recovery Journey",
-      prog_grief:"Carry Both", prog_body_90:"Move & Nourish",
-      prog_first30:"Recovery Journey", prog_eat:"Move & Nourish", prog_move:"Move & Nourish"
+      reset_free:"Riley Guide (free)", companion:"Riley Companion ($29/mo)",
+      coach:"Riley Coach ($49/mo)", concierge:"Riley Coach ($49/mo)", mentor:"Riley Mentor",
+      prog_sobriety:"Sobriety (self-guided, $9)", prog_sobriety_90:"Sobriety (self-guided, $9)",
+      prog_grief:"Grief & Life Transitions (self-guided, $9)",
+      prog_body:"Body Rebuild (self-guided, $9)", prog_body_90:"Body Rebuild (self-guided, $9)",
+      prog_first30:"Sobriety (self-guided, $9)", prog_eat:"Body Rebuild (self-guided, $9)", prog_move:"Body Rebuild (self-guided, $9)"
     };
     const owns = (clientData.ownedProducts || []).map(p => PRODUCT_NAMES[p] || p);
     lines.push("\nACCESS & ENTITLEMENTS:");
     lines.push(`Tier: ${clientData.tier.toUpperCase()}`);
-    lines.push(owns.length ? `Owns: ${owns.join(", ")}` : "Owns: nothing yet (free visitor)");
-    lines.push("\nSELLING RULES — follow exactly:");
-    if (clientData.tier === "concierge") {
-      lines.push("- This is a CONCIERGE member. They have EVERYTHING. NEVER sell or upsell anything. Just coach and support.");
+    lines.push(owns.length ? `Owns: ${owns.join(", ")}` : "Owns: nothing yet");
+    lines.push("\nSELLING RULES — follow exactly, no urgency games, ever:");
+    if (clientData.tier === "coach" || clientData.tier === "concierge") {
+      lines.push("- This is a COACH member. They have EVERYTHING. NEVER sell or upsell anything. Just coach and support.");
     } else if (clientData.tier === "companion") {
-      lines.push("- Companion subscriber. They have check-ins + community but NOT the full program library.");
-      lines.push("- Only mention a specific à la carte program if it directly fits what they're working through. Concierge is the natural upgrade if they want everything — but never push.");
+      lines.push("- Companion subscriber. Unlimited chat, every domain, full community — but NOT adaptive workout/nutrition plans, proactive check-ins, or the Knowledge Graph.");
+      lines.push("- Only mention Coach if what they're describing is literally that gap (wanting a plan that adapts, wanting Riley to reach out first, wanting to be remembered more deeply) — never push.");
     } else if (clientData.tier === "alacarte") {
-      lines.push("- They bought program(s) but have NO subscription — so no community/daily check-ins.");
-      lines.push("- If they want ongoing support or check-ins, Companion is the fit. Don't re-sell what they already own.");
+      lines.push("- They bought self-guided content only, no ongoing relationship — no chat, no tracking, no community, not even Guide's caps.");
+      lines.push("- A light, non-pushy mention of Riley Guide (it's free!) after they finish content is the natural next step — lower friction than pitching a paid tier. Never re-sell what they already own.");
     } else {
-      lines.push("- FREE visitor, owns nothing. Offer the free 7-Day Reset as the first step — zero commitment, real support. Ask one question to understand what they need, then recommend ONE next step — never a list.");
+      lines.push("- Riley GUIDE (free, forever) — not a trial, doesn't expire, never talk about it like a lesser tier. This is a real, legitimate destination. No pressure to upgrade, ever.");
+      lines.push("- If they're bumping into their weekly chat limit or say they want to talk more, Companion is the natural fit (unlimited conversation). If they want Riley checking on them proactively or want a plan, Coach fits. Recommend ONE, never both, never a hard sell.");
     }
-    lines.push("- NEVER pitch a program they already own. Reference what they have by name.");
+    lines.push("- NEVER pitch a membership or program they already own. Reference what they have by name.");
   }
 
   lines.push("");
@@ -507,9 +511,15 @@ async function getClientData(supabase, userId) {
     };
 
     const ownedProducts = (entRes.value?.data || []).map(r => r.product_key);
-    const tier = ownedProducts.includes("concierge") ? "concierge"
+    // v4 tiers: mentor > coach > companion > guide (Riley Guide is free but
+    // real and persistent — everyone who's holding ANY entitlement row, or
+    // reset_free specifically, is "guide" at minimum). "alacarte" = content
+    // only, no relationship at all — the one case with NO Guide caps either.
+    const tier = ownedProducts.includes("mentor") ? "mentor"
+               : (ownedProducts.includes("coach") || ownedProducts.includes("concierge")) ? "coach"
                : ownedProducts.includes("companion") ? "companion"
-               : ownedProducts.length ? "alacarte" : "free";
+               : ownedProducts.includes("reset_free") ? "guide"
+               : ownedProducts.length ? "alacarte" : "guide";
 
     // Merge personal + shared sensitive dates for today
     const personalDates = importantRes.value?.data || [];
@@ -566,7 +576,11 @@ async function buildSystemPrompt(supabase, userId) {
     getClientData(supabase, userId),
     getContentContext(supabase),
   ]);
-  return RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile, clientData)) + contentCtx;
+  const text = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile, clientData)) + contentCtx;
+  // Exposed alongside the prompt text so the handler can enforce Riley Guide's
+  // chat cap without a second round-trip — tier/ownedProducts are already
+  // resolved inside getClientData.
+  return { text, tier: clientData?.tier || null, ownedProducts: clientData?.ownedProducts || [] };
 }
 
 async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
@@ -751,10 +765,14 @@ exports.handler = async function (event) {
 
   // Build context-aware system prompt (Supabase failures are non-fatal)
   let systemPrompt = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(null));
+  let userTier = null, ownedProducts = [];
   let supabase = null;
   try {
-    supabase     = getSupabaseClient();
-    systemPrompt = await buildSystemPrompt(supabase, user_id || null);
+    supabase = getSupabaseClient();
+    const built = await buildSystemPrompt(supabase, user_id || null);
+    systemPrompt  = built.text;
+    userTier      = built.tier;
+    ownedProducts = built.ownedProducts;
   } catch (e) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
@@ -814,6 +832,46 @@ exports.handler = async function (event) {
   if (isDiagnosis) safetyDirective += DIAGNOSIS_DIRECTIVE + "\n\n";
   if (safetyDirective) systemPrompt = safetyDirective + "----\n\n" + systemPrompt;
 
+  // ── RILEY GUIDE CHAT CAP (v4 pricing) — capped, never hidden ────────────────
+  // Crisis support ALWAYS overrides the cap — this check only runs when no
+  // crisis signal was detected at all (Level 3 already returned above; Levels
+  // 1-2 fall through here on purpose and must still bypass the cap). This is a
+  // product requirement, not a nice-to-have: a Guide member in real distress
+  // must never hit a usage wall. See 06_entitlements_and_webhooks_spec.md §4.
+  let usageInfo = null;
+  const isUncappedTier = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
+  if (crisis.level === 0 && supabase && user_id && !isUncappedTier) {
+    try {
+      let freeAccess = false;
+      try {
+        const { data: fa } = await supabase.from("app_settings").select("value").eq("key", "free_access_mode").maybeSingle();
+        freeAccess = !!(fa && String(fa.value).toLowerCase() === "true");
+      } catch (_) {}
+      if (!freeAccess) {
+        usageInfo = await getRemaining(supabase, user_id, "riley_chat", ownedProducts.length ? ownedProducts : ["reset_free"]);
+      }
+    } catch (e) { console.warn("chat-cap check failed (non-fatal, defaults to allowing the message):", e.message); }
+  }
+
+  if (usageInfo && usageInfo.remaining <= 0) {
+    // Warm, deterministic — no model call, matches the "capped, never a hard
+    // wall implying they don't have Riley at all" tone from the client spec.
+    const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : usageInfo.period === "month" ? "this month" : "for now";
+    const capReply = `We've used up our conversations ${periodWord} — Riley Guide includes a limited number so I can be here for everyone. More opens back up soon, or Riley Companion means we can talk as much as you want, any time. I'm not going anywhere either way.`;
+    if (supabase && user_id && session_id) persistMessages(supabase, user_id, session_id, latestUserText, capReply);
+    return {
+      statusCode: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
+      body: capReply,
+    };
+  }
+
+  // Near the limit but not out — let Riley mention it naturally, once, warmly.
+  if (usageInfo && usageInfo.remaining > 0 && usageInfo.remaining <= 2) {
+    const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : "for now";
+    systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord}. If it fits naturally, you may mention it warmly near the end — something like "we've got a couple conversations left ${periodWord} — want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
+  }
+
   const response = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {
@@ -858,6 +916,14 @@ exports.handler = async function (event) {
     if (fullConvo.length >= 6 && fullConvo.length % 6 === 0) {
       extractMemories(supabase, user_id, fullConvo);
     }
+  }
+
+  // Riley Guide chat cap — count this message now that it actually got a real
+  // reply (capped-out messages returned earlier and never reach this line, so
+  // they're never double-counted). Non-blocking; a failed increment just means
+  // one free message, never a lockout.
+  if (usageInfo) {
+    incrementUsage(supabase, user_id, "riley_chat", usageInfo.periodStart).catch(() => {});
   }
 
   // Return plain text so the streaming client UI (getReader) works without

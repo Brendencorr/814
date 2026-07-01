@@ -169,8 +169,26 @@ const NU_GOALS=[['fat_loss','Fat loss'],['muscle_gain','Muscle gain'],['maintena
 const NU_COOK=[['true','Yes, I cook at home'],['false','Rarely — quick / eat out']];
 function nSel(id,label,opts){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;}
 function nTxt(id,label,ph){return `<div class="field"><label>${label}</label><input id="${id}" placeholder="${ph||''}"></div>`;}
+// Adaptive plan generation is a Riley Coach feature (v4 pricing) — separate
+// from meal LOGGING below, which stays open at Companion+ via the page's
+// existing tracker_nutrition gate. Self-contained fetch (not the sidebar-gating
+// IIFE's cache) so there's no race on load order.
+async function coachEntitled(featureKey){
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok})});
+    const d=await r.json();
+    return !!(d&&d.features&&d.features[featureKey]&&d.features[featureKey].access);
+  }catch(e){return true;} // fail open — never block on a network hiccup
+}
+function coachLockCard(slot,title,body){
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_nutrition" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Coach →</a></div>`;
+}
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
+  if(!(await coachEntitled('adaptive_nutrition'))){
+    return coachLockCard(slot,'Your adaptive nutrition plan','Riley Coach builds a personalized 7-day meal plan + grocery list that adapts to you — included with Riley Coach ($49/mo). Your meal log below still works on Companion.');
+  }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
   if(!prof||!prof.nutrition_intake_done){return renderNutritionIntake(slot);}
@@ -311,7 +329,7 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
       tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Concierge',sub:'concierge'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach',sub:'concierge'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
       roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
     };

@@ -302,6 +302,7 @@ header{background:var(--header);border-bottom:1px solid var(--border2);box-shado
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:#d9534f;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
       <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="g" onclick="loadProgs(this)">Programs</button>
+      <button class="ht" data-s="y" onclick="loadPricing(this)">Pricing</button>
     </nav>
     <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
   </header>
@@ -427,6 +428,13 @@ header{background:var(--header);border-bottom:1px solid var(--border2);box-shado
   </div>
 </div>
 
+<!-- MEMBERSHIP & PRICING SCREEN (v4) -->
+<div class="sc" id="sy">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1000px;margin:0 auto" id="pricing-body"><div class="em">Loading…</div></div>
+  </div>
+</div>
+
 <!-- USERS SCREEN -->
 <div class="sc" id="su">
   <div class="users-top">
@@ -527,7 +535,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','g'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
+function gs(n,btn){['o','h','p','r','u','e','s','m','g','y'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
 
 /* ── HOME · COMBINED OVERVIEW ─────────────────────────────────────────────── */
 async function loadOverview(btn){
@@ -797,6 +805,73 @@ async function saveProg(){
 async function freezeProg(id,on){try{await progApi('set_active',{id:id,is_active:on});loadProgs();}catch(e){window.alert(e.message);}}
 async function deleteProg(id){if(!window.confirm('Delete this program permanently? (If members are enrolled, freeze it instead.)'))return;try{await progApi('delete',{id:id});loadProgs();}catch(e){window.alert(e.message);}}
 async function toggleFreeAccess(on){if(!window.confirm(on?'Turn ON free access — every member sees all active programs free?':'Turn OFF free access — members only see what they purchased?'))return;try{await progApi('set_free_access',{value:on});loadProgs();}catch(e){window.alert(e.message);}}
+
+// ── Membership & Pricing (v4) — OPERATOR_KEY protected, reuses opKey() ───────
+async function pricingApi(action,extra){
+  var k=opKey();
+  if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
+  var r=await fetch(B+'/admin-pricing',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
+  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===503)throw new Error('not-configured');
+  if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
+  return await r.json();
+}
+var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach',4:'Mentor'};
+var STATUS_COLOR={draft:'var(--muted2)',locked:'var(--gold)',live:'var(--green)',retired:'var(--red)'};
+async function loadPricing(btn){
+  gs('y',btn);
+  var el=document.getElementById('pricing-body');el.innerHTML='<div class="em">Loading…</div>';
+  try{var d=await pricingApi('list');renderPricing(d.products||[],d.usage_limits||[],d.free_access_mode);}
+  catch(e){
+    var msg=e.message==='bad-key'?'Operator key incorrect. <button class="bo" onclick="loadPricing()">Try again</button>'
+      :e.message==='not-configured'?'Set <b>OPERATOR_KEY</b> in Netlify env, then reload.'
+      :e.message==='no-key'?'Enter your operator key. <button class="bo" onclick="loadPricing()">Enter key</button>'
+      :'Could not load: '+engEsc(e.message);
+    el.innerHTML='<div class="em">'+msg+'</div>';
+  }
+}
+function pricingRow(p){
+  var price=p.price_cents?('$'+(p.price_cents/100).toFixed(p.price_cents%100?2:0)+(p.recurring?'/mo':'')):'Free';
+  var col=STATUS_COLOR[p.status]||'var(--muted2)';
+  var future=p.status==='draft'?' <span style="color:var(--muted2);font-size:.66rem">· Future release — not launched</span>':'';
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+(p.status==='draft'?'opacity:.6':'')+'">'+
+    '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);width:64px;flex-shrink:0">'+(TIER_LABEL[p.tier_level]||'—')+'</span>'+
+    '<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem">'+engEsc(p.display_name)+future+'</div><div style="font-size:.66rem;color:var(--muted2)">'+engEsc(p.blurb||'').slice(0,110)+'</div></div>'+
+    '<span style="font-size:.8rem;color:var(--text);white-space:nowrap">'+price+'</span>'+
+    '<select onchange="setProductStatus(\''+p.product_key+'\',this.value)" style="background:var(--bg);border:1px solid '+col+';color:'+col+';border-radius:4px;padding:.3rem .5rem;font-size:.72rem;font-family:DM Mono,monospace;text-transform:uppercase">'+
+      ['draft','locked','live','retired'].map(function(s){return '<option value="'+s+'"'+(s===p.status?' selected':'')+'>'+s+'</option>';}).join('')+
+    '</select>'+
+    '<button class="bo" onclick="editProductPrice(\''+p.product_key+'\','+p.price_cents+')">Edit price</button>'+
+  '</div>';
+}
+function renderPricing(products,limits,freeAccess){
+  var fa='<div style="background:'+(freeAccess?'rgba(74,124,89,0.12)':'var(--card)')+';border:1px solid '+(freeAccess?'var(--green)':'var(--border)')+';border-radius:6px;padding:1rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem"><div><div style="color:var(--text);font-size:.9rem;font-weight:600">Free-access mode '+(freeAccess?'· ON':'· OFF')+'</div><div style="font-size:.72rem;color:var(--muted2);margin-top:.2rem">'+(freeAccess?'Everyone sees every membership free (friends &amp; family testing) — usage caps do not apply either.':'Members only get what they\'ve purchased or been granted.')+'</div></div><button class="bg" onclick="togglePricingFreeAccess('+(!freeAccess)+')">Turn '+(freeAccess?'OFF':'ON')+'</button></div>';
+  var rows=products.length?products.map(pricingRow).join(''):'<div class="em">No products found.</div>';
+  var limitRows=limits.length?limits.map(function(l){
+    return '<div style="display:flex;align-items:center;gap:.7rem;background:var(--card);border:1px solid var(--border);padding:.6rem .9rem;margin-bottom:.4rem;font-size:.8rem"><span style="color:var(--muted2);width:110px;flex-shrink:0">'+engEsc(l.product_key)+'</span><span style="flex:1;color:var(--text)">'+engEsc(l.feature_key)+'</span>'+
+      '<input type="number" min="0" value="'+l.limit_amount+'" style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:.3rem .4rem;font-size:.78rem" onchange="setUsageLimit(\''+l.id+'\',this.value,null)">'+
+      '<select onchange="setUsageLimit(\''+l.id+'\',null,this.value)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:.3rem .4rem;font-size:.72rem">'+
+        ['day','week','month','lifetime'].map(function(p){return '<option value="'+p+'"'+(p===l.limit_period?' selected':'')+'>'+p+'</option>';}).join('')+
+      '</select></div>';
+  }).join(''):'<div class="em">No usage caps configured.</div>';
+  document.getElementById('pricing-body').innerHTML=
+    '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Membership &amp; Pricing</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+products.length+' products</div></div>'+
+    fa+
+    '<div class="sh" style="margin-bottom:.6rem">Guide / Companion / Coach / Mentor + à la carte</div>'+rows+
+    '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Guide — Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
+}
+async function setProductStatus(key,status){try{await pricingApi('update_product',{key:key,patch:{status:status}});loadPricing();}catch(e){window.alert(e.message);}}
+async function editProductPrice(key,current){
+  var v=window.prompt('New price in cents (e.g. 2900 = $29.00; 0 = free):',current);
+  if(v===null)return;
+  var cents=parseInt(v,10);if(isNaN(cents)||cents<0){window.alert('Enter a whole number of cents, 0 or more.');return;}
+  try{await pricingApi('update_product',{key:key,patch:{price_cents:cents}});loadPricing();}catch(e){window.alert(e.message);}
+}
+async function setUsageLimit(id,amount,period){
+  var patch={};if(amount!=null)patch.limit_amount=amount;if(period!=null)patch.limit_period=period;
+  try{await pricingApi('update_usage_limit',{id:id,patch:patch});loadPricing();}catch(e){window.alert(e.message);}
+}
+async function togglePricingFreeAccess(on){if(!window.confirm(on?'Turn ON free access — every member sees every membership free, uncapped?':'Turn OFF free access — enforce real purchases and Guide caps?'))return;try{await pricingApi('set_free_access',{value:on});loadPricing();}catch(e){window.alert(e.message);}}
 
 function init(){scd();ls();ldst();loadOverview();checkSafetyAlerts();setInterval(checkSafetyAlerts,90000);}
 async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
@@ -1265,6 +1340,9 @@ function renderUserDetail(d){
   html+='</div>';
   html+='</div>';
 
+  // Membership & Entitlements (v4) — populated async below, after ud-body is set
+  html+='<div class="ud-section"><div class="ud-section-label">Membership &amp; Entitlements</div><div id="ud-membership"><div class="em">Loading…</div></div></div>';
+
   // Programs purchased
   if(profile.programs_purchased&&profile.programs_purchased.length){
     html+='<div class="ud-section">';
@@ -1317,6 +1395,49 @@ function renderUserDetail(d){
   }
 
   document.getElementById('ud-body').innerHTML=html;
+  if(profile.id)loadMembershipPanel(profile.id);
+}
+
+// ── Membership & Entitlements panel (v4) — merged into the Users tab ────────
+async function membershipApi(action,extra){
+  var k=opKey();
+  if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
+  var r=await fetch(B+'/admin-membership',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
+  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===503)throw new Error('not-configured');
+  if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
+  return await r.json();
+}
+var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($9)'],['prog_grief','Grief & Transitions ($9)'],['prog_body','Body Rebuild ($9)']];
+async function loadMembershipPanel(userId){
+  var el=document.getElementById('ud-membership');if(!el)return;
+  try{
+    var d=await membershipApi('get',{user_id:userId});
+    renderMembershipPanel(userId,d.entitlements||[]);
+  }catch(e){
+    var msg=e.message==='bad-key'?'Operator key incorrect. <button class="bo" onclick="loadMembershipPanel(\''+userId+'\')">Try again</button>'
+      :e.message==='not-configured'?'Set <b>OPERATOR_KEY</b> in Netlify env, then reload.'
+      :e.message==='no-key'?'Enter your operator key. <button class="bo" onclick="loadMembershipPanel(\''+userId+'\')">Enter key</button>'
+      :'Could not load: '+engEsc(e.message);
+    el.innerHTML='<div class="em">'+msg+'</div>';
+  }
+}
+function renderMembershipPanel(userId,ents){
+  var active=ents.filter(function(e){return e.status==='active';});
+  var rows=active.length?active.map(function(e){
+    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid var(--border);font-size:.8rem"><span style="color:var(--green)">&#10003;</span><span style="flex:1;color:var(--text)">'+engEsc(e.product_key)+'</span><span style="font-size:.66rem;color:var(--muted2)">'+engEsc(e.source)+'</span><button class="bo" style="border-color:var(--red);color:#c98a8a" onclick="revokeProductFromUser(\''+userId+'\',\''+e.product_key+'\')">Revoke</button></div>';
+  }).join(''):'<div class="em" style="padding:.4rem 0">No active memberships.</div>';
+  var opts=GRANT_PRODUCTS.map(function(p){return '<option value="'+p[0]+'">'+p[1]+'</option>';}).join('');
+  document.getElementById('ud-membership').innerHTML=rows+
+    '<div style="display:flex;gap:.5rem;margin-top:.7rem"><select id="grant-select-'+userId+'" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:.4rem .5rem;font-size:.78rem">'+opts+'</select><button class="bg" onclick="grantProductToUser(\''+userId+'\')">Grant</button></div>';
+}
+async function grantProductToUser(userId){
+  var sel=document.getElementById('grant-select-'+userId);if(!sel)return;
+  try{await membershipApi('grant',{user_id:userId,product_key:sel.value});loadMembershipPanel(userId);}catch(e){window.alert(e.message);}
+}
+async function revokeProductFromUser(userId,productKey){
+  if(!window.confirm('Revoke '+productKey+' from this member?'))return;
+  try{await membershipApi('revoke',{user_id:userId,product_key:productKey});loadMembershipPanel(userId);}catch(e){window.alert(e.message);}
 }
 
 function toggleSession(id){

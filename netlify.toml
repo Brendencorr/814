@@ -50,6 +50,16 @@
 [functions."admin-programs"]
   timeout = 10
 
+[functions."admin-pricing"]
+  timeout = 10
+
+[functions."admin-membership"]
+  timeout = 10
+
+# Public marketing-site pricing feed (v4) — no auth, cached 60s.
+[functions."public-pricing"]
+  timeout = 10
+
 
 [functions."entitlements"]
   timeout = 10

@@ -256,7 +256,7 @@ async function loadSobriety(){
   const yrs=Math.floor(days/365),mos=Math.floor((days%365)/30);
   document.getElementById('sob-label').textContent=yrs>0?(yrs+'yr '+(mos>0?mos+'mo ':'')+' sober'):'days sober';
   document.getElementById('sob-milestone').textContent=days>=365?'🏆 '+yrs+' year'+(yrs>1?'s':'')+' sober':days>=90?'💫 Personal best':days>=30?'⭐ 1 month':days>=7?'🌱 1 week':'🔥 Keep going';
-  document.getElementById('sob-msg').textContent=days>=365?'Absolutely extraordinary. Riley is with you.':days>=90?'Personal best territory. Keep going.':days>=30?'A full month. You're really doing this.':days>=7?'One week strong.':'Every single day counts.';
+  document.getElementById('sob-msg').textContent=days>=365?'Absolutely extraordinary. Riley is with you.':days>=90?'Personal best territory. Keep going.':days>=30?'A full month. This is really happening.':days>=7?'One week strong.':'Every single day counts.';
   document.getElementById('sob-display').style.display='block';document.getElementById('sob-form').style.display='none';
   document.getElementById('sob-date').value=data.start_date;
   const {data:cis}=await SB.from('daily_checkins').select('checkin_date').eq('user_id',UID).gte('checkin_date',dAgo(27));
@@ -419,7 +419,7 @@ async function addLifeEvent(){
       tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Concierge',sub:'concierge'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach',sub:'concierge'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
       roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
     };

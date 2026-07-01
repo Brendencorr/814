@@ -164,8 +164,26 @@ const WK_LEVELS=[['beginner','Beginner — 0–2 days/wk'],['intermediate','Inte
 const WK_EQUIP=[['none','No equipment'],['dumbbells','Dumbbells only'],['full_gym','Full gym']];
 function wSel(id,label,opts){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;}
 function wTxt(id,label,ph){return `<div class="field"><label>${label}</label><input id="${id}" placeholder="${ph||''}"></div>`;}
+// Adaptive plan generation is a Riley Coach feature (v4 pricing) — separate
+// from workout LOGGING below, which stays open at Companion+ via the page's
+// existing tracker_fitness gate. Self-contained fetch (not the sidebar-gating
+// IIFE's cache) so there's no race on load order.
+async function coachEntitled(featureKey){
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok})});
+    const d=await r.json();
+    return !!(d&&d.features&&d.features[featureKey]&&d.features[featureKey].access);
+  }catch(e){return true;} // fail open — never block on a network hiccup
+}
+function coachLockCard(slot,title,body){
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Coach →</a></div>`;
+}
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
+  if(!(await coachEntitled('adaptive_workouts'))){
+    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week — included with Riley Coach ($49/mo). Your workout log below still works on Companion.');
+  }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
   if(!prof||!prof.workout_intake_done){return renderWorkoutIntake(slot);}
@@ -307,7 +325,7 @@ async function logWorkout(){
       tracker_fitness:{name:'Workout Tracking',need:'Riley Companion',sub:'companion'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion',sub:'companion'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion',sub:'companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Concierge',sub:'concierge'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach',sub:'concierge'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion',sub:'companion'},
       roadmap:{name:'Your Roadmap',need:'Riley Companion',sub:'companion'}
     };

@@ -90,6 +90,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
+<div id="plan-slot" style="margin-bottom:18px"></div>
 <div class="stat-row">
   <div class="stat"><div class="sv" id="n-cal">—</div><div class="sl">Calories Today</div></div>
   <div class="stat"><div class="sv" id="n-pro">—</div><div class="sl">Protein (g)</div></div>
@@ -161,7 +162,70 @@ async function boot(cb){
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 
 
-(async()=>{ await boot(async()=>{document.getElementById('n-date').value=TODAY;await loadNutrition();}); })();
+(async()=>{ await boot(async()=>{document.getElementById('n-date').value=TODAY;await loadWellness();await loadNutrition();}); })();
+
+// ── NUTRITION PLAN — intake → generate → display (with grocery list) → adapt ──
+const NU_GOALS=[['fat_loss','Fat loss'],['muscle_gain','Muscle gain'],['maintenance','Maintenance'],['more_energy','More energy'],['better_sleep','Better sleep'],['recovery_support','Recovery support'],['blood_sugar','Blood sugar stability'],['reduced_cravings','Reduced cravings'],['general_health','General health']];
+const NU_COOK=[['true','Yes, I cook at home'],['false','Rarely — quick / eat out']];
+function nSel(id,label,opts){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;}
+function nTxt(id,label,ph){return `<div class="field"><label>${label}</label><input id="${id}" placeholder="${ph||''}"></div>`;}
+async function loadWellness(){
+  const slot=document.getElementById('plan-slot');if(!slot)return;
+  let prof=null;
+  try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
+  if(!prof||!prof.nutrition_intake_done){return renderNutritionIntake(slot);}
+  let plan=null;
+  try{const {data}=await SB.from('wellness_plans').select('plan').eq('user_id',UID).eq('plan_type','nutrition').eq('is_active',true).maybeSingle();plan=data&&data.plan;}catch(e){}
+  if(plan&&plan.days)renderNutritionPlan(slot,plan);else renderNutritionCta(slot);
+}
+function renderNutritionIntake(slot){
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div class="card-title">Let's build your nutrition plan 🍃</div><div class="card-sub">Eight quick questions and Riley builds a 7-day plan plus a grocery list — around foods you actually like.</div>`+
+    nSel('ni-goal','Your main nutrition goal',NU_GOALS)+
+    nTxt('ni-restrict','Allergies or dietary restrictions? (optional)','e.g. dairy-free, no shellfish')+
+    `<div class="fr">`+nTxt('ni-meals','Meals per day','3')+nSel('ni-cook','Do you cook at home?',NU_COOK)+`</div>`+
+    nTxt('ni-love','Foods you love','the more the better')+
+    nTxt('ni-hate','Foods you hate / avoid','so Riley never suggests them')+
+    nTxt('ni-crave','When do cravings hit? (optional)','e.g. evenings, after work')+
+    nTxt('ni-typical','A normal day of eating now? (optional)','roughly what you eat')+
+    `<button class="btn btn-gold" id="ni-btn" onclick="saveNutritionIntake()" style="margin-top:8px">Build my 7-day plan →</button><div class="alert" id="ni-alert"></div></div>`;
+}
+async function saveNutritionIntake(){
+  const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  const row={user_id:UID,nutrition_goal:g('ni-goal'),dietary_restrictions:g('ni-restrict')||null,meals_per_day:parseInt(g('ni-meals'))||3,cooks_at_home:g('ni-cook')==='true',foods_love:g('ni-love')||null,foods_hate:g('ni-hate')||null,craving_times:g('ni-crave')||null,typical_day:g('ni-typical')||null,nutrition_intake_done:true,updated_at:new Date().toISOString()};
+  setBtn('ni-btn',true,'Build my 7-day plan →');
+  try{await SB.from('wellness_profile').upsert(row,{onConflict:'user_id'});}catch(e){A('ni-alert','Could not save: '+e.message,false);setBtn('ni-btn',false,'Build my 7-day plan →');return;}
+  await generateNutritionPlan();
+}
+async function generateNutritionPlan(){
+  const slot=document.getElementById('plan-slot');
+  slot.innerHTML=`<div class="card"><div class="card-sub" style="text-align:center;padding:28px 0">🍃 Riley is building your plan — one moment…</div></div>`;
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    const r=await fetch('/.netlify/functions/plan-generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,plan_type:'nutrition'})});
+    const d=await r.json();
+    if(d.plan&&d.plan.days)renderNutritionPlan(slot,d.plan);
+    else slot.innerHTML=`<div class="card"><div class="card-sub">Riley couldn't build the plan just now. <button class="btn btn-ghost" onclick="generateNutritionPlan()">Try again</button></div></div>`;
+  }catch(e){slot.innerHTML=`<div class="card"><div class="card-sub">Something went wrong. <button class="btn btn-ghost" onclick="generateNutritionPlan()">Try again</button></div></div>`;}
+}
+function renderNutritionCta(slot){slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div class="card-title">Your plan is ready to build</div><div class="card-sub">Riley has your goals — tap to generate this week's meals + grocery list.</div><button class="btn btn-gold" onclick="generateNutritionPlan()">Generate my 7-day plan →</button></div>`;}
+function nList(title,arr){if(!arr||!arr.length)return '';return `<div style="margin-top:12px"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">${title}</div><div style="font-size:12px;color:var(--smoke);line-height:1.7">${arr.map(x=>esc(String(x))).join(' · ')}</div></div>`;}
+function renderNutritionPlan(slot,plan){
+  const days=(plan.days||[]).map(d=>`<div style="background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:13px 15px;margin-bottom:8px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--parchment);margin-bottom:6px">${esc(d.day||'')}</div><div style="font-size:12px;color:var(--smoke);line-height:1.7">${d.breakfast?`<b style="color:var(--parchment)">Breakfast:</b> ${esc(d.breakfast)}<br>`:''}${d.lunch?`<b style="color:var(--parchment)">Lunch:</b> ${esc(d.lunch)}<br>`:''}${d.snack?`<b style="color:var(--parchment)">Snack:</b> ${esc(d.snack)}<br>`:''}${d.dinner?`<b style="color:var(--parchment)">Dinner:</b> ${esc(d.dinner)}`:''}${d.optional?`<br><span style="color:var(--smoke2)">Optional: ${esc(d.optional)}</span>`:''}</div></div>`).join('');
+  const targets=`<div style="display:flex;gap:16px;font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);margin-bottom:10px">${plan.protein_target?`<span>PROTEIN ${esc(plan.protein_target)}</span>`:''}${plan.hydration_target?`<span>WATER ${esc(plan.hydration_target)}</span>`:''}</div>`;
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><div class="card-title" style="margin:0">Your 7-Day Plan</div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateNutritionPlan()">↻ Regenerate</button></div><div class="card-sub">${esc(plan.summary||'')}</div>${targets}${days}${nList('Grocery list',plan.grocery_list)}${nList('Snack ideas',plan.snack_ideas)}${nList('Craving support',plan.craving_support)}${plan.prep_plan?`<div style="font-size:12px;color:var(--smoke);margin-top:12px"><b style="color:var(--parchment)">Weekly prep:</b> ${esc(plan.prep_plan)}</div>`:''}${plan.safety_note?`<div style="font-size:10px;color:var(--smoke2);margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">⚠ ${esc(plan.safety_note)}</div>`:''}<button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="nutritionWeekly()">Log this week's check-in →</button></div>`;
+}
+function nutritionWeekly(){
+  const slot=document.getElementById('plan-slot');
+  slot.innerHTML=`<div class="card"><div class="card-title">This week's check-in</div><div class="card-sub">Riley adapts next week from what actually worked for you.</div>`+
+    nTxt('nw-pct','How well did you stick to the plan? (%)','e.g. 70')+nTxt('nw-meals','Which meals did you actually enjoy?','')+nTxt('nw-crave','How were cravings?','')+nTxt('nw-energy','How was your energy?','')+
+    `<button class="btn btn-gold" id="nw-btn" onclick="saveNutritionWeekly()">Save & adapt my plan →</button><button class="btn btn-ghost" style="margin-left:8px" onclick="loadWellness()">Cancel</button></div>`;
+}
+async function saveNutritionWeekly(){
+  const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  setBtn('nw-btn',true,'Save & adapt my plan →');
+  try{await SB.from('wellness_weekly').insert({user_id:UID,plan_type:'nutrition',completed_pct:parseInt(g('nw-pct'))||null,meals_enjoyed:g('nw-meals')||null,cravings:g('nw-crave')||null,energy:g('nw-energy')||null});}catch(e){}
+  await generateNutritionPlan();
+}
 async function loadNutrition(){
   const {data:all}=await SB.from('nutrition_logs').select('*').eq('user_id',UID).order('logged_date',{ascending:false}).order('created_at',{ascending:false}).limit(60);
   const logs=all||[];const tl=logs.filter(l=>l.logged_date===TODAY);

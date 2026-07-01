@@ -872,7 +872,21 @@ async function setUsageLimit(id,amount,period){
 }
 async function togglePricingFreeAccess(on){if(!window.confirm(on?'Turn ON free access — every member sees every membership free, uncapped?':'Turn OFF free access — enforce real purchases and Guide caps?'))return;try{await pricingApi('set_free_access',{value:on});loadPricing();}catch(e){window.alert(e.message);}}
 
-function init(){scd();ls();ldst();loadOverview();checkSafetyAlerts();setInterval(checkSafetyAlerts,90000);}
+function init(){
+  try{
+    scd();ls();ldst();loadOverview();
+    checkSafetyAlerts();
+    setInterval(checkSafetyAlerts,90000);
+  }catch(err){
+    console.error('[init] crash:',err);
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='flex';
+    var errDiv=document.createElement('div');
+    errDiv.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#8a2a1a;color:#fff;padding:1rem 1.5rem;z-index:9999;font-family:DM Mono,monospace;font-size:13px;max-width:600px;text-align:center;';
+    errDiv.textContent='Init error: '+err.message+' — open DevTools Console for details';
+    document.body.appendChild(errDiv);
+  }
+}
 async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
 function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r,i){var row=document.createElement('div');row.className='rr clickable';row.title='Click to view this week\'s posts and numbers';row.onclick=function(){openWk(r);};row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}
 function recho(s){if(!s)return;var p=document.getElementById('ep');document.getElementById('ee').style.display='none';var scs=[['biggest_lever','BIGGEST LEVER','l'],['best_pillar','BEST PILLAR','w'],['worst_pillar','WORST PILLAR','d']];scs.forEach(function(a){if(!s[a[0]])return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(s[a[0]])+'</div>';p.appendChild(d);});if(s.email_signups!=null){document.getElementById('ms').textContent=s.email_signups;document.getElementById('mc2').textContent=s.chatbot_opens||'—';document.getElementById('msv').textContent=s.instagram_saves||'—';document.getElementById('mcl').textContent=s.link_clicks||'—';}}

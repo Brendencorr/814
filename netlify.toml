@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html,login.html,community.html,journey.html,onboarding.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-dashboard.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,roadmap.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html"
   # OPERATOR_KEY is an operator-chosen password; we never hardcode it, so scanning
   # the build for its value only false-positives (and fails the build) when the
   # chosen password happens to match a common word in the code.
@@ -203,6 +203,20 @@
 [[redirects]]
   from   = "https://riley.eight14.us/workouts.html"
   to     = "/workouts.html"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/lifemap"
+  to   = "/lifemap.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.eight14.us/lifemap/"
+  to   = "/lifemap.html"
+  status = 200
+[[redirects]]
+  from   = "https://riley.eight14.us/lifemap.html"
+  to     = "/lifemap.html"
   status = 200
   force  = true
 

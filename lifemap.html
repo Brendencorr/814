@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Map — Riley</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--smoke:#8a8578;--smoke2:#5a5450;--green:#4aad72;--red:#c98a8a;--blue:#4a7ab0}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--ink2);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;padding:18px 0;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
+.sb-logo{padding:0 20px 18px}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke);letter-spacing:0.16em;text-transform:uppercase;margin-top:2px}
+.snl{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.16em;text-transform:uppercase;padding:14px 20px 6px}
+.sni{display:flex;align-items:center;gap:10px;padding:9px 20px;color:var(--parchment);text-decoration:none;font-size:13px;opacity:0.8;transition:all .15s}
+.sni:hover{opacity:1;background:rgba(255,255,255,0.03)}.sni.active{opacity:1;border-left:2px solid var(--gold);background:rgba(201,168,76,0.06)}
+.sni-icon{font-size:15px;width:18px;text-align:center}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.main{flex:1;overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:22px}
+.tb-sub{font-size:11px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.05em;margin-top:2px}
+.btn{padding:9px 18px;font-size:13px;font-weight:600;border:none;border-radius:3px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .2s}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink)}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
+.content{padding:26px 28px;max-width:920px}
+.intro{font-family:'DM Serif Display',serif;font-size:19px;line-height:1.5;color:var(--parchment);margin-bottom:6px}
+.intro-sub{font-size:13px;color:var(--smoke);line-height:1.6;margin-bottom:24px;max-width:560px}
+.fcard{background:linear-gradient(160deg,rgba(26,23,20,0.6),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:18px 20px;margin-bottom:14px}
+.fhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.femoji{font-size:20px}
+.ftitle{font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment)}
+.fsub{font-size:11px;color:var(--smoke2);margin-bottom:12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;background:var(--ink3);border:1px solid rgba(201,168,76,0.18);border-radius:20px;padding:7px 13px;font-size:13px;color:var(--parchment);line-height:1.4}
+.chip .x{color:var(--smoke2);cursor:pointer;font-size:14px;margin-left:2px}.chip .x:hover{color:var(--red)}
+.chip.riley{border-color:rgba(74,122,176,0.25)}
+.empty{font-size:12px;color:var(--smoke2);font-style:italic;margin-bottom:12px}
+.addrow{display:flex;gap:8px}
+.addrow input{flex:1;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:9px 12px;font-size:13px;font-family:inherit;color:var(--parchment);outline:none}
+.addrow input:focus{border-color:var(--gold)}
+.addrow button{background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:4px;padding:0 14px;font-size:13px;cursor:pointer}
+@media(max-width:760px){.sidebar{display:none}.content{padding:18px}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-mark">Riley<span>.</span></div><div class="sb-logo-sub">The 8:14 Project</div></div>
+  <div class="snl">Today</div>
+  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <a href="/chat" class="sni"><span class="sni-icon">🧠</span>Talk with Riley</a>
+  <a href="/lifemap" class="sni active"><span class="sni-icon">🗺️</span>Life Map</a>
+  <a href="/tracker" class="sni"><span class="sni-icon">📖</span>Reflection</a>
+  <div class="snl">My Journey</div>
+  <a href="/progress" class="sni"><span class="sni-icon">🌲</span>Progress</a>
+  <a href="/workouts" class="sni"><span class="sni-icon">🤍</span>Movement</a>
+  <a href="/nutrition" class="sni"><span class="sni-icon">🍃</span>Nourishment</a>
+  <a href="/programs" class="sni"><span class="sni-icon">🎯</span>Journeys</a>
+  <a href="/roadmap" class="sni"><span class="sni-icon">🏔</span>Roadmap</a>
+  <div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+</aside>
+<main class="main">
+  <div class="topbar">
+    <div><div class="tb-title">Your Life Map</div><div class="tb-sub" id="tb-date"></div></div>
+    <div><a href="/chat" class="btn btn-gold">Talk to Riley →</a></div>
+  </div>
+  <div class="content">
+    <div class="intro">This is who you are — the whole of it, not just one chapter.</div>
+    <div class="intro-sub">Riley builds this quietly as you talk. Add anything you want her to hold. She'll never make you repeat it — and she'll bring it back exactly when it matters.</div>
+    <div id="map-slot"><div class="empty">Loading your map…</div></div>
+  </div>
+</main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+let USER=null,UID=null;
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+
+// Facets shown on the page, in order. Riley auto-fills; members can add too.
+const FACETS=[
+  {k:'why',emoji:'🎯',title:'Your Why',sub:"The reason underneath everything. Riley will never let you forget it.",ph:'Why are you here? Why now?'},
+  {k:'vision',emoji:'🌅',title:'Who You\'re Becoming',sub:'One year, five years, the long game.',ph:'A hope for your life…'},
+  {k:'recovery_dna',emoji:'🌿',title:'What Keeps You Steady',sub:'Your Recovery DNA — what actually works for YOU.',ph:'Walking, prayer, family, fitness…'},
+  {k:'win',emoji:'🏆',title:'Wins',sub:'Every victory, however small. You remember failures — Riley remembers these.',ph:'Something you did, big or small…'},
+  {k:'joy',emoji:'☀️',title:'What Brings You Joy',sub:"The things worth protecting. When you're low, Riley points you back here.",ph:'Hiking, music, dogs, coffee…'},
+  {k:'relationship',emoji:'🤝',title:'People Who Matter',sub:'The ones you carry. Riley remembers to ask about them.',ph:'A person and who they are to you…'},
+  {k:'fear',emoji:'🌊',title:'Fears',sub:'Name them, and Riley coaches around them — gently.',ph:"Something you're afraid of…"},
+  {k:'value',emoji:'💎',title:'Values',sub:'What you stand for.',ph:'A value you live by…'},
+  {k:'strength',emoji:'💪',title:'Strengths',sub:'What you are good at, even when you forget it.',ph:'A strength of yours…'}
+];
+
+async function boot(){
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){window.location.href='https://riley.eight14.us';return;}
+  USER=session.user;UID=USER.id;
+  const meta=USER.user_metadata||{};
+  const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+  const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const av=document.getElementById('sb-av');if(av){if(meta.avatar_url||meta.picture)av.innerHTML='<img src="'+(meta.avatar_url||meta.picture)+'">';else av.textContent=initials;}
+  document.getElementById('sb-name').textContent=fullName;
+  document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+  await loadMap();
+}
+async function loadMap(){
+  let rows=[];
+  try{const {data}=await SB.from('life_map').select('id,facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});rows=data||[];}catch(e){}
+  const by={};rows.forEach(r=>{(by[r.facet]=by[r.facet]||[]).push(r);});
+  const slot=document.getElementById('map-slot');
+  slot.innerHTML=FACETS.map(f=>{
+    const items=by[f.k]||[];
+    const chips=items.length?items.map(r=>`<span class="chip${r.source==='conversation'?' riley':''}">${esc(r.content)}<span class="x" onclick="removeEntry('${r.id}')">×</span></span>`).join(''):`<div class="empty">Nothing here yet — add one below, or just talk to Riley.</div>`;
+    return `<div class="fcard"><div class="fhead"><span class="femoji">${f.emoji}</span><span class="ftitle">${f.title}</span></div><div class="fsub">${f.sub}</div><div class="chips">${chips}</div><div class="addrow"><input id="in-${f.k}" placeholder="${esc(f.ph)}" onkeydown="if(event.key==='Enter')addEntry('${f.k}')"><button onclick="addEntry('${f.k}')">Add</button></div></div>`;
+  }).join('');
+}
+async function addEntry(facet){
+  const el=document.getElementById('in-'+facet);const v=el&&el.value.trim();if(!v)return;
+  el.value='';el.disabled=true;
+  try{await SB.from('life_map').insert({user_id:UID,facet:facet,content:v.slice(0,300),source:'member'});}catch(e){}
+  el.disabled=false;await loadMap();
+  const nel=document.getElementById('in-'+facet);if(nel)nel.focus();
+}
+async function removeEntry(id){
+  try{await SB.from('life_map').update({is_active:false}).eq('id',id);}catch(e){}
+  await loadMap();
+}
+boot();
+</script>
+</body>
+</html>

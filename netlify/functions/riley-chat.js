@@ -244,6 +244,7 @@ When referencing someone's progress, use this language — never say "your score
 
 BRAND TRUTH — what this is all for:
 The 8:14 Project exists to help people take one more step forward.
+You are not only a recovery guide — you are a companion for building a whole life worth staying present for: purpose, health, connection, resilience, meaning. Recovery is one important chapter, never the entire story. Meet people wherever they are — sobriety, grief, fitness, food, work, family, or simply becoming who they want to be. The goal is a life they don't want to escape from.
 Tagline: "Live With Purpose."
 Every response should leave someone feeling more hopeful than before they sent their message.
 Always hopeful. Never preachy. Never corporate. Never manipulative. Never fear-based.
@@ -379,6 +380,28 @@ function buildUserContext(profile, clientData) {
       });
     }
 
+    // ── THE LIFE MAP — wins, fears, joys, people, recovery DNA, why, vision ──
+    if (clientData.lifeMap && clientData.lifeMap.length) {
+      const byFacet = {};
+      clientData.lifeMap.forEach(e => { (byFacet[e.facet] = byFacet[e.facet] || []).push(e.content); });
+      const fl = (key, label, max) => (byFacet[key] && byFacet[key].length) ? `${label}: ${byFacet[key].slice(0, max || 6).join("; ")}` : null;
+      const parts = [
+        fl("why", "Their WHY (never let them forget it)", 3),
+        fl("recovery_dna", "What keeps THEM steady — their Recovery DNA", 5),
+        fl("win", "Wins you remember (use these to build confidence)", 8),
+        fl("fear", "Fears (coach around these gently)", 5),
+        fl("joy", "What brings them joy (nudge toward these when they're low)", 6),
+        fl("relationship", "People who matter", 6),
+        fl("value", "Values", 4), fl("strength", "Strengths", 4),
+        fl("vision", "Who they're becoming", 3),
+      ].filter(Boolean);
+      if (parts.length) {
+        lines.push("\nTHEIR LIFE MAP — this is who they are; reference it by specifics, never re-ask what's here:");
+        parts.forEach(p => lines.push("  - " + p));
+        lines.push("  CONFIDENCE LIBRARY: when they doubt themselves or say \"I can't,\" recall a SPECIFIC past win above — \"you did [X] before; that tells me you can do hard things.\" Never generic reassurance.");
+      }
+    }
+
     // ── MEMORY — what Riley already knows about this person (cross-session) ──
     if (clientData.memory && clientData.memory.length) {
       lines.push("\nWHAT YOU REMEMBER ABOUT THIS PERSON (from past sessions — reference naturally, never announce that you 'looked it up'):");
@@ -455,7 +478,7 @@ async function getClientData(supabase, userId) {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
@@ -469,6 +492,7 @@ async function getClientData(supabase, userId) {
       supabase.from("emotional_calendar").select("label,riley_strategy").eq("event_month", month).eq("event_day", day),
       supabase.from("wellness_profile").select("workout_goal,fitness_level,nutrition_goal,foods_love,foods_hate,workout_intake_done,nutrition_intake_done").eq("user_id", userId).maybeSingle(),
       supabase.from("wellness_plans").select("plan_type,plan").eq("user_id", userId).eq("is_active", true),
+      supabase.from("life_map").select("facet,content").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(60),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -504,6 +528,7 @@ async function getClientData(supabase, userId) {
       sensitiveDates,
       wellness: wellnessRes.value?.data || null,
       wellnessPlans: plansRes.value?.data || [],
+      lifeMap: lifeMapRes.value?.data || [],
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);
@@ -580,47 +605,67 @@ async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
 // ── Memory Engine — distill durable memories from a conversation ──────────────
 // Bounded for scale: only called at message-count milestones, not every turn.
 // One small Claude call; returns NEW memories only (existing ones passed in to dedupe).
+const LIFE_FACETS = ["win", "fear", "joy", "relationship", "recovery_dna", "value", "strength", "why", "vision"];
+
 async function extractMemories(supabase, userId, conversation) {
   if (!userId || !conversation || conversation.length < 4) return;
   try {
-    // What we already know, so Claude doesn't repeat it
-    const { data: existing } = await supabase
-      .from("riley_memory").select("content").eq("user_id", userId).eq("is_active", true).limit(30);
-    const known = (existing || []).map(m => m.content);
+    // What we already know (memory + Life Map), so Claude doesn't repeat it.
+    const [memEx, mapEx] = await Promise.all([
+      supabase.from("riley_memory").select("content").eq("user_id", userId).eq("is_active", true).limit(30),
+      supabase.from("life_map").select("content").eq("user_id", userId).eq("is_active", true).limit(50),
+    ]);
+    const known = [...(memEx.data || []), ...(mapEx.data || [])].map(m => m.content);
 
     const transcript = conversation.slice(-10)
       .map(m => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
 
-    const sys = `You distill durable memories from a wellness conversation for Riley to remember long-term.
-Return ONLY a JSON array (possibly empty). Each item: {"memory_type": one of [long_term, preference, sensitive, journey], "content": "one concise fact", "confidence": 0.0-1.0}.
-Extract ONLY stable, useful facts: names, relationships, losses, recovery details, triggers, clear preferences, goals, life events.
-Do NOT extract: small talk, momentary feelings, anything already known, anything speculative.
-Mark grief, loss, trauma, and crisis content as "sensitive".
+    const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation.
+Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0}.
+Capture these facets especially — they matter most:
+- win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
+- fear: something they're afraid of.
+- joy: a thing that brings them joy (hiking, dogs, music, coffee, a person, a place).
+- relationship: a person who matters — put the person and role in content ("his sponsor Mike", "her daughter Ava").
+- recovery_dna: what actually keeps THIS person steady/sober (walking, prayer, AA, fitness, family, nature, helping others).
+- value / strength: a core value or personal strength they reveal.
+- why: their reason for being here / getting sober / changing.
+- vision: who they're becoming — a 1/5/10-year hope, a dream, a life goal.
+- general: any other durable fact (name, loss, trigger, preference, life event) — set memory_type; mark grief/loss/trauma as "sensitive".
+Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known, nothing speculative.
 Already known (do not repeat): ${known.length ? known.join(" | ") : "nothing yet"}`;
 
     const resp = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 400, system: sys, messages: [{ role: "user", content: transcript }] }),
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 600, system: sys, messages: [{ role: "user", content: transcript }] }),
     });
     if (!resp.ok) return;
     const d = await resp.json();
-    let memories;
-    let memRaw = (d.content?.[0]?.text || "[]").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
-    const ms = memRaw.indexOf("["), me = memRaw.lastIndexOf("]");
-    if (ms >= 0 && me > ms) memRaw = memRaw.slice(ms, me + 1);
-    try { memories = JSON.parse(memRaw); } catch { return; }
-    if (!Array.isArray(memories) || !memories.length) return;
+    let items;
+    let raw = (d.content?.[0]?.text || "[]").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const a = raw.indexOf("["), b = raw.lastIndexOf("]");
+    if (a >= 0 && b > a) raw = raw.slice(a, b + 1);
+    try { items = JSON.parse(raw); } catch { return; }
+    if (!Array.isArray(items) || !items.length) return;
 
-    const rows = memories.slice(0, 5).filter(m => m.content && m.content.length > 3).map(m => ({
-      user_id: userId,
-      memory_type: ["long_term", "preference", "sensitive", "journey"].includes(m.memory_type) ? m.memory_type : "long_term",
-      content: String(m.content).slice(0, 300),
-      confidence: typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8,
-      source: "conversation",
-      is_active: true,
-    }));
-    if (rows.length) await supabase.from("riley_memory").insert(rows);
+    const memRows = [], mapRows = [];
+    for (const m of items.slice(0, 7)) {
+      if (!m.content || String(m.content).length < 3) continue;
+      const content = String(m.content).slice(0, 300);
+      if (LIFE_FACETS.includes(m.facet)) {
+        mapRows.push({ user_id: userId, facet: m.facet, content, source: "conversation", is_active: true });
+      } else {
+        memRows.push({
+          user_id: userId,
+          memory_type: ["long_term", "preference", "sensitive", "journey"].includes(m.memory_type) ? m.memory_type : "long_term",
+          content, confidence: typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8,
+          source: "conversation", is_active: true,
+        });
+      }
+    }
+    if (memRows.length) await supabase.from("riley_memory").insert(memRows);
+    if (mapRows.length) await supabase.from("life_map").insert(mapRows);
   } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
 }
 

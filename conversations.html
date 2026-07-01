@@ -252,7 +252,7 @@ function openSess(sid){
         const badge=it.comingSoon?'<span class="sb-badge-soon">Soon</span>':(itemLocked?'<span class="sb-tier-lock">🔒</span>':'');
         return `<a href="${itemLocked?'#':it.href}" class="${cls}" data-feat="${it.feat||''}" data-upsell="${itemLocked?'1':'0'}"><span class="sni-icon">${it.icon}</span>${it.label}${badge}</a>`;
       }).join('');
-      const openDefault=idx===myIdx;
+      const openDefault=idx<=myIdx;
       return `<div class="sb-tier">
         <div class="sb-tier-head${openDefault?' open':''}${locked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${locked?'<span class="sb-tier-lock">🔒</span>':''}<span class="sb-chev">▸</span></div>
         <div class="sb-tier-items${openDefault?' open':''}">${itemsHtml}</div>

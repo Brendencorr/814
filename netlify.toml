@@ -408,6 +408,22 @@
   status = 200
   force  = true
 
+# ── Marketing site preview (home.html) ──
+# Reviewable now at riley.eight14.us/welcome. The apex rules below are pre-staged
+# and stay inert until eight14.us DNS is pointed at Netlify (then it serves as root).
+[[redirects]]
+  from = "https://riley.eight14.us/welcome"
+  to   = "/home.html"
+  status = 200
+[[redirects]]
+  from = "https://eight14.us/"
+  to   = "/home.html"
+  status = 200
+[[redirects]]
+  from = "https://www.eight14.us/"
+  to   = "/home.html"
+  status = 200
+
 # ── Riley catch-all (anonymous chat for everything else) ──
 # No force=true here — lets actual files (CSS, JS, HTML) be served directly.
 # Only applies to paths that don't match an existing file.

@@ -1322,21 +1322,24 @@ function renderUserDetail(d){
   }
   var totalMsgs=sessions.reduce(function(a,s){return a+s.message_count;},0);
 
-  // ── TIER BANNER ──────────────────────────────────────────────────────────
-  var tier='Free';var tierColor='var(--muted2)';
+  // ── TIER BANNER (v4 naming: Guide/Companion/Coach/Mentor) ──────────────────
+  // Quick-glance display from the legacy programs_purchased text array; the
+  // full membership picture (entitlements table, grant/revoke) is the
+  // Membership & Entitlements panel further down this same view.
+  var tier='Riley Guide · Free';var tierColor='var(--muted2)';
   if(profile.programs_purchased&&profile.programs_purchased.length){
     var p=profile.programs_purchased;
-    if(p.some(function(x){return x.indexOf('Concierge')>=0;})){tier='Riley Concierge · $39/mo';tierColor='var(--gold)';}
-    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $19/mo';tierColor='var(--gold)';}
-    else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0;})){tier='Recovery Journey · $37';tierColor='var(--sage)';}
-    else if(p.some(function(x){return x.indexOf('Nourish')>=0;})){tier='Move & Nourish · $37';tierColor='var(--sage)';}
-    else if(p.some(function(x){return x.indexOf('Carry')>=0;})){tier='Carry Both · $37';tierColor='var(--sage)';}
+    if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Coach · $49/mo';tierColor='var(--gold)';}
+    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $29/mo';tierColor='var(--gold)';}
+    else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0||x.indexOf('Sobriety')>=0;})){tier='Sobriety (self-guided) · $9';tierColor='var(--sage)';}
+    else if(p.some(function(x){return x.indexOf('Nourish')>=0||x.indexOf('Body')>=0;})){tier='Body Rebuild (self-guided) · $9';tierColor='var(--sage)';}
+    else if(p.some(function(x){return x.indexOf('Carry')>=0||x.indexOf('Grief')>=0;})){tier='Grief & Life Transitions (self-guided) · $9';tierColor='var(--sage)';}
     else tier=p[p.length-1];
   }
   html+='<div style="background:var(--gold-dim);border-left:3px solid var(--gold);padding:.75rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between">';
   html+='<div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted2);letter-spacing:.15em;margin-bottom:.2rem">CURRENT TIER</div>';
   html+='<div style="font-family:DM Mono,monospace;font-size:13px;color:'+tierColor+';letter-spacing:.05em;font-weight:600">'+x(tier)+'</div></div>';
-  html+='<button class="bg" style="font-size:10px;padding:.35rem .75rem" onclick="alert('To update: Supabase → user_profiles → programs_purchased')">Change Tier</button>';
+  html+='<span style="font-size:.66rem;color:var(--muted2)">Use Membership &amp; Entitlements below to grant/revoke →</span>';
   html+='</div>';
 
   html+='<div class="ud-section">';

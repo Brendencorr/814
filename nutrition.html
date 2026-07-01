@@ -304,24 +304,24 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
 (function(){
   const TIER_NAV = {
     guide:    {label:'Guide',     items:[
-      {href:'/journey?slug=7-day-reset', icon:'\U0001F331', label:'7-Day Reset'},
-      {href:'/conversations', icon:'\U0001F4AD', label:'Conversations'}
+      {href:'/journey?slug=7-day-reset', icon:'🌱', label:'7-Day Reset'},
+      {href:'/conversations', icon:'💭', label:'Conversations'}
     ]},
     companion:{label:'Companion', items:[
-      {href:'/tracker', icon:'\U0001F4D6', label:'Reflection', feat:'daily_checkin'},
-      {href:'/workouts', icon:'\U0001F90D', label:'Movement', feat:'tracker_fitness'},
-      {href:'/nutrition', icon:'\U0001F343', label:'Nourishment', feat:'tracker_nutrition'},
-      {href:'/sleep', icon:'\U0001F319', label:'Rest', feat:'tracker_sleep'}
+      {href:'/tracker', icon:'📖', label:'Reflection', feat:'daily_checkin'},
+      {href:'/workouts', icon:'🤍', label:'Movement', feat:'tracker_fitness'},
+      {href:'/nutrition', icon:'🍃', label:'Nourishment', feat:'tracker_nutrition'},
+      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'}
     ]},
     coach:    {label:'Coach',     items:[
-      {href:'/finance', icon:'\U0001F4B0', label:'Financial Goals', feat:'tracker_finance'},
-      {href:'/lifemap', icon:'\U0001F5FA️', label:'Life Map', feat:'knowledge_graph'},
-      {href:'/community', icon:'\U0001F91D', label:'Community', comingSoon:true}
+      {href:'/finance', icon:'💰', label:'Financial Goals', feat:'tracker_finance'},
+      {href:'/lifemap', icon:'🗺️', label:'Life Map', feat:'knowledge_graph'},
+      {href:'/community', icon:'🤝', label:'Community', comingSoon:true}
     ]}
   };
   const RESOURCES = [
-    {href:'/programs', icon:'\U0001F5C2️', label:'Journeys'},
-    {href:'/calendar', icon:'\U0001F4C5', label:'Calendar', feat:'tracker_calendar'}
+    {href:'/programs', icon:'🗂️', label:'Journeys'},
+    {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
   ];
   const TIER_ORDER = ['guide','companion','coach'];
   const PAGE_FEATURE = 'tracker_nutrition';
@@ -343,7 +343,7 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
     const base=it.href.split('?')[0].replace(/\/$/,'');
     const isActive=path===base;
     const cls='sni'+(isActive?' active':'')+(locked?' locked':'');
-    const badge=it.comingSoon?'<span class="sb-badge-soon">Soon</span>':(locked?'<span class="sb-tier-lock">\U0001F512</span>':'');
+    const badge=it.comingSoon?'<span class="sb-badge-soon">Soon</span>':(locked?'<span class="sb-tier-lock">🔒</span>':'');
     return `<a href="${locked?'#':it.href}" class="${cls}" data-feat="${it.feat||''}" data-upsell="${locked?'1':'0'}"><span class="sni-icon">${it.icon}</span>${it.label}${badge}</a>`;
   }
 
@@ -352,15 +352,13 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
     if(!mount)return;
     const myIdx=tierIdx(ent.tier||'guide');
     let html='';
-    // Tier buckets — own tier + everything below open; higher tiers collapse + lock
     TIER_ORDER.forEach((key,idx)=>{
       const tier=TIER_NAV[key];
       const tierLocked=idx>myIdx;
       const items=tier.items.map(it=>navItem(it, tierLocked && !it.comingSoon)).join('');
       const open=idx<=myIdx;
-      html+=`<div class="sb-tier"><div class="sb-tier-head${open?' open':''}${tierLocked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${tierLocked?'<span class="sb-tier-lock">\U0001F512</span>':''}<span class="sb-chev">▸</span></div><div class="sb-tier-items${open?' open':''}">${items}</div></div>`;
+      html+=`<div class="sb-tier"><div class="sb-tier-head${open?' open':''}${tierLocked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${tierLocked?'<span class="sb-tier-lock">🔒</span>':''}<span class="sb-chev">▸</span></div><div class="sb-tier-items${open?' open':''}">${items}</div></div>`;
     });
-    // Additional Resources — always visible; each item gated by its own feature
     const resItems=RESOURCES.map(it=>navItem(it, it.feat ? !can(ent,it.feat) : false)).join('');
     html+=`<div class="sb-tier"><div class="sb-tier-head open" onclick="sbToggleTier(this)">Additional Resources<span class="sb-chev">▸</span></div><div class="sb-tier-items open">${resItems}</div></div>`;
     mount.innerHTML=html;
@@ -395,7 +393,7 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
     const ov=document.createElement('div');
     ov.style.cssText='position:fixed;inset:0;left:220px;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
-      <div style="font-size:44px;margin-bottom:20px">\U0001F512</div>
+      <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
       <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>

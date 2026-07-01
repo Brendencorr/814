@@ -78,9 +78,10 @@
 [functions."journey-step"]
   timeout = 26
 
-# Workout & Nutrition plan generator — Claude-powered, 7-day plan, 4000 tokens.
-[functions."plan-generate"]
-  timeout = 26
+# Workout & Nutrition plan generator runs as a BACKGROUND function
+# (plan-generate-background.js) — a full 7-day plan exceeds the synchronous
+# timeout, so the -background suffix gives it up to 15 min. The client fires it
+# and polls wellness_plans for the result. No timeout config needed here.
 
 # HTTP-triggered background pipeline — no timeout, runs full Scout->Sage->Atlas
 # The -background suffix tells Netlify to return 202 immediately and keep running

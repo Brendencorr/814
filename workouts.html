@@ -192,14 +192,21 @@ async function saveWorkoutIntake(){
 }
 async function generateWorkoutPlan(){
   const slot=document.getElementById('plan-slot');
-  slot.innerHTML=`<div class="card"><div class="card-sub" style="text-align:center;padding:28px 0">🤍 Riley is building your plan — one moment…</div></div>`;
-  try{
-    const tok=(await SB.auth.getSession()).data.session?.access_token;
-    const r=await fetch('/.netlify/functions/plan-generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,plan_type:'workout'})});
-    const d=await r.json();
-    if(d.plan&&d.plan.days)renderWorkoutPlan(slot,d.plan);
-    else slot.innerHTML=`<div class="card"><div class="card-sub">Riley couldn't build the plan just now. <button class="btn btn-ghost" onclick="generateWorkoutPlan()">Try again</button></div></div>`;
-  }catch(e){slot.innerHTML=`<div class="card"><div class="card-sub">Something went wrong. <button class="btn btn-ghost" onclick="generateWorkoutPlan()">Try again</button></div></div>`;}
+  slot.innerHTML=`<div class="card"><div class="card-sub" style="text-align:center;padding:28px 0">🤍 Riley is building your plan — this takes about 30 seconds…</div></div>`;
+  let prev=null;
+  try{const {data}=await SB.from('wellness_plans').select('created_at').eq('user_id',UID).eq('plan_type','workout').eq('is_active',true).maybeSingle();prev=data&&data.created_at;}catch(e){}
+  try{const tok=(await SB.auth.getSession()).data.session?.access_token;
+    fetch('/.netlify/functions/plan-generate-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,plan_type:'workout'})}).catch(function(){});
+  }catch(e){}
+  let tries=0;
+  const poll=async()=>{
+    tries++;let d=null;
+    try{const {data}=await SB.from('wellness_plans').select('plan,created_at').eq('user_id',UID).eq('plan_type','workout').eq('is_active',true).maybeSingle();d=data;}catch(e){}
+    if(d&&d.plan&&d.plan.days&&d.created_at!==prev)return renderWorkoutPlan(slot,d.plan);
+    if(tries>=22){slot.innerHTML=`<div class="card"><div class="card-sub">Still building — Riley's taking a little longer. <button class="btn btn-ghost" onclick="loadWellness()">Check for it</button></div></div>`;return;}
+    setTimeout(poll,4000);
+  };
+  setTimeout(poll,6000);
 }
 function renderWorkoutCta(slot){slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div class="card-title">Your plan is ready to build</div><div class="card-sub">Riley has your goals — tap to generate this week's workouts.</div><button class="btn btn-gold" onclick="generateWorkoutPlan()">Generate my 7-day plan →</button></div>`;}
 function renderWorkoutPlan(slot,plan){

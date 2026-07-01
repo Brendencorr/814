@@ -82,6 +82,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
     <div id="manual-slot"></div>
     <div id="map-slot"><div class="empty">Loading your map…</div></div>
     <div id="timeline-slot"></div>
+    <div id="story-slot"></div>
+    <div id="legacy-slot"></div>
   </div>
 </main>
 </div>
@@ -118,8 +120,47 @@ async function boot(){
   document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   loadLifeScore();loadInsights();loadManual();
   await loadMap();
-  loadTimeline();
+  loadTimeline();loadStory();loadLegacy();
 }
+// ── Story Engine — "This is who you became" ─────────────────────────────────
+async function loadStory(){
+  const slot=document.getElementById('story-slot');if(!slot)return;
+  let doc=null;try{const {data}=await SB.from('member_docs').select('body').eq('user_id',UID).eq('doc_type','story').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();doc=data&&data.body;}catch(e){}
+  if(doc&&doc.sections)renderStory(slot,doc);
+  else slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📖</span><span class="ftitle">Your Story</span></div><div class="fsub">Every conversation becomes part of your story. Whenever you want, Riley writes the chapter — "this is who you became." It grows richer every month.</div><button class="btn btn-gold" onclick="generateStory()">Write my story so far →</button></div>`;
+}
+function renderStory(slot,doc){
+  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:14px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--gold2);margin-bottom:4px">${esc(s.heading||'')}</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.7">${esc(s.body||'')}</div></div>`).join('');
+  slot.innerHTML=`<div class="fcard" style="background:linear-gradient(160deg,rgba(30,26,20,0.7),rgba(16,14,12,0.5))"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📖</span><span class="ftitle">${esc(doc.title||'Your Story')}</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateStory()">↻ Rewrite</button></div>${secs}</div>`;
+}
+async function generateStory(){
+  const slot=document.getElementById('story-slot');
+  slot.innerHTML=`<div class="fcard"><div class="fsub" style="text-align:center;padding:22px 0">📖 Riley is writing your story — about 30 seconds…</div></div>`;
+  let prev=null;try{const {data}=await SB.from('member_docs').select('created_at').eq('user_id',UID).eq('doc_type','story').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();prev=data&&data.created_at;}catch(e){}
+  try{const tok=(await SB.auth.getSession()).data.session?.access_token;fetch('/.netlify/functions/member-doc-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,doc_type:'story'})}).catch(function(){});}catch(e){}
+  let tries=0;const poll=async()=>{tries++;let d=null;try{const {data}=await SB.from('member_docs').select('body,created_at').eq('user_id',UID).eq('doc_type','story').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();d=data;}catch(e){}
+    if(d&&d.body&&d.body.sections&&d.created_at!==prev)return renderStory(slot,d.body);
+    if(tries>=22)return loadStory();
+    setTimeout(poll,4000);};
+  setTimeout(poll,6000);
+}
+// ── The Legacy Vault ────────────────────────────────────────────────────────
+const LEGACY_TYPES=[['letter','A letter'],['lesson','A life lesson'],['value','A value to pass on'],['advice','Advice'],['recipe','A recipe'],['note','A note']];
+async function loadLegacy(){
+  const slot=document.getElementById('legacy-slot');if(!slot)return;
+  let rows=[];try{const {data}=await SB.from('legacy_vault').select('id,entry_type,title,recipient,body').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});rows=data||[];}catch(e){}
+  const list=rows.length?rows.map(r=>`<div style="background:var(--ink3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:13px 15px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--parchment)">${esc(r.title||'(untitled)')}</div><span style="color:var(--smoke2);cursor:pointer;font-size:15px" onclick="removeLegacy('${r.id}')">×</span></div><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin:2px 0 6px">${esc(((LEGACY_TYPES.find(t=>t[0]===r.entry_type)||[])[1])||r.entry_type)}${r.recipient?' · for '+esc(r.recipient):''}</div><div style="font-size:13px;color:var(--smoke);line-height:1.6;white-space:pre-wrap">${esc(r.body||'')}</div></div>`).join(''):`<div class="empty">Nothing here yet. Start with one letter, one lesson, one recipe. It compounds into something the people you love will keep.</div>`;
+  const opts=LEGACY_TYPES.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');
+  const inp='background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:8px 10px;font-size:13px;color:var(--parchment);font-family:inherit';
+  slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🕯️</span><span class="ftitle">The Legacy Vault</span></div><div class="fsub">The things worth keeping — letters, lessons, recipes, values. What you'd want the people you love to have.</div>${list}<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px"><div style="display:flex;gap:8px;margin-bottom:8px"><select id="lg-type" style="flex:1;${inp}">${opts}</select><input id="lg-to" placeholder="For whom? (optional)" style="flex:1;${inp}"></div><input id="lg-title" placeholder="Title" style="width:100%;${inp};margin-bottom:8px"><textarea id="lg-body" placeholder="Write it here…" rows="4" style="width:100%;${inp};line-height:1.6;resize:vertical"></textarea><button class="btn btn-gold" style="margin-top:8px" onclick="addLegacy()">Save to vault</button></div></div>`;
+}
+async function addLegacy(){
+  const g=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  const body=g('lg-body');if(!body)return;
+  try{await SB.from('legacy_vault').insert({user_id:UID,entry_type:g('lg-type')||'note',title:g('lg-title')||null,recipient:g('lg-to')||null,body:body.slice(0,5000)});}catch(e){}
+  await loadLegacy();
+}
+async function removeLegacy(id){try{await SB.from('legacy_vault').update({is_active:false}).eq('id',id);}catch(e){}await loadLegacy();}
 // ── Habit Intelligence — patterns from the member's own data ────────────────
 async function loadInsights(){
   const slot=document.getElementById('insights-slot');if(!slot)return;

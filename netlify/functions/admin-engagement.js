@@ -64,7 +64,7 @@ exports.handler = async function (event) {
         .order("checkin_date", { ascending: false })
         .limit(50000),
       // tier/products config — same tables entitlements.js reads
-      supabase.from("products").select("product_key,display_name,tier_level"),
+      supabase.from("products").select("product_key,display_name,tier_level,status"),
       supabase.from("user_active_products").select("user_id,product_key").limit(50000),
       // current curriculum enrollment, most-recently-active first
       supabase.from("user_program_progress")
@@ -146,7 +146,10 @@ exports.handler = async function (event) {
         reengaged_at: u.reengagement_sent_at || null,
         won_back: !!(lastEmailAt[u.id] && lastOpenAt[u.id] && lastOpenAt[u.id] > lastEmailAt[u.id]),
         tier: tierFor(owned),
-        products: owned.filter(k => k !== "reset_free").map(k => (prodByKey[k] || {}).display_name || k),
+        // Exclude reset_free (implied for everyone, not worth listing) and
+        // retired products (Coach/Companion's implies_all_programs expansion
+        // technically includes them, but they're dead SKUs — noisy to show).
+        products: owned.filter(k => k !== "reset_free" && (prodByKey[k] || {}).status !== "retired").map(k => (prodByKey[k] || {}).display_name || k),
         active_program: activeProgramByUser[u.id] || null,
         last_crisis_level: u.last_crisis_level || null,
       };

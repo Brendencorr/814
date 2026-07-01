@@ -8,12 +8,12 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#111110;--card:#1a1a14;--card2:#1f1f18;--border:#2a2a22;--border2:#323228;
-  --gold:#c9a84c;--gold-dim:rgba(201,168,76,.15);
-  --sage:#5a8a5a;--sage-dim:rgba(90,138,90,.15);
-  --blue:#6b7f99;--red:#8a4a3a;--red-dim:rgba(138,74,58,.18);
-  --green:#5a8a5a;--green-dim:rgba(90,138,90,.15);
-  --text:#e8e4dc;--muted:#7a7a64;--muted2:#5a5a48;--header:#0d0d0b;
+  --bg:#f5f0e8;--card:#ffffff;--card2:#faf8f4;--border:#e2ddd5;--border2:#ccc8c0;
+  --gold:#9a7820;--gold-dim:rgba(154,120,32,.12);
+  --sage:#3a7055;--sage-dim:rgba(58,112,85,.12);
+  --blue:#6b7f99;--red:#8a2a1a;--red-dim:rgba(138,42,26,.12);
+  --green:#3a7055;--green-dim:rgba(58,112,85,.12);
+  --text:#1a1814;--muted:#6a6458;--muted2:#9a9488;--header:#ffffff;
 }
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;overflow:hidden}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
@@ -27,7 +27,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .gbtn:hover{opacity:.88}
 .gerr{color:var(--red);font-size:.78rem;margin-top:.5rem;min-height:1.1em}
 #app{display:none;flex-direction:column;height:100dvh;overflow:hidden}
-header{background:var(--header);border-bottom:1px solid var(--border);height:52px;display:flex;align-items:center;padding:0 1.25rem;gap:1.5rem;flex-shrink:0;z-index:100}
+header{background:var(--header);border-bottom:1px solid var(--border2);box-shadow:0 1px 3px rgba(0,0,0,.08);height:52px;display:flex;align-items:center;padding:0 1.25rem;gap:1.5rem;flex-shrink:0;z-index:100}
 .hl{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);letter-spacing:.15em}
 .hn{display:flex;gap:4px;flex:1}
 .ht{padding:.35rem .9rem;background:transparent;border:none;font-family:'DM Mono',monospace;font-size:14px;letter-spacing:.12em;color:var(--muted2);cursor:pointer;position:relative;transition:color .15s}
@@ -297,10 +297,10 @@ header{background:var(--header);border-bottom:1px solid var(--border);height:52p
       <button class="ht" data-s="h" onclick="gs('h',this)">Social</button>
       <button class="ht" data-s="p" onclick="spl(this)">Pipeline</button>
       <button class="ht" data-s="r" onclick="gs('r',this)">Review</button>
-      <button class="ht" data-s="u" onclick="loadUsers(this)">Users</button>
+      <button class="ht" data-s="u" onclick="loadUsers(this)">Clients</button>
       <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:#d9534f;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
-      <button class="ht" data-s="m" onclick="loadContent(this)">Content</button>
+      <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="g" onclick="loadProgs(this)">Programs</button>
     </nav>
     <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>

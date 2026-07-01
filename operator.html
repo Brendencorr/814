@@ -896,8 +896,7 @@ function pricingRow(p){
   var price=p.price_cents?('$'+(p.price_cents/100).toFixed(p.price_cents%100?2:0)+(p.recurring?'/mo':'')):'Free';
   var col=STATUS_COLOR[p.status]||'var(--muted2)';
   var future=p.status==='draft'?' <span style="color:var(--muted2);font-size:.66rem">· Future release — not launched</span>':'';
-  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+(p.status==='draft'?'opacity:.6':'')+'">'+
-    '<span style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);width:64px;flex-shrink:0">'+(TIER_LABEL[p.tier_level]||'—')+'</span>'+
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+(p.status==='draft'||p.status==='retired'?'opacity:.6':'')+'">'+
     '<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem">'+engEsc(p.display_name)+future+'</div><div style="font-size:.66rem;color:var(--muted2)">'+engEsc(p.blurb||'').slice(0,110)+'</div></div>'+
     '<span style="font-size:.8rem;color:var(--text);white-space:nowrap">'+price+'</span>'+
     '<select onchange="setProductStatus(\''+p.product_key+'\',this.value)" style="background:var(--bg);border:1px solid '+col+';color:'+col+';border-radius:4px;padding:.3rem .5rem;font-size:.72rem;font-family:DM Mono,monospace;text-transform:uppercase">'+
@@ -906,9 +905,39 @@ function pricingRow(p){
     '<button class="bo" onclick="editProductPrice(\''+p.product_key+'\','+p.price_cents+')">Edit price</button>'+
   '</div>';
 }
+// Explicit display order within a group — falls back to sort_order for
+// anything not listed (e.g. a brand-new product added later).
+var ALACARTE_ORDER=['prog_sobriety','prog_grief','prog_body','prog_first30','prog_eat','prog_move'];
+var RETIRED_ORDER=['concierge','prog_sobriety_90','prog_body_90'];
+function byExplicitOrder(list){
+  return function(a,b){
+    var ia=list.indexOf(a.product_key),ib=list.indexOf(b.product_key);
+    if(ia===-1&&ib===-1)return (a.sort_order||0)-(b.sort_order||0);
+    if(ia===-1)return 1;if(ib===-1)return -1;
+    return ia-ib;
+  };
+}
+function pricingGroup(title,sub,items){
+  if(!items.length)return'';
+  return '<div class="sh" style="margin:1.2rem 0 .6rem">'+title+(sub?' <span style="color:var(--muted2);font-weight:400;font-size:.7rem">'+sub+'</span>':'')+'</div>'+items.map(pricingRow).join('');
+}
 function renderPricing(products,limits,freeAccess){
   var fa='<div style="background:'+(freeAccess?'rgba(74,124,89,0.12)':'var(--card)')+';border:1px solid '+(freeAccess?'var(--green)':'var(--border)')+';border-radius:6px;padding:1rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem"><div><div style="color:var(--text);font-size:.9rem;font-weight:600">Free-access mode '+(freeAccess?'· ON':'· OFF')+'</div><div style="font-size:.72rem;color:var(--muted2);margin-top:.2rem">'+(freeAccess?'Everyone sees every membership free (friends &amp; family testing) — usage caps do not apply either.':'Members only get what they\'ve purchased or been granted.')+'</div></div><button class="bg" onclick="togglePricingFreeAccess('+(!freeAccess)+')">Turn '+(freeAccess?'OFF':'ON')+'</button></div>';
-  var rows=products.length?products.map(pricingRow).join(''):'<div class="em">No products found.</div>';
+
+  // Three groups, by status + tier_level — no new fields needed:
+  //  · Live Programs — the membership ladder (tier_level > 0), Mentor included
+  //    even while status='draft' so the roadmap stays visible to the admin.
+  //  · À La Carte — content-only products (tier_level 0) that are still live.
+  //  · Retired — anything status='retired', regardless of tier.
+  var liveTiers  = products.filter(function(p){return p.tier_level>0;}).sort(function(a,b){return a.tier_level-b.tier_level;});
+  var alacarte   = products.filter(function(p){return p.tier_level===0 && p.status!=='retired';}).sort(byExplicitOrder(ALACARTE_ORDER));
+  var retired    = products.filter(function(p){return p.status==='retired';}).sort(byExplicitOrder(RETIRED_ORDER));
+
+  var groups = pricingGroup('Live Programs','— the membership ladder',liveTiers)
+             + pricingGroup('À La Carte','— content only, no Riley, no subscription',alacarte)
+             + pricingGroup('Retired','— kept for history; existing holders keep access, hidden from everyone else',retired);
+  if(!groups) groups='<div class="em">No products found.</div>';
+
   var limitRows=limits.length?limits.map(function(l){
     return '<div style="display:flex;align-items:center;gap:.7rem;background:var(--card);border:1px solid var(--border);padding:.6rem .9rem;margin-bottom:.4rem;font-size:.8rem"><span style="color:var(--muted2);width:110px;flex-shrink:0">'+engEsc(l.product_key)+'</span><span style="flex:1;color:var(--text)">'+engEsc(l.feature_key)+'</span>'+
       '<input type="number" min="0" value="'+l.limit_amount+'" style="width:60px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:.3rem .4rem;font-size:.78rem" onchange="setUsageLimit(\''+l.id+'\',this.value,null)">'+
@@ -918,8 +947,7 @@ function renderPricing(products,limits,freeAccess){
   }).join(''):'<div class="em">No usage caps configured.</div>';
   document.getElementById('pricing-body').innerHTML=
     '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Membership &amp; Pricing</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+products.length+' products</div></div>'+
-    fa+
-    '<div class="sh" style="margin-bottom:.6rem">Guide / Companion / Coach / Mentor + à la carte</div>'+rows+
+    fa+groups+
     '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Guide — Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
 }
 async function setProductStatus(key,status){try{await pricingApi('update_product',{key:key,patch:{status:status}});loadPricing();}catch(e){window.alert(e.message);}}

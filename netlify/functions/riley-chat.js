@@ -101,6 +101,23 @@ The sugar replacement pattern: why sweets spike in sobriety, dopamine substituti
 Hydration and electrolytes in withdrawal: why water alone is not enough
 Gut repair timeline: what to expect and when with consistent nutrition changes
 
+WORKOUT & NUTRITION COACHING — how you build and talk about plans:
+When someone wants a workout or nutrition plan, you understand them first, then personalize — never a generic template.
+- Classify ONE primary goal. Workout: weight loss, muscle gain, strength, general health, stress reduction, mobility, recovery support, athletic performance. Nutrition: fat loss, muscle gain, maintenance, more energy, better sleep, recovery support, blood sugar stability, reduced cravings, general health.
+- Read fitness level from training frequency: beginner (0-2 days/wk, simple routines), intermediate (3-4 days, knows basic lifts), advanced (5+ days, progressive overload).
+- Personalize by what they actually have: time per day (20 min → full-body circuits, walks, simple meals; 45-60 → structured splits, longer cardio, real prep), equipment (none/bodyweight · dumbbells only · full gym), and recovery state.
+- RECOVERY & CRAVING OVERRIDES: if sleep is under ~6h or stress is high, drop the intensity — walking, mobility, light lifting, hydration. If cravings are elevated, the plan right now is: eat protein, hydrate, walk, reach a support person, avoid isolation, a grounding exercise, community. Movement and food serve recovery first.
+- Adaptive weekly: adjust from what they completed. 80%+ → nudge difficulty up a little. 40-79% → keep it, remove friction. Under 40% → simplify, cut volume, rebuild consistency. Never shame a low week.
+
+WORKOUT & NUTRITION SAFETY — non-negotiable:
+You are a wellness coach — not a doctor, trainer, physical therapist, or dietitian. Never diagnose an injury, never promise rapid weight loss, never push through pain.
+Avoid extreme volume, pain-based progression, punishment language, and "earn your food" framing. Never encourage eating-disorder-style restriction, extreme fasting, detoxes, supplement-heavy protocols, or rapid weight-loss targets.
+With movement guidance, include when it fits: "If pain, dizziness, chest discomfort, or unusual symptoms show up, stop and consult a medical professional."
+With nutrition guidance, include when it fits: "This is general wellness guidance. For medical conditions, medications, eating-disorder history, pregnancy, diabetes, or major dietary changes, work with a qualified clinician."
+
+WHEN A MEMBER HAS A SAVED PLAN:
+If their workout/nutrition goal, level, and current plan are in your context, reference them by specifics — "your Wednesday upper-body session," the grocery list you built, the foods they told you they love or can't stand. Hold them to it warmly. Never re-ask what you already know.
+
 GRIEF, LOSS AND LIFE TRANSITIONS:
 Complicated grief: delayed, denied, numbed — what it looks like when it finally surfaces
 The five stages model: what it gets right, what it misses, why grief is not linear
@@ -340,6 +357,28 @@ function buildUserContext(profile, clientData) {
       });
     }
 
+    // ── WORKOUT & NUTRITION — saved goals + the member's current plan ──
+    if (clientData.wellness) {
+      const w = clientData.wellness;
+      const wl = [];
+      if (w.workout_goal)   wl.push(`workout goal: ${String(w.workout_goal).replace(/_/g, " ")} (${w.fitness_level || "beginner"})`);
+      if (w.nutrition_goal) wl.push(`nutrition goal: ${String(w.nutrition_goal).replace(/_/g, " ")}`);
+      if (w.foods_love)     wl.push(`loves: ${w.foods_love}`);
+      if (w.foods_hate)     wl.push(`won't eat: ${w.foods_hate}`);
+      if (wl.length) lines.push("\nWORKOUT & NUTRITION: " + wl.join("; ") + ". Reference these by name; never re-ask what you already know here.");
+    }
+    if (clientData.wellnessPlans && clientData.wellnessPlans.length) {
+      clientData.wellnessPlans.forEach(pl => {
+        const plan = pl.plan || {};
+        const days = Array.isArray(plan.days) ? plan.days : [];
+        if (pl.plan_type === "workout" && days.length) {
+          lines.push(`Current 7-day WORKOUT plan (${plan.goal || ""}): ${days.map(d => (d.day ? d.day.slice(0, 3) : "") + " " + (d.focus || "")).join(" · ")}. Reference the specific day when it fits.`);
+        } else if (pl.plan_type === "nutrition" && days.length) {
+          lines.push(`Current 7-day NUTRITION plan (${plan.goal || ""}) — protein target ${plan.protein_target || "?"}, hydration ${plan.hydration_target || "?"}, grocery list built. Reference their actual meals when it fits.`);
+        }
+      });
+    }
+
     // ── MEMORY — what Riley already knows about this person (cross-session) ──
     if (clientData.memory && clientData.memory.length) {
       lines.push("\nWHAT YOU REMEMBER ABOUT THIS PERSON (from past sessions — reference naturally, never announce that you 'looked it up'):");
@@ -416,7 +455,7 @@ async function getClientData(supabase, userId) {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
@@ -428,6 +467,8 @@ async function getClientData(supabase, userId) {
       supabase.from("life_events").select("event_type,notes,riley_strategy").eq("user_id", userId).eq("active_support_needed", true).order("created_at", { ascending: false }).limit(3),
       supabase.from("important_dates").select("label,riley_strategy,is_sensitive").eq("user_id", userId).eq("event_month", month).eq("event_day", day),
       supabase.from("emotional_calendar").select("label,riley_strategy").eq("event_month", month).eq("event_day", day),
+      supabase.from("wellness_profile").select("workout_goal,fitness_level,nutrition_goal,foods_love,foods_hate,workout_intake_done,nutrition_intake_done").eq("user_id", userId).maybeSingle(),
+      supabase.from("wellness_plans").select("plan_type,plan").eq("user_id", userId).eq("is_active", true),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -461,6 +502,8 @@ async function getClientData(supabase, userId) {
       memory: memoryRes.value?.data || [],
       lifeEvents: lifeEventsRes.value?.data || [],
       sensitiveDates,
+      wellness: wellnessRes.value?.data || null,
+      wellnessPlans: plansRes.value?.data || [],
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);

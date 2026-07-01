@@ -74,6 +74,10 @@
 [functions."journey-step"]
   timeout = 26
 
+# Workout & Nutrition plan generator — Claude-powered, 7-day plan, 4000 tokens.
+[functions."plan-generate"]
+  timeout = 26
+
 # HTTP-triggered background pipeline — no timeout, runs full Scout->Sage->Atlas
 # The -background suffix tells Netlify to return 202 immediately and keep running
 [functions."manual-pipeline-background"]

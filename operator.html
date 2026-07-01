@@ -357,10 +357,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="hl">8:14</div>
     <nav class="hn">
       <button class="ht active" data-s="o" onclick="loadOverview(this)">Home</button>
-      <button class="ht" data-s="h" onclick="gs('h',this)">Social</button>
-      <button class="ht" data-s="p" onclick="spl(this)">Pipeline</button>
-      <button class="ht" data-s="r" onclick="gs('r',this)">Review</button>
+      <div style="position:relative;display:inline-block" id="social-dd-wrap">
+        <button class="ht" id="social-dd-trigger" onclick="toggleSocialDD(event)">Social Media <span style="font-size:.7em">▾</span></button>
+        <div id="social-dd" style="display:none;position:absolute;top:100%;left:0;margin-top:.25rem;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.14);min-width:150px;z-index:60;padding:.35rem">
+          <button class="ht" data-s="h" onclick="gs('h',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Social</button>
+          <button class="ht" data-s="p" onclick="spl(this);closeSocialDD()" style="display:block;width:100%;text-align:left">Pipeline</button>
+          <button class="ht" data-s="r" onclick="gs('r',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Review</button>
+        </div>
+      </div>
       <button class="ht" data-s="u" onclick="loadUsers(this)">Clients</button>
+      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:#d9534f;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
       <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="y" onclick="loadPricing(this)">Programs</button>
@@ -505,6 +511,18 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="em" id="users-empty">Loading users…</div>
   </div>
 </div>
+
+<!-- ENGAGEMENT SCREEN -->
+<div class="sc" id="se">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1200px;margin:0 auto">
+      <div class="cl" style="margin-bottom:1.1rem">Client Engagement</div>
+      <div id="eng-stats"><div class="em">Loading engagement…</div></div>
+      <div id="eng-attention"></div>
+      <div id="eng-table"></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- USER DETAIL PANEL -->
@@ -592,7 +610,27 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+
+// ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
+function toggleSocialDD(e){
+  if(e)e.stopPropagation();
+  var el=document.getElementById('social-dd');
+  el.style.display=el.style.display==='block'?'none':'block';
+}
+function closeSocialDD(){var el=document.getElementById('social-dd');if(el)el.style.display='none';}
+// The trigger reads "Social Media" whether Social, Pipeline, or Review is the
+// active screen — since gs() only highlights whichever specific item was
+// clicked (now hidden inside the closed dropdown), sync the trigger separately.
+function syncSocialTrigger(){
+  var trig=document.getElementById('social-dd-trigger');if(!trig)return;
+  var current=['h','p','r'].some(function(s){var el=document.getElementById('s'+s);return el&&el.classList.contains('active');});
+  trig.classList.toggle('active',current);
+}
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('social-dd-wrap');
+  if(wrap&&!wrap.contains(e.target))closeSocialDD();
+});
 
 /* ── HOME · COMBINED OVERVIEW ─────────────────────────────────────────────── */
 async function loadOverview(btn){
@@ -677,18 +715,34 @@ async function loadEngagement(btn){
     renderEngagement(d);
   }catch(e){st.innerHTML='<div class="em">Could not load engagement: '+engEsc(e.message)+'</div>';}
 }
+var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],mentor:['Mentor','var(--gold)'],alacarte:['À la carte','var(--sage)']};
+function engTierBadge(tier){
+  var m=ENG_TIER_LABEL[tier];
+  if(!m)return'';
+  return '<span style="font-size:.62rem;color:'+m[1]+';border:1px solid '+m[1]+';border-radius:10px;padding:.08rem .45rem;white-space:nowrap">'+m[0]+'</span>';
+}
 function engRow(u){
   var col=engColor(u.state);
   var moodC=u.recent_mood==null?'var(--muted2)':(u.recent_mood<=2?'var(--red)':u.recent_mood>=4?'var(--green)':'var(--muted)');
-  var reeng=u.won_back?'<span style="color:var(--green);font-size:.68rem">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold);font-size:.68rem">✉ emailed</span>':'<span style="color:var(--muted2)">—</span>');
-  return '<div style="display:grid;grid-template-columns:1.6fr .7fr .75fr .45fr .45fr .6fr .8fr;gap:.5rem;padding:.6rem .9rem;border-bottom:1px solid var(--border);align-items:center;font-size:.8rem">'+
-    '<div style="min-width:0"><div style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(u.name)+'</div><div style="font-size:.65rem;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(u.email||'')+'</div></div>'+
-    '<span><span style="display:inline-block;padding:.12rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span></span>'+
-    '<span style="color:var(--muted);font-size:.72rem">'+engAgo(u.last_active_at)+'</span>'+
-    '<span style="color:var(--muted)">'+(u.brief_open_count||0)+'</span>'+
-    '<span style="color:var(--muted)">'+(u.riley_msg_count||0)+'</span>'+
-    '<span style="color:'+moodC+';font-size:.74rem">'+(u.recent_mood==null?'—':engMood(u.recent_mood))+'</span>'+
-    '<span>'+reeng+'</span>'+
+  var reeng=u.won_back?'<span style="color:var(--green)">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold)">✉ emailed</span>':'<span style="color:var(--muted2)">—</span>');
+  var safety=u.last_crisis_level?'<span style="font-size:.62rem;color:'+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border:1px solid '+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border-radius:10px;padding:.08rem .45rem">⚑ L'+u.last_crisis_level+'</span>':'';
+  var prog=u.active_program?('<span style="color:var(--text)">'+engEsc(u.active_program.title)+'</span> — Day '+(u.active_program.days_completed||0)+(u.active_program.duration_days?' of '+u.active_program.duration_days:'')):'<span style="color:var(--muted2)">No active program</span>';
+  var products=(u.products&&u.products.length)?u.products.map(engEsc).join(', '):'';
+  return '<div onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer;padding:.65rem .9rem;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'">'+
+    '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem">'+
+      '<div style="flex:1;min-width:0"><span style="color:var(--text);font-size:.85rem">'+engEsc(u.name)+'</span> <span style="font-size:.68rem;color:var(--muted2)">'+engEsc(u.email||'')+'</span></div>'+
+      '<span style="display:inline-block;padding:.1rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span>'+
+      engTierBadge(u.tier)+safety+
+    '</div>'+
+    '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.9rem;font-size:.72rem;color:var(--muted)">'+
+      '<span>'+prog+'</span>'+
+      (products?'<span style="color:var(--muted2)">Owns: '+products+'</span>':'')+
+      '<span>Last active '+engAgo(u.last_active_at)+'</span>'+
+      '<span>'+(u.brief_open_count||0)+' briefs</span>'+
+      '<span>'+(u.riley_msg_count||0)+' msgs</span>'+
+      '<span style="color:'+moodC+'">Mood: '+(u.recent_mood==null?'—':engMood(u.recent_mood))+'</span>'+
+      '<span>'+reeng+'</span>'+
+    '</div>'+
   '</div>';
 }
 function renderEngagement(d){
@@ -701,8 +755,7 @@ function renderEngagement(d){
   var na=d.needs_attention||[];
   document.getElementById('eng-attention').innerHTML=na.length?('<div class="sh" style="margin-bottom:.6rem;color:var(--red)">Needs a Check-In ('+na.length+')</div><div style="background:var(--card);border:1px solid var(--border);margin-bottom:1.6rem">'+na.map(engRow).join('')+'</div>'):'';
   var users=d.users||[];
-  var head='<div style="display:grid;grid-template-columns:1.6fr .7fr .75fr .45fr .45fr .6fr .8fr;gap:.5rem;padding:.55rem .9rem;font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.1em;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)"><span>Client</span><span>State</span><span>Last active</span><span>Briefs</span><span>Msgs</span><span>Mood</span><span>Re-engage</span></div>';
-  document.getElementById('eng-table').innerHTML='<div class="sh" style="margin-bottom:.6rem">All Clients ('+users.length+')</div><div style="background:var(--card);border:1px solid var(--border)">'+head+users.map(engRow).join('')+'</div>';
+  document.getElementById('eng-table').innerHTML='<div class="sh" style="margin-bottom:.6rem">All Clients ('+users.length+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div><div style="background:var(--card);border:1px solid var(--border)">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');}
 

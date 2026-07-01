@@ -7,11 +7,18 @@
  *
  * GET → {
  *   aggregate: { total, active, cooling, dormant, new, brief_opens_7d,
- *                riley_msgs_7d, app_opens_7d, new_signups_7d, avg_brief_opens },
+ *                riley_msgs_7d, app_opens_7d, new_signups_7d, avg_brief_opens,
+ *                reeng_emails_7d, win_backs_7d },
  *   users: [ {id, name, email, state, last_active_at, brief_open_count,
- *             riley_msg_count, session_count, sober_days, recent_mood} ],
+ *             riley_msg_count, session_count, sober_days, recent_mood,
+ *             tier, products, active_program, last_crisis_level} ],
  *   needs_attention: [ same shape — dormant/cooling or low recent mood ]
  * }
+ *
+ * tier/products ties each client's engagement directly back to what they've
+ * actually purchased (reads user_active_products, same expansion entitlements.js
+ * uses — Guide/Companion/Coach imply every program). active_program pulls their
+ * current curriculum enrollment + days completed from user_program_progress.
  */
 
 const { getSupabaseClient } = require("./supabase-client");
@@ -40,9 +47,9 @@ exports.handler = async function (event) {
     const sevenAgoTs  = new Date(now - 7 * 86400000).toISOString();
     const sevenAgoDay = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
 
-    const [usersRes, eventsRes, checkinsRes] = await Promise.all([
+    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes] = await Promise.all([
       supabase.from("user_profiles")
-        .select("id,full_name,preferred_name,email,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at")
+        .select("id,full_name,preferred_name,email,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
         .eq("onboarding_completed", true)
         .order("last_active_at", { ascending: false, nullsFirst: false })
         .limit(5000),
@@ -56,15 +63,49 @@ exports.handler = async function (event) {
         .not("mood", "is", null)
         .order("checkin_date", { ascending: false })
         .limit(50000),
+      // tier/products config — same tables entitlements.js reads
+      supabase.from("products").select("product_key,display_name,tier_level"),
+      supabase.from("user_active_products").select("user_id,product_key").limit(50000),
+      // current curriculum enrollment, most-recently-active first
+      supabase.from("user_program_progress")
+        .select("user_id,program_name,days_completed,day_completed,status,last_activity,programs(title,duration_days)")
+        .eq("status", "active")
+        .order("last_activity", { ascending: false })
+        .limit(20000),
     ]);
 
     const users   = usersRes.data   || [];
     const events  = eventsRes.data  || [];
     const checkins= checkinsRes.data|| [];
+    const prodDefs= prodRes.data    || [];
+    const entRows = entRes.data     || [];
+    const progRows= progRes.data    || [];
 
     // Latest mood per user (checkins already newest-first)
     const latestMood = {};
     for (const c of checkins) { if (latestMood[c.user_id] === undefined) latestMood[c.user_id] = c.mood; }
+
+    // Owned products per user (user_active_products already expands
+    // implies_all_programs — same resolved view entitlements.js uses).
+    const prodByKey = {};
+    prodDefs.forEach(p => { prodByKey[p.product_key] = p; });
+    const ownedByUser = {};
+    entRows.forEach(r => { (ownedByUser[r.user_id] ||= []).push(r.product_key); });
+    function tierFor(owned) {
+      if (owned.includes("mentor"))    return "mentor";
+      if (owned.includes("coach") || owned.includes("concierge")) return "coach";
+      if (owned.includes("companion")) return "companion";
+      if (owned.includes("reset_free")) return "guide";
+      return owned.length ? "alacarte" : null;
+    }
+    // First active curriculum enrollment per user (rows already newest-first).
+    const activeProgramByUser = {};
+    progRows.forEach(r => {
+      if (activeProgramByUser[r.user_id]) return;
+      const title = (r.programs && r.programs.title) || r.program_name || "Program";
+      const total = (r.programs && r.programs.duration_days) || null;
+      activeProgramByUser[r.user_id] = { title, days_completed: r.days_completed ?? r.day_completed ?? 0, duration_days: total };
+    });
 
     // Week event tallies + per-user latest email/open times for win-back detection
     let briefOpens7d = 0, rileyMsgs7d = 0, appOpens7d = 0, reengEmails7d = 0;
@@ -89,6 +130,7 @@ exports.handler = async function (event) {
       if (u.created_at && new Date(u.created_at) >= new Date(sevenAgoTs)) newSignups7d++;
       totalBriefOpens += u.brief_open_count || 0;
       const soberDays = u.sobriety_date ? Math.max(0, Math.floor((now - new Date(u.sobriety_date)) / 86400000)) : null;
+      const owned = ownedByUser[u.id] || [];
       return {
         id: u.id,
         name: (u.preferred_name || u.full_name || u.email || "Member"),
@@ -103,6 +145,10 @@ exports.handler = async function (event) {
         reengaged: !!u.reengagement_sent_at,             // currently lapsed + emailed
         reengaged_at: u.reengagement_sent_at || null,
         won_back: !!(lastEmailAt[u.id] && lastOpenAt[u.id] && lastOpenAt[u.id] > lastEmailAt[u.id]),
+        tier: tierFor(owned),
+        products: owned.filter(k => k !== "reset_free").map(k => (prodByKey[k] || {}).display_name || k),
+        active_program: activeProgramByUser[u.id] || null,
+        last_crisis_level: u.last_crisis_level || null,
       };
     });
 

@@ -1,0 +1,9 @@
+# Local scratch / backup artifacts — never deploy these.
+# (Netlify's secret scanner fails the build if these reach the repo, since they
+#  contain the Supabase publishable key in paths outside SECRETS_SCAN_OMIT_PATHS.)
+files.zip
+_redirects_riley.txt
+riley-auth-patch.html
+814-agent-prompts.js
+node_modules/
+.DS_Store

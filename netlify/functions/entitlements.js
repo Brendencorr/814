@@ -98,19 +98,37 @@ exports.handler = async function (event) {
       const { data: fa } = await sb.from('app_settings').select('value').eq('key', 'free_access_mode').maybeSingle();
       if (fa && String(fa.value).toLowerCase() === 'true') {
         freeAccess = true;
-        const { data: allProds } = await sb.from('products').select('product_key').eq('status', 'live');
+        // .eq('status','live') needs migration 033 (products.status). Fall back
+        // to "every product" pre-migration so free-access mode still works.
+        let allProds;
+        try {
+          const r = await sb.from('products').select('product_key').eq('status', 'live');
+          if (r.error) throw r.error;
+          allProds = r.data;
+        } catch (_) {
+          const r2 = await sb.from('products').select('product_key');
+          allProds = r2.data;
+        }
         (allProds || []).forEach(p => owned.add(p.product_key));
       }
     } catch (_) { /* settings table optional — fall back to real entitlements */ }
 
-    // 2. Feature map + usage limits config
-    const [featRes, limitsRes] = await Promise.all([
-      sb.from('feature_map').select('feature_key, required_any, gate_mode, unentitled_state, display_name, sort_order').order('sort_order'),
-      sb.from('usage_limits').select('product_key, feature_key, limit_amount, limit_period'),
-    ]);
-    if (featRes.error) throw featRes.error;
-    const featRows   = featRes.data || [];
-    const limitRows  = limitsRes.data || [];
+    // 2. Feature map + usage limits config. unentitled_state / usage_limits
+    // need migration 033 — degrade to pre-v4 columns (gate_mode only, no caps)
+    // rather than hard-failing the whole endpoint if it hasn't run yet.
+    let featRows = [], limitRows = [];
+    try {
+      const [featRes, limitsRes] = await Promise.all([
+        sb.from('feature_map').select('feature_key, required_any, gate_mode, unentitled_state, display_name, sort_order').order('sort_order'),
+        sb.from('usage_limits').select('product_key, feature_key, limit_amount, limit_period'),
+      ]);
+      if (featRes.error) throw featRes.error;
+      featRows  = featRes.data || [];
+      limitRows = limitsRes.error ? [] : (limitsRes.data || []);
+    } catch (_) {
+      const fallback = await sb.from('feature_map').select('feature_key, required_any, gate_mode, display_name, sort_order').order('sort_order');
+      featRows = fallback.data || [];
+    }
     const limitsByFeature = {};
     limitRows.forEach(l => { (limitsByFeature[l.feature_key] ||= []).push(l); });
 

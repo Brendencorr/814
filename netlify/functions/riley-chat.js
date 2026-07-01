@@ -393,6 +393,7 @@ function buildUserContext(profile, clientData) {
         fl("joy", "What brings them joy (nudge toward these when they're low)", 6),
         fl("relationship", "People who matter", 6),
         fl("value", "Values", 4), fl("strength", "Strengths", 4),
+        fl("energy", "Their energy rhythms (time recommendations to these)", 4),
         fl("vision", "Who they're becoming", 3),
       ].filter(Boolean);
       if (parts.length) {
@@ -605,7 +606,7 @@ async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
 // ── Memory Engine — distill durable memories from a conversation ──────────────
 // Bounded for scale: only called at message-count milestones, not every turn.
 // One small Claude call; returns NEW memories only (existing ones passed in to dedupe).
-const LIFE_FACETS = ["win", "fear", "joy", "relationship", "recovery_dna", "value", "strength", "why", "vision"];
+const LIFE_FACETS = ["win", "fear", "joy", "relationship", "recovery_dna", "value", "strength", "why", "vision", "energy"];
 
 async function extractMemories(supabase, userId, conversation) {
   if (!userId || !conversation || conversation.length < 4) return;
@@ -621,7 +622,7 @@ async function extractMemories(supabase, userId, conversation) {
       .map(m => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
 
     const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation.
-Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0}.
+Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0}.
 Capture these facets especially — they matter most:
 - win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
 - fear: something they're afraid of.
@@ -631,6 +632,7 @@ Capture these facets especially — they matter most:
 - value / strength: a core value or personal strength they reveal.
 - why: their reason for being here / getting sober / changing.
 - vision: who they're becoming — a 1/5/10-year hope, a dream, a life goal.
+- energy: when they have energy or crash (e.g. "sharp in the mornings", "wiped by 3pm") — helps Riley time recommendations.
 - general: any other durable fact (name, loss, trigger, preference, life event) — set memory_type; mark grief/loss/trauma as "sensitive".
 Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known, nothing speculative.
 Already known (do not repeat): ${known.length ? known.join(" | ") : "nothing yet"}`;

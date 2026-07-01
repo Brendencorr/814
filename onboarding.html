@@ -63,7 +63,7 @@ const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_pu
 let USER=null,UID=null,FIRST='';
 const A={}; // collected answers
 const FOCUS=['Sleep','Nutrition','Fitness','Purpose','Mental Health','Stress','Relationships','Recovery','Leadership','Career','Adventure','Creativity','Community','Learning','Financial Wellness'];
-const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
+const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am working on my sobriety.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
 const TIMING=[['morning','Morning'],['lunch','Lunch'],['afternoon','Afternoon'],['evening','Evening'],['on_demand','Only when I ask']];
 const HUMAN_OS=[
   {k:'energy',q:'What gives you energy?',sub:'The people, places, or moments that fill you up.'},
@@ -207,7 +207,8 @@ async function doneS2(){
   if(!A.why_set||!A.why_set.length)return;
   A.why_here=A.why_set.map(i=>WHY[i]).join('; ');
   A.why_here_detail=document.getElementById('why-text')?.value?.trim()||null;
-  await save({why_here:A.why_here,why_here_detail:A.why_here_detail},2);
+  const sobrietyInterest=A.why_set.some(i=>WHY[i]==='I am working on my sobriety.');
+  await save({why_here:A.why_here,why_here_detail:A.why_here_detail,sobriety_interest:sobrietyInterest},2);
   await saveMemory([{content:`Why they came to 8:14: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
   renderSection(3);
 }

@@ -264,9 +264,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- Phase 2 — Riley's progressive discovery (one gentle question at a time) -->
     <div id="phase2-slot"></div>
 
-    <!-- For You Today — Riley Brain's matched recommendations -->
-    <div id="foryou-slot"></div>
-
     <!-- HERO -->
     <div class="hero">
       <div class="hero-ring">
@@ -279,7 +276,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       </div>
       <div class="hero-info">
         <div class="hero-title" id="hero-title">Calculating your readiness…</div>
-        <div class="hero-msg" id="hero-msg">Riley synthesizes your sobriety, sleep, mood, habits, and goals into one daily clarity score.</div>
+        <div class="hero-msg" id="hero-msg">Riley synthesizes your sleep, mood, habits, and goals into one daily clarity score.</div>
         <div class="hero-pills" id="hero-pills"></div>
       </div>
       <div class="hero-breakdown" id="hero-breakdown"></div>
@@ -287,6 +284,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
+
+    <!-- For You Today — Riley Brain's matched recommendations -->
+    <div id="foryou-slot"></div>
 
     <!-- TWO COL -->
     <div class="grid2">
@@ -325,7 +325,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           </div>
           <div id="mood-saved" style="display:none;font-size:10px;color:var(--green2);font-family:'DM Mono',monospace;margin-top:8px;letter-spacing:0.06em"></div>
         </div></div>
-        <div class="panel"><div class="p-body">
+        <div class="panel" id="sober-panel" style="display:none"><div class="p-body">
           <div class="rc-label">Sobriety Streak</div>
           <div class="sober-wrap">
             <div class="sober-ring"><svg viewBox="0 0 80 80" width="80" height="80"><defs><linearGradient id="sobGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c9a84c"/><stop offset="100%" stop-color="#e8d5a3"/></linearGradient></defs><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/><circle id="sober-ring" cx="40" cy="40" r="32" fill="none" stroke="url(#sobGrad)" stroke-width="6" stroke-dasharray="201" stroke-dashoffset="201" stroke-linecap="round"/></svg><div class="sober-c"><div class="sober-n" id="sober-n">—</div><div class="sober-u">days</div></div></div>
@@ -475,12 +475,20 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // ── CLARITY SCORE — prefer the persisted State Engine value; fall back to
     // the live client computation when the engine hasn't written state yet ──
     let UDS=null;try{const _u=await SB.from('user_daily_state').select('clarity_score,clarity_note,crisis_flag').eq('user_id',UID).eq('date',TODAY).maybeSingle();UDS=_u&&_u.data||null;}catch(e){}
-    const factors=[
-      {key:'Sobriety',weight:30,val:sobriety?1:0,color:'#5bc488'},
+    // Sobriety only counts toward Clarity for members actually tracking it —
+    // an active sobriety_tracker row is the signal. Weights are rebalanced
+    // (not just zeroed) so members who aren't in recovery can still reach 100.
+    const factors=sobriety?[
+      {key:'Sobriety',weight:30,val:1,color:'#5bc488'},
       {key:'Sleep',weight:20,val:sleepLast?Math.min(1,sleepLast/8):0,color:'#5bc488'},
       {key:'Mood',weight:20,val:moodToday?moodToday/5:0,color:'#c9a84c'},
       {key:'Habits',weight:15,val:habitsTotal?habitsDoneToday/habitsTotal:0,color:'#c9a84c'},
       {key:'Goals',weight:15,val:goals.length?goalsOnTrack/goals.length:0,color:'#e8d5a3'}
+    ]:[
+      {key:'Sleep',weight:30,val:sleepLast?Math.min(1,sleepLast/8):0,color:'#5bc488'},
+      {key:'Mood',weight:30,val:moodToday?moodToday/5:0,color:'#c9a84c'},
+      {key:'Habits',weight:20,val:habitsTotal?habitsDoneToday/habitsTotal:0,color:'#c9a84c'},
+      {key:'Goals',weight:20,val:goals.length?goalsOnTrack/goals.length:0,color:'#e8d5a3'}
     ];
     let clientScore=Math.round(factors.reduce((s,f)=>s+f.weight*f.val,0));
     clientScore=Math.min(100,clientScore);
@@ -495,7 +503,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(moodToday)pills.push({t:['','Low','Off','OK','Good','Great'][moodToday]+' mood',c:moodToday>=4?'pill-green':'pill-gold'});
     if(habitsTotal)pills.push({t:habitsDoneToday+'/'+habitsTotal+' habits',c:habitsDoneToday>=habitsTotal*0.5?'pill-green':'pill-gold'});
     document.getElementById('hero-title').textContent=score>=80?'You\'re in a great rhythm.':score>=60?'You\'re building momentum.':score>=40?'One step at a time.':score>0?'You\'re rebuilding.':'Every day counts.';
-    document.getElementById('hero-msg').textContent=(UDS&&UDS.clarity_note)?UDS.clarity_note:(score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Add your sobriety date and a few habits in Reflection — Riley will take it from there.');
+    document.getElementById('hero-msg').textContent=(UDS&&UDS.clarity_note)?UDS.clarity_note:(score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?(sobriety?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Log a sleep entry and check in daily. Each one helps Riley know you better.'):(sobriety?'Add your sobriety date and a few habits in Reflection — Riley will take it from there.':'Add a few habits and goals in Reflection — Riley will take it from there.'));
     document.getElementById('hero-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('')+(score<100?'<a href="/tracker" class="pill pill-add">+ Add to your day</a>':'');
 
     // Hero breakdown bars
@@ -523,7 +531,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const wkHist=Array.from({length:7},(_,i)=>wkByDay[dAgo(6-i)]||0);
     const yrs=Math.floor(SOBER_DAYS/365),mos=Math.floor((SOBER_DAYS%365)/30);
     document.getElementById('trends').innerHTML=
-      trend('Sobriety',SOBER_DAYS||'—',yrs>0?`${yrs}yr ${mos}mo sober`:'days sober',[],'#c9a84c','sp1')+
+      (sobriety?trend('Sobriety',SOBER_DAYS||'—',yrs>0?`${yrs}yr ${mos}mo sober`:'days sober',[],'#c9a84c','sp1'):'')+
       trend('Sleep',sleepLast?sleepLast+'h':'—','last night vs 7d',sleepHist,'#5bc488','sp2')+
       trend('Mood',moodToday?['','Low','Off','OK','Good','🔥'][moodToday]:'—','7-day trend',moodHist,'#c9a84c','sp3')+
       trend('Training',workouts.length||'—','workouts · 14d',wkHist,'#4a7ab0','sp4');
@@ -555,14 +563,19 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // ── MOOD ──
     if(todayCI?.mood){MOOD=todayCI.mood;hlMood(todayCI.mood);document.getElementById('mood-saved').style.display='block';document.getElementById('mood-saved').textContent='✓ CHECKED IN TODAY';}
 
-    // ── SOBRIETY ──
+    // ── SOBRIETY ── (panel only shows for members with an active tracker —
+    // not everyone on the platform is pursuing sobriety)
+    const soberPanel=document.getElementById('sober-panel');
     if(sobriety){
+      soberPanel.style.display='';
       countUp(document.getElementById('sober-n'),SOBER_DAYS,900);
       document.getElementById('sober-mile').textContent=yrs>=1?yrs+'yr '+mos+'mo sober':SOBER_DAYS>=90?'Personal best':'Keep going';
       document.getElementById('sober-msg').textContent=SOBER_DAYS>=365?'Absolutely extraordinary.':SOBER_DAYS>=90?'Personal best territory.':SOBER_DAYS>=30?'A full month strong.':'Every day counts.';
       const sr=document.getElementById('sober-ring');setTimeout(()=>{sr.style.transition='stroke-dashoffset 1.2s';sr.style.strokeDashoffset=201*(1-Math.min(1,SOBER_DAYS/365));},150);
       const ciSet=new Set(checkins.map(c=>c.checkin_date));let dots='';for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);dots+=`<div class="sd ${ds===TODAY?'today':ciSet.has(ds)?'done':''}"></div>`;}
       document.getElementById('sober-dots').innerHTML=dots;
+    }else{
+      soberPanel.style.display='none';
     }
 
     // ── HABITS ──
@@ -710,6 +723,10 @@ async function sendFeedback(contentId,type,fb){
 // Deferred onboarding questions, surfaced one at a time, conversationally —
 // never a second form. Each gated by days-since-onboarding, tracked so it never repeats.
 const PHASE2_BANK=[
+  // SOBRIETY FOLLOW-UP — surfaces on the very next login after onboarding for
+  // anyone who flagged sobriety in "What brings you here?" (why_here). Doesn't
+  // assume they're already sober — that's the whole point of asking.
+  {key:"s_status",bucket:"sobriety",day:0,store:"custom",when:ctx=>ctx.sobrietyInterest&&!ctx.hasSobrietyTracker,prompt:"When you first signed up, you mentioned sobriety was something you wanted to explore. Are you already sober, or is that something you'd like to work toward?",type:"choice",opts:["Already sober","Want to get sober","Not right now"]},
   // PHYSICAL (available from day 1)
   {key:"p_age",bucket:"physical",day:0,store:"detail",prompt:"Hey — I realized I don't actually know how old you are. Mind sharing?",type:"text",ph:"Your age"},
   {key:"p_occupation",bucket:"physical",day:0,store:"detail",prompt:"What do you do with your days? Work, school, caregiving — whatever fills them.",type:"text",ph:"What you do"},
@@ -732,7 +749,7 @@ async function loadPhase2Discovery(force){
     const gateKey='p2_last_'+UID;
     if(!force&&localStorage.getItem(gateKey)===TODAY)return;
 
-    const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_completed_at,phase2_progress').eq('id',UID).maybeSingle();
+    const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_completed_at,phase2_progress,sobriety_interest').eq('id',UID).maybeSingle();
     if(!p||!p.onboarding_completed)return; // only after Phase 1
     const prog=p.phase2_progress||{};
     const startedAt=p.onboarding_completed_at?new Date(p.onboarding_completed_at):new Date(Date.now()-86400000);
@@ -744,8 +761,17 @@ async function loadPhase2Discovery(force){
       if(!wb){localStorage.setItem(gateKey,TODAY);renderWellnessBaseline();return;}
     }
 
-    // Otherwise surface the next unanswered, day-eligible question
-    const next=PHASE2_BANK.find(q=>daysSince>=q.day&&!prog[q.key]);
+    // Only probe for an existing tracker when it's actually relevant — avoids
+    // an extra query for the majority who never flagged sobriety interest.
+    let hasSobrietyTracker=false;
+    if(p.sobriety_interest&&!prog.s_status){
+      const {data:st}=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle();
+      hasSobrietyTracker=!!st;
+    }
+    const ctx={sobrietyInterest:!!p.sobriety_interest,hasSobrietyTracker};
+
+    // Otherwise surface the next unanswered, day-eligible, applicable question
+    const next=PHASE2_BANK.find(q=>daysSince>=q.day&&!prog[q.key]&&(!q.when||q.when(ctx)));
     if(!next){return;} // all caught up
     localStorage.setItem(gateKey,TODAY);
     renderPhase2(next);
@@ -780,6 +806,7 @@ async function p2save(key,store,col,bucket){
   const inp=document.getElementById('p2-in');
   const val=inp?inp.value.trim():window._p2val;
   if(!val){return p2skip(key);}
+  if(key==='s_status'){return p2saveSobrietyStatus(val);}
   try{
     if(store==='detail'){await SB.from('profile_details').upsert({user_id:UID,category:bucket,detail_key:key,detail_value:val,updated_at:new Date().toISOString()},{onConflict:'user_id,detail_key'});}
     else if(store==='profile'&&col){const patch={};patch[col]=val;if(col==='preferred_encouragement')patch.communication_style=val;await SB.from('user_profiles').update(patch).eq('id',UID);}
@@ -796,6 +823,46 @@ async function markP2(key,status){
 function phase2MemoryLine(key,val){
   const m={p_age:'Their age: '+val,p_occupation:'What they do: '+val,p_exercise:'Exercise frequency: '+val,p_sleep_dur:'Typical sleep: '+val,p_recovery:'Recovery context: '+val,pers_encouragement:'Prefers to be encouraged: '+val,pers_difficult:'What helps them when things are hard: '+val,pers_learning:'Learns best by: '+val,pref_music:'Music they love: '+val,pref_outdoor:'Favorite way to be outside: '+val,pref_season:'Favorite season: '+val};
   return m[key]||(key+': '+val);
+}
+
+// ── Sobriety follow-up branch — "already sober" vs "want to get sober" get
+// very different responses. Never assumes a start date for the latter. ──
+async function p2saveSobrietyStatus(val){
+  try{
+    await SB.from('profile_details').upsert({user_id:UID,category:'sobriety',detail_key:'sobriety_status',detail_value:val,updated_at:new Date().toISOString()},{onConflict:'user_id,detail_key'});
+    await markP2('s_status');
+    if(val==='Already sober'){
+      await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They are already sober and told Riley so directly.',source:'phase2',confidence:0.95,is_active:true});
+      renderSoberDateAsk();
+    }else if(val==='Want to get sober'){
+      await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They want to get sober but have not started yet. Be supportive and non-judgmental, let them set the pace, do not assume a start date or push a plan.',source:'phase2',confidence:0.95,is_active:true});
+      p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready — even just to talk it through — I am here.</span></div></div>');
+      setTimeout(closeP2,2400);
+    }else{
+      await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They were asked about sobriety and said not right now. Do not bring it up unprompted going forward, let them lead.',source:'phase2',confidence:0.95,is_active:true});
+      closeP2();
+    }
+  }catch(e){console.warn('p2saveSobrietyStatus',e.message);closeP2();}
+}
+function renderSoberDateAsk(){
+  p2Modal(`
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:30px;flex-shrink:0">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">That's wonderful. What's your sobriety date? I'll start tracking your streak right on your dashboard.</div></div></div>
+    <input type="date" id="s-date" max="${TODAY}" style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:14px"><button onclick="p2saveSoberDate()" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 26px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Save</button><button onclick="p2skipSoberDate()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">I'll add it later</button></div>`);
+}
+async function p2saveSoberDate(){
+  const dt=document.getElementById('s-date').value;
+  if(!dt)return p2skipSoberDate();
+  try{
+    await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
+    await SB.from('sobriety_tracker').insert({user_id:UID,start_date:dt,is_active:true,milestone_days:[]});
+  }catch(e){console.warn('p2saveSoberDate',e.message);}
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it — saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
+  setTimeout(closeP2,2000);
+}
+function p2skipSoberDate(){
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Whenever you are ready.<br><span style="color:var(--smoke);font-size:15px">Tracker is right there for you.</span></div></div>');
+  setTimeout(closeP2,2000);
 }
 
 // Wellness baseline — the Day 5-7 culmination, 10 quick ratings (modal)

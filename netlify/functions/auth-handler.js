@@ -182,7 +182,7 @@ const PROFILE_CLEAR = {
   preferred_name: null, pronouns: null, birthday: null, city: null,
   why_here: null, why_here_detail: null, one_year_vision: null, human_os: null,
   primary_goals: null, communication_style: null, preferred_encouragement: null,
-  sobriety_date: null, avatar_url: null, full_name: null,
+  sobriety_date: null, sobriety_interest: false, avatar_url: null, full_name: null,
   onboarding_completed: false, onboarding_step: 0, phase2_progress: null,
 };
 

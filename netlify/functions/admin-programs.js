@@ -11,10 +11,14 @@
  * tools. Fails closed if OPERATOR_KEY is unset.
  *
  * POST { action: "list" }                          → { programs, free_access_mode }
+ *   each program also carries stage_counts — {active, completed, ...} tallied
+ *   from user_program_progress, for the operator's enrollment-at-a-glance view.
  * POST { action: "upsert", program: {...} }        → { program }   (id → update, else insert)
  * POST { action: "set_active", id, is_active }     → { ok }        (toggle / freeze)
  * POST { action: "delete", id }                    → { ok }        (hard delete; refuses if enrolled)
  * POST { action: "set_free_access", value: bool }  → { ok }
+ * POST { action: "members", id, status }           → { members: [{id,email,full_name,days_completed,last_activity,enrolled_at}] }
+ *   who's enrolled in program id at that stage. Drill-down from a stage count.
  */
 
 const { getSupabaseClient } = require("./supabase-client");
@@ -36,12 +40,45 @@ async function getFreeAccess(sb) {
 }
 
 async function listPrograms(sb) {
-  const { data, error } = await sb
-    .from("programs")
-    .select("id,slug,title,description,emoji,duration_days,price_cents,tagline,is_active,sort_order")
-    .order("sort_order", { ascending: true });
-  if (error) throw error;
-  return json(200, { programs: data || [], free_access_mode: await getFreeAccess(sb) });
+  const [progRes, stageRes] = await Promise.all([
+    sb.from("programs").select("id,slug,title,description,emoji,duration_days,price_cents,tagline,is_active,sort_order").order("sort_order", { ascending: true }),
+    // One pass over all enrollments, tallied per (program_id, status) — avoids
+    // an N+1 count query per program row.
+    sb.from("user_program_progress").select("program_id,status"),
+  ]);
+  if (progRes.error) throw progRes.error;
+  const stageCounts = {};
+  (stageRes.data || []).forEach(r => {
+    if (!r.program_id) return;
+    const s = stageCounts[r.program_id] || (stageCounts[r.program_id] = {});
+    s[r.status || "active"] = (s[r.status || "active"] || 0) + 1;
+  });
+  const programs = (progRes.data || []).map(p => ({ ...p, stage_counts: stageCounts[p.id] || {} }));
+  return json(200, { programs, free_access_mode: await getFreeAccess(sb) });
+}
+
+async function members(sb, id, status) {
+  if (!id) return json(400, { error: "id is required" });
+  let q = sb.from("user_program_progress").select("user_id,days_completed,day_completed,last_activity,enrolled_at,status").eq("program_id", id);
+  if (status) q = q.eq("status", status);
+  const { data: rows, error } = await q.order("last_activity", { ascending: false }).limit(500);
+  if (error) return json(500, { error: error.message });
+  const ids = [...new Set((rows || []).map(r => r.user_id))];
+  let profMap = {};
+  if (ids.length) {
+    const { data: profs } = await sb.from("user_profiles").select("id,email,full_name").in("id", ids);
+    (profs || []).forEach(p => { profMap[p.id] = p; });
+  }
+  const out = (rows || []).map(r => ({
+    id: r.user_id,
+    email: (profMap[r.user_id] || {}).email || null,
+    full_name: (profMap[r.user_id] || {}).full_name || null,
+    days_completed: r.days_completed ?? r.day_completed ?? 0,
+    status: r.status,
+    last_activity: r.last_activity,
+    enrolled_at: r.enrolled_at,
+  }));
+  return json(200, { members: out });
 }
 
 async function upsertProgram(sb, p) {
@@ -117,6 +154,7 @@ exports.handler = async function (event) {
       case "set_active":      return await setActive(sb, body.id, body.is_active);
       case "delete":          return await deleteProgram(sb, body.id);
       case "set_free_access": return await setFreeAccess(sb, body.value === true);
+      case "members":         return await members(sb, body.id, body.status);
       default:                return json(400, { error: "Unknown action" });
     }
   } catch (err) {

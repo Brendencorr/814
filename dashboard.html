@@ -285,6 +285,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- For You Today — Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
+    <!-- Everything Riley Offers — reliable, entitlement-driven locked previews so
+         every member sees the full menu of what they could unlock (Coach hides it) -->
+    <div id="explore-slot"></div>
+
     <!-- TWO COL -->
     <div class="grid2">
       <div>
@@ -638,11 +642,44 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // Riley Brain — non-blocking; assembles today's matched recommendations
     loadRileyBrain();
+    // Everything Riley Offers — reliable entitlement-driven locked previews
+    loadExplore();
     // Daily Check-In takes priority (the daily heartbeat). Phase 2 discovery only
     // surfaces on days the check-in is already done, so we never stack two modals.
     loadDailyCheckin().then(function(shown){ if(!shown) loadPhase2Discovery(); });
     }catch(e){console.error('Dashboard:',e);}
 })();
+
+// ── EVERYTHING RILEY OFFERS — reliable, entitlement-driven locked previews ────
+// Shows every member (except Coach, who has it all) the full menu of what they
+// could unlock — so the value of upgrading is always visible on the Today page.
+const EXPLORE_FLAGSHIP=[
+  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals — Riley learns from every entry.', need:'Riley Companion'},
+  {feat:'adaptive_programming',icon:'🌅', title:'Your Morning Brief',          desc:'A personalized 45-second briefing to start every day with intention.',           need:'Riley Companion'},
+  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Companion'},
+  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life — not a rigid diet.',             need:'Riley Companion'},
+  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Companion'},
+  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story — a living map of who you are becoming.',       need:'Riley Coach'},
+  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach'}
+];
+async function loadExplore(){
+  try{
+    if(typeof UID==='undefined'||!UID)return;
+    let ent=null; const k='ent_'+UID;
+    const cached=sessionStorage.getItem(k);
+    if(cached){try{ent=JSON.parse(cached);}catch(e){}}
+    if(!ent){
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
+      ent=await r.json(); try{sessionStorage.setItem(k,JSON.stringify(ent));}catch(e){}
+    }
+    const has=f=>ent&&ent.features&&ent.features[f]&&ent.features[f].access===true;
+    const locked=EXPLORE_FLAGSHIP.filter(f=>!has(f.feat));
+    const slot=document.getElementById('explore-slot');
+    if(!slot||!locked.length)return; // Coach / full members: nothing to upsell
+    const cards=locked.map(f=>'<div onclick="track(\'explore_unlock_click\',{feat:\''+f.feat+'\'});location.href=\'/programs?unlock='+f.feat+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.5),rgba(16,14,12,0.4));border:1px dashed rgba(201,168,76,0.28);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.28)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px;opacity:0.85">'+f.icon+'</span><span style="font-size:12px;opacity:0.7">🔒</span></div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Unlock with '+f.need+' →</div></div>').join('');
+    slot.innerHTML='<div style="margin:4px 0 24px"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:4px">The full Riley experience</div><div style="font-family:\'DM Serif Display\',serif;font-size:20px;color:var(--parchment);margin-bottom:16px">Everything you could unlock</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px">'+cards+'</div></div>';
+  }catch(e){console.warn('explore (non-fatal):',e.message);}
+}
 
 // ── RILEY BRAIN — the decision engine drives "For You Today" ──────────────────
 async function loadRileyBrain(){

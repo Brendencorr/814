@@ -353,7 +353,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
+let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA'),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
 
 // ── SEASON ────────────────────────────────────────────────────────────────────
 function getSeason(){const m=new Date().getMonth();return m>=2&&m<=4?'spring':m>=5&&m<=7?'summer':m>=8&&m<=10?'fall':'winter';}
@@ -399,7 +399,7 @@ function applyUpliftMode(){
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 // Engagement tracking — fire-and-forget, never blocks render. Logs event + bumps counters.
 function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
@@ -475,7 +475,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     }
 
     SOBER_DAYS=sobriety?Math.max(0,Math.floor((Date.now()-new Date(sobriety.start_date))/86400000)):0;
-    const dateStreak=(()=>{const s=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));let n=0,exp=TODAY;for(const d of s){if(d.checkin_date===exp){n++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else break;}return n;})();
+    const dateStreak=(()=>{const s=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));let n=0,exp=TODAY;for(const d of s){if(d.checkin_date===exp){n++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else break;}return n;})();
     const sleepLast=checkins.find(c=>c.sleep_hours)?.sleep_hours||null;
     const moodToday=todayCI?.mood||null;
     const goalsOnTrack=goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
@@ -581,7 +581,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       document.getElementById('sober-mile').textContent=yrs>=1?yrs+'yr '+mos+'mo sober':SOBER_DAYS>=90?'Personal best':'Keep going';
       document.getElementById('sober-msg').textContent=SOBER_DAYS>=365?'Absolutely extraordinary.':SOBER_DAYS>=90?'Personal best territory.':SOBER_DAYS>=30?'A full month strong.':'Every day counts.';
       const sr=document.getElementById('sober-ring');setTimeout(()=>{sr.style.transition='stroke-dashoffset 1.2s';sr.style.strokeDashoffset=201*(1-Math.min(1,SOBER_DAYS/365));},150);
-      const ciSet=new Set(checkins.map(c=>c.checkin_date));let dots='';for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);dots+=`<div class="sd ${ds===TODAY?'today':ciSet.has(ds)?'done':''}"></div>`;}
+      const ciSet=new Set(checkins.map(c=>c.checkin_date));let dots='';for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toLocaleDateString('en-CA');dots+=`<div class="sd ${ds===TODAY?'today':ciSet.has(ds)?'done':''}"></div>`;}
       document.getElementById('sober-dots').innerHTML=dots;
     }else{
       soberPanel.style.display='none';
@@ -939,9 +939,12 @@ const DAILY_Q=[
 let DC={};
 async function loadDailyCheckin(){
   try{
-    if(localStorage.getItem('dc_'+UID)===TODAY)return false;            // already shown today
+    // Source of truth is the DB completed flag (keyed on the user's LOCAL date).
+    // No localStorage day-gate — a stale device flag was wrongly suppressing it.
+    if(sessionStorage.getItem('dc_seen_'+UID)===TODAY)return false;      // avoid re-nagging within one session only
     const {data:ci}=await SB.from('daily_checkins').select('checkin_completed').eq('user_id',UID).eq('checkin_date',TODAY).maybeSingle();
     if(ci&&ci.checkin_completed)return false;                            // already completed today
+    sessionStorage.setItem('dc_seen_'+UID,TODAY);
     DC={};dcShow(0);return true;
   }catch(e){return false;}
 }

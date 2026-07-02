@@ -244,7 +244,7 @@ const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
+let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA');
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
@@ -253,7 +253,7 @@ function A(id,msg,ok){
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 async function boot(cb){
@@ -296,7 +296,7 @@ async function loadSobriety(){
   document.getElementById('sob-date').value=data.start_date;
   const {data:cis}=await SB.from('daily_checkins').select('checkin_date').eq('user_id',UID).gte('checkin_date',dAgo(27));
   const ciSet=new Set((cis||[]).map(c=>c.checkin_date));
-  let g='';for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);
+  let g='';for(let i=27;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toLocaleDateString('en-CA');
     const col=ds===TODAY?'var(--green2)':ciSet.has(ds)?'var(--gold)':'rgba(255,255,255,0.08)';
     g+=`<div style="aspect-ratio:1;border-radius:50%;background:${col}" title="${ds}"></div>`;}
   document.getElementById('sob-grid').innerHTML=g;
@@ -329,7 +329,7 @@ async function loadTimeline(){
     const ms=[{d:7,l:'1 week',i:'🌱'},{d:30,l:'1 month',i:'⭐'},{d:60,l:'2 months',i:'🔥'},{d:90,l:'90 days',i:'💫'},{d:180,l:'6 months',i:'🏆'},{d:365,l:'1 year',i:'🎯'},{d:730,l:'2 years',i:'🌟'},{d:1095,l:'3 years',i:'💎'},{d:1825,l:'5 years',i:'✨'},{d:2190,l:'6 years',i:'🌺'},{d:2555,l:'7 years',i:'💎'}];
     ms.filter(m=>soberDays>=m.d).forEach(m=>{
       const d=new Date(sober.start_date);d.setDate(d.getDate()+m.d);
-      events.push({date:d.toISOString().slice(0,10),icon:m.i,title:m.l+' sober',color:'var(--green2)'});
+      events.push({date:d.toLocaleDateString('en-CA'),icon:m.i,title:m.l+' sober',color:'var(--green2)'});
     });
   }
   progs.filter(p=>p.status==='completed').forEach(p=>{

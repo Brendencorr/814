@@ -150,7 +150,7 @@ const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
+let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA');
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
@@ -159,7 +159,7 @@ function A(id,msg,ok){
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 async function boot(cb){
@@ -277,14 +277,14 @@ async function loadWorkouts(){
   const {data:all}=await SB.from('fitness_logs').select('*').eq('user_id',UID).order('logged_date',{ascending:false}).limit(50);
   const logs=all||[];
   const monday=new Date();monday.setDate(monday.getDate()-monday.getDay()+1);
-  const ms=monday.toISOString().slice(0,10);
+  const ms=monday.toLocaleDateString('en-CA');
   const tw=logs.filter(l=>l.logged_date>=ms);
   document.getElementById('wk-cnt').textContent=tw.length||'—';
   document.getElementById('wk-min').textContent=tw.reduce((s,l)=>s+(l.duration_minutes||0),0)||'—';
   const mi=tw.reduce((s,l)=>s+(parseFloat(l.distance_miles)||0),0);
   document.getElementById('wk-mi').textContent=mi>0?mi.toFixed(1):'—';
   const dates=[...new Set(logs.map(l=>l.logged_date))].sort((a,b)=>b.localeCompare(a));
-  let streak=0,exp=TODAY;for(const d of dates){if(d===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toISOString().slice(0,10);}else if(d<exp)break;}
+  let streak=0,exp=TODAY;for(const d of dates){if(d===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else if(d<exp)break;}
   document.getElementById('wk-str').textContent=streak||'—';
   const icons={Run:'🏃',Lift:'🏋️',Bike:'🚴',Walk:'🚶',Swim:'🏊',HIIT:'⚡',Yoga:'🧘',Recovery:'🛁'};
   const el=document.getElementById('w-hist');

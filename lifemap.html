@@ -248,8 +248,8 @@ async function loadTimeline(){
 // ── Life Score wheel — a mirror of life balance across the dimensions ────────
 async function loadLifeScore(){
   const wslot=document.getElementById('wheel-slot');if(!wslot)return;
-  const wk=new Date();wk.setDate(wk.getDate()-7);const wkISO=wk.toISOString().slice(0,10);
-  const ten=new Date();ten.setDate(ten.getDate()-10);const tenISO=ten.toISOString().slice(0,10);
+  const wk=new Date();wk.setDate(wk.getDate()-7);const wkISO=wk.toLocaleDateString('en-CA');
+  const ten=new Date();ten.setDate(ten.getDate()-10);const tenISO=ten.toLocaleDateString('en-CA');
   let ci=[],fit=0,nut=0,habits=[],comps=[],sober=null,facets=[];
   try{
     const R=await Promise.allSettled([

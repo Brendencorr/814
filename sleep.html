@@ -156,7 +156,7 @@ const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-let USER=null,UID=null,TODAY=new Date().toISOString().slice(0,10);
+let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA');
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
@@ -165,7 +165,7 @@ function A(id,msg,ok){
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);}
+function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 async function boot(cb){
@@ -189,7 +189,7 @@ async function boot(cb){
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 
 
-(async()=>{ await boot(async()=>{const y=new Date();y.setDate(y.getDate()-1);document.getElementById('sl-date').value=y.toISOString().slice(0,10);await loadSleep();}); })();
+(async()=>{ await boot(async()=>{const y=new Date();y.setDate(y.getDate()-1);document.getElementById('sl-date').value=y.toLocaleDateString('en-CA');await loadSleep();}); })();
 async function loadSleep(){
   const {data:rows}=await SB.from('daily_checkins').select('checkin_date,sleep_hours,notes').eq('user_id',UID).gte('checkin_date',dAgo(14)).order('checkin_date',{ascending:false});
   const logs=rows||[];
@@ -221,7 +221,7 @@ async function loadSleep(){
     storyEl.innerHTML=story;
   }
   // Chart
-  const last14=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toISOString().slice(0,10));}
+  const last14=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last14.push(d.toLocaleDateString('en-CA'));}
   const lm=Object.fromEntries(ws.map(l=>[l.checkin_date,l.sleep_hours]));
   const maxH=Math.max(goalHrs+2,...Object.values(lm),1);
   document.getElementById('sl-chart').innerHTML='<div style="display:flex;align-items:flex-end;gap:3px;height:100%;position:relative">'+

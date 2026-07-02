@@ -1,0 +1,122 @@
+[
+  {
+    "name": "814-cardinal-perched",
+    "w": 420,
+    "h": 414
+  },
+  {
+    "name": "814-cardinal-flying",
+    "w": 420,
+    "h": 426
+  },
+  {
+    "name": "814-feather",
+    "w": 220,
+    "h": 516
+  },
+  {
+    "name": "814-cardinal-loading-walking",
+    "w": 122,
+    "h": 85
+  },
+  {
+    "name": "814-cardinal-loading-looking",
+    "w": 138,
+    "h": 80
+  },
+  {
+    "name": "814-cardinal-loading-almost-there",
+    "w": 117,
+    "h": 85
+  },
+  {
+    "name": "814-cardinal-loading-welcome",
+    "w": 130,
+    "h": 100
+  },
+  {
+    "name": "814-cardinal-chatbot-fly-in",
+    "w": 90,
+    "h": 100
+  },
+  {
+    "name": "814-cardinal-chatbot-lands-greets",
+    "w": 115,
+    "h": 105
+  },
+  {
+    "name": "814-cardinal-chatbot-stays-to-help",
+    "w": 125,
+    "h": 110
+  },
+  {
+    "name": "814-cardinal-thank-you",
+    "w": 75,
+    "h": 70
+  },
+  {
+    "name": "814-cardinal-success",
+    "w": 75,
+    "h": 79
+  },
+  {
+    "name": "814-cardinal-new-message",
+    "w": 71,
+    "h": 79
+  },
+  {
+    "name": "814-cardinal-gentle-reminder",
+    "w": 75,
+    "h": 70
+  },
+  {
+    "name": "814-cardinal-keep-going",
+    "w": 79,
+    "h": 73
+  },
+  {
+    "name": "814-nav-home-cardinal",
+    "w": 68,
+    "h": 60
+  },
+  {
+    "name": "814-nav-about-branch-cardinal",
+    "w": 66,
+    "h": 66
+  },
+  {
+    "name": "814-nav-resources-flying",
+    "w": 86,
+    "h": 70
+  },
+  {
+    "name": "814-nav-blog-feather",
+    "w": 40,
+    "h": 71
+  },
+  {
+    "name": "814-icon-warmth-heart",
+    "w": 50,
+    "h": 38
+  },
+  {
+    "name": "814-icon-hope-leaf",
+    "w": 44,
+    "h": 42
+  },
+  {
+    "name": "814-icon-connection-people",
+    "w": 65,
+    "h": 70
+  },
+  {
+    "name": "814-icon-guidance-compass",
+    "w": 60,
+    "h": 70
+  },
+  {
+    "name": "814-icon-purpose-mountain",
+    "w": 77,
+    "h": 35
+  }
+]

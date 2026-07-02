@@ -102,7 +102,7 @@
       + '<div style="width:66px;height:66px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 44px rgba(201,168,76,0.45)"></div>'
       + '<div style="font-family:\'DM Serif Display\',serif;font-size:23px;color:#f5f0e8;margin-bottom:8px">Get the Riley app</div>'
       + '<div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>'
-      + '<button id="rli-go" style="width:100%;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:15px;font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;margin-bottom:10px">Install Riley</button>'
+      + '<button id="rli-go" style="width:100%;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#fff;border:none;padding:15px;font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;margin-bottom:10px">Install Riley App<span style="color:#0a0908">.</span></button>'
       + '<button id="rli-skip" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:4px">Maybe later</button>'
       + '</div>';
     document.body.appendChild(ov);
@@ -117,8 +117,8 @@
     if (document.getElementById('riley-install-btn')) return;
     styleOnce('riley-pill-css', '@keyframes rilePop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}#riley-install-btn:hover{transform:translateY(-2px)}');
     var b = document.createElement('div'); b.id = 'riley-install-btn';
-    b.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:9px;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px 16px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
-    b.innerHTML = '<span style="font-size:15px">🌅</span><span>Install Riley App</span><span id="riley-inst-x" style="opacity:0.55;font-size:17px;line-height:1;padding-left:4px">&times;</span>';
+    b.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#fff;padding:12px 18px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
+    b.innerHTML = '<span>Install Riley App<span style="color:#0a0908">.</span></span><span id="riley-inst-x" style="opacity:0.6;font-size:17px;line-height:1">&times;</span>';
     b.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'riley-inst-x') { b.remove(); try { localStorage.setItem('riley_install_dismissed', '1'); } catch (er) {} return; }
       triggerInstall();

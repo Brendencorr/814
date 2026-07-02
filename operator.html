@@ -509,11 +509,20 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
         <div class="cl" style="margin:0">Automated Content Engine</div>
         <div style="display:flex;gap:.5rem;align-items:center">
           <span id="ce-runstat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2)"></span>
+          <button class="bo" onclick="ceToggleTemplates()">⚙ Design Templates</button>
           <button class="bg" id="ce-run" onclick="ceRunNow()">▶ Run Now</button>
         </div>
       </div>
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.1rem;max-width:640px;line-height:1.6">
         Scout scans the live web daily at 6 AM MT for trending, on-brand opportunities. Reposts fast-track straight here; original ideas pass through Sage and the Sentinel safety gate. Nothing publishes until you approve it.
+      </div>
+      <!-- Design templates panel -->
+      <div id="ce-templates" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-bottom:1.1rem">
+        <div style="font-size:.82rem;font-weight:600;color:var(--ink);margin-bottom:.35rem">Canva Design Templates</div>
+        <div style="font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:.9rem">
+          Paste each Canva <b>Brand Template ID</b> to arm Atlas to auto-design that family. Until an ID is set (and CANVA_CONNECT_TOKEN is configured in Netlify), that family's posts go to review as text. Find the ID in the Canva brand template URL.
+        </div>
+        <div id="ce-tpl-list"><div class="em">Loading templates…</div></div>
       </div>
       <!-- sub-tabs -->
       <div style="display:flex;gap:.4rem;margin-bottom:1.1rem;border-bottom:1px solid var(--border)">
@@ -1799,6 +1808,41 @@ async function ceRunNow(){
     fetch(B+'/content-run-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});
     setTimeout(function(){btn.disabled=false;btn.textContent='▶ Run Now';ceRefresh();},4000);
   }catch(e){btn.disabled=false;btn.textContent='▶ Run Now';alert('Could not start: '+e.message);}
+}
+
+
+function ceToggleTemplates(){
+  var el=document.getElementById('ce-templates');
+  var show=el.style.display==='none';
+  el.style.display=show?'block':'none';
+  if(show)ceLoadTemplates();
+}
+async function ceLoadTemplates(){
+  var box=document.getElementById('ce-tpl-list');
+  box.innerHTML='<div class="em">Loading templates…</div>';
+  try{
+    var d=await fetch(B+'/content-templates').then(function(r){return r.json();});
+    var tpls=d.templates||[];
+    if(!tpls.length){box.innerHTML='<div class="em">No templates.</div>';return;}
+    box.innerHTML=tpls.map(function(t){
+      var armed=t.engine_template_id&&t.engine_template_id!=='TBD';
+      return '<div style="display:grid;grid-template-columns:200px 1fr auto auto;gap:.6rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">'+
+        '<div><div style="font-size:.8rem;color:var(--ink);font-weight:500">'+esc(t.family_name)+'</div>'+
+        '<div style="font-size:.68rem;color:var(--muted)">'+esc(t.engine)+' · '+esc(t.asset_type)+'</div></div>'+
+        '<input class="spi" id="tpl-'+t.slug+'" style="margin:0" placeholder="Canva Brand Template ID" value="'+esc(armed?t.engine_template_id:'')+'">'+
+        '<span style="font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;'+(armed?'background:var(--green-soft);color:var(--green)':'background:var(--surface2);color:var(--muted2)')+'">'+(armed?'ARMED':'TEXT-ONLY')+'</span>'+
+        '<button class="ce-btn" style="flex:0;padding:.4rem .7rem" onclick="ceSaveTemplate(\''+t.slug+'\')">Save</button>'+
+      '</div>';
+    }).join('');
+  }catch(e){box.innerHTML='<div class="em" style="color:var(--red)">Error: '+e.message+'</div>';}
+}
+async function ceSaveTemplate(slug){
+  var id=document.getElementById('tpl-'+slug).value.trim();
+  try{
+    var r=await fetch(B+'/content-templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({slug:slug,engine_template_id:id})});
+    if(!r.ok){var d=await r.json();throw new Error(d.error||'failed');}
+    ceLoadTemplates();
+  }catch(e){alert('Could not save: '+e.message);}
 }
 
 </script>

@@ -22,6 +22,7 @@
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS } = require("./content-lib");
+const { renderBrief } = require("./content-atlas");
 
 const MAX_CANDIDATES = 8; // bound cost/time per run
 
@@ -200,6 +201,15 @@ async function runDaily(trigger = "cron") {
       await db.from("content_candidates").update({ status: "sent_to_sage" }).eq("id", c.id);
       stats.briefs++;
 
+      // Phase 2: attempt automated design (gated + non-fatal). If no Canva token
+      // or the template has no engine_template_id yet, this returns designed:false
+      // and the brief stays a text item for review — never fakes a design.
+      let assetIds = [];
+      try {
+        const design = await renderBrief(briefRow.id);
+        if (design.designed) assetIds = design.assets.map((a) => a.id);
+      } catch (e) { console.warn("atlas render failed (non-fatal):", e.message); }
+
       // Sentinel on the final caption/hook/cta
       const verdict = await runSentinel(sentinelPrompt, {
         kind: brief.decision,
@@ -213,6 +223,7 @@ async function runDaily(trigger = "cron") {
         kind: clean(brief.decision, ["remix", "original"], "original"),
         candidate_id: c.id,
         brief_id: briefRow?.id || null,
+        asset_ids: assetIds,
         platforms,
         preview_caption: brief.caption || "",
         safety_verdict: verdict.verdict,

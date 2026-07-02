@@ -106,6 +106,14 @@
 [functions."content-queue"]
   timeout = 26
 
+# Design template library manager (paste Canva Brand Template IDs)
+[functions."content-templates"]
+  timeout = 10
+
+# Atlas render — Canva Connect Autofill (manual per-brief design / retry)
+[functions."content-atlas"]
+  timeout = 26
+
 # HTTP-triggered manual run of the daily content pipeline (background, no timeout).
 # Scout (live web search) -> candidates -> reposts fast-track / Sage briefs -> Sentinel -> queue.
 [functions."content-run-background"]

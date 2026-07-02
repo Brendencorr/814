@@ -607,15 +607,22 @@ async function runOnboarding(session, consentAt) {
   await wait(300);
 
   const focus = await askButtons(
-    "Last one. What do you most want to focus on right now? You can always change this.",
+    "What do you most want to focus on right now? You can always change this.",
     [{ label: 'Sobriety & recovery', value: 'sobriety' }, { label: 'Movement', value: 'movement' }, { label: 'Food & nutrition', value: 'nutrition' }, { label: 'Just figuring it out', value: 'exploring' }]
   );
   patch.primary_goals = [focus];
+  await wait(300);
+
+  const heroes = (await askText("One more — and it's my favorite to ask. Who are some of your people? Heroes, favorite authors or artists, a song or a book that has stayed with you — anyone whose words tend to land for you.")).trim();
 
   patch.onboarding_completed = true;
   patch.onboarding_step = 7;
   patch.onboarding_completed_at = new Date().toISOString();
   try { await sb.from('user_profiles').upsert(patch, { onConflict: 'id' }); } catch (e) { console.warn('onboarding save', e && e.message); }
+  // influences is saved separately + non-fatally: if migration 036 (the influences
+  // column) hasn't been run in Supabase yet, this fails quietly and onboarding still
+  // completes fully. Once 036 is applied, it saves and powers Riley's sign-off quote.
+  if (heroes) { try { await sb.from('user_profiles').update({ influences: heroes }).eq('id', session.user.id); } catch (e) { console.warn('influences save', e && e.message); } }
 
   onboarding.active = false;
   onboarding.resolveInput = null;

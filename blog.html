@@ -70,7 +70,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .riley-visual{aspect-ratio:1;border-radius:20px;background:radial-gradient(circle at 38% 32%,rgba(201,168,76,0.22),var(--ink2) 62%);border:1px solid rgba(201,168,76,0.16);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .riley-orb{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 80px rgba(201,168,76,0.4);animation:breathe 5s ease-in-out infinite}
 @keyframes breathe{0%,100%{transform:scale(1);opacity:0.92}50%{transform:scale(1.06);opacity:1}}
-.riley-visual .rtag{position:absolute;bottom:22px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.2em;color:var(--smoke);text-transform:uppercase}
+.riley-visual .rtag{position:absolute;bottom:24px;font-family:'DM Serif Display',serif;font-size:34px;color:#fff;line-height:1}
+.riley-visual .rtag span{color:var(--gold)}
 .riley h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,40px);line-height:1.14;color:var(--parchment);margin:14px 0 18px}
 .riley p{font-size:16px;color:var(--smoke);line-height:1.8;margin-bottom:14px}
 .riley p strong{color:var(--parchment);font-weight:500}
@@ -141,9 +142,9 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 ::-webkit-scrollbar-track{background:var(--ink)}
 ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.25);border-radius:4px}
 /* ── Cardinal ── */
-.cardinal-band{display:flex;align-items:center;gap:52px;max-width:900px;margin:0 auto;flex-wrap:wrap;justify-content:center;text-align:left}
-.cardinal-band img{width:230px;height:auto;flex-shrink:0}
-.cardinal-band .ct{max-width:400px}
+.cardinal-band{display:flex;align-items:center;gap:40px;max-width:760px;margin:0 auto;flex-wrap:wrap;justify-content:center;text-align:left}
+.cardinal-band img{width:132px;height:auto;flex-shrink:0}
+.cardinal-band .ct{max-width:380px}
 .econn{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:44px}
 .ec{display:flex;flex-direction:column;align-items:center;gap:13px}
 .ec img{height:46px;width:auto;opacity:0.92}
@@ -153,7 +154,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 @keyframes cardFly{0%{transform:translate(0,0) rotate(-4deg);opacity:0}9%{opacity:.95}50%{transform:translate(52vw,-38px) rotate(3deg)}91%{opacity:.95}100%{transform:translate(118vw,22px) rotate(-3deg);opacity:0}}
 @keyframes featherFall{0%{opacity:0;transform:translateY(0) rotate(-8deg)}14%{opacity:.85}100%{opacity:0;transform:translateY(190px) rotate(70deg)}}
 @media(prefers-reduced-motion:reduce){#cardinal-fly,.feather-fall{display:none}}
-@media(max-width:820px){.cardinal-band{text-align:center}.cardinal-band img{width:180px}}
+@media(max-width:820px){.cardinal-band{text-align:center}.cardinal-band img{width:112px}}
 </style>
 </head>
 <body>

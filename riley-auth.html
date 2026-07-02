@@ -520,8 +520,8 @@ async function handlePostAuth(session) {
   try {
     await runOnboarding(session, consentAt);
   } catch (e) {
-    console.warn('onboarding failed, falling back to /dashboard:', e && e.message);
-    window.location.href = '/dashboard';   // safety net — the /onboarding form still exists
+    console.warn('onboarding failed, sending to /chat:', e && e.message);
+    window.location.href = '/chat';   // land in the portal (no onboarding guard there → no redirect loop)
   }
 }
 
@@ -735,19 +735,9 @@ async function signInWithGoogle() {
 //  conversation has been restored — see boot().)
 
 async function signOut() {
-  if (!sb) return;
-  await sb.auth.signOut();
-  currentUser = null;
-  userProfile = null;
-  chatHistory = [];
-  userMsgCount = 0;
-  document.getElementById('user-pill').style.display = 'none';
-  document.getElementById('user-avatar').style.display = 'none';
-  document.getElementById('messages').innerHTML = '';
-  document.getElementById('messages').style.display = 'none';
-  document.getElementById('chat-welcome').style.display = 'flex';
-  hideSobrietyBar();
-  document.getElementById('sobriety-banner').style.display = 'none';
+  try { if (sb) await sb.auth.signOut(); } catch (e) {}
+  // Always return to the main landing page after signing out.
+  window.location.href = 'https://riley.eight14.us';
 }
 
 // ── Save prompt ───────────────────────────────────────────────────────────────

@@ -76,6 +76,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 @keyframes breathe{0%,100%{transform:scale(1);opacity:0.92}50%{transform:scale(1.06);opacity:1}}
 .riley-visual .rtag{position:absolute;bottom:24px;font-family:'DM Serif Display',serif;font-size:34px;color:#fff;line-height:1}
 .riley-visual .rtag span{color:var(--gold)}
+/* THE HERO LOGO — the locked mark (glowing orb in a dark box + "8:14." at bottom). Scale via --size only. */
+.herologo{width:var(--size,300px);height:var(--size,300px);container-type:size;border-radius:calc(var(--size,300px)*0.0435);background:radial-gradient(circle at 38% 32%,rgba(201,168,76,0.22),var(--ink2) 62%);border:1px solid rgba(201,168,76,0.16);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin:0 auto}
+.herologo .orb{width:32.6cqw;height:32.6cqw;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 17.4cqw rgba(201,168,76,0.4);animation:breathe 5s ease-in-out infinite}
+.herologo .tag{position:absolute;bottom:5.2cqh;left:50%;transform:translateX(-50%);font-family:'DM Serif Display',serif;color:#fff;line-height:1;font-size:7.4cqw}
+.herologo .tag span{color:var(--gold)}
 .riley h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,40px);line-height:1.14;color:var(--parchment);margin:14px 0 18px}
 .riley p{font-size:16px;color:var(--smoke);line-height:1.8;margin-bottom:14px}
 .riley p strong{color:var(--parchment);font-weight:500}
@@ -83,6 +88,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 /* ── PROGRAMS ── */
 .prog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:48px}
+@media(max-width:900px){.prog-grid{grid-template-columns:1fr;max-width:440px;margin:40px auto 0}}
+.price span{font-size:16px;color:var(--smoke);font-family:'DM Sans',sans-serif}
 .pcard{background:linear-gradient(165deg,var(--ink2),var(--ink));border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:32px 26px;display:flex;flex-direction:column;transition:all .25s;position:relative}
 .pcard:hover{border-color:rgba(201,168,76,0.35);transform:translateY(-4px)}
 .pcard.feat{border-color:rgba(201,168,76,0.3);background:linear-gradient(165deg,#1a160e,var(--ink))}
@@ -172,36 +179,47 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   </div>
 </nav>
 <main>
-<header class="hero" style="padding:150px 0 70px">
+<header class="hero" style="padding:150px 0 60px">
   <div class="hero-glow"></div>
   <div class="wrap hero-inner">
     <div class="eyebrow">Our Story</div>
     <h1 style="font-size:clamp(38px,6vw,66px)">Why 8:14.</h1>
-    <div class="lede">A little reminder can change everything.</div>
-    <p class="body">8:14 is the minute the light comes back — the small, ordinary moment when something quietly shifts and you decide to keep going.</p>
-    <p class="body">The 8:14 Project was built for those turning points. Not the dramatic before-and-afters — the Tuesday mornings. The one more day.</p>
+    <div class="lede">A time that keeps its promise.</div>
+    <p class="body">There was a watch. A kid&rsquo;s watch, worn every single day &mdash; the kind a child never takes off, because it makes them feel a little more grown, a little more themselves. And no matter when you looked at it, it always read 8:14. Ask him the time, and the answer never changed. It became the family&rsquo;s favorite running joke.</p>
+    <p class="body">He never grew out of it. Years later, still wearing that same watch, it finally stopped &mdash; and of all the moments it could have chosen, it stopped at 8:14.</p>
+    <p class="body">He&rsquo;s gone now. But 8:14 stayed behind. And now, every time a clock reads 8:14 &mdash; on a microwave, a dashboard, a phone you almost reached for &mdash; it lands like a hand on the shoulder. A reminder that the people we love are never as far as they feel. That presence outlasts loss. That none of us is walking this alone.</p>
   </div>
 </header>
-<section class="section band"><div class="wrap center">
-  <div class="eyebrow mt-e">The Mission</div>
-  <div class="h2">Build a life you don't want to escape from.</div>
-  <p class="sub" style="margin:16px auto 0">Recovery is one chapter — not the whole book. Riley is here for the whole book: sobriety, movement, food that heals, and the slow, real work of becoming who you were meant to be.</p>
+<section class="section band"><div class="wrap center" style="max-width:730px">
+  <div class="eyebrow mt-e">Why this exists</div>
+  <div class="h2">Built the hard way.</div>
+  <p class="sub" style="margin:18px auto 0">I didn&rsquo;t build this from a textbook. I built it from the years I spent losing myself.</p>
+  <p class="sub" style="margin:16px auto 0">For a long time I looked fine &mdash; successful, even. Inside, I was numbing, hiding, and surviving days I didn&rsquo;t know how to face. It took a breaking point, and finally admitting I couldn&rsquo;t do it alone, to start finding my way back.</p>
+  <p class="sub" style="margin:16px auto 0">What followed wasn&rsquo;t a clean comeback. It was getting sober and learning to feel everything I&rsquo;d been running from. The end of a marriage, and grieving a future I thought was mine. Starting over somewhere new, learning how to breathe again. And a loss that rearranged the way the whole world feels.</p>
+  <p class="sub" style="margin:16px auto 0">I&rsquo;m still becoming who I&rsquo;m meant to be. But I learned something I wish I&rsquo;d known at the bottom: <strong style="color:var(--parchment);font-weight:500">a life can fall apart and still become beautiful.</strong> Sometimes more beautiful &mdash; because it&rsquo;s finally real.</p>
+  <p class="sub" style="margin:16px auto 0">This exists so you don&rsquo;t have to find that out alone.</p>
 </div></section>
-<section class="section"><div class="wrap riley">
+<section class="section"><div class="wrap center" style="max-width:720px">
+  <div class="eyebrow mt-e">Who it&rsquo;s for</div>
+  <div class="h2">Wherever you are.</div>
+  <p class="sub" style="margin:16px auto 0">You don&rsquo;t need a diagnosis to deserve support. A person can look successful and still be suffering &mdash; can be surrounded by people and still feel completely alone. Whether you&rsquo;re deep in recovery, quietly starting over, holding grief and hope in the same hand, or just lost and trying to find yourself again, this was built for you. Built from experience, so you don&rsquo;t have to go through it in the dark.</p>
+</div></section>
+<section class="section band"><div class="wrap riley">
   <div class="reveal">
     <div class="eyebrow">Meet Riley</div>
-    <h2>A guide who's been there.</h2>
-    <p>Riley isn't a chatbot with a wellness script. She's a companion for the hard, human middle — <strong>sobriety, grief, loss, or just wanting a change.</strong></p>
-    <p>No appointments. No judgment. Available any hour you need her.</p>
+    <h2>A steady presence.<br>Any hour.</h2>
+    <p>Riley is the companion I wished existed in the hardest chapters. Not a therapist. Not a program with a script.</p>
+    <p>She shows up the way the people who saved me did &mdash; <strong>not with lectures or judgment, but with calm, patience, and understanding.</strong></p>
+    <p>Available any hour, because 8:14 doesn&rsquo;t keep office hours.</p>
     <a href="https://riley.eight14.us" class="btn btn-ghost btn-lg" style="margin-top:12px">Talk to Riley &rarr;</a>
   </div>
-  <div class="riley-visual reveal"><div class="riley-orb"></div><div class="rtag">8:14<span>.</span></div></div>
+  <div class="herologo reveal" style="--size:min(430px,84vw)"><div class="orb"></div><div class="tag">8:14<span>.</span></div></div>
 </div></section>
 <section class="finalcta"><div class="wrap">
   <div class="eyebrow mt-e">Begin</div>
   <h2>Start where you are.</h2>
   <p>Riley will meet you there. The rest of your life can start today.</p>
-  <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Get the Free 7-Day Reset</a>
+  <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Get started free</a>
 </div></section>
 </main>
 <footer>

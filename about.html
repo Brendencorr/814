@@ -81,6 +81,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .herologo .orb{width:32.6cqw;height:32.6cqw;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 17.4cqw rgba(201,168,76,0.4);animation:breathe 5s ease-in-out infinite}
 .herologo .tag{position:absolute;bottom:5.2cqh;left:50%;transform:translateX(-50%);font-family:'DM Serif Display',serif;color:#fff;line-height:1;font-size:7.4cqw}
 .herologo .tag span{color:var(--gold)}
+/* About: two-column editorial block (heading left, narrative right) — fills the width, kills the side gutters */
+.about-split{display:grid;grid-template-columns:minmax(0,0.82fr) minmax(0,1.55fr);gap:28px 64px;align-items:start;max-width:1060px;margin:0 auto;text-align:left}
+.about-split .as-head{position:sticky;top:112px}
+.about-split .as-head .eyebrow{display:block;text-align:left;margin-bottom:12px}
+.about-split .as-head .h2{text-align:left;margin:0}
+.about-split .as-body .sub{text-align:left;max-width:none;margin:0 0 18px !important}
+.about-split .as-body .sub:last-child{margin-bottom:0 !important}
+@media(max-width:860px){.about-split{grid-template-columns:1fr;gap:10px}.about-split .as-head{position:static}}
+.about-hero .body{max-width:780px}
 .riley h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,40px);line-height:1.14;color:var(--parchment);margin:14px 0 18px}
 .riley p{font-size:16px;color:var(--smoke);line-height:1.8;margin-bottom:14px}
 .riley p strong{color:var(--parchment);font-weight:500}
@@ -181,7 +190,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 <main>
 <header class="hero" style="padding:150px 0 60px">
   <div class="hero-glow"></div>
-  <div class="wrap hero-inner">
+  <div class="wrap hero-inner about-hero">
     <div class="eyebrow">Our Story</div>
     <h1 style="font-size:clamp(38px,6vw,66px)">Why 8:14.</h1>
     <div class="lede">A time that keeps its promise.</div>
@@ -190,19 +199,23 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <p class="body">He&rsquo;s gone now. But 8:14 stayed behind. And now, every time a clock reads 8:14 &mdash; on a microwave, a dashboard, a phone you almost reached for &mdash; it lands like a hand on the shoulder. A reminder that the people we love are never as far as they feel. That presence outlasts loss. That none of us is walking this alone.</p>
   </div>
 </header>
-<section class="section band"><div class="wrap center" style="max-width:730px">
-  <div class="eyebrow mt-e">Why this exists</div>
-  <div class="h2">Built the hard way.</div>
-  <p class="sub" style="margin:18px auto 0">I didn&rsquo;t build this from a textbook. I built it from the years I spent losing myself.</p>
-  <p class="sub" style="margin:16px auto 0">For a long time I looked fine &mdash; successful, even. Inside, I was numbing, hiding, and surviving days I didn&rsquo;t know how to face. It took a breaking point, and finally admitting I couldn&rsquo;t do it alone, to start finding my way back.</p>
-  <p class="sub" style="margin:16px auto 0">What followed wasn&rsquo;t a clean comeback. It was getting sober and learning to feel everything I&rsquo;d been running from. The end of a marriage, and grieving a future I thought was mine. Starting over somewhere new, learning how to breathe again. And a loss that rearranged the way the whole world feels.</p>
-  <p class="sub" style="margin:16px auto 0">I&rsquo;m still becoming who I&rsquo;m meant to be. But I learned something I wish I&rsquo;d known at the bottom: <strong style="color:var(--parchment);font-weight:500">a life can fall apart and still become beautiful.</strong> Sometimes more beautiful &mdash; because it&rsquo;s finally real.</p>
-  <p class="sub" style="margin:16px auto 0">This exists so you don&rsquo;t have to find that out alone.</p>
+<section class="section band"><div class="wrap about-split">
+  <div class="as-head">
+    <div class="eyebrow">Why this exists</div>
+    <div class="h2">Built the hard way.</div>
+  </div>
+  <div class="as-body">
+    <p class="sub">I didn&rsquo;t build this from a textbook. I built it from the years I spent losing myself.</p>
+    <p class="sub">For a long time I looked fine &mdash; successful, even. Inside, I was numbing, hiding, and surviving days I didn&rsquo;t know how to face. It took a breaking point, and finally admitting I couldn&rsquo;t do it alone, to start finding my way back.</p>
+    <p class="sub">What followed wasn&rsquo;t a clean comeback. It was getting sober and learning to feel everything I&rsquo;d been running from. The end of a marriage, and grieving a future I thought was mine. Starting over somewhere new, learning how to breathe again. And a loss that rearranged the way the whole world feels.</p>
+    <p class="sub">I&rsquo;m still becoming who I&rsquo;m meant to be. But I learned something I wish I&rsquo;d known at the bottom: <strong style="color:var(--parchment);font-weight:500">a life can fall apart and still become beautiful.</strong> Sometimes more beautiful &mdash; because it&rsquo;s finally real.</p>
+    <p class="sub">This exists so you don&rsquo;t have to find that out alone.</p>
+  </div>
 </div></section>
-<section class="section"><div class="wrap center" style="max-width:720px">
+<section class="section"><div class="wrap center" style="max-width:880px">
   <div class="eyebrow mt-e">Who it&rsquo;s for</div>
   <div class="h2">Wherever you are.</div>
-  <p class="sub" style="margin:16px auto 0">You don&rsquo;t need a diagnosis to deserve support. A person can look successful and still be suffering &mdash; can be surrounded by people and still feel completely alone. Whether you&rsquo;re deep in recovery, quietly starting over, holding grief and hope in the same hand, or just lost and trying to find yourself again, this was built for you. Built from experience, so you don&rsquo;t have to go through it in the dark.</p>
+  <p class="sub" style="margin:18px auto 0;font-size:18px;line-height:1.85">You don&rsquo;t need a diagnosis to deserve support. A person can look successful and still be suffering &mdash; can be surrounded by people and still feel completely alone. Whether you&rsquo;re deep in recovery, quietly starting over, holding grief and hope in the same hand, or just lost and trying to find yourself again, this was built for you. Built from experience, so you don&rsquo;t have to go through it in the dark.</p>
 </div></section>
 <section class="section band"><div class="wrap riley">
   <div class="reveal">

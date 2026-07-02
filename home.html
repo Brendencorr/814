@@ -81,6 +81,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .herologo .orb{width:32.6cqw;height:32.6cqw;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 17.4cqw rgba(201,168,76,0.4);animation:breathe 5s ease-in-out infinite}
 .herologo .tag{position:absolute;bottom:5.2cqh;left:50%;transform:translateX(-50%);font-family:'DM Serif Display',serif;color:#fff;line-height:1;font-size:7.4cqw}
 .herologo .tag span{color:var(--gold)}
+/* About: two-column editorial block (heading left, narrative right) — fills the width, kills the side gutters */
+.about-split{display:grid;grid-template-columns:minmax(0,0.82fr) minmax(0,1.55fr);gap:28px 64px;align-items:start;max-width:1060px;margin:0 auto;text-align:left}
+.about-split .as-head{position:sticky;top:112px}
+.about-split .as-head .eyebrow{display:block;text-align:left;margin-bottom:12px}
+.about-split .as-head .h2{text-align:left;margin:0}
+.about-split .as-body .sub{text-align:left;max-width:none;margin:0 0 18px !important}
+.about-split .as-body .sub:last-child{margin-bottom:0 !important}
+@media(max-width:860px){.about-split{grid-template-columns:1fr;gap:10px}.about-split .as-head{position:static}}
+.about-hero .body{max-width:780px}
 .riley h2{font-family:'DM Serif Display',serif;font-size:clamp(28px,4vw,40px);line-height:1.14;color:var(--parchment);margin:14px 0 18px}
 .riley p{font-size:16px;color:var(--smoke);line-height:1.8;margin-bottom:14px}
 .riley p strong{color:var(--parchment);font-weight:500}
@@ -192,33 +201,12 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="eyebrow">Health · Sobriety · Wellness</div>
     <h1>Rebuild your life.<br>One day at a time.</h1>
     <div class="lede">Become who you were meant to be.</div>
-    <p class="body">A wellness platform for people who are quietly starting over — through <strong>sobriety, movement, and food that heals.</strong></p>
-    <p class="body">The 8:14 Project combines personalized coaching, evidence-based programs, and a supportive community to help you build a life you don't want to escape from.</p>
     <div class="cta-row">
-      <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Get the Free 7-Day Reset</a>
-      <a href="https://riley.eight14.us/login" class="btn btn-ghost btn-lg">Sign Up</a>
+      <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Start free</a>
+      <a href="https://riley.eight14.us/talk" class="btn btn-ghost btn-lg">Talk to Riley</a>
     </div>
-    <div class="micro">Free · No spam · Unsubscribe anytime</div>
   </div>
 </header>
-
-<!-- MEET RILEY -->
-<section class="section" id="meet">
-  <div class="wrap riley">
-    <div class="riley-visual reveal">
-      <div class="riley-orb"></div>
-      <div class="rtag">8:14<span>.</span></div>
-    </div>
-    <div class="reveal">
-      <div class="eyebrow">Meet Riley</div>
-      <h2>Your personal guide.<br>Any hour, any day.</h2>
-      <p>Ask Riley about anything — <strong>sobriety, fitness, grief, loss</strong>, or just wanting a change.</p>
-      <p>No appointments. No judgment.</p>
-      <p><strong>She's been through it.</strong></p>
-      <a href="https://riley.eight14.us/talk" class="btn btn-ghost btn-lg" style="margin-top:12px">Talk to Riley →</a>
-    </div>
-  </div>
-</section>
 
 <!-- PROGRAMS -->
 <section class="section band" id="programs">
@@ -252,18 +240,6 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   </div>
 </section>
 
-<!-- 7-DAY RESET BAND -->
-<section class="section-tight">
-  <div class="wrap reset-band reveal">
-    <div class="big">7 days.<br>7 actions.</div>
-    <div class="mid">
-      <h3>The Free 7-Day Reset</h3>
-      <p>A gentle re-entry into connecting back with yourself through movement, food, and mindset. No pressure. No perfection. Just a beginning.</p>
-    </div>
-    <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Begin</a>
-  </div>
-</section>
-
 <!-- NOT SURE — emotional core -->
 <section class="section band">
   <div class="wrap core reveal">
@@ -271,21 +247,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <p>Most wellness content is built for people who already know they need help.</p>
     <p>Here's the thing most of us don't.</p>
     <p><strong>Riley is for everyone who's surviving and just trying to figure it out.</strong></p>
-    <div style="margin-top:30px"><a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Start with the free 7-Day Reset</a></div>
-  </div>
-</section>
-
-<!-- FOUR PILLARS -->
-<section class="section" id="pillars">
-  <div class="wrap center">
-    <div class="eyebrow mt-e">The Four Pillars</div>
-    <div class="h2">Everything Riley is built on.</div>
-    <div class="pillars">
-      <div class="pillar reveal"><div class="icon">🌅</div><h4>Sobriety &amp; Recovery</h4></div>
-      <div class="pillar reveal"><div class="icon">🤍</div><h4>Movement as Medicine</h4></div>
-      <div class="pillar reveal"><div class="icon">🍃</div><h4>Food That Heals</h4></div>
-      <div class="pillar reveal"><div class="icon">🏔️</div><h4>The Rebuild</h4></div>
-    </div>
+    <div style="margin-top:30px"><a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Start free</a></div>
   </div>
 </section>
 
@@ -332,7 +294,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="eyebrow mt-e">Begin</div>
     <h2>Start where you are.<br>Riley will meet you there.</h2>
     <p>It takes about a minute. The rest of your life can start today.</p>
-    <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Get the Free 7-Day Reset</a>
+    <a href="https://riley.eight14.us/login" class="btn btn-gold btn-lg">Start free</a>
   </div>
 </section>
 

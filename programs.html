@@ -333,6 +333,6 @@ async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {err
   if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
 })();
 </script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
+<script src="/pwa.js"></script>
 </body>
 </html>

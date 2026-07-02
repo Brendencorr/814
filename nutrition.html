@@ -425,6 +425,6 @@ async function deleteMeal(id){try{await SB.from('nutrition_logs').delete().eq('i
   if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
 })();
 </script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
+<script src="/pwa.js"></script>
 </body>
 </html>

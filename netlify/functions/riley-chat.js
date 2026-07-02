@@ -314,6 +314,16 @@ function buildUserContext(profile, clientData) {
   if (profile.pronouns) lines.push(`Pronouns: ${profile.pronouns} — use these exactly, every time.`);
   else lines.push(`Pronouns: NOT on file — do NOT assume gender. Stay neutral (use their name or "you") until they tell you.`);
   if (profile.influences) lines.push(`Their people (heroes, favorite authors, artists, coaches, songs, books): ${profile.influences}. When THEY choose to end a conversation, you may close with a short, fitting quote or line from one of these — attributed simply. Never force it.`);
+  if (profile.why_here) lines.push(`Why they came here: ${profile.why_here}`);
+  if (profile.one_year_vision) lines.push(`Their one-year vision (what success looks like a year from now): ${profile.one_year_vision} — hold this quietly as their north star.`);
+  if (profile.human_os && typeof profile.human_os === "object") {
+    const h = profile.human_os, bits = [];
+    if (h.energy) bits.push(`gives them energy: ${h.energy}`);
+    if (h.drains) bits.push(`drains them: ${h.drains}`);
+    if (h.proud)  bits.push(`most proud of: ${h.proud}`);
+    if (h.dream)  bits.push(`a dream they've never let go of: ${h.dream}`);
+    if (bits.length) lines.push(`What makes them who they are — ${bits.join("; ")}. Draw on this gently when it fits; never recite it back at them.`);
+  }
   if (profile.email)     lines.push(`Email: ${profile.email}`);
   if (profile.sobriety_date) {
     const days = Math.floor((Date.now() - new Date(profile.sobriety_date)) / 86400000);

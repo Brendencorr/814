@@ -449,6 +449,14 @@ async function boot() {
       // Not signed in — chat still works, no action needed
     }
   });
+
+  // Popup sign-in hand-off: the marketing popup writes the conversation to
+  // sessionStorage and sends us to /talk?signin=1. The conversation has now been
+  // restored above, so start OAuth via signInWithGoogle() (top-level branch) —
+  // it re-saves the conversation to sessionStorage before the redirect.
+  if (window.location.search.indexOf('signin=1') !== -1 && window.self === window.top) {
+    signInWithGoogle();
+  }
 }
 boot();
 
@@ -552,38 +560,42 @@ function askText(text) {
   });
 }
 
+let _onboardingStarted = false;   // guard against double-run (boot getSession + onAuthStateChange can both fire)
 async function runOnboarding(session, consentAt) {
+  if (_onboardingStarted) return;
+  _onboardingStarted = true;
   onboarding.active = true;
   const track1 = chatHistory.length > 0;   // they were already talking to Riley
   const md = session.user.user_metadata || {};
   const gName = md.given_name || (md.name ? md.name.split(' ')[0] : '') || '';
   const patch = { id: session.user.id, email: session.user.email };
+  const humanOs = {};
 
   addMsg('riley', (gName ? gName + ', thank you' : 'Thank you') + ' for signing in.' +
-    (track1 ? " I saved everything we were just talking about — we'll pick it right back up." : '') +
-    " First, a quick and honest note about your privacy — then a couple of small things so I can understand you better.");
+    (track1 ? " I saved everything we were just talking about — we'll pick it right back up in a moment." : '') +
+    " First, an honest note about your privacy — then a few things so I can really understand you.");
   await wait(600);
 
-  if (!consentAt) {
-    const choice = await askButtons(
-      "<b>Here's what I keep, in plain words.</b><br><br>" +
-      "· <b>What you tell me</b> — your name, your story, your goals<br>" +
-      "· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>" +
-      "· <b>Our conversations</b> — so I remember, and you never repeat yourself<br><br>" +
-      "I keep these only to know you and support you over time. <b>Never sold. Never used for advertising.</b> " +
-      "You can view or delete everything, anytime, under Your Data.",
-      [{ label: 'Decline', value: 'decline' }, { label: 'Agree & Continue', value: 'agree', primary: true }]
-    );
-    if (choice === 'decline') {
-      addMsg('riley', "That's completely okay — no pressure at all. I can't save our conversation or build your space without it, so I'll sign you back out. You're always welcome back, any time.");
-      onboarding.active = false;
-      setTimeout(function () { signOut(); }, 4000);
-      return;
-    }
-    try { await sb.from('user_profiles').update({ consent_at: new Date().toISOString(), consent_version: '1.0' }).eq('id', session.user.id); } catch (e) {}
-    await wait(400);
+  // ── Consent — ALWAYS shown, mandatory. Must be acknowledged before anything else. ──
+  const choice = await askButtons(
+    "<b>Here's what I keep, in plain words.</b><br><br>" +
+    "· <b>What you tell me</b> — your name, your story, your goals<br>" +
+    "· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>" +
+    "· <b>Our conversations</b> — so I remember, and you never repeat yourself<br><br>" +
+    "I keep these only to know you and support you over time. <b>Never sold. Never used for advertising.</b> " +
+    "You can view or delete everything, anytime, under Your Data.",
+    [{ label: 'Decline', value: 'decline' }, { label: 'Agree & Continue', value: 'agree', primary: true }]
+  );
+  if (choice === 'decline') {
+    addMsg('riley', "That's completely okay — no pressure at all. I can't save our conversation or build your space without it, so I'll sign you back out. You're always welcome back, any time.");
+    onboarding.active = false;
+    setTimeout(function () { signOut(); }, 4000);
+    return;
   }
+  try { await sb.from('user_profiles').update({ consent_at: new Date().toISOString(), consent_version: '1.0' }).eq('id', session.user.id); } catch (e) {}
+  await wait(400);
 
+  // ── Name ──
   let preferred = gName;
   const nameChoice = await askButtons(
     "I've got you as <b>" + (gName || 'you') + "</b>. Want me to call you that — or something else?",
@@ -595,6 +607,7 @@ async function runOnboarding(session, consentAt) {
   }
   if (preferred) { patch.preferred_name = preferred; addMsg('riley', preferred + '. Got it.'); await wait(400); }
 
+  // ── Pronouns ──
   const pr = await askButtons(
     "And your pronouns, if you'd like me to have them — completely optional.",
     [{ label: 'she/her', value: 'she/her' }, { label: 'he/him', value: 'he/him' }, { label: 'they/them', value: 'they/them' }, { label: 'Prefer not to say', value: 'skip' }]
@@ -602,10 +615,12 @@ async function runOnboarding(session, consentAt) {
   if (pr !== 'skip') patch.pronouns = pr;
   await wait(400);
 
+  // ── Why here ──
   const why = (await askText("So I understand where you're at — what brought you here today?")).trim();
   if (why) patch.why_here = why;
   await wait(300);
 
+  // ── Focus ──
   const focus = await askButtons(
     "What do you most want to focus on right now? You can always change this.",
     [{ label: 'Sobriety & recovery', value: 'sobriety' }, { label: 'Movement', value: 'movement' }, { label: 'Food & nutrition', value: 'nutrition' }, { label: 'Just figuring it out', value: 'exploring' }]
@@ -613,6 +628,37 @@ async function runOnboarding(session, consentAt) {
   patch.primary_goals = [focus];
   await wait(300);
 
+  // ── One-year vision ──
+  const vision = (await askText("Picture a year from today, and things have gone well for you. What does that look like?")).trim();
+  if (vision) patch.one_year_vision = vision;
+  await wait(300);
+
+  // ── Human OS — a few honest reflections ──
+  addMsg('riley', "A few quick reflections now — there are no wrong answers here.");
+  await wait(500);
+  const energy = (await askText("What gives you energy? The people, places, or moments that fill you up.")).trim();
+  if (energy) humanOs.energy = energy;
+  await wait(250);
+  const drains = (await askText("And what drains you? No judgment — just honesty.")).trim();
+  if (drains) humanOs.drains = drains;
+  await wait(250);
+  const proud = (await askText("What are you most proud of? It can be big or quiet. Both count.")).trim();
+  if (proud) humanOs.proud = proud;
+  await wait(250);
+  const dream = (await askText("And one dream you have never given up on — the one that is still there, underneath everything?")).trim();
+  if (dream) humanOs.dream = dream;
+  if (Object.keys(humanOs).length) patch.human_os = humanOs;
+  await wait(300);
+
+  // ── Check-in timing ──
+  const timing = await askButtons(
+    "When would you like me to check in with you? I'll never overdo it.",
+    [{ label: 'Mornings', value: 'morning' }, { label: 'Midday', value: 'lunch' }, { label: 'Evenings', value: 'evening' }, { label: 'Whenever I come to you', value: 'on_demand' }]
+  );
+  if (timing) patch.notification_schedule = timing;
+  await wait(300);
+
+  // ── Heroes / favorites ──
   const heroes = (await askText("One more — and it's my favorite to ask. Who are some of your people? Heroes, favorite authors or artists, a song or a book that has stayed with you — anyone whose words tend to land for you.")).trim();
 
   patch.onboarding_completed = true;
@@ -627,10 +673,24 @@ async function runOnboarding(session, consentAt) {
   onboarding.active = false;
   onboarding.resolveInput = null;
   await wait(400);
-  addMsg('riley', track1
-    ? ("That's everything I need, " + (preferred || 'friend') + ". Now — back to what you were saying.")
-    : ("Thank you, " + (preferred || 'friend') + ". I'm really glad you're here. Whenever you're ready — what's on your mind?"));
-  document.getElementById('msg-input').focus();
+  addMsg('riley', "That's everything I need, " + (preferred || 'friend') + ". " +
+    (track1 ? "Let's pick up right where we left off — I'm taking you into your space now." : "I'm taking you into your space now — this is where we'll talk from here."));
+  await wait(1300);
+
+  // ── Continue the conversation inside the portal ──
+  // Persist the pre-auth conversation to riley_conversations (RLS allows insert where
+  // user_id = auth.uid()), then hand off to /chat, which auto-resumes the latest session.
+  try {
+    if (chatHistory.length) {
+      const sid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('sess-' + Date.now());
+      const base = Date.now() - chatHistory.length * 1000;   // incrementing timestamps preserve order
+      const rows = chatHistory.map(function (m, i) {
+        return { user_id: session.user.id, session_id: sid, role: m.role, content: m.content, created_at: new Date(base + i * 1000).toISOString() };
+      });
+      await sb.from('riley_conversations').insert(rows);
+    }
+  } catch (e) { console.warn('conversation handoff', e && e.message); }
+  window.location.href = '/chat';
 }
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
@@ -638,12 +698,13 @@ async function signInWithGoogle() {
   // If we're inside an iframe, Google will block the OAuth flow.
   // Instead, save the conversation and open riley.eight14.us in the top-level window.
   if (window.self !== window.top) {
-    if (chatHistory.length) {
-      // Pass history to parent via postMessage so the widget can relay it
-      // The parent widget opens riley.eight14.us directly for the OAuth flow
+    // We're in the marketing-site popup. Google blocks OAuth inside an iframe, so
+    // hand the conversation to the parent page and let it run the top-level flow.
+    try {
+      window.parent.postMessage({ type: 'riley_signin', history: chatHistory, count: userMsgCount }, '*');
+    } catch (e) {
+      window.top.location.href = 'https://riley.eight14.us/talk?signin=1';
     }
-    // Open riley.eight14.us in the top frame — this breaks out of the iframe
-    window.top.location.href = 'https://riley.eight14.us?signin=1';
     return;
   }
 
@@ -670,20 +731,8 @@ async function signInWithGoogle() {
   }
 }
 
-// Auto-trigger sign-in if redirected here from the iframe widget
-(function() {
-  if (window.location.search.includes('signin=1') && window.self === window.top) {
-    // Small delay to let boot() finish
-    setTimeout(async function() {
-      if (sb) {
-        const { error } = await sb.auth.signInWithOAuth({
-          provider: 'google',
-          options: { redirectTo: 'https://riley.eight14.us/riley-auth.html' },
-        });
-      }
-    }, 800);
-  }
-})();
+// (Popup ?signin=1 hand-off is triggered at the end of boot() now, after the
+//  conversation has been restored — see boot().)
 
 async function signOut() {
   if (!sb) return;

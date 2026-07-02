@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Tiny same-origin server: serves a canvas page that draws the hero-logo icon
-(clean sun + 8:14.) at 512/192/180 and POSTs each PNG back here to write to disk."""
+"""Render THE hero logo (the Meet Riley card: centered glowing orb + "8:14." at the bottom,
+verbatim from home.html .riley-visual) to PNG at any size, and POST each back to disk.
+No SVG->PNG tool on this box, so we draw it on a browser <canvas> (fonts load normally)."""
 import http.server, socketserver, os
 # repo root (two levels up from assets/hero-logo/) — writes icon-512/192 + apple-touch-icon there
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -11,30 +12,31 @@ PAGE = r"""<!doctype html><html><head><meta charset="utf-8">
 </head><body><div id="log">generating…</div>
 <script>
 async function draw(S){
-  await document.fonts.load('400 ' + Math.round(S*0.20) + 'px "DM Serif Display"');
+  await document.fonts.load('400 ' + Math.round(S*0.074) + 'px "DM Serif Display"');
   await document.fonts.ready;
   const c=document.createElement('canvas');c.width=S;c.height=S;const x=c.getContext('2d');
-  // dark background with a warm radial wash
-  let bg=x.createRadialGradient(S*0.5,S*0.30,0,S*0.5,S*0.30,S*0.98);
-  bg.addColorStop(0,'#17130d');bg.addColorStop(0.55,'#0a0807');bg.addColorStop(1,'#040302');
+  // card bg: --ink2 with a warm radial wash toward top-left (matches .riley-visual bg)
+  x.fillStyle='#141210';x.fillRect(0,0,S,S);
+  let bg=x.createRadialGradient(S*0.38,S*0.32,0, S*0.38,S*0.32,S*0.62);
+  bg.addColorStop(0,'rgba(201,168,76,0.22)');bg.addColorStop(1,'rgba(201,168,76,0)');
   x.fillStyle=bg;x.fillRect(0,0,S,S);
-  let gl=x.createRadialGradient(S*0.5,S*0.36,0,S*0.5,S*0.36,S*0.52);
-  gl.addColorStop(0,'rgba(201,168,76,0.20)');gl.addColorStop(1,'rgba(201,168,76,0)');
-  x.fillStyle=gl;x.fillRect(0,0,S,S);
-  // sun — gold radial orb with a soft glow (no horizon line)
-  const cx=S*0.5, cy=S*0.365, r=S*0.158;
-  x.save();x.shadowColor='rgba(201,168,76,0.55)';x.shadowBlur=S*0.10;
-  let sun=x.createRadialGradient(cx-r*0.28,cy-r*0.30,r*0.08,cx,cy,r);
-  sun.addColorStop(0,'#f2e4bc');sun.addColorStop(0.55,'#c9a84c');sun.addColorStop(1,'#a8842f');
-  x.fillStyle=sun;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.restore();
-  // "8:14." in DM Serif — white number, gold period
-  x.textBaseline='alphabetic';
-  x.font='400 ' + Math.round(S*0.205) + 'px "DM Serif Display", serif';
+  // orb (150px in a 460 card => r 0.163S), CENTERED
+  const cx=S*0.5, cy=S*0.5, r=S*0.163;
+  // soft glow around the orb (box-shadow 0 0 80px rgba(201,168,76,0.4))
+  let halo=x.createRadialGradient(cx,cy,r*0.55, cx,cy,r+S*0.174);
+  halo.addColorStop(0,'rgba(201,168,76,0.40)');halo.addColorStop(1,'rgba(201,168,76,0)');
+  x.fillStyle=halo;x.fillRect(0,0,S,S);
+  // the orb itself (radial highlight at 40% 35%)
+  let sun=x.createRadialGradient(cx-r*0.20,cy-r*0.30,r*0.05, cx,cy,r);
+  sun.addColorStop(0,'#e8d5a3');sun.addColorStop(0.55,'#c9a84c');sun.addColorStop(1,'#a8842f');
+  x.fillStyle=sun;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();
+  // "8:14." at the bottom (bottom:24px, 34px), centered
+  x.textBaseline='alphabetic';x.textAlign='left';
+  x.font='400 ' + Math.round(S*0.074) + 'px "DM Serif Display", serif';
   const num='8:14', dot='.';
   const wn=x.measureText(num).width, wd=x.measureText(dot).width, tot=wn+wd;
-  const sx=cx-tot/2, ty=S*0.74;
-  x.textAlign='left';
-  x.fillStyle='#f5f0e8';x.fillText(num,sx,ty);
+  const sx=cx-tot/2, ty=S*0.925;
+  x.fillStyle='#fff';x.fillText(num,sx,ty);
   x.fillStyle='#c9a84c';x.fillText(dot,sx+wn,ty);
   return new Promise(function(res){c.toBlob(function(b){res(b);},'image/png');});
 }
@@ -44,6 +46,7 @@ async function save(name,S){ const b=await draw(S); await fetch('/save/'+name,{m
     await save('icon-512.png',512);
     await save('icon-192.png',192);
     await save('apple-touch-icon.png',180);
+    await save('assets__hero-logo__hero-logo.png',512);
     document.getElementById('log').textContent='DONE';
   }catch(e){ document.getElementById('log').textContent='ERR '+e; }
 })();
@@ -55,10 +58,12 @@ class H(http.server.BaseHTTPRequestHandler):
         self.wfile.write(PAGE.encode('utf-8'))
     def do_POST(self):
         if self.path.startswith('/save/'):
-            name = os.path.basename(self.path)
+            name = os.path.basename(self.path).replace('__', os.sep)
+            dest = os.path.join(ROOT, name)
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
             n = int(self.headers.get('Content-Length', 0))
             data = self.rfile.read(n)
-            with open(os.path.join(ROOT, name), 'wb') as f:
+            with open(dest, 'wb') as f:
                 f.write(data)
             self.send_response(200); self.end_headers(); self.wfile.write(b'ok')
         else:

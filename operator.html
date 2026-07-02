@@ -1744,12 +1744,12 @@ function ceRenderPending(q){
     html+='<span class="ce-plat">'+(it.platforms||[]).join(', ')+'</span>';
     html+='<span class="ce-verdict '+v+'">'+v+'</span></div>';
     if(it.kind==='repost'&&it.original_url){
-      html+='<div class="ce-repost-src">↗ '+esc(it.original_creator||'creator')+': '+esc(it.original_url)+'</div>';
+      html+='<div class="ce-repost-src">↗ '+x(it.original_creator||'creator')+': '+x(it.original_url)+'</div>';
     }
-    html+='<div class="ce-cap">'+esc(it.preview_caption||'(no caption)')+'</div>';
+    html+='<div class="ce-cap">'+x(it.preview_caption||'(no caption)')+'</div>';
     if(flags.length){
       html+='<div class="ce-flags">';
-      flags.forEach(function(f){html+='<div class="ce-flag-item"><b>'+esc(f.rule||'flag')+'</b> ('+esc(f.severity||'')+'): '+esc(f.evidence||'')+(f.suggested_fix?' → '+esc(f.suggested_fix):'')+'</div>';});
+      flags.forEach(function(f){html+='<div class="ce-flag-item"><b>'+x(f.rule||'flag')+'</b> ('+x(f.severity||'')+'): '+x(f.evidence||'')+(f.suggested_fix?' → '+x(f.suggested_fix):'')+'</div>';});
       html+='</div>';
     }
     html+='<div class="ce-actions">';
@@ -1772,9 +1772,9 @@ function ceRenderJobs(jobs){
   var html='';
   jobs.forEach(function(j){
     var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'—');
-    html+='<div class="ce-job"><span class="ce-job-plat">'+esc(j.platform)+'</span>';
-    html+='<span class="ce-job-cap">'+esc((j.caption_final||'').slice(0,120))+'</span>';
-    html+='<span class="ce-job-when">'+when+' · '+esc(j.state)+'</span></div>';
+    html+='<div class="ce-job"><span class="ce-job-plat">'+x(j.platform)+'</span>';
+    html+='<span class="ce-job-cap">'+x((j.caption_final||'').slice(0,120))+'</span>';
+    html+='<span class="ce-job-when">'+when+' · '+x(j.state)+'</span></div>';
   });
   body.innerHTML=html;
 }
@@ -1827,9 +1827,9 @@ async function ceLoadTemplates(){
     box.innerHTML=tpls.map(function(t){
       var armed=t.engine_template_id&&t.engine_template_id!=='TBD';
       return '<div style="display:grid;grid-template-columns:200px 1fr auto auto;gap:.6rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)">'+
-        '<div><div style="font-size:.8rem;color:var(--ink);font-weight:500">'+esc(t.family_name)+'</div>'+
-        '<div style="font-size:.68rem;color:var(--muted)">'+esc(t.engine)+' · '+esc(t.asset_type)+'</div></div>'+
-        '<input class="spi" id="tpl-'+t.slug+'" style="margin:0" placeholder="Canva Brand Template ID" value="'+esc(armed?t.engine_template_id:'')+'">'+
+        '<div><div style="font-size:.8rem;color:var(--ink);font-weight:500">'+x(t.family_name)+'</div>'+
+        '<div style="font-size:.68rem;color:var(--muted)">'+x(t.engine)+' · '+x(t.asset_type)+'</div></div>'+
+        '<input class="spi" id="tpl-'+t.slug+'" style="margin:0" placeholder="Canva Brand Template ID" value="'+x(armed?t.engine_template_id:'')+'">'+
         '<span style="font-size:.62rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;'+(armed?'background:var(--green-soft);color:var(--green)':'background:var(--surface2);color:var(--muted2)')+'">'+(armed?'ARMED':'TEXT-ONLY')+'</span>'+
         '<button class="ce-btn" style="flex:0;padding:.4rem .7rem" onclick="ceSaveTemplate(\''+t.slug+'\')">Save</button>'+
       '</div>';

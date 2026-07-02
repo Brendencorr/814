@@ -342,6 +342,43 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   .pbl{display:none}
   #stpn,#udpn,#wkpn{width:100%;right:-100%}
 }
+
+/* ── Content Engine ── */
+.ce-tab{padding:.5rem .9rem;background:transparent;border:none;border-bottom:2px solid transparent;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:-1px}
+.ce-tab:hover{color:var(--ink)}
+.ce-tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
+.ce-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:.3rem;background:var(--surface2);border-radius:9px;font-size:.65rem;font-weight:700;color:var(--muted)}
+.ce-tab.active .ce-count{background:var(--gold-soft);color:var(--amber)}
+.ce-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.ce-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.65rem}
+.ce-card.blocked{border-color:var(--red);border-left:3px solid var(--red)}
+.ce-card.flagged{border-left:3px solid var(--amber)}
+.ce-card-top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.ce-kind{font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.18rem .5rem;border-radius:4px}
+.ce-kind.repost{background:var(--blue-soft);color:var(--blue)}
+.ce-kind.original{background:var(--gold-soft);color:var(--amber)}
+.ce-kind.remix{background:var(--sage-soft);color:var(--sage)}
+.ce-verdict{font-size:.6rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.18rem .5rem;border-radius:4px;margin-left:auto}
+.ce-verdict.pass{background:var(--green-soft);color:var(--green)}
+.ce-verdict.flag{background:#fdf3e0;color:var(--amber)}
+.ce-verdict.block{background:var(--red-soft);color:var(--red)}
+.ce-plat{font-size:.65rem;color:var(--muted)}
+.ce-cap{font-size:.82rem;color:var(--ink2);line-height:1.55;white-space:pre-wrap;max-height:180px;overflow-y:auto}
+.ce-repost-src{font-size:.7rem;color:var(--blue);word-break:break-all}
+.ce-flags{background:var(--surface2);border-radius:6px;padding:.5rem .65rem;font-size:.72rem;color:var(--muted)}
+.ce-flag-item{margin-bottom:.25rem}
+.ce-flag-item b{color:var(--ink2)}
+.ce-actions{display:flex;gap:.45rem;margin-top:.25rem}
+.ce-btn{flex:1;padding:.5rem;border-radius:6px;font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--border-strong);background:var(--surface);color:var(--ink2);font-family:'Inter',sans-serif;transition:all .15s}
+.ce-btn:hover{border-color:var(--ink2)}
+.ce-btn.approve{background:var(--gold);border-color:var(--gold);color:#fff}
+.ce-btn.approve:hover{background:#a07e22}
+.ce-btn.approve:disabled{background:var(--surface2);border-color:var(--border);color:var(--muted2);cursor:not-allowed}
+.ce-btn.reject:hover{border-color:var(--red);color:var(--red)}
+.ce-job{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;margin-bottom:.55rem;display:flex;align-items:center;gap:.75rem}
+.ce-job-plat{font-size:.7rem;font-weight:600;color:var(--gold);text-transform:uppercase;width:80px;flex-shrink:0}
+.ce-job-cap{flex:1;font-size:.78rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ce-job-when{font-size:.68rem;color:var(--muted);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -363,6 +400,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <button class="ht" data-s="h" onclick="gs('h',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Social</button>
           <button class="ht" data-s="p" onclick="spl(this);closeSocialDD()" style="display:block;width:100%;text-align:left">Pipeline</button>
           <button class="ht" data-s="r" onclick="gs('r',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Review</button>
+          <button class="ht" data-s="ce" onclick="loadCE(this);closeSocialDD()" style="display:block;width:100%;text-align:left">Content Engine ✨</button>
         </div>
       </div>
       <button class="ht" data-s="u" onclick="loadUsers(this)">Clients</button>
@@ -463,6 +501,31 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <button class="dbn" onclick="svd()">Save Draft</button>
     </div>
   </div>
+<!-- CONTENT ENGINE SCREEN -->
+<div class="sc" id="sce">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1200px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+        <div class="cl" style="margin:0">Automated Content Engine</div>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <span id="ce-runstat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2)"></span>
+          <button class="bg" id="ce-run" onclick="ceRunNow()">▶ Run Now</button>
+        </div>
+      </div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.1rem;max-width:640px;line-height:1.6">
+        Scout scans the live web daily at 6 AM MT for trending, on-brand opportunities. Reposts fast-track straight here; original ideas pass through Sage and the Sentinel safety gate. Nothing publishes until you approve it.
+      </div>
+      <!-- sub-tabs -->
+      <div style="display:flex;gap:.4rem;margin-bottom:1.1rem;border-bottom:1px solid var(--border)">
+        <button class="ce-tab active" id="ce-tab-pending" onclick="ceTab('pending')">Pending <span id="ce-c-pending" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-scheduled" onclick="ceTab('scheduled')">Scheduled <span id="ce-c-scheduled" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-published" onclick="ceTab('published')">Published <span id="ce-c-published" class="ce-count">0</span></button>
+      </div>
+      <div id="ce-body"><div class="em">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ENGAGEMENT SCREEN -->
 <div class="sc" id="se">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
@@ -610,7 +673,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -1627,6 +1690,115 @@ function fdt(s){
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+
            d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   }catch(e){return s;}
+}
+
+
+/* ═══════════ CONTENT ENGINE ═══════════ */
+var ceView='pending';
+function loadCE(btn){gs('ce',btn);ceRefresh();}
+function ceTab(v){ceView=v;['pending','scheduled','published'].forEach(function(t){document.getElementById('ce-tab-'+t).classList.toggle('active',t===v);});ceRefresh();}
+
+async function ceRefresh(){
+  var body=document.getElementById('ce-body');
+  body.innerHTML='<div class="em">Loading…</div>';
+  // counts + last run
+  try{
+    var cts=await fetch(B+'/content-queue?view=counts').then(function(r){return r.json();});
+    document.getElementById('ce-c-pending').textContent=cts.pending||0;
+    document.getElementById('ce-c-scheduled').textContent=cts.scheduled||0;
+    document.getElementById('ce-c-published').textContent=cts.published||0;
+    var lr=cts.last_run;
+    document.getElementById('ce-runstat').textContent=lr?('last run: '+fd(lr.run_date)+' · '+(lr.status||'?')+' · '+(lr.candidates_count||0)+' found'):'no runs yet';
+  }catch(e){}
+  // view body
+  try{
+    if(ceView==='pending'){
+      var d=await fetch(B+'/content-queue?view=pending').then(function(r){return r.json();});
+      ceRenderPending(d.queue||[]);
+    }else{
+      var d=await fetch(B+'/content-queue?view='+ceView).then(function(r){return r.json();});
+      ceRenderJobs(d.jobs||[]);
+    }
+  }catch(e){body.innerHTML='<div class="em" style="color:var(--red)">Error: '+e.message+'</div>';}
+}
+
+function ceRenderPending(q){
+  var body=document.getElementById('ce-body');
+  if(!q.length){body.innerHTML='<div class="em">Nothing pending. Scout runs daily at 6 AM MT — or hit Run Now.</div>';return;}
+  var html='<div class="ce-grid">';
+  q.forEach(function(it){
+    var v=it.safety_verdict||'pass';
+    var flags=Array.isArray(it.safety_flags)?it.safety_flags:[];
+    var blocked=v==='block';
+    html+='<div class="ce-card '+(blocked?'blocked':v==='flag'?'flagged':'')+'">';
+    html+='<div class="ce-card-top"><span class="ce-kind '+it.kind+'">'+it.kind+'</span>';
+    html+='<span class="ce-plat">'+(it.platforms||[]).join(', ')+'</span>';
+    html+='<span class="ce-verdict '+v+'">'+v+'</span></div>';
+    if(it.kind==='repost'&&it.original_url){
+      html+='<div class="ce-repost-src">↗ '+esc(it.original_creator||'creator')+': '+esc(it.original_url)+'</div>';
+    }
+    html+='<div class="ce-cap">'+esc(it.preview_caption||'(no caption)')+'</div>';
+    if(flags.length){
+      html+='<div class="ce-flags">';
+      flags.forEach(function(f){html+='<div class="ce-flag-item"><b>'+esc(f.rule||'flag')+'</b> ('+esc(f.severity||'')+'): '+esc(f.evidence||'')+(f.suggested_fix?' → '+esc(f.suggested_fix):'')+'</div>';});
+      html+='</div>';
+    }
+    html+='<div class="ce-actions">';
+    if(blocked){
+      html+='<button class="ce-btn approve" disabled title="Blocked by Sentinel">Blocked</button>';
+    }else{
+      html+='<button class="ce-btn approve" onclick="ceAct(\''+it.id+'\',\'approve\',this)">'+(it.kind==='repost'?'Approve repost':'Approve')+'</button>';
+    }
+    html+='<button class="ce-btn" onclick="ceRevise(\''+it.id+'\')">Revise</button>';
+    html+='<button class="ce-btn reject" onclick="ceAct(\''+it.id+'\',\'reject\',this)">Reject</button>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+function ceRenderJobs(jobs){
+  var body=document.getElementById('ce-body');
+  if(!jobs.length){body.innerHTML='<div class="em">Nothing here yet.</div>';return;}
+  var html='';
+  jobs.forEach(function(j){
+    var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'—');
+    html+='<div class="ce-job"><span class="ce-job-plat">'+esc(j.platform)+'</span>';
+    html+='<span class="ce-job-cap">'+esc((j.caption_final||'').slice(0,120))+'</span>';
+    html+='<span class="ce-job-when">'+when+' · '+esc(j.state)+'</span></div>';
+  });
+  body.innerHTML=html;
+}
+
+async function ceAct(id,action,btn){
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,id:id})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    ceRefresh();
+  }catch(e){alert('Could not '+action+': '+e.message);if(btn){btn.disabled=false;btn.textContent=action;}}
+}
+
+async function ceRevise(id){
+  var note=window.prompt('What needs to change? (sent as a revision note)');
+  if(note===null)return;
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'revise',id:id,note:note})});
+    if(!r.ok){var d=await r.json();throw new Error(d.error||'failed');}
+    ceRefresh();
+  }catch(e){alert('Could not revise: '+e.message);}
+}
+
+async function ceRunNow(){
+  var btn=document.getElementById('ce-run');
+  btn.disabled=true;btn.textContent='Running…';
+  document.getElementById('ce-runstat').textContent='pipeline running in background — refresh in ~2 min';
+  try{
+    // background function returns 202 immediately
+    fetch(B+'/content-run-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});
+    setTimeout(function(){btn.disabled=false;btn.textContent='▶ Run Now';ceRefresh();},4000);
+  }catch(e){btn.disabled=false;btn.textContent='▶ Run Now';alert('Could not start: '+e.message);}
 }
 
 </script>

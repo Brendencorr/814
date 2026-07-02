@@ -101,6 +101,19 @@
 [functions."weekly-pipeline-cron"]
   schedule = "0 12 * * 0"
 
+# ── AUTOMATED CONTENT ENGINE (content schema) ──────────────────────────────
+# Admin queue API (list / approve→Echo→Buffer / revise / reject / counts)
+[functions."content-queue"]
+  timeout = 26
+
+# HTTP-triggered manual run of the daily content pipeline (background, no timeout).
+# Scout (live web search) -> candidates -> reposts fast-track / Sage briefs -> Sentinel -> queue.
+[functions."content-run-background"]
+
+# Scheduled daily content run — 6:00 AM Mountain (12:00 UTC). Runs as background.
+[functions."content-daily-cron"]
+  schedule = "0 12 * * *"
+
 # Re-engagement win-back email — runs daily at 10am MT (16:00 UTC).
 # Finds people ~1 week lapsed and sends one gentle "we saved your place" email.
 [functions."reengagement-cron"]

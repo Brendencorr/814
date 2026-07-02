@@ -245,7 +245,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div id="sb-tiers"></div>
   <div class="snl">Trust</div>
   <a href="#" class="sni" onclick="aboutRiley();return false;"><span class="sni-icon">🕊️</span>About Riley</a>
-  <a href="#" class="sni" onclick="yourData();return false;"><span class="sni-icon">🔒</span>Your Data</a>
   <div class="sb-spacer"></div>
   <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan" id="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
 </aside>
@@ -1220,6 +1219,10 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
     }catch(e){console.error('gating:',e);}
   }
   if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+  // Open the Your Data panel when arrived here from the account menu on another page
+  window.addEventListener('load',function(){
+    if(location.hash==='#data'){setTimeout(function(){if(typeof yourData==='function')yourData();},450);}
+  });
 })();
 </script>
 <script src="/pwa.js"></script>

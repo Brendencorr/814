@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings — Riley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080706;--ink2:#100e0c;--ink3:#1a1714;--ink4:#252019;
+  --parchment:#f5f0e8;--warm:#faf8f4;
+  --gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.1);
+  --amber:#d4942a;--smoke:#8a8578;--smoke2:#544f4a;--rust:#c0604a;
+}
+*{box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);margin:0;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 70% -10%,rgba(201,168,76,0.06),transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:34px 22px 80px}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--smoke);text-decoration:none;font-size:13px;transition:color .15s}
+.back:hover{color:var(--parchment)}
+.head{margin:26px 0 6px;font-family:'DM Serif Display',serif;font-size:34px;line-height:1.05}
+.sub{color:var(--smoke);font-size:14px;margin-bottom:30px}
+.card{background:linear-gradient(180deg,rgba(26,23,20,0.7),rgba(16,14,12,0.7));border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px 26px;margin-bottom:18px}
+.card h2{font-family:'DM Serif Display',serif;font-size:19px;margin:0 0 4px}
+.card .cdesc{color:var(--smoke);font-size:13px;margin-bottom:18px}
+.field{margin-bottom:6px}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+.field input{width:100%;background:rgba(8,7,6,0.6);border:1px solid rgba(255,255,255,0.1);border-radius:9px;color:var(--parchment);font-family:'DM Sans',sans-serif;font-size:15px;padding:12px 14px}
+.field input:focus{outline:none;border-color:rgba(201,168,76,0.55)}
+.save{margin-top:16px;background:linear-gradient(135deg,var(--gold2),var(--gold) 55%,var(--amber));color:var(--ink);border:none;border-radius:10px;font-size:14px;font-weight:700;padding:12px 20px;cursor:pointer}
+.save:disabled{opacity:0.55}
+.row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid rgba(255,255,255,0.06)}
+.row:first-of-type{border-top:none}
+.row .lbl{font-size:14px}
+.row .val{color:var(--smoke);font-size:13px}
+.linkbtn{background:none;border:1px solid rgba(255,255,255,0.14);color:var(--parchment);font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;text-decoration:none;transition:all .15s}
+.linkbtn:hover{border-color:rgba(201,168,76,0.5);color:var(--gold2)}
+.linkbtn.danger:hover{border-color:rgba(192,96,74,0.6);color:var(--rust)}
+.status{min-height:18px;margin-top:10px;font-size:13px;color:var(--gold2)}
+.status.err{color:var(--rust)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/dashboard">← Back to dashboard</a>
+  <h1 class="head">Settings</h1>
+  <div class="sub">Your account and the details that shape Riley's support.</div>
+
+  <div class="card">
+    <h2>Sobriety date</h2>
+    <div class="cdesc">Riley uses this to honor your milestones. Leave blank if it's not for you.</div>
+    <div class="field">
+      <label for="f-date">The day it began</label>
+      <input id="f-date" type="date">
+    </div>
+    <button class="save" id="save-date">Save date</button>
+    <div class="status" id="date-status"></div>
+  </div>
+
+  <div class="card">
+    <h2>Account</h2>
+    <div class="cdesc">Manage who you are and what Riley keeps.</div>
+    <div class="row"><div class="lbl">Email<div class="val" id="acct-email">…</div></div><a class="linkbtn" href="/profile">Edit profile</a></div>
+    <div class="row"><div class="lbl">Your data<div class="val">View, download, or delete everything</div></div><a class="linkbtn" href="/dashboard#data">Manage data</a></div>
+    <div class="row"><div class="lbl">Sign out<div class="val">End this session</div></div><button class="linkbtn danger" id="signout">Sign out</button></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
+  'https://tglljvjixlolaguycvbb.supabase.co',
+  'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+);
+let USER=null, UID=null;
+const $=id=>document.getElementById(id);
+function dstatus(m,err){const s=$('date-status');s.textContent=m||'';s.className='status'+(err?' err':'');}
+
+async function load(){
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){location.href='https://riley.eight14.us';return;}
+  USER=session.user; UID=USER.id;
+  $('acct-email').textContent=USER.email||'';
+  try{
+    const {data:prof}=await SB.from('user_profiles').select('sobriety_date').eq('id',UID).maybeSingle();
+    if(prof&&prof.sobriety_date) $('f-date').value=prof.sobriety_date;
+  }catch(e){}
+}
+
+$('save-date').addEventListener('click', async ()=>{
+  const btn=$('save-date'); btn.disabled=true; dstatus('Saving…');
+  try{
+    const v=$('f-date').value||null;
+    const {error}=await SB.from('user_profiles').upsert({id:UID,email:USER.email,sobriety_date:v});
+    if(error) throw error;
+    dstatus('Saved.');
+  }catch(err){ dstatus('Save failed: '+(err.message||err),true); }
+  finally{ btn.disabled=false; }
+});
+
+$('signout').addEventListener('click', async ()=>{
+  try{ await SB.auth.signOut(); }catch(e){}
+  location.href='https://riley.eight14.us';
+});
+
+load();
+</script>
+<script src="/pwa.js"></script>
+</body>
+</html>

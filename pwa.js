@@ -171,3 +171,73 @@
     setInterval(function () { if (Math.random() < 0.3) fly(); }, 90000);  // then rarely
   });
 })();
+
+/* ── Account menu — click the sidebar user (bottom-left) to open Profile / Settings /
+ * Your Data / Sign out. Injected here so every app page's sidebar gets it consistently. */
+(function () {
+  function init() {
+    var user = document.querySelector('.sb-user');
+    if (!user || document.getElementById('riley-acct-pop')) return;
+    user.style.cursor = 'pointer';
+    user.setAttribute('title', 'Account');
+
+    var st = document.createElement('style');
+    st.textContent = [
+      '#riley-acct-pop{position:fixed;z-index:10002;min-width:186px;background:#161310;border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:6px;box-shadow:0 14px 44px rgba(0,0,0,0.62);opacity:0;transform:translateY(6px);pointer-events:none;transition:opacity .16s,transform .16s;font-family:"DM Sans",sans-serif}',
+      '#riley-acct-pop.on{opacity:1;transform:none;pointer-events:auto}',
+      '#riley-acct-pop .ai{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;color:#e8e4de;font-size:13.5px;cursor:pointer;transition:background .12s;-webkit-user-select:none;user-select:none}',
+      '#riley-acct-pop .ai:hover{background:rgba(255,255,255,0.05)}',
+      '#riley-acct-pop .ai .ic{width:17px;text-align:center;font-size:14px;opacity:0.9}',
+      '#riley-acct-pop .sep{height:1px;background:rgba(255,255,255,0.08);margin:5px 8px}',
+      '#riley-acct-pop .ai.out{color:#c0604a}'
+    ].join('');
+    document.head.appendChild(st);
+
+    var pop = document.createElement('div');
+    pop.id = 'riley-acct-pop';
+    pop.innerHTML =
+        '<div class="ai" data-act="profile"><span class="ic">👤</span>Profile</div>'
+      + '<div class="ai" data-act="settings"><span class="ic">⚙️</span>Settings</div>'
+      + '<div class="ai" data-act="data"><span class="ic">🔒</span>Your Data</div>'
+      + '<div class="sep"></div>'
+      + '<div class="ai out" data-act="signout"><span class="ic">↪</span>Sign out</div>';
+    document.body.appendChild(pop);
+
+    function place() {
+      var r = user.getBoundingClientRect();
+      pop.style.left = Math.round(r.left + 10) + 'px';
+      pop.style.bottom = Math.round(window.innerHeight - r.top + 8) + 'px';
+      pop.style.width = Math.max(186, Math.round(r.width - 20)) + 'px';
+    }
+    function openPop() { place(); pop.classList.add('on'); }
+    function closePop() { pop.classList.remove('on'); }
+
+    user.addEventListener('click', function (e) {
+      if (e.target.closest && e.target.closest('.sb-out')) return;  // existing sign-out button keeps working
+      e.stopPropagation();
+      pop.classList.contains('on') ? closePop() : openPop();
+    });
+    document.addEventListener('click', function (e) {
+      if (!pop.contains(e.target) && !user.contains(e.target)) closePop();
+    });
+    window.addEventListener('resize', function () { if (pop.classList.contains('on')) place(); });
+
+    pop.addEventListener('click', function (e) {
+      var it = e.target.closest && e.target.closest('.ai');
+      if (!it) return;
+      var act = it.getAttribute('data-act');
+      closePop();
+      if (act === 'profile') location.href = '/profile';
+      else if (act === 'settings') location.href = '/settings';
+      else if (act === 'data') {
+        if (typeof window.yourData === 'function') window.yourData();
+        else location.href = '/dashboard#data';
+      } else if (act === 'signout') {
+        if (typeof window.doSignOut === 'function') window.doSignOut();
+        else location.href = 'https://riley.eight14.us';
+      }
+    });
+  }
+  if (document.readyState !== 'loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
+})();

@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<script>/* OAuth safety net: if a Google sign-in callback lands on the marketing root, forward it into the app/chat at /talk. */
+(function(){var s=location.search,h=location.hash;if(/[?&](code|access_token|error)=/.test(s)||/[#&](access_token|error)=/.test(h)){location.replace('/talk'+s+h);}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">

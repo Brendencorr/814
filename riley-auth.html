@@ -307,6 +307,13 @@ header {
   .input-row { padding: .75rem .85rem; }
   #save-prompt { padding: .65rem .85rem; }
 }
+/* Riley-led onboarding — cards + quick-reply buttons */
+.msg.ob-card { max-width: 90%; }
+.ob-btns { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; }
+.ob-btn { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.35); color: var(--gold); font: inherit; font-size: .85rem; padding: .5rem .95rem; border-radius: 999px; cursor: pointer; transition: background .15s; }
+.ob-btn:hover:not(:disabled) { background: rgba(201,168,76,0.18); }
+.ob-btn.primary, .ob-btn.chosen { background: var(--gold); color: #000; border-color: var(--gold); font-weight: 600; }
+.ob-btn:disabled { opacity: .5; cursor: default; }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
 </head>
@@ -424,15 +431,14 @@ async function boot() {
   // Check if already signed in on page load → go straight to dashboard
   const { data: { session: existingSession } } = await sb.auth.getSession();
   if (existingSession) {
-    window.location.href = '/dashboard';
+    await handlePostAuth(existingSession);
     return;
   }
 
   // Listen for auth state changes (handles OAuth callback return)
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
-      // Redirect authenticated users to the dashboard
-      window.location.href = '/dashboard';
+      await handlePostAuth(session);
       return;
     }
     if (session?.user) {
@@ -487,6 +493,139 @@ async function onSignedIn(session) {
   }
 }
 
+// ── Riley-led onboarding — runs IN the chat, right after sign-in, for new members ──
+let onboarding = { active: false, resolveInput: null };
+function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+async function handlePostAuth(session) {
+  if (!session || !session.user) return;
+  currentUser = session.user;
+  try { await onSignedIn(session); } catch (e) {}
+  let onboarded = false, consentAt = null;
+  try {
+    const { data } = await sb.from('user_profiles')
+      .select('onboarding_completed,consent_at').eq('id', session.user.id).maybeSingle();
+    onboarded = data && data.onboarding_completed === true;
+    consentAt = data ? data.consent_at : null;
+  } catch (e) {}
+  if (onboarded) { window.location.href = '/dashboard'; return; }
+  try {
+    await runOnboarding(session, consentAt);
+  } catch (e) {
+    console.warn('onboarding failed, falling back to /dashboard:', e && e.message);
+    window.location.href = '/dashboard';   // safety net — the /onboarding form still exists
+  }
+}
+
+// A Riley message offering buttons; resolves with the chosen value.
+function askButtons(html, options) {
+  return new Promise(function (resolve) {
+    const thread = document.getElementById('messages');
+    document.getElementById('chat-welcome').style.display = 'none';
+    thread.style.display = 'flex';
+    const wrap = document.createElement('div');
+    wrap.className = 'msg riley ob-card';
+    const t = document.createElement('div'); t.className = 'ob-text'; t.innerHTML = html;
+    const btns = document.createElement('div'); btns.className = 'ob-btns';
+    options.forEach(function (o) {
+      const b = document.createElement('button');
+      b.className = 'ob-btn' + (o.primary ? ' primary' : '');
+      b.textContent = o.label;
+      b.onclick = function () {
+        btns.querySelectorAll('button').forEach(function (x) { x.disabled = true; });
+        b.classList.add('chosen');
+        resolve(o.value);
+      };
+      btns.appendChild(b);
+    });
+    wrap.appendChild(t); wrap.appendChild(btns);
+    thread.appendChild(wrap);
+    thread.scrollTop = thread.scrollHeight;
+  });
+}
+
+// A Riley message that waits for the member to type an answer.
+function askText(text) {
+  addMsg('riley', text);
+  return new Promise(function (resolve) {
+    onboarding.resolveInput = function (val) { onboarding.resolveInput = null; resolve(val); };
+  });
+}
+
+async function runOnboarding(session, consentAt) {
+  onboarding.active = true;
+  const track1 = chatHistory.length > 0;   // they were already talking to Riley
+  const md = session.user.user_metadata || {};
+  const gName = md.given_name || (md.name ? md.name.split(' ')[0] : '') || '';
+  const patch = { id: session.user.id, email: session.user.email };
+
+  addMsg('riley', (gName ? gName + ', thank you' : 'Thank you') + ' for signing in.' +
+    (track1 ? " I saved everything we were just talking about — we'll pick it right back up." : '') +
+    " First, a quick and honest note about your privacy — then a couple of small things so I can understand you better.");
+  await wait(600);
+
+  if (!consentAt) {
+    const choice = await askButtons(
+      "<b>Here's what I keep, in plain words.</b><br><br>" +
+      "· <b>What you tell me</b> — your name, your story, your goals<br>" +
+      "· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>" +
+      "· <b>Our conversations</b> — so I remember, and you never repeat yourself<br><br>" +
+      "I keep these only to know you and support you over time. <b>Never sold. Never used for advertising.</b> " +
+      "You can view or delete everything, anytime, under Your Data.",
+      [{ label: 'Decline', value: 'decline' }, { label: 'Agree & Continue', value: 'agree', primary: true }]
+    );
+    if (choice === 'decline') {
+      addMsg('riley', "That's completely okay — no pressure at all. I can't save our conversation or build your space without it, so I'll sign you back out. You're always welcome back, any time.");
+      onboarding.active = false;
+      setTimeout(function () { signOut(); }, 4000);
+      return;
+    }
+    try { await sb.from('user_profiles').update({ consent_at: new Date().toISOString(), consent_version: '1.0' }).eq('id', session.user.id); } catch (e) {}
+    await wait(400);
+  }
+
+  let preferred = gName;
+  const nameChoice = await askButtons(
+    "I've got you as <b>" + (gName || 'you') + "</b>. Want me to call you that — or something else?",
+    [{ label: gName ? 'Call me ' + gName : 'That works', value: 'keep', primary: true }, { label: 'Something else', value: 'other' }]
+  );
+  if (nameChoice === 'other') {
+    const typed = (await askText("What should I call you?")).trim();
+    if (typed) preferred = typed;
+  }
+  if (preferred) { patch.preferred_name = preferred; addMsg('riley', preferred + '. Got it.'); await wait(400); }
+
+  const pr = await askButtons(
+    "And your pronouns, if you'd like me to have them — completely optional.",
+    [{ label: 'she/her', value: 'she/her' }, { label: 'he/him', value: 'he/him' }, { label: 'they/them', value: 'they/them' }, { label: 'Prefer not to say', value: 'skip' }]
+  );
+  if (pr !== 'skip') patch.pronouns = pr;
+  await wait(400);
+
+  const why = (await askText("So I understand where you're at — what brought you here today?")).trim();
+  if (why) patch.why_here = why;
+  await wait(300);
+
+  const focus = await askButtons(
+    "Last one. What do you most want to focus on right now? You can always change this.",
+    [{ label: 'Sobriety & recovery', value: 'sobriety' }, { label: 'Movement', value: 'movement' }, { label: 'Food & nutrition', value: 'nutrition' }, { label: 'Just figuring it out', value: 'exploring' }]
+  );
+  patch.primary_goals = [focus];
+
+  patch.onboarding_completed = true;
+  patch.onboarding_step = 7;
+  patch.onboarding_completed_at = new Date().toISOString();
+  try { await sb.from('user_profiles').upsert(patch, { onConflict: 'id' }); } catch (e) { console.warn('onboarding save', e && e.message); }
+
+  onboarding.active = false;
+  onboarding.resolveInput = null;
+  await wait(400);
+  addMsg('riley', track1
+    ? ("That's everything I need, " + (preferred || 'friend') + ". Now — back to what you were saying.")
+    : ("Thank you, " + (preferred || 'friend') + ". I'm really glad you're here. Whenever you're ready — what's on your mind?"));
+  document.getElementById('msg-input').focus();
+}
+
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 async function signInWithGoogle() {
   // If we're inside an iframe, Google will block the OAuth flow.
@@ -515,7 +654,7 @@ async function signInWithGoogle() {
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://riley.eight14.us' },
+      options: { redirectTo: 'https://riley.eight14.us/talk' },
     });
     if (error) throw error;
   } catch (err) {
@@ -532,7 +671,7 @@ async function signInWithGoogle() {
       if (sb) {
         const { error } = await sb.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: 'https://riley.eight14.us' },
+          options: { redirectTo: 'https://riley.eight14.us/talk' },
         });
       }
     }, 800);
@@ -569,7 +708,7 @@ function startKickTimer() {
   if (currentUser || _kickTimer) return;
   _kickTimer = setTimeout(() => {
     if (currentUser) return; // signed in during timer
-    showSignInModal('Your conversation isn't being saved yet.');
+    showSignInModal("Your conversation isn't being saved yet.");
   }, 8 * 60 * 1000);
 }
 
@@ -681,6 +820,13 @@ async function send() {
 
   input.value = '';
   input.style.height = '42px';
+
+  // During onboarding, the input feeds the question flow instead of the chat API.
+  if (onboarding.active) {
+    addMsg('user', text);
+    if (onboarding.resolveInput) onboarding.resolveInput(text);
+    return;
+  }
 
   addMsg('user', text);
 

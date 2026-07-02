@@ -30,7 +30,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .logo{display:inline-flex;align-items:center;font-family:'DM Serif Display',serif;font-size:32px;color:#fff;line-height:1}
 .logo span{color:var(--gold)}
 .logo-sun{width:27px;height:27px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 15px rgba(201,168,76,0.5);animation:breathe 5s ease-in-out infinite;flex-shrink:0;margin-right:11px}
-.hero-brand{font-family:'DM Serif Display',serif;font-size:clamp(42px,8vw,70px);color:#fff;line-height:1;letter-spacing:-0.01em;margin:2px 0 22px}
+.hero-brand{font-family:'DM Serif Display',serif;font-size:clamp(72px,14vw,132px);color:#fff;line-height:0.98;letter-spacing:-0.02em;margin:4px 0 24px}
 .hero-brand span{color:var(--gold)}
 .nav-links{display:flex;align-items:center;gap:30px}
 .nav-links a.nl{font-size:13px;color:var(--smoke);transition:color .15s}
@@ -140,6 +140,20 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 ::-webkit-scrollbar{width:8px}
 ::-webkit-scrollbar-track{background:var(--ink)}
 ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.25);border-radius:4px}
+/* ── Cardinal ── */
+.cardinal-band{display:flex;align-items:center;gap:52px;max-width:900px;margin:0 auto;flex-wrap:wrap;justify-content:center;text-align:left}
+.cardinal-band img{width:230px;height:auto;flex-shrink:0}
+.cardinal-band .ct{max-width:400px}
+.econn{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:44px}
+.ec{display:flex;flex-direction:column;align-items:center;gap:13px}
+.ec img{height:46px;width:auto;opacity:0.92}
+.ec span{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke)}
+#cardinal-fly{position:fixed;width:94px;height:auto;z-index:60;pointer-events:none;left:-150px;will-change:transform}
+.feather-fall{position:fixed;width:24px;height:auto;z-index:59;pointer-events:none}
+@keyframes cardFly{0%{transform:translate(0,0) rotate(-4deg);opacity:0}9%{opacity:.95}50%{transform:translate(52vw,-38px) rotate(3deg)}91%{opacity:.95}100%{transform:translate(118vw,22px) rotate(-3deg);opacity:0}}
+@keyframes featherFall{0%{opacity:0;transform:translateY(0) rotate(-8deg)}14%{opacity:.85}100%{opacity:0;transform:translateY(190px) rotate(70deg)}}
+@media(prefers-reduced-motion:reduce){#cardinal-fly,.feather-fall{display:none}}
+@media(max-width:820px){.cardinal-band{text-align:center}.cardinal-band img{width:180px}}
 </style>
 </head>
 <body>
@@ -205,6 +219,28 @@ addEventListener('scroll',()=>{nav.style.background=scrollY>20?'rgba(10,9,8,0.9)
 const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
+// Ambient cardinal — flies across at gentle intervals, drops a feather along the way
+(function(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  function fly(){
+    if(document.getElementById('cardinal-fly'))return;
+    var c=document.createElement('img');c.id='cardinal-fly';c.alt='';
+    c.src='/assets/cardinal/png/814-cardinal-flying@2x.png';
+    c.style.top=(9+Math.random()*20)+'%';
+    document.body.appendChild(c);
+    c.style.animation='cardFly 9s ease-in-out forwards';
+    setTimeout(function(){
+      var f=document.createElement('img');f.className='feather-fall';f.alt='';
+      f.src='/assets/cardinal/png/814-feather@2x.png';
+      f.style.left=(38+Math.random()*26)+'vw';f.style.top=c.style.top;
+      document.body.appendChild(f);f.style.animation='featherFall 4.2s ease-in forwards';
+      setTimeout(function(){f.remove();},4400);
+    },3400);
+    setTimeout(function(){c.remove();},9200);
+  }
+  setTimeout(fly,7000);
+  setInterval(function(){ if(Math.random()<0.4) fly(); },50000);
+})();
 </script>
 </body>
 </html>

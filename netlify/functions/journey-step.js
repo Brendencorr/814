@@ -82,7 +82,7 @@ exports.handler = async (event) => {
     const phase = phaseFor(arc, day_number);
     const isMilestone = [7, 30, 60, 90].includes(day_number) || day_number === arc.duration;
 
-    const sys = `You are Riley, the wellness guide for The 8:14 Project. Write Day ${day_number} of ${arc.duration} of the "${arc.title}" journey.
+    const sys = `You are Riley, the wellness guide for The 8:14 Project. Write Day ${day_number} of ${arc.duration} of the "${arc.title}" journey. Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context.
 
 CURRENT PHASE: ${phase.theme} — ${phase.focus}
 ${isMilestone ? "This is a MILESTONE day — mark it with quiet weight, acknowledge how far they've come. No fireworks; presence." : ""}

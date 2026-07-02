@@ -329,41 +329,6 @@ addEventListener('scroll',()=>{nav.style.background=scrollY>20?'rgba(10,9,8,0.9)
 const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-// Time-aware sun — sunrise → noon → sunset → twilight, by the visitor's LOCAL time
-(function(){
-  const KF=[
-    [0, 148,'#cdd6f5','#8a9ad0','#4a5a90','#5566a0',0.20],
-    [5, 138,'#ffe6c4','#f2ad72','#c9683c','#e89560',0.34],
-    [8, 104,'#fff0c8','#f2c766','#c9a84c','#c9a84c',0.40],
-    [12,66, '#fff8e6','#f7dd94','#e8c05a','#f0d680',0.50],
-    [16,100,'#ffecbc','#f2b566','#d98a3c','#e8a050',0.42],
-    [19,132,'#ffd6ac','#ec7e54','#b83c50','#d05058',0.40],
-    [21,146,'#f2acac','#b6607e','#6a3c78','#7a4c88',0.30],
-    [24,148,'#cdd6f5','#8a9ad0','#4a5a90','#5566a0',0.20]
-  ];
-  const hx=h=>{h=h.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];};
-  const mix=(c1,c2,f)=>{const a=hx(c1),b=hx(c2);return 'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*f)).join(',')+')';};
-  const lerp=(a,b,f)=>a+(b-a)*f;
-  const S=id=>document.getElementById(id);
-  const qh=new URLSearchParams(location.search).get('hour'); // ?hour=6 previews any time of day
-  function paint(){
-    if(!S('ts-suncircle'))return;
-    const n=new Date();
-    const t=(qh!==null&&!isNaN(parseFloat(qh)))?parseFloat(qh):(n.getHours()+n.getMinutes()/60);
-    let A=KF[0],B=KF[KF.length-1];
-    for(let i=0;i<KF.length-1;i++){if(t>=KF[i][0]&&t<KF[i+1][0]){A=KF[i];B=KF[i+1];break;}}
-    const f=(t-A[0])/(B[0]-A[0]),cy=lerp(A[1],B[1],f);
-    S('ts-core').setAttribute('stop-color',mix(A[2],B[2],f));
-    S('ts-mid').setAttribute('stop-color',mix(A[3],B[3],f));
-    S('ts-edge').setAttribute('stop-color',mix(A[4],B[4],f));
-    S('ts-horizon').setAttribute('stroke',mix(A[4],B[4],f));
-    const gc=mix(A[5],B[5],f),go=lerp(A[6],B[6],f);
-    S('ts-glow-in').setAttribute('stop-color',gc);S('ts-glow-in').setAttribute('stop-opacity',go);
-    S('ts-glow-mid').setAttribute('stop-color',gc);S('ts-glow-mid').setAttribute('stop-opacity',go*0.15);
-    S('ts-suncircle').setAttribute('cy',cy);S('ts-glowc').setAttribute('cy',cy);
-  }
-  paint();setInterval(paint,60000);
-})();
 </script>
 </body>
 </html>

@@ -149,15 +149,6 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 .ec{display:flex;flex-direction:column;align-items:center;gap:13px}
 .ec img{height:46px;width:auto;opacity:0.92}
 .ec span{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke)}
-#cardinal-fly{position:fixed;width:120px;height:auto;z-index:60;pointer-events:none;left:-170px;top:12%;overflow:visible;will-change:transform;filter:drop-shadow(0 0 20px rgba(201,168,76,0.26))}
-#cardinal-fly .wing-near{transform-box:view-box;transform-origin:114px 70px;animation:flapN .5s ease-in-out infinite}
-#cardinal-fly .wing-far{transform-box:view-box;transform-origin:110px 74px;animation:flapF .5s ease-in-out infinite}
-@keyframes flapN{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(32deg)}}
-@keyframes flapF{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(22deg)}}
-.feather-fall{position:fixed;width:22px;height:auto;z-index:59;pointer-events:none;filter:drop-shadow(0 0 8px rgba(201,168,76,0.2))}
-@keyframes cardFly{0%{transform:translate(0,0) rotate(-3deg);opacity:0}8%{opacity:.96}50%{transform:translate(52vw,-40px) rotate(2deg)}92%{opacity:.96}100%{transform:translate(120vw,26px) rotate(-3deg);opacity:0}}
-@keyframes featherFall{0%{opacity:0;transform:translateY(0) rotate(-8deg)}14%{opacity:.85}100%{opacity:0;transform:translateY(190px) rotate(70deg)}}
-@media(prefers-reduced-motion:reduce){#cardinal-fly,.feather-fall{display:none}}
 @media(max-width:820px){.cardinal-band{text-align:center}.cardinal-band img{width:112px}}
 </style>
 </head>
@@ -223,37 +214,6 @@ addEventListener('scroll',()=>{nav.style.background=scrollY>20?'rgba(10,9,8,0.9)
 // Reveal on scroll
 const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:0.12});
 document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-
-// Ambient cardinal — flies across at gentle intervals, drops a feather along the way
-(function(){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var CARD='<path class="wing-far" d="M110 74 C86 62 58 60 40 70 C56 78 62 88 66 98 C80 96 98 90 110 74 Z" fill="#7c1a1a"/>'
-    +'<path d="M76 88 L14 116 L28 124 L84 100 Z" fill="#a5231f"/>'
-    +'<path d="M152 66 C122 58 90 64 72 86 C65 95 68 106 82 110 C102 116 130 110 150 95 C161 86 163 74 152 66 Z" fill="#c62b28"/>'
-    +'<circle cx="158" cy="60" r="22" fill="#c62b28"/>'
-    +'<path d="M148 44 L145 13 L158 35 L168 11 L174 44 Z" fill="#c62b28"/>'
-    +'<path d="M178 56 L205 62 L178 70 Z" fill="#e0a53a"/>'
-    +'<ellipse cx="173" cy="64" rx="9" ry="8" fill="#191309"/>'
-    +'<circle cx="165" cy="55" r="2.6" fill="#0a0908"/>'
-    +'<path class="wing-near" d="M114 70 C86 52 52 46 30 56 C48 64 56 76 60 90 C78 88 100 84 114 70 Z" fill="#d83b34"/>';
-  function fly(){
-    if(document.getElementById('cardinal-fly'))return;
-    var top=(9+Math.random()*20);
-    document.body.insertAdjacentHTML('beforeend','<svg id="cardinal-fly" viewBox="0 0 210 150" style="top:'+top+'%">'+CARD+'</svg>');
-    var c=document.getElementById('cardinal-fly');
-    c.style.animation='cardFly 9s ease-in-out forwards';
-    setTimeout(function(){
-      var f=document.createElement('img');f.className='feather-fall';f.alt='';
-      f.src='/assets/cardinal/png/814-feather@2x.png';
-      f.style.left=(38+Math.random()*26)+'vw';f.style.top=top+'%';
-      document.body.appendChild(f);f.style.animation='featherFall 4.2s ease-in forwards';
-      setTimeout(function(){f.remove();},4400);
-    },3400);
-    setTimeout(function(){c.remove();},9200);
-  }
-  setTimeout(fly,7000);
-  setInterval(function(){ if(Math.random()<0.4) fly(); },50000);
-})();
 </script>
 </body>
 </html>

@@ -134,44 +134,6 @@
   });
 })();
 
-/* ── Ambient cardinal — flapping fly-across, app-side parity with the marketing site.
- * Subtle + infrequent (a "visit", not a distraction): first pass after the page settles,
- * then only occasionally, confined to the upper band, pointer-events off, reduced-motion safe. */
-(function () {
-  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  var CARD = '<path class="wing-far" d="M110 74 C86 62 58 60 40 70 C56 78 62 88 66 98 C80 96 98 90 110 74 Z" fill="#7c1a1a"/>'
-    + '<path d="M76 88 L14 116 L28 124 L84 100 Z" fill="#a5231f"/>'
-    + '<path d="M152 66 C122 58 90 64 72 86 C65 95 68 106 82 110 C102 116 130 110 150 95 C161 86 163 74 152 66 Z" fill="#c62b28"/>'
-    + '<circle cx="158" cy="60" r="22" fill="#c62b28"/>'
-    + '<path d="M148 44 L145 13 L158 35 L168 11 L174 44 Z" fill="#c62b28"/>'
-    + '<path d="M178 56 L205 62 L178 70 Z" fill="#e0a53a"/>'
-    + '<ellipse cx="173" cy="64" rx="9" ry="8" fill="#191309"/>'
-    + '<circle cx="165" cy="55" r="2.6" fill="#0a0908"/>'
-    + '<path class="wing-near" d="M114 70 C86 52 52 46 30 56 C48 64 56 76 60 90 C78 88 100 84 114 70 Z" fill="#d83b34"/>';
-  var st = document.createElement('style');
-  st.textContent = [
-    '#riley-cardinal{position:fixed;width:104px;height:auto;z-index:40;pointer-events:none;left:-160px;top:10%;overflow:visible;will-change:transform;filter:drop-shadow(0 0 18px rgba(201,168,76,0.24))}',
-    '#riley-cardinal .wing-near{transform-box:view-box;transform-origin:114px 70px;animation:rcFlapN .5s ease-in-out infinite}',
-    '#riley-cardinal .wing-far{transform-box:view-box;transform-origin:110px 74px;animation:rcFlapF .5s ease-in-out infinite}',
-    '@keyframes rcFlapN{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(32deg)}}',
-    '@keyframes rcFlapF{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(22deg)}}',
-    '@keyframes rcFly{0%{transform:translate(0,0) rotate(-3deg);opacity:0}9%{opacity:.9}50%{transform:translate(52vw,-32px) rotate(2deg)}91%{opacity:.9}100%{transform:translate(118vw,20px) rotate(-3deg);opacity:0}}'
-  ].join('');
-  document.head.appendChild(st);
-  function fly() {
-    if (document.getElementById('riley-cardinal') || document.hidden) return;
-    var top = (6 + Math.random() * 14);
-    document.body.insertAdjacentHTML('beforeend', '<svg id="riley-cardinal" viewBox="0 0 210 150" style="top:' + top + '%">' + CARD + '</svg>');
-    var c = document.getElementById('riley-cardinal');
-    c.style.animation = 'rcFly 9s ease-in-out forwards';
-    setTimeout(function () { if (c) c.remove(); }, 9300);
-  }
-  window.addEventListener('load', function () {
-    setTimeout(fly, 24000);                                        // one gentle pass after things settle
-    setInterval(function () { if (Math.random() < 0.3) fly(); }, 90000);  // then rarely
-  });
-})();
-
 /* ── Account menu — click the sidebar user (bottom-left) to open Profile / Settings /
  * Your Data / Sign out. Injected here so every app page's sidebar gets it consistently. */
 (function () {

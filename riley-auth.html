@@ -52,7 +52,10 @@ header {
   gap: 1rem;
   flex-shrink: 0;
 }
-.logo { font-size: 1.4rem; font-weight: 900; color: var(--gold); letter-spacing: -1px; }
+.logo { display: inline-flex; align-items: center; font-family: 'DM Serif Display', serif; font-size: 1.5rem; font-weight: 400; color: #fff; letter-spacing: normal; line-height: 1; }
+.logo .logo-sun { width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #e8d5a3, #c9a84c 55%, #a8842f); box-shadow: 0 0 12px rgba(201,168,76,0.5); animation: sunbreathe 5s ease-in-out infinite; flex-shrink: 0; margin-right: 8px; }
+.logo .logo-dot { color: var(--gold); }
+@keyframes sunbreathe { 0%,100% { transform: scale(1); opacity: .92; } 50% { transform: scale(1.06); opacity: 1; } }
 .header-label { font-size: .78rem; color: var(--muted2); }
 .user-pill {
   margin-left: auto;
@@ -305,11 +308,12 @@ header {
   #save-prompt { padding: .65rem .85rem; }
 }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="page">
   <header>
-    <div class="logo">8:14</div>
+    <div class="logo"><span class="logo-sun"></span>8:14<span class="logo-dot">.</span></div>
     <span class="header-label">Riley</span>
     <div class="user-pill" id="user-pill">
       <img id="user-avatar" class="user-avatar" src="" alt="">

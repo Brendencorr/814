@@ -102,7 +102,7 @@
       + '<div style="width:66px;height:66px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 44px rgba(201,168,76,0.45)"></div>'
       + '<div style="font-family:\'DM Serif Display\',serif;font-size:23px;color:#f5f0e8;margin-bottom:8px">Get the Riley app</div>'
       + '<div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>'
-      + '<button id="rli-go" style="width:100%;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#fff;border:none;padding:15px;font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;margin-bottom:10px">Install Riley App<span style="color:#0a0908">.</span></button>'
+      + '<button id="rli-go" style="width:100%;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;border:none;padding:15px;font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;margin-bottom:10px">Install Riley App<span style="color:#fff">.</span></button>'
       + '<button id="rli-skip" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:4px">Maybe later</button>'
       + '</div>';
     document.body.appendChild(ov);
@@ -117,8 +117,8 @@
     if (document.getElementById('riley-install-btn')) return;
     styleOnce('riley-pill-css', '@keyframes rilePop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}#riley-install-btn:hover{transform:translateY(-2px)}');
     var b = document.createElement('div'); b.id = 'riley-install-btn';
-    b.style.cssText = 'position:fixed;left:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#fff;padding:12px 18px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
-    b.innerHTML = '<span>Install Riley App<span style="color:#0a0908">.</span></span><span id="riley-inst-x" style="opacity:0.6;font-size:17px;line-height:1">&times;</span>';
+    b.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;padding:12px 18px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
+    b.innerHTML = '<span>Install Riley App<span style="color:#fff">.</span></span><span id="riley-inst-x" style="opacity:0.55;font-size:17px;line-height:1">&times;</span>';
     b.addEventListener('click', function (e) {
       if (e.target && e.target.id === 'riley-inst-x') { b.remove(); try { localStorage.setItem('riley_install_dismissed', '1'); } catch (er) {} return; }
       triggerInstall();
@@ -131,5 +131,43 @@
       if (onLogin && isMobile) { loginPopup(); return; }   // login on phone → popup
       if (deferredPrompt || (isIOS && isSafari)) installPill();
     }, onLogin ? 900 : 400);
+  });
+})();
+
+/* ── Ambient cardinal — flapping fly-across, app-side parity with the marketing site.
+ * Subtle + infrequent (a "visit", not a distraction): first pass after the page settles,
+ * then only occasionally, confined to the upper band, pointer-events off, reduced-motion safe. */
+(function () {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var CARD = '<path class="wing-far" d="M110 74 C86 62 58 60 40 70 C56 78 62 88 66 98 C80 96 98 90 110 74 Z" fill="#7c1a1a"/>'
+    + '<path d="M76 88 L14 116 L28 124 L84 100 Z" fill="#a5231f"/>'
+    + '<path d="M152 66 C122 58 90 64 72 86 C65 95 68 106 82 110 C102 116 130 110 150 95 C161 86 163 74 152 66 Z" fill="#c62b28"/>'
+    + '<circle cx="158" cy="60" r="22" fill="#c62b28"/>'
+    + '<path d="M148 44 L145 13 L158 35 L168 11 L174 44 Z" fill="#c62b28"/>'
+    + '<path d="M178 56 L205 62 L178 70 Z" fill="#e0a53a"/>'
+    + '<ellipse cx="173" cy="64" rx="9" ry="8" fill="#191309"/>'
+    + '<circle cx="165" cy="55" r="2.6" fill="#0a0908"/>'
+    + '<path class="wing-near" d="M114 70 C86 52 52 46 30 56 C48 64 56 76 60 90 C78 88 100 84 114 70 Z" fill="#d83b34"/>';
+  var st = document.createElement('style');
+  st.textContent = [
+    '#riley-cardinal{position:fixed;width:104px;height:auto;z-index:40;pointer-events:none;left:-160px;top:10%;overflow:visible;will-change:transform;filter:drop-shadow(0 0 18px rgba(201,168,76,0.24))}',
+    '#riley-cardinal .wing-near{transform-box:view-box;transform-origin:114px 70px;animation:rcFlapN .5s ease-in-out infinite}',
+    '#riley-cardinal .wing-far{transform-box:view-box;transform-origin:110px 74px;animation:rcFlapF .5s ease-in-out infinite}',
+    '@keyframes rcFlapN{0%,100%{transform:rotate(-40deg)}50%{transform:rotate(32deg)}}',
+    '@keyframes rcFlapF{0%,100%{transform:rotate(-28deg)}50%{transform:rotate(22deg)}}',
+    '@keyframes rcFly{0%{transform:translate(0,0) rotate(-3deg);opacity:0}9%{opacity:.9}50%{transform:translate(52vw,-32px) rotate(2deg)}91%{opacity:.9}100%{transform:translate(118vw,20px) rotate(-3deg);opacity:0}}'
+  ].join('');
+  document.head.appendChild(st);
+  function fly() {
+    if (document.getElementById('riley-cardinal') || document.hidden) return;
+    var top = (6 + Math.random() * 14);
+    document.body.insertAdjacentHTML('beforeend', '<svg id="riley-cardinal" viewBox="0 0 210 150" style="top:' + top + '%">' + CARD + '</svg>');
+    var c = document.getElementById('riley-cardinal');
+    c.style.animation = 'rcFly 9s ease-in-out forwards';
+    setTimeout(function () { if (c) c.remove(); }, 9300);
+  }
+  window.addEventListener('load', function () {
+    setTimeout(fly, 24000);                                        // one gentle pass after things settle
+    setInterval(function () { if (Math.random() < 0.3) fly(); }, 90000);  // then rarely
   });
 })();

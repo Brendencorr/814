@@ -58,6 +58,24 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tbtn-ghost:hover{background:rgba(255,255,255,0.1)}
 .tbtn-gold{background:linear-gradient(135deg,var(--gold),var(--amber));color:var(--ink);box-shadow:0 2px 12px rgba(201,168,76,0.25)}
 .tbtn-gold:hover{box-shadow:0 4px 20px rgba(201,168,76,0.4)}
+.abell-wrap{position:relative;display:flex;align-items:center}
+.abell{position:relative;width:34px;height:34px;border-radius:3px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.06);color:var(--parchment);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;padding:0}
+.abell:hover{background:rgba(255,255,255,0.1)}
+.abadge{position:absolute;top:-6px;right:-6px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:9px;font-weight:800;font-family:'DM Mono',monospace;display:none;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(201,168,76,0.5)}
+.apanel{position:absolute;top:44px;right:0;width:344px;max-width:88vw;max-height:70vh;overflow-y:auto;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,0.55);z-index:60;display:none;padding:6px}
+.apanel.open{display:block}
+.apanel-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);opacity:.9}
+.apanel-clear{background:none;border:none;color:var(--smoke);font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.apanel-clear:hover{color:var(--parchment)}
+.aitem{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:6px;text-decoration:none;transition:background .15s;position:relative}
+.aitem:hover{background:rgba(255,255,255,0.04)}
+.aitem+.aitem{border-top:1px solid rgba(255,255,255,0.04)}
+.aitem-ico{font-size:17px;flex-shrink:0;line-height:1.35}
+.aitem-t{font-size:13px;color:var(--parchment);line-height:1.4;margin-bottom:2px}
+.aitem-b{font-size:11.5px;color:var(--smoke);line-height:1.45;word-break:break-word}
+.aitem-time{font-size:9px;color:var(--smoke2);font-family:'DM Mono',monospace;margin-top:4px;letter-spacing:0.05em}
+.aitem-dot{position:absolute;top:14px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--gold)}
+.aempty{padding:22px 14px;text-align:center;color:var(--smoke);font-size:12px;line-height:1.6}
 
 .content{padding:24px 28px;max-width:1280px}
 
@@ -252,7 +270,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <main class="main">
   <div class="topbar">
     <div><div class="greeting" id="greeting">Good morning.</div><div class="tb-date" id="tbdate"></div></div>
-    <div class="tb-actions"><a href="/brief" class="tbtn tbtn-ghost">Today's Brief</a><a href="/chat" class="tbtn tbtn-gold">Talk to Riley →</a></div>
+    <div class="tb-actions">
+      <div class="abell-wrap">
+        <button class="abell" id="abell" onclick="toggleAlerts(event)" aria-label="Notifications" title="Notifications">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="abadge" id="abadge">0</span>
+        </button>
+        <div class="apanel" id="apanel">
+          <div class="apanel-head"><span>Notifications</span><button class="apanel-clear" id="aclear" onclick="markAllAlertsRead(event)">Mark all read</button></div>
+          <div id="alist"><div class="aempty">No notifications yet.</div></div>
+        </div>
+      </div>
+      <a href="/brief" class="tbtn tbtn-ghost">Today's Brief</a><a href="/chat" class="tbtn tbtn-gold">Talk to Riley →</a></div>
   </div>
   <div class="content">
 
@@ -401,6 +430,59 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 // Engagement tracking — fire-and-forget, never blocks render. Logs event + bumps counters.
 function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
+
+// ── Notifications (client alerts) — new library additions, etc. ───────────────
+let ALERTS=[];
+async function loadClientAlerts(){
+  if(!UID)return;
+  try{
+    const r=await fetch('/.netlify/functions/client-alerts?user_id='+encodeURIComponent(UID));
+    const d=await r.json();
+    ALERTS=d.alerts||[];
+    renderAlerts(d.unread||0);
+  }catch(e){/* non-fatal */}
+}
+function alertTimeAgo(iso){
+  if(!iso)return'';
+  var s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60)return'just now';
+  var m=Math.floor(s/60);if(m<60)return m+'m ago';
+  var h=Math.floor(m/60);if(h<24)return h+'h ago';
+  var dd=Math.floor(h/24);if(dd<7)return dd+'d ago';
+  return new Date(iso).toLocaleDateString();
+}
+function renderAlerts(unread){
+  var badge=document.getElementById('abadge');
+  if(badge){if(unread>0){badge.textContent=unread>9?'9+':String(unread);badge.style.display='flex';}else{badge.style.display='none';}}
+  var list=document.getElementById('alist');if(!list)return;
+  if(!ALERTS.length){list.innerHTML='<div class="aempty">No notifications yet.<br>New additions to your library will show up here.</div>';return;}
+  list.innerHTML=ALERTS.map(function(a){
+    var inner='<div class="aitem-ico">'+(a.icon||'✨')+'</div><div style="flex:1;min-width:0"><div class="aitem-t">'+esc(a.title)+'</div>'+(a.body?'<div class="aitem-b">'+esc(a.body)+'</div>':'')+'<div class="aitem-time">'+alertTimeAgo(a.created_at)+'</div></div>'+(a.read?'':'<span class="aitem-dot"></span>');
+    if(a.url){var ext=/^https?:/i.test(a.url);return '<a class="aitem" href="'+esc(a.url)+'"'+(ext?' target="_blank" rel="noopener"':'')+'>'+inner+'</a>';}
+    return '<div class="aitem">'+inner+'</div>';
+  }).join('');
+}
+function toggleAlerts(ev){
+  if(ev)ev.stopPropagation();
+  var p=document.getElementById('apanel');if(!p)return;
+  var open=p.classList.toggle('open');
+  if(open){
+    var badge=document.getElementById('abadge');if(badge)badge.style.display='none';
+    if(UID){try{fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',user_id:UID})});}catch(e){}}
+  }
+}
+async function markAllAlertsRead(ev){
+  if(ev)ev.stopPropagation();
+  var badge=document.getElementById('abadge');if(badge)badge.style.display='none';
+  ALERTS=ALERTS.map(function(a){var c=Object.assign({},a);c.read=true;return c;});
+  renderAlerts(0);
+  if(!UID)return;
+  try{await fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',user_id:UID})});}catch(e){}
+}
+document.addEventListener('click',function(e){
+  var p=document.getElementById('apanel');var b=document.getElementById('abell');
+  if(p&&p.classList.contains('open')&&!p.contains(e.target)&&b&&!b.contains(e.target))p.classList.remove('open');
+});
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 // Animated count-up
@@ -421,6 +503,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(!session){window.location.href='https://riley.eight14.us';return;}
     USER=session.user;UID=USER.id;
     track('app_open');
+    loadClientAlerts();
     // Onboarding guard — new users build their profile with Riley first.
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
@@ -691,8 +774,7 @@ async function loadExplore(){
 // ── RILEY BRAIN — the decision engine drives "For You Today" ──────────────────
 async function loadRileyBrain(){
   try{
-    const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
-    const res=await fetch('/.netlify/functions/riley-brain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok})});
+    const res=await fetch('/.netlify/functions/riley-brain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
     if(!res.ok)return;
     const brain=await res.json();
     window._brain=brain;
@@ -1228,5 +1310,38 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 </script>
 <script src="/pwa.js"></script>
 <script src="/track.js"></script>
+<script>
+/* Riley chat popup — "Talk with Riley" opens an embedded live chat (iframe of /chat?embed=1)
+   inside the dashboard, instead of navigating to the full-screen page. */
+(function(){
+  var overlay, frame, built=false;
+  function build(){
+    if(built) return; built=true;
+    overlay=document.createElement('div');
+    overlay.id='riley-chat-popup';
+    overlay.style.cssText='position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;background:rgba(6,9,14,0.7);backdrop-filter:blur(4px);padding:20px';
+    var panel=document.createElement('div');
+    panel.style.cssText='position:relative;width:100%;max-width:480px;height:min(85vh,760px);background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.5)';
+    var closeBtn=document.createElement('button');
+    closeBtn.innerHTML='&times;'; closeBtn.setAttribute('aria-label','Close');
+    closeBtn.style.cssText='position:absolute;top:8px;right:10px;z-index:2;width:32px;height:32px;border:none;border-radius:50%;background:rgba(0,0,0,0.4);color:#fff;font-size:22px;line-height:1;cursor:pointer';
+    closeBtn.onclick=hide;
+    frame=document.createElement('iframe');
+    frame.title='Chat with Riley';
+    frame.style.cssText='width:100%;height:100%;border:0;display:block';
+    panel.appendChild(closeBtn); panel.appendChild(frame); overlay.appendChild(panel);
+    overlay.addEventListener('click',function(e){ if(e.target===overlay) hide(); });
+    document.body.appendChild(overlay);
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&overlay.style.display==='flex') hide(); });
+  }
+  function show(){ build(); if(!frame.src) frame.src='/chat?embed=1'; overlay.style.display='flex'; document.body.style.overflow='hidden'; }
+  function hide(){ if(overlay){ overlay.style.display='none'; document.body.style.overflow=''; } }
+  document.addEventListener('click',function(e){
+    var a=e.target.closest?e.target.closest('a[href]'):null;
+    if(!a) return;
+    if(/^\/chat(\?|$)/.test(a.getAttribute('href')||'')){ e.preventDefault(); show(); }
+  });
+})();
+</script>
 </body>
 </html>

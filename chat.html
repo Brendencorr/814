@@ -199,6 +199,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--i
 .sb-plan{font-size:9px;color:var(--gold)}
 .sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
 .sb-out:hover{color:var(--red)}
+/* Embed mode — dashboard chat popup (iframe of /chat?embed=1): drop the portal chrome */
+body.embed .sidebar{display:none}
+body.embed main{height:100vh}
+body.embed .topbar-actions a.topbar-btn{display:none}
 </style>
 </head>
 <body>
@@ -263,6 +267,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--i
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
+// Embed mode: when iframed in the dashboard popup (?embed=1), hide the portal chrome.
+if (new URLSearchParams(location.search).get('embed')) document.body.classList.add('embed');
 const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
 const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
 const RILEY_URL = '/.netlify/functions/riley-chat';
@@ -289,22 +295,26 @@ let _db, _user, _uid, _sessionId, _history = [];
   else av.textContent = initials;
   document.getElementById('user-name').textContent = fullName;
 
-  // Load most recent session to restore context
-  const { data: recent } = await _db.from('riley_conversations')
-    .select('role, content, session_id, created_at')
+  // ── Smart resume (Option A): auto-continue the latest thread if it last spoke
+  //    < 24h ago; if it's older, Riley asks whether to continue or start fresh.
+  //    Loads the FULL latest session (fixes the old last-20-across-sessions bug). ──
+  const { data: last } = await _db.from('riley_conversations')
+    .select('session_id, created_at')
     .eq('user_id', _uid)
     .order('created_at', { ascending: false })
-    .limit(20);
-
-  if (recent && recent.length) {
-    // Group by most recent session_id
-    const latestSid = recent[0].session_id;
-    const latestMsgs = recent.filter(m => m.session_id === latestSid).reverse();
-    _sessionId = latestSid;
-    _history = latestMsgs.map(m => ({ role: m.role, content: m.content }));
-    if (_history.length) {
-      document.getElementById('welcome').style.display = 'none';
-      _history.forEach(m => appendMsg(m.role, m.content));
+    .limit(1);
+  if (last && last.length) {
+    const sid = last[0].session_id;
+    const hoursSince = (Date.now() - new Date(last[0].created_at).getTime()) / 3600000;
+    const { data: msgs } = await _db.from('riley_conversations')
+      .select('role, content')
+      .eq('user_id', _uid).eq('session_id', sid)
+      .order('created_at', { ascending: true })
+      .limit(50);
+    const history = (msgs || []).map(m => ({ role: m.role, content: m.content }));
+    if (history.length) {
+      if (hoursSince < 24) resumeSession(sid, history);
+      else                 offerResume(sid, history);
     }
   }
 })();
@@ -315,6 +325,40 @@ function newConversation() {
   document.getElementById('messages').innerHTML = '';
   document.getElementById('messages').appendChild(document.getElementById('welcome') || createWelcome());
   document.getElementById('welcome').style.display = 'block';
+}
+
+// Auto-continue a thread (< 24h): rehydrate it into the view.
+function resumeSession(sid, history) {
+  _sessionId = sid;
+  _history = history;
+  document.getElementById('welcome').style.display = 'none';
+  const box = document.getElementById('messages');
+  box.innerHTML = '';
+  history.forEach(m => appendMsg(m.role, m.content));
+}
+
+// Older thread: Riley asks whether to pick up where we left off or start fresh.
+function offerResume(sid, history) {
+  document.getElementById('welcome').style.display = 'none';
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:flex-start';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'max-width:80%;padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.6;background:white;color:var(--ink);border:1px solid var(--mist);border-bottom-left-radius:4px';
+  bubble.textContent = 'Welcome back. Want to pick up where we left off, or start fresh?';
+  const btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
+  const b1 = document.createElement('button');
+  b1.textContent = 'Pick up where we left off';
+  b1.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid var(--gold);background:var(--gold);color:var(--ink);font-size:13px;font-weight:600;cursor:pointer';
+  b1.onclick = function () { wrap.remove(); resumeSession(sid, history); };
+  const b2 = document.createElement('button');
+  b2.textContent = 'Start fresh';
+  b2.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid var(--mist);background:white;color:var(--ink);font-size:13px;cursor:pointer';
+  b2.onclick = function () { wrap.remove(); newConversation(); };
+  btns.appendChild(b1); btns.appendChild(b2);
+  wrap.appendChild(bubble); wrap.appendChild(btns);
+  box.appendChild(wrap);
 }
 
 function starter(btn) {

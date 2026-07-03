@@ -43,36 +43,28 @@ exports.handler = async function (event) {
     const userId   = params.user_id;
     const search   = params.search;
 
-    // ── Single user detail ────────────────────────────────────────────────────
+    // ── Single user detail (+ 30-day trends for the profile deep-dive) ──────────
     if (userId) {
-      const [profileRes, convsRes, progRes] = await Promise.all([
-        supabase
-          .from("user_profiles")
-          .select("*")
-          .eq("id", userId)
-          .single(),
-        supabase
-          .from("riley_conversations")
-          .select("role, content, session_id, created_at")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: true })
-          .limit(200),
-        supabase
-          .from("user_program_progress")
-          .select("*")
-          .eq("user_id", userId)
-          .order("last_activity", { ascending: false }),
+      const now = Date.now();
+      const thirtyAgoTs  = new Date(now - 30 * 86400000).toISOString();
+      const thirtyAgoDay = thirtyAgoTs.slice(0, 10);
+      const sevenAgo     = new Date(now - 7 * 86400000);
+
+      const [profileRes, convsRes, progRes, evRes, ciRes] = await Promise.all([
+        supabase.from("user_profiles").select("*").eq("id", userId).single(),
+        supabase.from("riley_conversations").select("role, content, session_id, created_at").eq("user_id", userId).order("created_at", { ascending: true }).limit(200),
+        supabase.from("user_program_progress").select("*").eq("user_id", userId).order("last_activity", { ascending: false }),
+        supabase.from("engagement_events").select("event_type,created_at").eq("user_id", userId).gte("created_at", thirtyAgoTs).limit(20000),
+        supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).gte("checkin_date", thirtyAgoDay).not("mood", "is", null).order("checkin_date", { ascending: true }).limit(400),
       ]);
 
-      // Group conversations by session
+      // Group conversations by session (most recent first)
       const convsBySession = {};
       (convsRes.data || []).forEach((msg) => {
         const sid = msg.session_id || "default";
         if (!convsBySession[sid]) convsBySession[sid] = [];
         convsBySession[sid].push({ role: msg.role, content: msg.content, created_at: msg.created_at });
       });
-
-      // Most recent session first
       const sessions = Object.entries(convsBySession)
         .map(([sid, msgs]) => ({
           session_id: sid,
@@ -83,6 +75,27 @@ exports.handler = async function (event) {
         }))
         .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
 
+      // Per-user 30-day series (all activity + Riley) with 7d-vs-prior-7d deltas
+      const dayList = [];
+      for (let i = 29; i >= 0; i--) dayList.push(new Date(now - i * 86400000).toISOString().slice(0, 10));
+      const serAll = {}, serRiley = {};
+      dayList.forEach((d) => { serAll[d] = 0; serRiley[d] = 0; });
+      let ev7 = 0, evPrev = 0, ri7 = 0, riPrev = 0, brief30 = 0;
+      (evRes.data || []).forEach((e) => {
+        const dk = (e.created_at || "").slice(0, 10), cur = new Date(e.created_at) >= sevenAgo;
+        if (serAll[dk] !== undefined) serAll[dk]++;
+        if (cur) ev7++; else evPrev++;
+        if (e.event_type === "riley_message") { if (serRiley[dk] !== undefined) serRiley[dk]++; if (cur) ri7++; else riPrev++; }
+        if (e.event_type === "brief_opened") brief30++;
+      });
+      const mk = (obj) => dayList.map((d) => ({ label: d.slice(5), n: obj[d] }));
+      const checkins = ciRes.data || [];
+      const moodSeries = checkins.map((c) => ({ label: (c.checkin_date || "").slice(5), n: c.mood }));
+      const avgMood = checkins.length ? Math.round(checkins.reduce((a, c) => a + c.mood, 0) / checkins.length * 10) / 10 : null;
+      const la = profileRes.data && profileRes.data.last_active_at;
+      const days = la ? (now - new Date(la)) / 86400000 : 999;
+      const state = !la ? "new" : days <= 2 ? "active" : days <= 7 ? "cooling" : "dormant";
+
       return {
         statusCode: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
@@ -90,6 +103,8 @@ exports.handler = async function (event) {
           profile:  profileRes.data  || null,
           sessions: sessions,
           progress: progRes.data     || [],
+          series: { activity_30d: mk(serAll), riley_30d: mk(serRiley), mood: moodSeries },
+          stats:  { state, events_7d: ev7, events_prev_7d: evPrev, riley_7d: ri7, riley_prev_7d: riPrev, brief_30d: brief30, checkins_30d: checkins.length, avg_mood: avgMood },
         }),
       };
     }

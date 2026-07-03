@@ -1852,6 +1852,21 @@ function openUserPanel(userId){
     });
 }
 
+function udTrends(d){
+  var st=d.stats||{}, se=d.series||{};
+  var stateColor=st.state==='active'?'var(--green)':st.state==='cooling'?'var(--gold)':st.state==='dormant'?'var(--red)':'var(--blue)';
+  var actSpark=(se.activity_30d||[]).map(function(r){return r.n;});
+  var riSpark=(se.riley_30d||[]).map(function(r){return r.n;});
+  var stateBadge=st.state?'<span style="font-size:.58rem;font-family:DM Mono,monospace;text-transform:uppercase;letter-spacing:.06em;color:'+stateColor+';border:1px solid '+stateColor+';border-radius:10px;padding:.1rem .5rem;margin-left:.5rem">'+st.state+'</span>':'';
+  var cards='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.9rem">'+
+    statCard({label:'Activity · 7d',value:(st.events_7d||0),color:'var(--gold)',delta:{cur:st.events_7d,prev:st.events_prev_7d},spark:{series:actSpark,color:'var(--gold)'}})+
+    statCard({label:'Riley · 7d',value:(st.riley_7d||0),color:'var(--sage)',delta:{cur:st.riley_7d,prev:st.riley_prev_7d},spark:{series:riSpark,color:'var(--sage)'}})+
+    statCard({label:'Avg Mood',value:(st.avg_mood!=null?st.avg_mood:'—'),color:'var(--blue)',sub:(st.checkins_30d||0)+' check-ins · 30d'})+
+  '</div>';
+  var actChart=(se.activity_30d&&se.activity_30d.length)?'<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem"><div class="sh" style="margin:0 0 .2rem">30-Day Activity</div>'+svgBars(se.activity_30d,'var(--gold)',null)+'</div>':'';
+  var moodChart=(se.mood&&se.mood.length>1)?'<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem"><div class="sh" style="margin:0 0 .2rem">Mood Trend <span style="color:var(--muted2);font-weight:400;font-size:.66rem">1–5 scale</span></div>'+svgBars(se.mood,'var(--blue)',null)+'</div>':'';
+  return '<div class="ud-section"><div class="ud-section-label">Trends'+stateBadge+'</div>'+cards+actChart+moodChart+'</div>';
+}
 function renderUserDetail(d){
   var profile=d.profile||{};
   var sessions=d.sessions||[];
@@ -1898,6 +1913,8 @@ function renderUserDetail(d){
   html+='<div style="font-family:DM Mono,monospace;font-size:13px;color:'+tierColor+';letter-spacing:.05em;font-weight:600">'+x(tier)+'</div></div>';
   html+='<span style="font-size:.66rem;color:var(--muted2)">Use Membership &amp; Entitlements below to grant/revoke →</span>';
   html+='</div>';
+
+  html+=udTrends(d);
 
   html+='<div class="ud-section">';
   html+='<div class="ud-section-label">Overview</div>';

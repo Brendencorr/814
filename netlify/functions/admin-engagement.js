@@ -56,7 +56,7 @@ exports.handler = async function (event) {
 
     const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes] = await Promise.all([
       supabase.from("user_profiles")
-        .select("id,full_name,preferred_name,email,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
+        .select("id,full_name,preferred_name,email,avatar_url,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
         .eq("onboarding_completed", true)
         .order("last_active_at", { ascending: false, nullsFirst: false })
         .limit(5000),
@@ -155,6 +155,7 @@ exports.handler = async function (event) {
         id: u.id,
         name: (u.preferred_name || u.full_name || u.email || "Member"),
         email: u.email,
+        avatar_url: u.avatar_url || null,
         state,
         last_active_at: u.last_active_at,
         brief_open_count: u.brief_open_count || 0,

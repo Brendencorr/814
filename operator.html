@@ -370,6 +370,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .dchip.down{background:var(--red-soft);color:var(--red)}
 .dchip.flat{background:var(--surface2);color:var(--muted2)}
 .dchip.new{background:var(--gold-soft);color:var(--gold2)}
+/* Interactive chart hover (crosshair + point + tooltip bubble) */
+.chx{position:absolute;top:0;bottom:0;width:1px;background:var(--border-strong);transform:translateX(-.5px);display:none;pointer-events:none}
+.chd{position:absolute;width:10px;height:10px;border-radius:50%;transform:translate(-50%,-50%);display:none;pointer-events:none;box-shadow:0 0 9px 1px currentColor;border:2px solid var(--surface)}
+.chtip{position:absolute;transform:translate(-50%,-150%);display:none;pointer-events:none;background:var(--surface2);border:1px solid var(--border-strong);border-radius:6px;padding:.28rem .55rem;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;box-shadow:0 8px 22px rgba(0,0,0,.55);z-index:6}
+.chtip b{font-family:'DM Serif Display',serif;font-size:13px;color:var(--ink);margin-right:3px}
 .ce-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
 .ce-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.65rem}
 .ce-card.blocked{border-color:var(--red);border-left:3px solid var(--red)}
@@ -431,9 +436,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="hl">8:14</div>
     <nav class="hn">
       <button class="ht active" data-s="o" onclick="loadOverview(this)">Home</button>
-      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>
-      <button class="ht" data-s="u" onclick="loadUsers(this)">Clients</button>
-      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
+      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:var(--red);color:#100d0a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
       <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="y" onclick="loadPricing(this)">Programs</button>
@@ -527,32 +530,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   </div>
 </div>
 
-<!-- USERS SCREEN -->
-<div class="sc" id="su">
-  <div class="users-top">
-    <input class="user-search" id="user-search" placeholder="Search by name or email…" oninput="filterUsers(this.value)">
-    <button class="bg" onclick="loadUsers(null)">&#8635; Refresh</button>
-  </div>
-  <div id="users-summary" style="flex-shrink:0"></div>
-  <div class="users-list" id="users-list">
-    <div class="user-row uh">
-      <span></span><span>Client</span><span>Sober</span><span>Tier / Program</span><span>Last Active</span><span>Messages</span><span>Safety</span>
-    </div>
-    <div class="em" id="users-empty">Loading users…</div>
-  </div>
-</div>
-
-<!-- ENGAGEMENT SCREEN -->
-<div class="sc" id="se">
-  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
-    <div style="max-width:1200px;margin:0 auto">
-      <div class="cl" style="margin-bottom:1.1rem">Client Engagement</div>
-      <div id="eng-stats"><div class="em">Loading engagement…</div></div>
-      <div id="eng-attention"></div>
-      <div id="eng-table"></div>
-    </div>
-  </div>
-</div>
+<!-- (Clients merged into Engagement; retired duplicate engagement screen) -->
 </div>
 
 <!-- USER DETAIL PANEL -->
@@ -705,9 +683,12 @@ function svgBars(series,color,clickKind){
     '<path d="'+line+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>';
   var yl='<div style="position:absolute;left:0;top:6px;bottom:24px;width:26px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);pointer-events:none">'+
     '<span>'+niceMax+'</span><span>'+Math.round(niceMax/2)+'</span><span>0</span></div>';
-  var cols=pts.map(function(p){
-    var clk=clickKind?' onclick="openDrill(\''+clickKind+'\',\''+p.s.label+'\',\''+x(clickKind)+' · '+p.s.label+'\')" style="flex:1;cursor:pointer"':' style="flex:1"';
-    return '<div'+clk+' title="'+x(String(p.s.label))+': '+p.s.n+'"></div>';
+  var cols=pts.map(function(p,i){
+    var xp=(n===1?50:(i/(n-1)*100)).toFixed(2);
+    var yp=((1-(p.s.n/niceMax))*100).toFixed(2);
+    var attrs=' data-xp="'+xp+'" data-yp="'+yp+'" data-lab="'+x(String(p.s.label))+'" data-val="'+p.s.n+'" onmouseenter="chHover(this)" onmousemove="chHover(this)"';
+    var clk=clickKind?(' onclick="openDrill(\''+clickKind+'\',\''+p.s.label+'\',\''+x(clickKind)+' · '+p.s.label+'\')" style="flex:1;cursor:pointer"'):' style="flex:1"';
+    return '<div'+attrs+clk+'></div>';
   }).join('');
   var step=n>8?Math.ceil(n/7):1;
   var xl=pts.map(function(p,i){
@@ -716,8 +697,9 @@ function svgBars(series,color,clickKind){
   }).join('');
   var lblTop=lastY<16?('calc('+lastY.toFixed(1)+'% + 9px)'):('calc('+lastY.toFixed(1)+'% - 24px)');
   return '<div style="position:relative;height:212px;padding:6px 8px 0 30px">'+
-    '<div style="position:absolute;left:30px;right:8px;top:6px;bottom:24px">'+svg+
-      '<div style="position:absolute;inset:0;display:flex">'+cols+'</div>'+
+    '<div data-chart data-col="'+color+'" style="position:absolute;left:30px;right:8px;top:6px;bottom:24px">'+svg+
+      '<div class="chx"></div><div class="chd"></div><div class="chtip"></div>'+
+      '<div style="position:absolute;inset:0;display:flex" onmouseleave="chHide(this)">'+cols+'</div>'+
       '<div style="position:absolute;width:9px;height:9px;border-radius:50%;background:'+color+';box-shadow:0 0 10px 1px '+color+';right:-4px;top:calc('+lastY.toFixed(1)+'% - 4px);pointer-events:none"></div>'+
       '<div style="position:absolute;right:1px;top:'+lblTop+';font-family:DM Serif Display,serif;font-size:15px;color:var(--ink);pointer-events:none">'+last.s.n+'</div>'+
     '</div>'+
@@ -761,6 +743,42 @@ function statCard(o){
     '<div class="val"'+vstyle+'>'+(o.value!=null?o.value:'—')+'</div>'+
     (o.sub?('<div class="sub">'+o.sub+'</div>'):'')+sparkHtml+
   '</div>';
+}
+// Chart hover: move a crosshair + point + value bubble across the series.
+function chHover(el){
+  var box=el.closest('[data-chart]'); if(!box)return;
+  var col=box.getAttribute('data-col')||'var(--gold)';
+  var xp=el.getAttribute('data-xp'), yp=el.getAttribute('data-yp'), lab=el.getAttribute('data-lab'), val=el.getAttribute('data-val');
+  var cx=box.querySelector('.chx'), cd=box.querySelector('.chd'), ct=box.querySelector('.chtip');
+  if(cx){cx.style.left=xp+'%';cx.style.display='block';}
+  if(cd){cd.style.left=xp+'%';cd.style.top=yp+'%';cd.style.background=col;cd.style.color=col;cd.style.display='block';}
+  if(ct){ct.style.left=xp+'%';ct.style.top=yp+'%';ct.innerHTML='<b>'+val+'</b> · '+lab;ct.style.display='block';}
+}
+function chHide(box){
+  var p=(box&&box.closest&&box.closest('[data-chart]'))||box; if(!p||!p.querySelector)return;
+  ['.chx','.chd','.chtip'].forEach(function(c){var e=p.querySelector(c);if(e)e.style.display='none';});
+}
+// Progress ring gauge (Apple/WHOOP-style) — pct 0-100.
+function ring(pct,label,sub,color){
+  color=color||'var(--gold)'; pct=Math.max(0,Math.min(100,pct||0));
+  var R=52,C=2*Math.PI*R, off=C*(1-pct/100);
+  return '<div style="display:flex;align-items:center;gap:1rem">'+
+    '<div style="position:relative;width:112px;height:112px;flex-shrink:0">'+
+      '<svg viewBox="0 0 120 120" style="width:112px;height:112px;transform:rotate(-90deg)">'+
+        '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="var(--surface2)" stroke-width="10"/>'+
+        '<circle cx="60" cy="60" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'"/>'+
+      '</svg>'+
+      '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:DM Serif Display,serif;font-size:26px;color:var(--ink)">'+Math.round(pct)+'%</div>'+
+    '</div>'+
+    '<div><div style="font-family:DM Serif Display,serif;font-size:17px;color:var(--ink);line-height:1.2">'+x(label||'')+'</div><div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;line-height:1.4">'+(sub||'')+'</div></div>'+
+  '</div>';
+}
+// Segmented distribution bar with legend — segs:[{label,n,color}]
+function distBar(segs){
+  var total=segs.reduce(function(a,s){return a+(s.n||0);},0)||1;
+  var bar=segs.map(function(s){var w=(s.n||0)/total*100; return w>0?'<div title="'+x(s.label)+': '+(s.n||0)+'" style="width:'+w.toFixed(2)+'%;background:'+s.color+';height:100%"></div>':'';}).join('');
+  var legend=segs.map(function(s){return '<div style="display:flex;align-items:center;gap:.35rem;font-size:.7rem;color:var(--muted)"><span style="width:8px;height:8px;border-radius:2px;background:'+s.color+'"></span>'+x(s.label)+' <b style="color:var(--ink);font-weight:600">'+(s.n||0)+'</b></div>';}).join('');
+  return '<div><div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)">'+bar+'</div><div style="display:flex;flex-wrap:wrap;gap:.9rem;margin-top:.6rem">'+legend+'</div></div>';
 }
 function renderHome(d){
   _homeData=d;
@@ -913,6 +931,13 @@ function engTierBadge(tier){
   if(!m)return'';
   return '<span style="font-size:.62rem;color:'+m[1]+';border:1px solid '+m[1]+';border-radius:10px;padding:.08rem .45rem;white-space:nowrap">'+m[0]+'</span>';
 }
+var _engUsers=[];
+function filterEng(q){
+  var list=_engUsers;
+  if(q){var s=q.toLowerCase();list=_engUsers.filter(function(u){return ((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(s)>=0;});}
+  var el=document.getElementById('eng-rows');
+  if(el)el.innerHTML=list.length?list.map(engRow).join(''):'<div class="em">No clients match.</div>';
+}
 function engRow(u){
   var col=engColor(u.state);
   var moodC=u.recent_mood==null?'var(--muted2)':(u.recent_mood<=2?'var(--red)':u.recent_mood>=4?'var(--green)':'var(--muted)');
@@ -920,8 +945,12 @@ function engRow(u){
   var safety=u.last_crisis_level?'<span style="font-size:.62rem;color:'+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border:1px solid '+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border-radius:10px;padding:.08rem .45rem">⚑ L'+u.last_crisis_level+'</span>':'';
   var prog=u.active_program?('<span style="color:var(--text)">'+engEsc(u.active_program.title)+'</span> — Day '+(u.active_program.days_completed||0)+(u.active_program.duration_days?' of '+u.active_program.duration_days:'')):'<span style="color:var(--muted2)">No active program</span>';
   var products=(u.products&&u.products.length)?u.products.map(engEsc).join(', '):'';
+  var initials=x((u.name||'?').trim().slice(0,1).toUpperCase());
+  var av=u.avatar_url
+    ?'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;overflow:hidden;border:1px solid var(--border)"><img src="'+x(u.avatar_url)+'" alt="" style="width:100%;height:100%;object-fit:cover"></div>'
+    :'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--gold);font-weight:600">'+initials+'</div>';
   return '<div onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer;padding:.65rem .9rem;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'">'+
-    '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem">'+
+    '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem">'+av+
       '<div style="flex:1;min-width:0"><span style="color:var(--text);font-size:.85rem">'+engEsc(u.name)+'</span> <span style="font-size:.68rem;color:var(--muted2)">'+engEsc(u.email||'')+'</span></div>'+
       '<span style="display:inline-block;padding:.1rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span>'+
       engTierBadge(u.tier)+safety+
@@ -939,8 +968,12 @@ function engRow(u){
 }
 function renderEngagement(d){
   var a=d.aggregate||{};
-  var states=[['active','Active','var(--green)','last 2 days'],['cooling','Cooling','var(--gold)','3–7 days'],['dormant','Dormant','var(--red)','7+ days away'],['new','New','var(--blue)','not yet active']];
-  var sc=states.map(function(s){return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid '+s[2]+';padding:1rem 1.1rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.16em;text-transform:uppercase;margin-bottom:.5rem">'+s[1]+'</div><div style="font-family:DM Serif Display,serif;font-size:34px;color:'+s[2]+';line-height:1">'+(a[s[0]]||0)+'</div><div style="font-size:.64rem;color:var(--muted2);margin-top:.25rem">'+s[3]+'</div></div>';}).join('');
+  var total=(a.active||0)+(a.cooling||0)+(a.dormant||0)+(a.new||0);
+  var activePct=total?Math.round((a.active||0)/total*100):0;
+  var hero='<div style="display:grid;grid-template-columns:auto 1fr;gap:2rem;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:.9rem">'+
+    ring(activePct,'Engaged this week','of '+total+' members active in the last 2 days','var(--green)')+
+    '<div><div class="sh" style="margin:0 0 .7rem">Member States</div>'+distBar([{label:'Active',n:a.active||0,color:'var(--green)'},{label:'Cooling',n:a.cooling||0,color:'var(--gold)'},{label:'Dormant',n:a.dormant||0,color:'var(--red)'},{label:'New',n:a.new||0,color:'var(--blue)'}])+'</div>'+
+  '</div>';
   var dl=d.deltas||{}, ser=d.series_14d||{};
   var mc=[
     statCard({label:'Brief opens · 7d',value:a.brief_opens_7d||0,color:'var(--gold)',delta:{cur:a.brief_opens_7d,prev:dl.brief_opens_7d},spark:{series:ser.brief||[],color:'var(--gold)'}}),
@@ -951,11 +984,17 @@ function renderEngagement(d){
     statCard({label:'Came back after email',value:a.win_backs_7d||0,color:'var(--green)',sub:'reactivated'})
   ].join('');
   var actChart='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.6rem"><div class="sh" style="margin:0 0 .2rem">App Activity · 14 days</div>'+svgBars(ser.app_opens||[],'var(--gold)',null)+'</div>';
-  document.getElementById('eng-stats').innerHTML='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:.7rem">'+sc+'</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin-bottom:1rem">'+mc+'</div>'+actChart;
+  document.getElementById('eng-stats').innerHTML=hero+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin-bottom:1rem">'+mc+'</div>'+actChart;
   var na=d.needs_attention||[];
   document.getElementById('eng-attention').innerHTML=na.length?('<div class="sh" style="margin-bottom:.6rem;color:var(--red)">Needs a Check-In ('+na.length+')</div><div style="background:var(--card);border:1px solid var(--border);margin-bottom:1.6rem">'+na.map(engRow).join('')+'</div>'):'';
   var users=d.users||[];
-  document.getElementById('eng-table').innerHTML='<div class="sh" style="margin-bottom:.6rem">All Clients ('+users.length+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div><div style="background:var(--card);border:1px solid var(--border)">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
+  _engUsers=users;
+  document.getElementById('eng-table').innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem">'+
+      '<div class="sh" style="margin:0">All Clients ('+users.length+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div>'+
+      '<input id="eng-search" oninput="filterEng(this.value)" placeholder="Search name or email…" style="'+CIN+';max-width:260px;margin:0">'+
+    '</div>'+
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="eng-rows">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');}
 

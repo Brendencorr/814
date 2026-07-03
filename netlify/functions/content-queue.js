@@ -47,6 +47,38 @@ exports.handler = async function (event) {
         return json(200, { jobs: data || [] });
       }
 
+      if (view === "performance") {
+        const since = new Date(Date.now() - 30 * 864e5).toISOString();
+        const { data: jobs } = await db.from("content_publishing_jobs")
+          .select("id, platform, caption_final, created_at, published_at")
+          .eq("state", "published").gte("created_at", since).limit(200);
+        const ids = (jobs || []).map((j) => j.id);
+        let metrics = [];
+        if (ids.length) { const r = await db.from("content_performance_metrics").select("*").in("job_id", ids); metrics = r.data || []; }
+        const byJob = {}; metrics.forEach((m) => { byJob[m.job_id] = m; });
+        const enriched = (jobs || []).map((j) => {
+          const m = byJob[j.id] || {};
+          const engagement = (m.likes||0)+(m.comments||0)+(m.shares||0)+(m.saves||0);
+          return { id: j.id, platform: j.platform, caption: (j.caption_final||"").slice(0,120),
+                   impressions: m.impressions||0, reach: m.reach||0, engagement, clicks: m.clicks||0, published_at: j.published_at };
+        });
+        const plat = {};
+        enriched.forEach((e) => {
+          const pp = plat[e.platform] || { platform: e.platform, posts: 0, engagement: 0, clicks: 0, reach: 0 };
+          pp.posts++; pp.engagement += e.engagement; pp.clicks += e.clicks; pp.reach += e.reach; plat[e.platform] = pp;
+        });
+        const sorted = [...enriched].sort((a,b) => b.engagement - a.engagement);
+        const { data: learn } = await db.from("content_learnings").select("*").order("created_at",{ascending:false}).limit(1);
+        return json(200, {
+          posts: enriched,
+          top: sorted.slice(0,5),
+          bottom: sorted.filter((e)=>e.impressions>0).slice(-5).reverse(),
+          platforms: Object.values(plat),
+          learnings: (learn && learn[0]) || null,
+          has_data: metrics.length > 0,
+        });
+      }
+
       // pending queue (default) — include brief caption + assets
       const { data: queue } = await db.from("content_approval_queue").select("*")
         .eq("status", "pending").order("created_at", { ascending: false }).limit(60);

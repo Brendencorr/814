@@ -394,15 +394,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="hl">8:14</div>
     <nav class="hn">
       <button class="ht active" data-s="o" onclick="loadOverview(this)">Home</button>
-      <div style="position:relative;display:inline-block" id="social-dd-wrap">
-        <button class="ht" id="social-dd-trigger" onclick="toggleSocialDD(event)">Social Media <span style="font-size:.7em">▾</span></button>
-        <div id="social-dd" style="display:none;position:absolute;top:100%;left:0;margin-top:.25rem;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.14);min-width:150px;z-index:60;padding:.35rem">
-          <button class="ht" data-s="h" onclick="gs('h',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Social</button>
-          <button class="ht" data-s="p" onclick="spl(this);closeSocialDD()" style="display:block;width:100%;text-align:left">Pipeline</button>
-          <button class="ht" data-s="r" onclick="gs('r',this);closeSocialDD()" style="display:block;width:100%;text-align:left">Review</button>
-          <button class="ht" data-s="ce" onclick="loadCE(this);closeSocialDD()" style="display:block;width:100%;text-align:left">Content Engine ✨</button>
-        </div>
-      </div>
+      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>
       <button class="ht" data-s="u" onclick="loadUsers(this)">Clients</button>
       <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:#d9534f;color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
@@ -529,6 +521,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
         <button class="ce-tab active" id="ce-tab-pending" onclick="ceTab('pending')">Pending <span id="ce-c-pending" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-scheduled" onclick="ceTab('scheduled')">Scheduled <span id="ce-c-scheduled" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-published" onclick="ceTab('published')">Published <span id="ce-c-published" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-performance" onclick="ceTab('performance')">Performance 📊</button>
       </div>
       <div id="ce-body"><div class="em">Loading…</div></div>
     </div>
@@ -758,7 +751,7 @@ function renderOverview(eng,ps){
   '</div>';
   var runs=(ps&&ps.pipeline_runs)||[];var lastRun=runs[0];var posts=(ps&&ps.published_posts)||[];var echo=(ps&&ps.echo_scores&&ps.echo_scores[0])||{};
   var socCol='<div style="background:var(--card);border:1px solid var(--border);padding:1.1rem 1.2rem">'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><span class="cl" style="margin:0">Social Performance</span><span onclick="gs(&#39;h&#39;)" style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;cursor:pointer">VIEW ALL &#8594;</span></div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><span class="cl" style="margin:0">Social Performance</span><span onclick="loadCE()" style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;cursor:pointer">VIEW ALL &#8594;</span></div>'+
     '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.6rem">'+ovSmall('Email signups · wk',echo.email_signups!=null?echo.email_signups:'—','var(--gold)')+ovSmall('Chatbot opens',echo.chatbot_opens!=null?echo.chatbot_opens:'—','var(--muted)')+ovSmall('IG saves',echo.instagram_saves!=null?echo.instagram_saves:'—','var(--muted)')+ovSmall('Link clicks',echo.link_clicks!=null?echo.link_clicks:'—','var(--muted)')+'</div>'+
     '<div style="border-top:1px solid var(--border);padding-top:.8rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.5rem">Latest Pipeline Run</div>'+
     (lastRun?'<div style="font-size:.85rem;color:var(--text)">'+fd(lastRun.run_date)+' · <span style="color:'+(lastRun.status==='success'?'var(--green)':lastRun.status==='partial'?'var(--gold)':'var(--red)')+'">'+(lastRun.status||'?')+'</span> · '+(lastRun.sage_posts_count||0)+' posts</div>':'<div style="font-size:.8rem;color:var(--muted)">No pipeline runs yet.</div>')+
@@ -1705,7 +1698,7 @@ function fdt(s){
 /* ═══════════ CONTENT ENGINE ═══════════ */
 var ceView='pending';
 function loadCE(btn){gs('ce',btn);ceRefresh();}
-function ceTab(v){ceView=v;['pending','scheduled','published'].forEach(function(t){document.getElementById('ce-tab-'+t).classList.toggle('active',t===v);});ceRefresh();}
+function ceTab(v){ceView=v;['pending','scheduled','published','performance'].forEach(function(t){document.getElementById('ce-tab-'+t).classList.toggle('active',t===v);});ceRefresh();}
 
 async function ceRefresh(){
   var body=document.getElementById('ce-body');
@@ -1724,11 +1717,53 @@ async function ceRefresh(){
     if(ceView==='pending'){
       var d=await fetch(B+'/content-queue?view=pending').then(function(r){return r.json();});
       ceRenderPending(d.queue||[]);
+    }else if(ceView==='performance'){
+      var d=await fetch(B+'/content-queue?view=performance').then(function(r){return r.json();});
+      ceRenderPerformance(d);
     }else{
       var d=await fetch(B+'/content-queue?view='+ceView).then(function(r){return r.json();});
       ceRenderJobs(d.jobs||[]);
     }
   }catch(e){body.innerHTML='<div class="em" style="color:var(--red)">Error: '+e.message+'</div>';}
+}
+
+function ceRenderPerformance(d){
+  var body=document.getElementById('ce-body');
+  var plats=d.platforms||[], top=d.top||[], bottom=d.bottom||[], learn=d.learnings;
+  var html='';
+  // learnings banner
+  if(learn&&learn.digest){
+    html+='<div style="background:var(--gold-soft);border-left:3px solid var(--gold);border-radius:8px;padding:.85rem 1rem;margin-bottom:1.1rem">'+
+      '<div style="font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:.35rem">What Riley learned this week</div>'+
+      '<div style="font-size:.85rem;color:var(--ink2);line-height:1.6">'+x(learn.digest)+'</div></div>';
+  }
+  if(!d.has_data){
+    html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once Buffer is connected and posts go live, engagement + reach + clicks land here nightly — then Riley starts weighting new content toward what your audience responds to.</div>';
+    body.innerHTML=html;return;
+  }
+  // platform rollup cards
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem">';
+  plats.forEach(function(pl){
+    html+='<div class="mc" style="margin:0"><div class="mn">'+x(pl.platform)+'</div>'+
+      '<div class="mv" style="font-size:26px">'+(pl.engagement||0)+'</div>'+
+      '<div class="ms">engagement · '+(pl.posts||0)+' posts · '+(pl.clicks||0)+' clicks</div></div>';
+  });
+  html+='</div>';
+  // top / bottom tables
+  function tbl(title,rows,color){
+    var h='<div class="sh" style="color:'+color+'">'+title+'</div><div class="rp" style="margin-bottom:1.1rem">';
+    if(!rows.length){h+='<div class="em">—</div>';}
+    rows.forEach(function(r){
+      h+='<div class="rr" style="grid-template-columns:70px 1fr 60px 60px"><span style="font-size:.68rem;color:var(--muted);text-transform:uppercase">'+x(r.platform)+'</span>'+
+        '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.caption)+'</span>'+
+        '<span style="color:var(--gold);font-weight:600">'+r.engagement+'</span>'+
+        '<span style="color:var(--muted)">'+r.clicks+'▸</span></div>';
+    });
+    return h+'</div>';
+  }
+  html+=tbl('Top Performers',top,'var(--green)');
+  html+=tbl('Needs Work',bottom,'var(--red)');
+  body.innerHTML=html;
 }
 
 function ceRenderPending(q){

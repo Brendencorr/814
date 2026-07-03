@@ -122,6 +122,11 @@
 [functions."content-daily-cron"]
   schedule = "0 12 * * *"
 
+# Nightly performance pull (Buffer analytics -> content_performance_metrics) +
+# weekly learnings digest (Sundays) that Sage reads. 23:30 MT = 05:30 UTC.
+[functions."content-metrics-cron"]
+  schedule = "30 5 * * *"
+
 # Re-engagement win-back email — runs daily at 10am MT (16:00 UTC).
 # Finds people ~1 week lapsed and sends one gentle "we saved your place" email.
 [functions."reengagement-cron"]

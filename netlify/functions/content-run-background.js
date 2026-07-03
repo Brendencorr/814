@@ -133,6 +133,8 @@ async function runDaily(trigger = "cron") {
       .select("slug, family_name, asset_type, use_case").eq("active", true);
     const templateList = (templates || []).map((t) => `${t.slug} (${t.family_name}, ${t.asset_type}): ${t.use_case}`).join("\n");
     const { data: discRow } = await db.from("content_daily_discoverability").select("*").eq("run_date", today).single();
+    const { data: learnRows } = await db.from("content_learnings").select("digest").order("created_at", { ascending: false }).limit(1);
+    const learnings = (learnRows && learnRows[0] && learnRows[0].digest) || "";
 
     // Sort: reposts first, then by brand_fit_score
     const toProcess = inserted
@@ -168,7 +170,7 @@ async function runDaily(trigger = "cron") {
       // ── REMIX / ORIGINAL → Sage brief ──────────────────────────────────────
       const briefRaw = await callClaude({
         system: sagePrompt,
-        user: `CANDIDATE:\n${JSON.stringify({ topic: c.topic, why: c.why_it_matters, action: c.recommended_action, persona: c.suggested_persona, program: c.suggested_program, source: c.source_platform, url: c.original_url }, null, 2)}\n\nTODAY'S DISCOVERABILITY:\n${JSON.stringify(discRow || {}, null, 2)}\n\nAVAILABLE TEMPLATE FAMILIES:\n${templateList}\n\nWrite the brief JSON.`,
+        user: `CANDIDATE:\n${JSON.stringify({ topic: c.topic, why: c.why_it_matters, action: c.recommended_action, persona: c.suggested_persona, program: c.suggested_program, source: c.source_platform, url: c.original_url }, null, 2)}\n\nTODAY'S DISCOVERABILITY:\n${JSON.stringify(discRow || {}, null, 2)}\n\nAVAILABLE TEMPLATE FAMILIES:\n${templateList}\n\n${learnings ? "RECENT PERFORMANCE LEARNINGS (weight toward what has worked):\n"+learnings+"\n\n" : ""}Write the brief JSON.`,
         maxTokens: 2000,
       });
       const brief = extractJson(briefRaw);

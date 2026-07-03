@@ -17,7 +17,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -768,10 +768,13 @@ exports.handler = async function (event) {
     };
   }
 
-  const { message, messages, user_id, session_id } = body;
+  const { message, messages, session_id } = body;
+  // SECURITY: identity is derived from the verified access token below (see buildSystemPrompt
+  // block), NEVER from a client-supplied user_id (which can be forged → IDOR).
+  let user_id = null;
 
   // Log parsed fields
-  console.log(`[riley-chat] parsed — message="${message?.slice(0,50)}" messages.length=${messages?.length ?? "undefined"} user_id=${user_id || "anon"}`);
+  console.log(`[riley-chat] parsed — message="${message?.slice(0,50)}" messages.length=${messages?.length ?? "undefined"}`);
 
   if (!message && (!messages?.length)) {
     console.error("[riley-chat] 400 — no message and no messages array. body keys:", Object.keys(body));
@@ -797,7 +800,8 @@ exports.handler = async function (event) {
   let supabase = null;
   try {
     supabase = getSupabaseClient();
-    const built = await buildSystemPrompt(supabase, user_id || null);
+    user_id = await getUserIdFromToken(supabase, body.token);   // verified identity; null (= anon) if no/invalid token
+    const built = await buildSystemPrompt(supabase, user_id);
     systemPrompt  = built.text;
     userTier      = built.tier;
     ownedProducts = built.ownedProducts;

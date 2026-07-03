@@ -20,7 +20,7 @@
  * No model. No max_tokens. Pure logic.
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -73,10 +73,11 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST")    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
 
   try {
-    const { user_id } = JSON.parse(event.body || "{}");
-    if (!user_id) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "user_id required" }) };
-
+    const body = JSON.parse(event.body || "{}");
     const supabase = getSupabaseClient();
+    // SECURITY: identity from the verified token, never the client-supplied user_id.
+    const user_id = await getUserIdFromToken(supabase, body.token);
+    if (!user_id) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     const today    = new Date();
     const todayISO = today.toISOString().slice(0, 10);
     const month    = today.getUTCMonth() + 1;

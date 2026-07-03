@@ -306,7 +306,8 @@ async function generateBrief(forceNew){
     if(forceNew){
       await SB.from('daily_briefs').delete().eq('user_id',UID).eq('brief_date',TODAY);
     }
-    const res=await fetch('/.netlify/functions/daily-brief',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
+    const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
+    const res=await fetch('/.netlify/functions/daily-brief',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok})});
     const {brief}=await res.json();
     if(brief&&brief.modules)renderBrief(brief);
     else throw new Error('No brief returned');

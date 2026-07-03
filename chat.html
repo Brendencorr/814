@@ -364,10 +364,11 @@ async function send() {
 
   let reply = '';
   try {
+    const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
     const res = await fetch(RILEY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, messages: _history, user_id: _uid, session_id: _sessionId })
+      body: JSON.stringify({ message: text, messages: _history, session_id: _sessionId, token: _tok })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 

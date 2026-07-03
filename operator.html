@@ -349,6 +349,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .ce-tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:600}
 .ce-count{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:.3rem;background:var(--surface2);border-radius:9px;font-size:.65rem;font-weight:700;color:var(--muted)}
 .ce-tab.active .ce-count{background:var(--gold-soft);color:var(--amber)}
+.lchip{padding:.32rem .72rem;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:.72rem;color:var(--muted);cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.lchip:hover{border-color:var(--gold);color:var(--ink)}
+.lchip.on{background:var(--gold-soft);border-color:var(--gold);color:var(--amber);font-weight:600}
+.lchip b{font-weight:700;opacity:.7;margin-left:.15rem}
 .ce-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
 .ce-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.65rem}
 .ce-card.blocked{border-color:var(--red);border-left:3px solid var(--red)}
@@ -956,11 +960,17 @@ async function contentApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-var _ctypes=[],CIN='width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;margin-bottom:6px',CFL='display:block;font-size:9px;font-family:DM Mono,monospace;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px';
+// ── Content Library ──────────────────────────────────────────────────────────
+var _ctypes=[],_lib={items:[],suggestions:[],counts:{},missing_links:0,type_labels:{}},_libTab='library',_libFilter='all',_libSearch='',_libPolling=false;
+var CIN='width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:13px;color:var(--text);font-family:inherit;margin-bottom:6px',CFL='display:block;font-size:9px;font-family:DM Mono,monospace;color:var(--muted2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px';
+var TYPE_META={book:{i:'📖',l:'Books'},podcast:{i:'🎧',l:'Podcasts'},video:{i:'🎬',l:'Videos'},music:{i:'🎵',l:'Music'},meditation:{i:'🧘',l:'Meditation'},breathwork:{i:'🫁',l:'Breathwork'},workout:{i:'🏃',l:'Workouts'},recipe:{i:'🥗',l:'Recipes'},article:{i:'📝',l:'Articles'},journal_prompt:{i:'✍️',l:'Journal'},community_prompt:{i:'💬',l:'Community'},quote:{i:'✨',l:'Quotes'}};
+function tmeta(t){return TYPE_META[t]||{i:'•',l:t};}
+function cfield(id,label){return '<div><label style="'+CFL+'">'+label+'</label><input id="'+id+'" style="'+CIN+'"></div>';}
+
 async function loadContent(btn){
   gs('m',btn);
   var el=document.getElementById('content-body');el.innerHTML='<div class="em">Loading…</div>';
-  try{var d=await contentApi('list');_ctypes=d.content_types||[];renderContent(d.items||[]);}
+  try{var d=await contentApi('list');applyLibData(d);renderLibrary();}
   catch(e){
     var msg=e.message==='bad-key'?'Operator key incorrect. <button class="bo" onclick="loadContent()">Try again</button>'
       :e.message==='not-configured'?'Set <b>OPERATOR_KEY</b> in Netlify env, then reload.'
@@ -969,28 +979,130 @@ async function loadContent(btn){
     el.innerHTML='<div class="em">'+msg+'</div>';
   }
 }
-function cfield(id,label){return '<div><label style="'+CFL+'">'+label+'</label><input id="'+id+'" style="'+CIN+'"></div>';}
-function renderContent(items){
-  var typeOpts=_ctypes.map(function(t){return '<option value="'+t+'">'+t+'</option>';}).join('');
-  var form='<div style="background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;margin-bottom:1.2rem"><div class="sh" style="margin-bottom:.7rem" id="cform-title">Add content</div><input type="hidden" id="cf-id"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">'+
-    cfield('cf-title','Title')+cfield('cf-creator','Creator / source')+
-    '<div><label style="'+CFL+'">Type</label><select id="cf-type" style="'+CIN+'">'+typeOpts+'</select></div>'+
-    cfield('cf-topic','Topic')+cfield('cf-mood','Moods (comma-sep)')+cfield('cf-duration','Duration (min)')+
-    cfield('cf-url','URL')+cfield('cf-intensity','Emotional intensity 1-5')+
-    '</div><label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'+
-    '<div style="display:flex;gap:.6rem;margin-top:.5rem;align-items:center"><button class="bg" onclick="saveContent()">Save</button><button class="bo" onclick="clearContentForm()">Clear</button><span id="cf-msg" style="color:var(--muted);font-size:.78rem"></span></div></div>';
-  var rows=items.length?items.map(contentRow).join(''):'<div class="em">No content yet. Add your first piece above.</div>';
-  document.getElementById('content-body').innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Content Library</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+items.length+' items</div></div>'+form+rows;
-  window._content=items;
+function applyLibData(d){
+  _ctypes=d.content_types||[];
+  _lib={items:d.items||[],suggestions:d.suggestions||[],counts:d.counts||{},missing_links:d.missing_links||0,type_labels:d.type_labels||{}};
 }
-function contentRow(c){
-  var dim=c.is_active?'':'opacity:.5;';
-  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+dim+'"><div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(c.title)+'</div><div style="font-size:.66rem;color:var(--muted2)">'+engEsc(c.content_type)+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.is_active?'':' · retired')+'</div></div><button class="bo" onclick="editContent(\''+c.id+'\')">Edit</button>'+(c.is_active?'<button class="bo" style="border-color:var(--red);color:#c98a8a" onclick="retireContent(\''+c.id+'\')">Retire</button>':'<button class="bo" style="border-color:var(--green);color:var(--green)" onclick="activateContent(\''+c.id+'\')">Restore</button>')+'</div>';
+function libTab(v){_libTab=v;renderLibrary();}
+function libFilter(t){_libFilter=t;renderLibrary();}
+function libSearchInput(v){_libSearch=v;var c=document.getElementById('lib-rows');if(c)c.innerHTML=libRowsHtml();}
+
+function renderLibrary(){
+  var liveN=_lib.items.filter(function(i){return i.is_active&&i.approval_status==='approved';}).length;
+  var sugN=_lib.suggestions.length;
+  var h='<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.9rem"><div class="cl" style="margin:0">Content Library</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+liveN+' live items</div></div>'
+    +'<div style="display:flex;align-items:center;gap:1.1rem;border-bottom:1px solid var(--border);margin-bottom:1.1rem">'
+    +'<button class="ce-tab'+(_libTab==='library'?' active':'')+'" onclick="libTab(\'library\')">Library <span class="ce-count">'+liveN+'</span></button>'
+    +'<button class="ce-tab'+(_libTab==='suggestions'?' active':'')+'" onclick="libTab(\'suggestions\')">Suggestions <span class="ce-count">'+sugN+'</span></button>'
+    +'</div>';
+  document.getElementById('content-body').innerHTML=h+(_libTab==='suggestions'?renderSuggestions():renderLibList());
 }
+
+function renderLibList(){
+  var typeCounts={},total=0;
+  _lib.items.forEach(function(i){if(i.is_active&&i.approval_status==='approved'){typeCounts[i.content_type]=(typeCounts[i.content_type]||0)+1;total++;}});
+  var chips='<button class="lchip'+(_libFilter==='all'?' on':'')+'" onclick="libFilter(\'all\')">All <b>'+total+'</b></button>';
+  Object.keys(TYPE_META).forEach(function(t){if(typeCounts[t]){var m=tmeta(t);chips+='<button class="lchip'+(_libFilter===t?' on':'')+'" onclick="libFilter(\''+t+'\')">'+m.i+' '+m.l+' <b>'+typeCounts[t]+'</b></button>';}});
+  var chipBar='<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">'+chips+'</div>';
+  var banner=_lib.missing_links>0?('<div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);color:var(--red);border-radius:6px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.8rem">⚠ '+_lib.missing_links+' live item'+(_lib.missing_links>1?'s have':' has')+' no link. Members can’t open those — add a URL via Edit.</div>'):'';
+  var search='<input id="lib-search" placeholder="Search title, creator, topic…" value="'+engEsc(_libSearch)+'" oninput="libSearchInput(this.value)" style="'+CIN+';max-width:300px;margin-bottom:1rem">';
+  return chipBar+banner+search+'<div id="lib-rows">'+libRowsHtml()+'</div>'+libForm();
+}
+function libRowsHtml(){
+  var q=_libSearch.trim().toLowerCase();
+  var rows=_lib.items.filter(function(i){
+    if(i.approval_status==='rejected')return false;
+    if(_libFilter!=='all'&&i.content_type!==_libFilter)return false;
+    if(q){var hay=((i.title||'')+' '+(i.creator||'')+' '+(i.topic||'')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+    return true;
+  });
+  return rows.length?rows.map(libRow).join(''):'<div class="em">No items match.</div>';
+}
+function libRow(c){
+  var dim=c.is_active?'':'opacity:.55;';
+  var m=tmeta(c.content_type);
+  var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.is_active?'':' · retired')+(c.source==='agent'?' · ✨ agent':'');
+  var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" class="bo" style="text-decoration:none;border-color:var(--green);color:var(--green)">Open ↗</a>':'<span class="bo" style="border-color:var(--red);color:var(--red);cursor:default">⚠ No link</span>';
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+dim+'">'
+    +'<div style="font-size:1.1rem;flex-shrink:0">'+m.i+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(c.title)+'</div><div style="font-size:.66rem;color:var(--muted2)">'+meta+'</div></div>'
+    +link
+    +'<button class="bo" onclick="editContent(\''+c.id+'\')">Edit</button>'
+    +(c.is_active?'<button class="bo" style="border-color:var(--red);color:#c0392b" onclick="retireContent(\''+c.id+'\')">Retire</button>':'<button class="bo" style="border-color:var(--green);color:var(--green)" onclick="activateContent(\''+c.id+'\')">Restore</button>')
+    +'</div>';
+}
+function libForm(){
+  var typeOpts=_ctypes.map(function(t){return '<option value="'+t+'">'+tmeta(t).l+'</option>';}).join('');
+  return '<details style="margin-top:1.6rem"><summary style="cursor:pointer;font-family:DM Mono,monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)">＋ Add content manually</summary>'
+    +'<div style="background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;margin-top:.7rem"><div class="sh" style="margin-bottom:.7rem" id="cform-title">Add content</div><input type="hidden" id="cf-id"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">'
+    +cfield('cf-title','Title')+cfield('cf-creator','Creator / source')
+    +'<div><label style="'+CFL+'">Type</label><select id="cf-type" style="'+CIN+'">'+typeOpts+'</select></div>'
+    +cfield('cf-topic','Topic')+cfield('cf-mood','Moods (comma-sep)')+cfield('cf-duration','Duration (min)')
+    +cfield('cf-url','URL (live link)')+cfield('cf-intensity','Emotional intensity 1-5')
+    +'</div><label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'
+    +'<div style="display:flex;gap:.6rem;margin-top:.5rem;align-items:center"><button class="bg" onclick="saveContent()">Save</button><button class="bo" onclick="clearContentForm()">Clear</button><span id="cf-msg" style="color:var(--muted);font-size:.78rem"></span></div></div></details>';
+}
+
+function renderSuggestions(){
+  var focus='<div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-bottom:.9rem">'
+    +'<input id="lib-focus" placeholder="Optional focus (e.g. grief, sleep, movement)" style="'+CIN+';max-width:320px;margin-bottom:0">'
+    +'<button class="bg" id="lib-suggest-btn" onclick="libSuggest()">✨ Suggest new content</button>'
+    +'<span id="lib-suggest-msg" style="font-size:.78rem;color:var(--muted)"></span></div>';
+  var intro='<div style="font-size:.8rem;color:var(--muted);margin-bottom:1.1rem;line-height:1.5">The Library Scout searches the live web for on-brand resources <b>with working links</b>, then queues them here for approval. Approving adds it to the library and sends an alert to every member’s dashboard.</div>';
+  var s=_lib.suggestions;
+  var body=s.length?s.map(suggRow).join(''):'<div class="em">No pending suggestions. Hit “Suggest new content” to have the agent find some.</div>';
+  return focus+intro+body;
+}
+function suggRow(c){
+  var m=tmeta(c.content_type);
+  var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.creator?' · '+engEsc(c.creator):'');
+  var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;word-break:break-all">'+engEsc(c.content_url)+' ↗</a>':'<span style="color:var(--red);font-size:.72rem">⚠ no link — cannot be published</span>';
+  var reason=c.suggestion_reason?'<div style="font-size:.74rem;color:var(--muted);font-style:italic;margin-top:.35rem">“'+engEsc(c.suggestion_reason)+'”</div>':'';
+  var approve=c.content_url?'<button class="bg" onclick="suggApprove(\''+c.id+'\')">Approve &amp; alert members</button>':'<button class="bg" disabled title="No live link — reject or add a URL first" style="opacity:.5;cursor:not-allowed">Approve</button>';
+  return '<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.85rem 1rem;margin-bottom:.6rem">'
+    +'<div style="display:flex;gap:.6rem;align-items:flex-start"><div style="font-size:1.2rem;flex-shrink:0">'+m.i+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.9rem;font-weight:600">'+engEsc(c.title)+'</div>'
+    +'<div style="font-size:.68rem;color:var(--muted2);margin:.15rem 0 .3rem">'+meta+'</div>'+link+reason+'</div></div>'
+    +'<div style="display:flex;gap:.5rem;margin-top:.7rem;justify-content:flex-end">'
+    +'<button class="bo" style="border-color:var(--red);color:var(--red)" onclick="suggReject(\''+c.id+'\')">Reject</button>'+approve
+    +'</div></div>';
+}
+
+function libSuggest(){
+  var f=document.getElementById('lib-focus');var focus=f?f.value.trim():'';
+  var btn=document.getElementById('lib-suggest-btn');var msg=document.getElementById('lib-suggest-msg');
+  if(btn){btn.disabled=true;btn.textContent='Scouting…';}
+  if(msg)msg.textContent='Searching the live web — this can take a minute.';
+  var baseline=_lib.suggestions.length;
+  try{fetch(B+'/library-suggest-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:6,focus:focus})});}catch(e){}
+  _libPolling=true;libPoll(0,baseline);
+}
+function libPoll(tries,baseline){
+  if(!_libPolling)return;
+  if(tries>18){var msg=document.getElementById('lib-suggest-msg');if(msg)msg.textContent='Still working — check back shortly and refresh.';var btn=document.getElementById('lib-suggest-btn');if(btn){btn.disabled=false;btn.textContent='✨ Suggest new content';}return;}
+  setTimeout(function(){
+    contentApi('list').then(function(d){
+      applyLibData(d);
+      if(_lib.suggestions.length>baseline){_libPolling=false;_libTab='suggestions';renderLibrary();return;}
+      libPoll(tries+1,baseline);
+    }).catch(function(){libPoll(tries+1,baseline);});
+  },7000);
+}
+async function suggApprove(id){
+  try{var r=await contentApi('approve_suggestion',{id:id});var d=await contentApi('list');applyLibData(d);renderLibrary();
+    window.alert(r&&r.alerted?'Added to the library — members have been alerted in their dashboard.':'Added to the library. (Member alert could not be sent — check function logs.)');
+  }catch(e){window.alert('Approve failed: '+e.message);}
+}
+async function suggReject(id){
+  if(!window.confirm('Reject this suggestion? It will not be shown to members.'))return;
+  try{await contentApi('reject_suggestion',{id:id});var d=await contentApi('list');applyLibData(d);renderLibrary();}catch(e){window.alert('Reject failed: '+e.message);}
+}
+
 function editContent(id){
-  var c=(window._content||[]).find(function(x){return x.id===id;});if(!c)return;
+  var c=(_lib.items||[]).find(function(x){return x.id===id;})||(_lib.suggestions||[]).find(function(x){return x.id===id;});if(!c)return;
+  var det=document.querySelector('#content-body details');if(det)det.open=true;
   document.getElementById('cf-id').value=c.id;document.getElementById('cf-title').value=c.title||'';document.getElementById('cf-creator').value=c.creator||'';document.getElementById('cf-type').value=c.content_type||'';document.getElementById('cf-topic').value=c.topic||'';document.getElementById('cf-mood').value=(c.mood||[]).join(', ');document.getElementById('cf-duration').value=c.duration_minutes||'';document.getElementById('cf-url').value=c.content_url||'';document.getElementById('cf-intensity').value=c.emotional_intensity||'';document.getElementById('cf-desc').value=c.description||'';
-  document.getElementById('cform-title').textContent='Edit content';window.scrollTo(0,0);
+  document.getElementById('cform-title').textContent='Edit content';if(det)det.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function clearContentForm(){['cf-id','cf-title','cf-creator','cf-topic','cf-mood','cf-duration','cf-url','cf-intensity','cf-desc'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});var t=document.getElementById('cform-title');if(t)t.textContent='Add content';var m=document.getElementById('cf-msg');if(m)m.textContent='';}
 async function saveContent(){

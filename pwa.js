@@ -3,6 +3,9 @@
  * hamburger + slide-in drawer for the sidebar (which is hidden on phones),
  * (3) an "Install Riley App" pill, (4) a download popup at login on phones. */
 (function () {
+  // Inside the embedded chat popup (iframe /chat?embed=1) we want a bare chat —
+  // no hamburger, no pills, no account menu. Skip all of pwa.js there.
+  if (/[?&]embed=1/.test(location.search)) return;
   var ua = navigator.userAgent || '';
   var isMobile = /iphone|ipad|ipod|android/i.test(ua);
   var isIOS = /iphone|ipad|ipod/i.test(ua);
@@ -67,8 +70,8 @@
   if (document.readyState !== 'loading') mobileNav();
   else document.addEventListener('DOMContentLoaded', mobileNav);
 
-  if (standalone) return;                                        // installed → no install UI
-  try { if (localStorage.getItem('riley_install_dismissed') === '1') { /* pill off, popup still ok */ } } catch (e) {}
+  // No early return on standalone: the "Chat with Riley" pill shows even in the
+  // installed app; only install-specific UI self-guards on `standalone` below.
 
   function triggerInstall() {
     if (deferredPrompt) {
@@ -111,32 +114,85 @@
     document.getElementById('rli-go').addEventListener('click', function () { ov.remove(); triggerInstall(); });
   }
 
-  // ── 3) Corner install pill (non-login pages) ─────────────────────────────
-  function installPill() {
-    try { if (localStorage.getItem('riley_install_dismissed') === '1') return; } catch (e) {}
+  // ── Floating "Chat with Riley" pill (always on) + embedded chat popup ─────
+  var _cov, _cfr;
+  function buildChat() {
+    _cov = document.createElement('div'); _cov.id = 'riley-chat-overlay';
+    _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:center;justify-content:center;background:rgba(6,9,14,0.7);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);padding:16px';
+    var panel = document.createElement('div');
+    panel.style.cssText = 'position:relative;width:100%;max-width:460px;height:min(84vh,760px);background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.55)';
+    var bar = document.createElement('div'); bar.style.cssText = 'position:absolute;top:0;right:0;z-index:2;display:flex;gap:5px;padding:8px 10px';
+    var mini = document.createElement('button'); mini.setAttribute('aria-label', 'Minimize'); mini.innerHTML = '&minus;';
+    mini.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:19px;line-height:1;cursor:pointer';
+    mini.onclick = closeChat;
+    var x = document.createElement('button'); x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
+    x.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:21px;line-height:1;cursor:pointer';
+    x.onclick = closeChat;
+    bar.appendChild(mini); bar.appendChild(x);
+    _cfr = document.createElement('iframe'); _cfr.title = 'Chat with Riley';
+    _cfr.style.cssText = 'width:100%;height:100%;border:0;display:block';
+    panel.appendChild(bar); panel.appendChild(_cfr); _cov.appendChild(panel);
+    _cov.addEventListener('click', function (e) { if (e.target === _cov) closeChat(); });
+    document.body.appendChild(_cov);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && _cov.style.display === 'flex') closeChat(); });
+  }
+  function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+  function closeChat() { if (_cov) { _cov.style.display = 'none'; document.body.style.overflow = ''; } }
+  function chatPill() {
+    if (document.getElementById('riley-chat-btn')) return;
+    styleOnce('riley-pill-css', '@keyframes rilePop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}#riley-chat-btn:hover,#riley-install-btn:hover{transform:translateY(-2px)}');
+    var b = document.createElement('div'); b.id = 'riley-chat-btn';
+    b.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#4a7c59,#375c44);color:#fff;padding:12px 18px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(74,124,89,0.42);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
+    b.innerHTML = '<span style="font-size:15px">&#128172;</span><span>Chat with Riley</span>';
+    b.addEventListener('click', openChat);
+    document.body.appendChild(b);
+  }
+  // Any existing "/chat" link opens the popup instead of navigating.
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest ? e.target.closest('a[href]') : null;
+    if (a && /^\/chat(\?|$)/.test(a.getAttribute('href') || '')) { e.preventDefault(); openChat(); }
+  });
+
+  // ── Install offer — FIRST LOGIN ONLY (afterwards it lives in Settings) ────
+  function showInstallNote() {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;right:18px;bottom:76px;z-index:9991;max-width:250px;background:#141210;border:1px solid rgba(201,168,76,0.3);color:#e8e4de;padding:12px 14px;border-radius:12px;font-family:"DM Sans",sans-serif;font-size:12.5px;line-height:1.55;box-shadow:0 8px 30px rgba(0,0,0,0.5)';
+    t.textContent = 'No problem — you can install Riley anytime from Settings.';
+    document.body.appendChild(t);
+    setTimeout(function () { t.style.transition = 'opacity .5s'; t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 500); }, 4500);
+  }
+  function installFirstLogin() {
+    if (standalone) return;
+    try { if (localStorage.getItem('riley_install_offered') === '1') return; } catch (e) { return; }
+    if (!deferredPrompt && !(isIOS && isSafari)) return;    // can't actually install here → skip silently
+    try { localStorage.setItem('riley_install_offered', '1'); } catch (e) {}
     if (document.getElementById('riley-install-btn')) return;
-    styleOnce('riley-pill-css', '@keyframes rilePop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}#riley-install-btn:hover{transform:translateY(-2px)}');
     var b = document.createElement('div'); b.id = 'riley-install-btn';
-    b.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9990;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;padding:12px 18px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;transition:transform .2s;animation:rilePop .5s ease';
+    b.style.cssText = 'position:fixed;right:18px;bottom:76px;z-index:9989;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;padding:11px 16px;border-radius:30px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:600;box-shadow:0 6px 24px rgba(201,168,76,0.35);cursor:pointer;animation:rilePop .5s ease';
     b.innerHTML = '<span>Install Riley App<span style="color:#fff">.</span></span><span id="riley-inst-x" style="opacity:0.55;font-size:17px;line-height:1">&times;</span>';
     b.addEventListener('click', function (e) {
-      if (e.target && e.target.id === 'riley-inst-x') { b.remove(); try { localStorage.setItem('riley_install_dismissed', '1'); } catch (er) {} return; }
-      triggerInstall();
+      if (e.target && e.target.id === 'riley-inst-x') { b.remove(); showInstallNote(); return; }
+      b.remove(); triggerInstall();
     });
     document.body.appendChild(b);
   }
 
+  // Let the Settings page trigger install on demand.
+  window.rileyTriggerInstall = triggerInstall;
+
   window.addEventListener('load', function () {
     setTimeout(function () {
-      if (onLogin && isMobile) { loginPopup(); return; }   // login on phone → popup
-      if (deferredPrompt || (isIOS && isSafari)) installPill();
-    }, onLogin ? 900 : 400);
+      chatPill();                                          // always-on: Chat with Riley
+      if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)
+      installFirstLogin();                                 // first-ever login → offer install
+    }, onLogin ? 900 : 500);
   });
 })();
 
 /* ── Account menu — click the sidebar user (bottom-left) to open Profile / Settings /
  * Your Data / Sign out. Injected here so every app page's sidebar gets it consistently. */
 (function () {
+  if (/[?&]embed=1/.test(location.search)) return;   // no account menu inside the chat popup
   function init() {
     var user = document.querySelector('.sb-user');
     if (!user || document.getElementById('riley-acct-pop')) return;

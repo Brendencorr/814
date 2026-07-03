@@ -66,8 +66,12 @@ async function getSession(supabase, body) {
     return json(200, { user: { id: user.id, email: user.email, ...newProfile }, messages: [] });
   }
 
-  // Load recent conversation for this session
+  // Load recent conversation. Also return the session id + last-activity time so
+  // the chat can smart-resume (auto-continue < 24h, else ask). This is the reliable
+  // path — the browser's own RLS read was coming back empty inside the popup iframe.
   let messages = [];
+  let lastSessionId = session_id || null;
+  let lastAt = null;
   if (session_id) {
     const { data: convData } = await supabase
       .from("riley_conversations")
@@ -77,16 +81,19 @@ async function getSession(supabase, body) {
       .order("created_at", { ascending: true })
       .limit(20);
     messages = (convData || []).map((m) => ({ role: m.role, content: m.content }));
+    if (convData && convData.length) lastAt = convData[convData.length - 1].created_at;
   } else {
     // Load most recent session if no session_id given
     const { data: lastMsg } = await supabase
       .from("riley_conversations")
-      .select("session_id")
+      .select("session_id, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
     if (lastMsg?.session_id) {
+      lastSessionId = lastMsg.session_id;
+      lastAt = lastMsg.created_at;
       const { data: convData } = await supabase
         .from("riley_conversations")
         .select("role, content")
@@ -98,7 +105,7 @@ async function getSession(supabase, body) {
     }
   }
 
-  return json(200, { user: profile, messages });
+  return json(200, { user: profile, messages, last_session_id: lastSessionId, last_at: lastAt });
 }
 
 // ── Action: save_message ──────────────────────────────────────────────────────

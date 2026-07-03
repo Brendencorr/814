@@ -65,6 +65,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="row"><div class="lbl">Your data<div class="val">View, download, or delete everything</div></div><a class="linkbtn" href="/dashboard#data">Manage data</a></div>
     <div class="row"><div class="lbl">Sign out<div class="val">End this session</div></div><button class="linkbtn danger" id="signout">Sign out</button></div>
   </div>
+
+  <div class="card">
+    <h2>The Riley app</h2>
+    <div class="cdesc">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>
+    <div class="row"><div class="lbl">Install Riley<div class="val">Works on your phone and desktop</div></div><button class="linkbtn" id="install-app">Install app</button></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -102,6 +108,11 @@ $('save-date').addEventListener('click', async ()=>{
 $('signout').addEventListener('click', async ()=>{
   try{ await SB.auth.signOut(); }catch(e){}
   location.href='https://riley.eight14.us';
+});
+
+// Install lives here for returning members (pwa.js only auto-offers on first login).
+$('install-app').addEventListener('click', ()=>{
+  if (typeof window.rileyTriggerInstall === 'function') window.rileyTriggerInstall();
 });
 
 load();

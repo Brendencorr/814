@@ -298,24 +298,32 @@ let _db, _user, _uid, _sessionId, _history = [];
   // ── Smart resume (Option A): auto-continue the latest thread if it last spoke
   //    < 24h ago; if it's older, Riley asks whether to continue or start fresh.
   //    Loads the FULL latest session (fixes the old last-20-across-sessions bug). ──
-  const { data: last } = await _db.from('riley_conversations')
-    .select('session_id, created_at')
-    .eq('user_id', _uid)
-    .order('created_at', { ascending: false })
-    .limit(1);
-  if (last && last.length) {
-    const sid = last[0].session_id;
-    const hoursSince = (Date.now() - new Date(last[0].created_at).getTime()) / 3600000;
-    const { data: msgs } = await _db.from('riley_conversations')
-      .select('role, content')
-      .eq('user_id', _uid).eq('session_id', sid)
-      .order('created_at', { ascending: true })
-      .limit(50);
-    const history = (msgs || []).map(m => ({ role: m.role, content: m.content }));
-    if (history.length) {
-      if (hoursSince < 24) resumeSession(sid, history);
-      else                 offerResume(sid, history);
+  //    Resume via auth-handler (server-side, token-verified, service-key). The
+  //    browser's own RLS read was coming back empty inside the popup iframe, so
+  //    Riley kept "forgetting" — the server path is reliable.
+  const _inp = document.getElementById('msg-input');
+  const _snd = document.getElementById('send-btn');
+  if (_inp) { _inp.disabled = true; _inp.placeholder = 'One moment…'; }
+  if (_snd) _snd.disabled = true;
+  try {
+    const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
+    const r = await fetch('/.netlify/functions/auth-handler', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_session', token: _tok })
+    });
+    if (r.ok) {
+      const s = await r.json();
+      const history = (s.messages || []).map(m => ({ role: m.role, content: m.content }));
+      if (history.length && s.last_session_id) {
+        const hoursSince = s.last_at ? (Date.now() - new Date(s.last_at).getTime()) / 3600000 : 0;
+        if (hoursSince < 24) resumeSession(s.last_session_id, history);
+        else                 offerResume(s.last_session_id, history);
+      }
     }
+  } catch (e) { /* no resume available → fresh session */ }
+  finally {
+    if (_inp) { _inp.disabled = false; _inp.placeholder = 'Message Riley…'; _inp.focus(); }
+    if (_snd) _snd.disabled = false;
   }
 })();
 

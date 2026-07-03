@@ -71,6 +71,10 @@
 [functions."track-event"]
   timeout = 10
 
+# Operator Home dashboard analytics (client engagement, one aggregated call)
+[functions."admin-home"]
+  timeout = 10
+
 [functions."riley-brain"]
   timeout = 10
 

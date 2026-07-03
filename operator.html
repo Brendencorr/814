@@ -411,9 +411,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <div class="cl" style="margin:0">Mission Control</div>
           <div id="ov-date" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.12em"></div>
         </div>
-        <div id="ov-hero"><div class="em">Loading…</div></div>
-        <div id="ov-programs" style="margin-top:1.1rem"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-top:1.2rem" id="ov-cols"></div>
+        <div id="home-body"><div class="em">Loading engagement data…</div></div>
       </div>
     </div>
   </div>
@@ -701,12 +699,76 @@ document.addEventListener('click',function(e){
 async function loadOverview(btn){
   if(btn)gs('o',btn);
   var dt=document.getElementById('ov-date'); if(dt)dt.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
-  var eng=null;
-  try{eng=await fetch(B+'/admin-engagement').then(function(r){return r.json();});}catch(e){}
-  var ps=_statusCache;
-  if(!ps){try{ps=await fetch(B+'/pipeline-status').then(function(r){return r.json();});}catch(e){}}
-  renderOverview(eng,ps);
-  loadHomePrograms();
+  var body=document.getElementById('home-body');
+  try{
+    var d=await fetch(B+'/admin-home').then(function(r){return r.json();});
+    if(d.error)throw new Error(d.error);
+    renderHome(d);
+  }catch(e){
+    if(body)body.innerHTML='<div class="em" style="color:var(--red)">Could not load analytics: '+x(e.message)+'</div>';
+  }
+}
+
+// Tiny dependency-free SVG bar chart. series=[{label,n}]
+function svgBars(series,color){
+  if(!series||!series.length)return '<div class="em">No data yet</div>';
+  var max=1; series.forEach(function(s){ if(s.n>max)max=s.n; });
+  var bw=16, gap=8, h=96, pad=16, totalW=series.length*(bw+gap);
+  var bars=series.map(function(s,i){
+    var bh=Math.round((s.n/max)*(h-pad));
+    var xx=i*(bw+gap);
+    return '<rect x="'+xx+'" y="'+(h-bh)+'" width="'+bw+'" height="'+Math.max(bh,1)+'" rx="2" fill="'+color+'"><title>'+s.label+': '+s.n+'</title></rect>'+
+      '<text x="'+(xx+bw/2)+'" y="'+(h+9)+'" text-anchor="middle" font-size="6.5" fill="var(--muted2)">'+x(String(s.label).slice(-5))+'</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+totalW+' '+(h+12)+'" preserveAspectRatio="none" style="width:100%;height:120px;display:block">'+bars+'</svg>';
+}
+
+function renderHome(d){
+  var c=d.clients||{}, t=d.totals||{};
+  var stat=function(label,val,sub){return '<div class="mc" style="margin:0"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'—')+'</div><div class="ms">'+(sub||'')+'</div></div>';};
+  var html='';
+  // ── stat row ──
+  html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.25rem">'+
+    stat('Total Clients', c.total, 'all-time')+
+    stat('Active · 7d', c.active_7d, 'logged activity')+
+    stat('New · 7d', c.new_7d, 'signups')+
+    stat('Logins · 7d', (t.logins_7d||0), 'sessions')+
+    stat('Riley Msgs · 7d', (t.riley_7d||0), 'conversations')+
+  '</div>';
+  // ── charts row ──
+  function panel(title,inner,action){return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><span class="cl" style="margin:0">'+title+'</span>'+(action||'')+'</div>'+inner+'</div>';}
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
+    panel('Logins · 14 days', svgBars(d.logins_14d,'var(--gold)'))+
+    panel('Riley Engagement · 14 days', svgBars(d.messages_14d,'var(--sage)'))+
+  '</div>';
+  // ── pages + clicks ──
+  function barList(rows,keyName,color){
+    if(!rows||!rows.length)return '<div class="em">Fills in as clients browse</div>';
+    var max=1; rows.forEach(function(r){ if(r.n>max)max=r.n; });
+    return rows.map(function(r){
+      var lbl=r[keyName]||'—';var pct=Math.round((r.n/max)*100);
+      return '<div style="margin-bottom:.5rem"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+'</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
+    }).join('');
+  }
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
+    panel('Most-Visited Pages', barList(d.top_pages,'page','var(--blue)'))+
+    panel('Top Clicks', barList(d.top_clicks,'target','var(--amber)'))+
+  '</div>';
+  // ── last active table ──
+  var la=d.last_active||[];
+  var laInner='';
+  if(!la.length){laInner='<div class="em">No client activity logged yet — fills in as people use the app</div>';}
+  else{
+    laInner='<div class="rp" style="margin:0">'+la.map(function(u){
+      var when=u.last_at?new Date(u.last_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+      return '<div class="rr" style="grid-template-columns:1fr 90px 140px 70px"><span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.name||'Member')+'</span>'+
+        '<span style="color:var(--muted);font-size:.72rem">'+(u.programs||0)+' program'+(u.programs===1?'':'s')+'</span>'+
+        '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
+        '<span style="color:var(--gold);font-weight:600">'+(u.events_7d||0)+'</span></div>';
+    }).join('')+'</div>';
+  }
+  html+=panel('Last Active Clients', laInner);
+  document.getElementById('home-body').innerHTML=html;
 }
 // ── Live Programs card on Home — current member count per live membership ───
 // Never forces the operator-key prompt on page load (matches checkSafetyAlerts'

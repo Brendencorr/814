@@ -13,6 +13,6 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
-    "netlify-cli": "^17.0.0"
+    "netlify-cli": "^26.1.0"
   }
 }

@@ -836,9 +836,7 @@ async function loadEngagement(btn){
   var st=document.getElementById('eng-stats');st.innerHTML='<div class="em">Loading engagement…</div>';
   document.getElementById('eng-attention').innerHTML='';document.getElementById('eng-table').innerHTML='';
   try{
-    var r=await fetch(B+'/admin-engagement');
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    var d=await r.json();
+    var d=await opGet('/admin-engagement');
     renderEngagement(d);
   }catch(e){st.innerHTML='<div class="em">Could not load engagement: '+engEsc(e.message)+'</div>';}
 }
@@ -888,6 +886,15 @@ function tgs(){document.getElementById('stpn').classList.toggle('open');}
 
 // ── Safety queue (crisis flags) — OPERATOR_KEY protected ─────────────────────
 function opKey(){return sessionStorage.getItem('814_opkey')||'';}
+// Authenticated GET for operator-only endpoints — ensures the key (prompts once), sends x-operator-key.
+async function opGet(path){
+  var k=opKey();
+  if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(!k) throw new Error('no-key'); sessionStorage.setItem('814_opkey',k); }
+  var r=await fetch(B+path,{headers:{'x-operator-key':k}});
+  if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); }
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
 async function safetyApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key (for the Safety queue):')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
@@ -1504,7 +1511,7 @@ function loadUsers(btn){
   var rows=list.querySelectorAll('.user-row:not(.uh)');
   rows.forEach(function(r){r.remove();});
 
-  fetch(B+'/admin-users').then(function(r){return r.json();}).then(function(d){
+  opGet('/admin-users').then(function(d){
     _allUsers=d.users||[];
     _usersLoaded=true;
     renderUserList(_allUsers);
@@ -1570,8 +1577,7 @@ function openUserPanel(userId){
   document.getElementById('ud-av').innerHTML='…';
   document.getElementById('ud-body').innerHTML='<div class="em" style="padding:1.5rem">Loading…</div>';
 
-  fetch(B+'/admin-users?user_id='+encodeURIComponent(userId))
-    .then(function(r){return r.json();})
+  opGet('/admin-users?user_id='+encodeURIComponent(userId))
     .then(function(d){renderUserDetail(d);})
     .catch(function(e){
       document.getElementById('ud-body').innerHTML='<div class="em" style="color:var(--red);padding:1.5rem">Error: '+x(e.message)+'</div>';

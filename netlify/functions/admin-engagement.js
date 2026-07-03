@@ -25,7 +25,7 @@ const { getSupabaseClient } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, x-operator-key",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
@@ -40,6 +40,12 @@ function stateFromLastActive(lastActive) {
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "GET")    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
+
+  // Operator-only. Fail closed: no configured secret -> never serve user data.
+  const expected = process.env.OPERATOR_KEY;
+  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY in the environment." }) };
+  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
+  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
 
   try {
     const supabase = getSupabaseClient(); // SERVICE_KEY

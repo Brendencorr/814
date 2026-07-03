@@ -1331,6 +1331,30 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   });
 })();
 </script>
+<script>
+/* Doc 2 §5.3 — the single post-weekend ask (once, warm, dismissible). Only selling moment in the sequence. */
+(async function(){
+  try{
+    if(typeof SB==='undefined')return;
+    var sess=(await SB.auth.getSession()).data.session; if(!sess)return;
+    var uid=sess.user.id, tok=sess.access_token;
+    if(localStorage.getItem('pw_ask_seen_'+uid))return;
+    var r=await fetch('/.netlify/functions/weekend-ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'check',token:tok})});
+    var d=await r.json();
+    if(!d||!d.show)return;
+    var content=document.querySelector('.content'); if(!content)return;
+    var card=document.createElement('div');
+    card.style.cssText='background:linear-gradient(135deg,rgba(201,168,76,0.12),var(--ink2));border:1px solid rgba(201,168,76,0.28);border-radius:12px;padding:22px 24px;margin-bottom:20px';
+    card.innerHTML='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);margin-bottom:8px">The weekend&rsquo;s over &mdash; and I&rsquo;m still here.</div>'
+      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Guide. If these two days felt like something you&rsquo;d want more of, Companion means we can talk like this any time &mdash; no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><a href="/programs?src=post_weekend" class="tbtn tbtn-gold" style="text-decoration:none">See Companion</a><button class="tbtn tbtn-ghost" id="pw-dismiss">Maybe later</button></div>';
+    content.insertAdjacentElement('afterbegin',card);
+    try{localStorage.setItem('pw_ask_seen_'+uid,'1');}catch(e){}
+    try{fetch('/.netlify/functions/weekend-ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'seen',token:tok})});}catch(e){}
+    var dz=document.getElementById('pw-dismiss'); if(dz)dz.addEventListener('click',function(){card.remove();});
+  }catch(e){}
+})();
+</script>
 <script src="/pwa.js"></script>
 <script src="/track.js"></script>
 <!-- The "Chat with Riley" floating pill + embedded popup are now provided globally by pwa.js

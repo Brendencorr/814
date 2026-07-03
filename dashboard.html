@@ -634,16 +634,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     function _briefHTML(m){
       const S=[];
       if(m.riley_note)S.push(`<div style="padding:14px 16px;background:rgba(74,122,176,0.08);border:1px solid rgba(74,122,176,0.2);border-radius:4px;display:flex;gap:11px;align-items:flex-start;margin-bottom:14px"><div style="font-size:18px;flex-shrink:0">🤝</div><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley noticed</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(m.riley_note)}</div></div></div>`);
-      if(m.mood_note)S.push(`<div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--parchment);line-height:1.6;margin-bottom:16px;padding-left:12px;border-left:2px solid var(--gold)">${esc(m.mood_note)}</div>`);
-      const fe=[];
-      if(m.focus)fe.push(`<div style="padding:12px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's focus</div><div style="font-size:13px;color:var(--parchment);font-weight:500">${esc(m.focus)}</div></div>`);
-      if(m.encouragement)fe.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Encouragement</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.encouragement)}</div></div>`);
-      if(fe.length)S.push(`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${fe.join('')}</div>`);
-      if(m.quote)S.push(`<div style="text-align:center;padding:12px 16px;margin-bottom:14px"><div style="font-family:'DM Serif Display',serif;font-size:15px;font-style:italic;color:var(--smoke);line-height:1.6">"${esc(m.quote)}"</div></div>`);
-      const cr=[];
-      if(m.challenge)cr.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's challenge</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.challenge)}</div></div>`);
-      if(m.reflection_prompt)cr.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Sit with this</div><div style="font-size:13px;font-style:italic;color:var(--smoke);line-height:1.5">${esc(m.reflection_prompt)}</div></div>`);
-      if(cr.length)S.push(`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${cr.join('')}</div>`);
+      if(m.focus)S.push(`<div style="padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:14px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's focus</div><div style="font-size:13.5px;color:var(--parchment);font-weight:500">${esc(m.focus)}</div></div>`);
       if(m.action)S.push(`<div style="padding:14px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);border-radius:3px;display:flex;gap:11px;align-items:flex-start"><div style="font-size:16px">✅</div><div><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">One action today</div><div style="font-size:13.5px;color:var(--parchment);font-weight:500">${esc(m.action)}</div></div></div>`);
       return S.join('')||'<div style="font-size:12px;color:var(--smoke)">Your brief is ready — check back in a moment.</div>';
     }
@@ -658,6 +649,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
         location.reload();
       }catch(e){if(b){b.disabled=false;b.textContent='Generate today\'s brief';}}
     };
+    let _briefShown=false;
     if(_brBody){
       if(!_entBrief){
         const _sub=document.getElementById('bc-sub'); if(_sub)_sub.textContent='A personalized 45-second briefing to start every day with intention.';
@@ -665,6 +657,8 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       } else if(brief&&brief.modules&&Object.keys(brief.modules).length){
         const rw=document.getElementById('bc-regen-wrap'); if(rw)rw.style.display='block';
         _brBody.innerHTML=_briefHTML(brief.modules);
+        _briefShown=true;
+        const _ins=document.getElementById('insight'); if(_ins)_ins.style.display='none';   // one voice: the brief supersedes Riley's Read
       } else {
         _brBody.innerHTML='<div style="font-size:13px;color:var(--smoke);line-height:1.7;margin-bottom:16px">Your brief is assembled fresh each morning from your check-ins, streak, and goals.</div><button id="dash-gen-btn" onclick="genDashBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:11px 24px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate today\'s brief</button>';
       }
@@ -742,7 +736,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // ── RILEY SUGGESTS — one card, two beats (Today screen consolidation) ──
     // Beat 1 = reflection (was "Today's Story"); Beat 2 = the suggestion. One
     // continuous thought — no divider, no second card.
-    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+rec+'</div></div>';
+    if(!_briefShown)stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+rec+'</div></div>';
     try{track('riley_suggests_shown',{card_id:'riley_suggests'});}catch(e){}
     // NOTICES
     const nSlot=document.getElementById('notices-slot');
@@ -754,7 +748,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(daysSinceCI>=5)nItems.push({ico:'📖',text:"You haven't journaled in a few days. Whenever you're ready — I'm here."});
     // "Riley suggests" merged into the two-beat Riley Suggests card above (Beat 2).
     const noteHtml=nItems.slice(0,3).map(function(n){return '<div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:11px 14px"><span style="font-size:14px;flex-shrink:0;margin-top:1px">'+n.ico+'</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">'+(n.label||'Riley noticed')+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">'+n.text+'</div></div></div>';}).join('');
-    if(noteHtml)nSlot.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">'+noteHtml+'</div>';
+    if(noteHtml&&!_briefShown)nSlot.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">'+noteHtml+'</div>';
 
     // Riley Brain — non-blocking; assembles today's matched recommendations
     loadRileyBrain();
@@ -771,7 +765,6 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 // could unlock — so the value of upgrading is always visible on the Today page.
 const EXPLORE_FLAGSHIP=[
   {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals — Riley learns from every entry.', need:'Riley Companion'},
-  {feat:'adaptive_programming',icon:'🌅', title:'Your Morning Brief',          desc:'A personalized 45-second briefing to start every day with intention.',           need:'Riley Companion'},
   {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Companion'},
   {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life — not a rigid diet.',             need:'Riley Companion'},
   {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Companion'},

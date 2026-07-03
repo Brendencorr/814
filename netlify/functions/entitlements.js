@@ -89,6 +89,18 @@ exports.handler = async function (event) {
     // history; this is the guarantee, not a substitute for that.)
     owned.add('reset_free');
 
+    // Master admin: full access to everything + an `admin` flag that drives the
+    // tier-preview toggle + edit controls in the app. Flagged on user_profiles.is_admin.
+    let isAdmin = false;
+    try {
+      const { data: prof } = await sb.from('user_profiles').select('is_admin').eq('id', userId).maybeSingle();
+      isAdmin = !!(prof && prof.is_admin === true);
+      if (isAdmin) {
+        try { const r = await sb.from('products').select('product_key'); (r.data || []).forEach(p => owned.add(p.product_key)); } catch (_) {}
+        owned.add('coach'); owned.add('companion');
+      }
+    } catch (_) {}
+
     // Free-access mode (friends & family testing): grant everyone every product
     // so testers see the whole app for free. Toggled in the operator Pricing
     // tab; flip off later to enforce real purchases. Pure read-time override, no
@@ -143,7 +155,7 @@ exports.handler = async function (event) {
       // hold a product that has no cap row for it (Companion/Coach = uncapped).
       const caps = limitsByFeature[f.feature_key] || [];
       const uncappedViaTier = required.some(p => owned.has(p) && !caps.find(c => c.product_key === p));
-      const cappedForUser = access && state === 'capped' && !freeAccess && !uncappedViaTier && caps.some(c => owned.has(c.product_key));
+      const cappedForUser = access && state === 'capped' && !freeAccess && !isAdmin && !uncappedViaTier && caps.some(c => owned.has(c.product_key));
       features[f.feature_key] = {
         access,
         gate_mode:    f.gate_mode || state,   // backward-compat field name
@@ -165,6 +177,7 @@ exports.handler = async function (event) {
     return json(200, {
       products: [...owned],
       tier: currentTier(owned),
+      admin: isAdmin,
       features,
     });
 

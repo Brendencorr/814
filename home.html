@@ -410,6 +410,19 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
   });
 })();
 </script>
+<!-- Waitlist modal (Doc 1 §4) -->
+<div id="wl-modal" style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;background:rgba(6,6,8,0.82);backdrop-filter:blur(4px);padding:20px">
+  <div style="background:#141210;border:1px solid rgba(201,168,76,0.22);border-radius:14px;max-width:400px;width:100%;padding:28px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.55)">
+    <button onclick="wlClose()" aria-label="Close" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#8a8578;font-size:24px;line-height:1;cursor:pointer">&times;</button>
+    <div id="wl-body">
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#f5f0e8;margin-bottom:8px">Be first when memberships open</div>
+      <div style="font-size:13px;color:#8a8578;line-height:1.6;margin-bottom:18px">Memberships aren't live yet. Leave your email and you'll be first to know — no charge, no spam.</div>
+      <input id="wl-email" type="email" placeholder="you@email.com" style="width:100%;padding:11px 13px;background:#1c1a18;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#f5f0e8;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box">
+      <button onclick="wlSubmit()" id="wl-submit" style="width:100%;padding:12px;background:#c9a84c;color:#0a0908;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer">Join the waitlist</button>
+      <div id="wl-msg" style="font-size:12px;color:#8b3a3a;margin-top:10px;min-height:14px"></div>
+    </div>
+  </div>
+</div>
 <script>
 /* Doc 1 §1 + Doc 0 §7: pricing renders from the `plans` table (public-read) — one row change
    updates the site, no deploy. Annual pre-selected. Fail-safe: the cards keep their correct
@@ -438,6 +451,24 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
       .then(function(rows){ if(Array.isArray(rows)){rows.forEach(function(p){P[p.id]=p;}); paint();} })
       .catch(function(){});
   }catch(e){}
+  // ── Waitlist routing (Doc 1 §4): paid CTAs open the waitlist while payments aren't live.
+  //    Reads payments_live so flipping the flag switches routing with no code change.
+  var LIVE=false, wlPlan='';
+  try{ fetch(SB+'/rest/v1/app_settings?select=value&key=eq.payments_live',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}}).then(function(r){return r.json();}).then(function(rows){ LIVE=!!(rows&&rows[0]&&String(rows[0].value).toLowerCase()==='true'); }).catch(function(){}); }catch(e){}
+  window.wlClose=function(){var m=document.getElementById('wl-modal');if(m)m.style.display='none';};
+  window.wlSubmit=function(){
+    var em=((document.getElementById('wl-email')||{}).value||'').trim(), msg=document.getElementById('wl-msg'), btn=document.getElementById('wl-submit');
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ if(msg)msg.textContent='Please enter a valid email.'; return; }
+    if(btn){btn.disabled=true;btn.textContent='Joining…';}
+    fetch('/.netlify/functions/waitlist-join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:em,plan:wlPlan})})
+      .then(function(r){return r.json();}).then(function(x){ var b=document.getElementById('wl-body');
+        if(x&&x.ok){ if(b)b.innerHTML='<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:10px">🕊️</div><div style="font-family:DM Serif Display,serif;font-size:19px;color:#f5f0e8">You\'re on the list.</div><div style="font-size:13px;color:#8a8578;margin-top:8px">We\'ll reach out the moment memberships open.</div></div>'; }
+        else { if(msg)msg.textContent=(x&&x.error)||'Something went wrong — try again.'; if(btn){btn.disabled=false;btn.textContent='Join the waitlist';} } })
+      .catch(function(){ if(msg)msg.textContent='Something went wrong — try again.'; if(btn){btn.disabled=false;btn.textContent='Join the waitlist';} });
+  };
+  document.querySelectorAll('a[data-cta]').forEach(function(a){
+    a.addEventListener('click',function(e){ if(LIVE)return; e.preventDefault(); wlPlan=a.getAttribute('data-plan-id')||''; var em=document.getElementById('wl-email'); if(em)em.value=''; var mm=document.getElementById('wl-msg'); if(mm)mm.textContent=''; var m=document.getElementById('wl-modal'); if(m)m.style.display='flex'; });
+  });
 })();
 </script>
 </body>

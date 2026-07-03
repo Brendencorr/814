@@ -67,6 +67,10 @@
 [functions."site-config"]
   timeout = 10
 
+# Client engagement tracker ingest (page views, logins, clicks, dwell)
+[functions."track-event"]
+  timeout = 10
+
 [functions."riley-brain"]
   timeout = 10
 

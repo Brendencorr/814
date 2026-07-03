@@ -29,6 +29,10 @@ const clampInt = (v, lo, hi, dflt) => {
   return Math.max(lo, Math.min(hi, n));
 };
 const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
+const toTags = (v) => {
+  const a = Array.isArray(v) ? v : (typeof v === "string" ? v.split(",") : []);
+  return a.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 10);
+};
 
 async function runSuggest({ count = 6, focus = "" } = {}) {
   const db = contentDb();
@@ -91,6 +95,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
       content_url: url.slice(0, 1000),
       description: it.description ? String(it.description).slice(0, 2000) : null,
       emotional_intensity: (it.emotional_intensity == null || isNaN(+it.emotional_intensity)) ? null : Math.max(1, Math.min(5, Math.round(+it.emotional_intensity))),
+      tags: toTags(it.tags),
       suggestion_reason: it.reason ? String(it.reason).slice(0, 500) : null,
       source: "agent",
       approval_status: "pending",

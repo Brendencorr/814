@@ -353,6 +353,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .lchip:hover{border-color:var(--gold);color:var(--ink)}
 .lchip.on{background:var(--gold-soft);border-color:var(--gold);color:var(--amber);font-weight:600}
 .lchip b{font-weight:700;opacity:.7;margin-left:.15rem}
+.ltag{display:inline-block;padding:.08rem .42rem;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-size:.62rem;color:var(--muted);line-height:1.55}
 .ce-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
 .ce-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;display:flex;flex-direction:column;gap:.65rem}
 .ce-card.blocked{border-color:var(--red);border-left:3px solid var(--red)}
@@ -1005,7 +1006,7 @@ function renderLibList(){
   Object.keys(TYPE_META).forEach(function(t){if(typeCounts[t]){var m=tmeta(t);chips+='<button class="lchip'+(_libFilter===t?' on':'')+'" onclick="libFilter(\''+t+'\')">'+m.i+' '+m.l+' <b>'+typeCounts[t]+'</b></button>';}});
   var chipBar='<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">'+chips+'</div>';
   var banner=_lib.missing_links>0?('<div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);color:var(--red);border-radius:6px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.8rem">⚠ '+_lib.missing_links+' live item'+(_lib.missing_links>1?'s have':' has')+' no link. Members can’t open those — add a URL via Edit.</div>'):'';
-  var search='<input id="lib-search" placeholder="Search title, creator, topic…" value="'+engEsc(_libSearch)+'" oninput="libSearchInput(this.value)" style="'+CIN+';max-width:300px;margin-bottom:1rem">';
+  var search='<input id="lib-search" placeholder="Search title, author, topic, tags…" value="'+engEsc(_libSearch)+'" oninput="libSearchInput(this.value)" style="'+CIN+';max-width:300px;margin-bottom:1rem">';
   return chipBar+banner+search+'<div id="lib-rows">'+libRowsHtml()+'</div>'+libForm();
 }
 function libRowsHtml(){
@@ -1013,7 +1014,7 @@ function libRowsHtml(){
   var rows=_lib.items.filter(function(i){
     if(i.approval_status==='rejected')return false;
     if(_libFilter!=='all'&&i.content_type!==_libFilter)return false;
-    if(q){var hay=((i.title||'')+' '+(i.creator||'')+' '+(i.topic||'')).toLowerCase();if(hay.indexOf(q)<0)return false;}
+    if(q){var hay=((i.title||'')+' '+(i.creator||'')+' '+(i.topic||'')+' '+((i.tags||[]).join(' '))).toLowerCase();if(hay.indexOf(q)<0)return false;}
     return true;
   });
   return rows.length?rows.map(libRow).join(''):'<div class="em">No items match.</div>';
@@ -1021,15 +1022,17 @@ function libRowsHtml(){
 function libRow(c){
   var dim=c.is_active?'':'opacity:.55;';
   var m=tmeta(c.content_type);
+  var author=c.creator?' <span style="color:var(--muted2);font-weight:400;font-size:.78rem">· '+engEsc(c.creator)+'</span>':'';
   var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.is_active?'':' · retired')+(c.source==='agent'?' · ✨ agent':'');
+  var tags=(c.tags&&c.tags.length)?'<div style="margin-top:.35rem;display:flex;flex-wrap:wrap;gap:.25rem">'+c.tags.slice(0,10).map(function(t){return '<span class="ltag">'+engEsc(t)+'</span>';}).join('')+'</div>':'';
   var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" class="bo" style="text-decoration:none;border-color:var(--green);color:var(--green)">Open ↗</a>':'<span class="bo" style="border-color:var(--red);color:var(--red);cursor:default">⚠ No link</span>';
-  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;'+dim+'">'
-    +'<div style="font-size:1.1rem;flex-shrink:0">'+m.i+'</div>'
-    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(c.title)+'</div><div style="font-size:.66rem;color:var(--muted2)">'+meta+'</div></div>'
-    +link
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:.7rem .9rem;margin-bottom:.5rem;display:flex;align-items:flex-start;gap:.7rem;'+dim+'">'
+    +'<div style="font-size:1.1rem;flex-shrink:0;margin-top:.1rem">'+m.i+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.85rem;line-height:1.35">'+engEsc(c.title)+author+'</div><div style="font-size:.66rem;color:var(--muted2);margin-top:.1rem">'+meta+'</div>'+tags+'</div>'
+    +'<div style="display:flex;gap:.4rem;align-items:center;flex-shrink:0">'+link
     +'<button class="bo" onclick="editContent(\''+c.id+'\')">Edit</button>'
     +(c.is_active?'<button class="bo" style="border-color:var(--red);color:#c0392b" onclick="retireContent(\''+c.id+'\')">Retire</button>':'<button class="bo" style="border-color:var(--green);color:var(--green)" onclick="activateContent(\''+c.id+'\')">Restore</button>')
-    +'</div>';
+    +'</div></div>';
 }
 function libForm(){
   var typeOpts=_ctypes.map(function(t){return '<option value="'+t+'">'+tmeta(t).l+'</option>';}).join('');
@@ -1039,7 +1042,8 @@ function libForm(){
     +'<div><label style="'+CFL+'">Type</label><select id="cf-type" style="'+CIN+'">'+typeOpts+'</select></div>'
     +cfield('cf-topic','Topic')+cfield('cf-mood','Moods (comma-sep)')+cfield('cf-duration','Duration (min)')
     +cfield('cf-url','URL (live link)')+cfield('cf-intensity','Emotional intensity 1-5')
-    +'</div><label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'
+    +'</div><label style="'+CFL+'">Tags — how members find it (comma-separated)</label><input id="cf-tags" style="'+CIN+'">'
+    +'<label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'
     +'<div style="display:flex;gap:.6rem;margin-top:.5rem;align-items:center"><button class="bg" onclick="saveContent()">Save</button><button class="bo" onclick="clearContentForm()">Clear</button><span id="cf-msg" style="color:var(--muted);font-size:.78rem"></span></div></div></details>';
 }
 
@@ -1055,14 +1059,16 @@ function renderSuggestions(){
 }
 function suggRow(c){
   var m=tmeta(c.content_type);
-  var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'')+(c.creator?' · '+engEsc(c.creator):'');
+  var author=c.creator?' <span style="color:var(--muted2);font-weight:400;font-size:.78rem">· '+engEsc(c.creator)+'</span>':'';
+  var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'');
+  var tags=(c.tags&&c.tags.length)?'<div style="margin-top:.45rem;display:flex;flex-wrap:wrap;gap:.25rem">'+c.tags.slice(0,10).map(function(t){return '<span class="ltag">'+engEsc(t)+'</span>';}).join('')+'</div>':'';
   var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;word-break:break-all">'+engEsc(c.content_url)+' ↗</a>':'<span style="color:var(--red);font-size:.72rem">⚠ no link — cannot be published</span>';
   var reason=c.suggestion_reason?'<div style="font-size:.74rem;color:var(--muted);font-style:italic;margin-top:.35rem">“'+engEsc(c.suggestion_reason)+'”</div>':'';
   var approve=c.content_url?'<button class="bg" onclick="suggApprove(\''+c.id+'\')">Approve &amp; alert members</button>':'<button class="bg" disabled title="No live link — reject or add a URL first" style="opacity:.5;cursor:not-allowed">Approve</button>';
   return '<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.85rem 1rem;margin-bottom:.6rem">'
     +'<div style="display:flex;gap:.6rem;align-items:flex-start"><div style="font-size:1.2rem;flex-shrink:0">'+m.i+'</div>'
-    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.9rem;font-weight:600">'+engEsc(c.title)+'</div>'
-    +'<div style="font-size:.68rem;color:var(--muted2);margin:.15rem 0 .3rem">'+meta+'</div>'+link+reason+'</div></div>'
+    +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.9rem;font-weight:600">'+engEsc(c.title)+author+'</div>'
+    +'<div style="font-size:.68rem;color:var(--muted2);margin:.15rem 0 .3rem">'+meta+'</div>'+link+reason+tags+'</div></div>'
     +'<div style="display:flex;gap:.5rem;margin-top:.7rem;justify-content:flex-end">'
     +'<button class="bo" style="border-color:var(--red);color:var(--red)" onclick="suggReject(\''+c.id+'\')">Reject</button>'+approve
     +'</div></div>';
@@ -1101,13 +1107,13 @@ async function suggReject(id){
 function editContent(id){
   var c=(_lib.items||[]).find(function(x){return x.id===id;})||(_lib.suggestions||[]).find(function(x){return x.id===id;});if(!c)return;
   var det=document.querySelector('#content-body details');if(det)det.open=true;
-  document.getElementById('cf-id').value=c.id;document.getElementById('cf-title').value=c.title||'';document.getElementById('cf-creator').value=c.creator||'';document.getElementById('cf-type').value=c.content_type||'';document.getElementById('cf-topic').value=c.topic||'';document.getElementById('cf-mood').value=(c.mood||[]).join(', ');document.getElementById('cf-duration').value=c.duration_minutes||'';document.getElementById('cf-url').value=c.content_url||'';document.getElementById('cf-intensity').value=c.emotional_intensity||'';document.getElementById('cf-desc').value=c.description||'';
+  document.getElementById('cf-id').value=c.id;document.getElementById('cf-title').value=c.title||'';document.getElementById('cf-creator').value=c.creator||'';document.getElementById('cf-type').value=c.content_type||'';document.getElementById('cf-topic').value=c.topic||'';document.getElementById('cf-mood').value=(c.mood||[]).join(', ');document.getElementById('cf-tags').value=(c.tags||[]).join(', ');document.getElementById('cf-duration').value=c.duration_minutes||'';document.getElementById('cf-url').value=c.content_url||'';document.getElementById('cf-intensity').value=c.emotional_intensity||'';document.getElementById('cf-desc').value=c.description||'';
   document.getElementById('cform-title').textContent='Edit content';if(det)det.scrollIntoView({behavior:'smooth',block:'center'});
 }
-function clearContentForm(){['cf-id','cf-title','cf-creator','cf-topic','cf-mood','cf-duration','cf-url','cf-intensity','cf-desc'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});var t=document.getElementById('cform-title');if(t)t.textContent='Add content';var m=document.getElementById('cf-msg');if(m)m.textContent='';}
+function clearContentForm(){['cf-id','cf-title','cf-creator','cf-topic','cf-mood','cf-tags','cf-duration','cf-url','cf-intensity','cf-desc'].forEach(function(i){var e=document.getElementById(i);if(e)e.value='';});var t=document.getElementById('cform-title');if(t)t.textContent='Add content';var m=document.getElementById('cf-msg');if(m)m.textContent='';}
 async function saveContent(){
   var g=function(i){var e=document.getElementById(i);return e?e.value.trim():'';};
-  var item={id:g('cf-id')||undefined,title:g('cf-title'),creator:g('cf-creator'),content_type:g('cf-type'),topic:g('cf-topic'),mood:g('cf-mood'),duration_minutes:g('cf-duration'),content_url:g('cf-url'),emotional_intensity:g('cf-intensity'),description:g('cf-desc')};
+  var item={id:g('cf-id')||undefined,title:g('cf-title'),creator:g('cf-creator'),content_type:g('cf-type'),topic:g('cf-topic'),mood:g('cf-mood'),tags:g('cf-tags'),duration_minutes:g('cf-duration'),content_url:g('cf-url'),emotional_intensity:g('cf-intensity'),description:g('cf-desc')};
   if(!item.title){document.getElementById('cf-msg').textContent='Title required';return;}
   document.getElementById('cf-msg').textContent='Saving…';
   try{await contentApi('upsert',{item:item});clearContentForm();loadContent();}catch(e){document.getElementById('cf-msg').textContent='Error: '+e.message;}

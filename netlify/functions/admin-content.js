@@ -42,7 +42,7 @@ const TYPE_ICON = {
   breathwork: "🫁", workout: "🏃", recipe: "🥗", article: "📝",
   journal_prompt: "✍️", community_prompt: "💬", quote: "✨",
 };
-const SELECT_COLS = "id,title,creator,content_type,topic,mood,duration_minutes,content_url,description,emotional_intensity,is_active,approval_status,source,suggestion_reason,suggested_at,updated_at";
+const SELECT_COLS = "id,title,creator,content_type,topic,mood,tags,duration_minutes,content_url,description,emotional_intensity,is_active,approval_status,source,suggestion_reason,suggested_at,updated_at";
 
 async function listContent(supabase) {
   const { data, error } = await supabase
@@ -90,6 +90,7 @@ async function upsertContent(supabase, item) {
     content_type: item.content_type,
     topic: item.topic ? String(item.topic).slice(0, 100) : null,
     mood: arr(item.mood),
+    tags: arr(item.tags).slice(0, 12).map((t) => String(t).slice(0, 40)),
     duration_minutes: num(item.duration_minutes),
     content_url: item.content_url ? String(item.content_url).slice(0, 1000) : null,
     description: item.description ? String(item.description).slice(0, 2000) : null,

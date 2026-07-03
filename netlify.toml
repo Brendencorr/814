@@ -491,3 +491,26 @@
   from = "/"
   to = "/operator.html"
   status = 200
+
+# ── Security headers (apply to every route) ─────────────────────────────────
+# Added in the privacy/security remediation (Phase 3).
+# DELIBERATE DEVIATION from the handoff: X-Frame-Options is SAMEORIGIN, not DENY,
+# and CSP uses frame-ancestors 'self' — the marketing "Talk to Riley" popup iframes
+# /talk from the SAME origin, so DENY would break it. CSP allows 'unsafe-inline'
+# because the site is built with inline styles / scripts / on* handlers; script/
+# style/font/connect sources are scoped to the domains found in the Phase 0 audit
+# (Supabase, Google Fonts, jsDelivr). Google OAuth is a top-level redirect (not
+# governed by connect-src/frame-src), so it is unaffected.
+# HIGHEST-RISK change in this branch: verify the chat + Google sign-in on the
+# deploy preview BEFORE merging. If anything breaks, comment out the
+# Content-Security-Policy line (the other headers are safe) or switch it to
+# Content-Security-Policy-Report-Only until confirmed.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"

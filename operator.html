@@ -435,83 +435,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     </div>
   </div>
 
-  <div class="sc" id="sh">
-    <div class="sc-left">
-      <div class="cl">Phase 1 Scorecard</div>
-      <div class="mc"><div class="mn">Email Signups This Week</div><div class="mv" id="ms">&#8212;</div><div class="ms2 ms">Goal: 500</div></div>
-      <div class="mc"><div class="mn">Riley Chatbot Opens</div><div class="mv" id="mc2">&#8212;</div><div class="ms2 ms"></div></div>
-      <div class="mc"><div class="mn">Instagram Saves</div><div class="mv" id="msv">&#8212;</div><div class="ms2 ms"></div></div>
-      <div class="mc"><div class="mn">Link Clicks to eight14.us</div><div class="mv" id="mcl">&#8212;</div><div class="ms2 ms"></div></div>
-      <div class="mc"><div class="mn">Total Email List</div><div class="mv" id="ml">&#8212;</div><div class="ms2 ms">Running total</div></div>
-      <button class="ebtn" onclick="onm()">+ Enter This Week's Numbers</button>
-      <div class="cd"><div class="cdl">Next Auto-Run</div><div class="cdn" id="cdn">&#8212;</div><div class="cds">Pipeline runs automatically<br>every Sunday at 6:00 AM MT</div></div>
-    </div>
-    <div class="sc-mid">
-      <div class="sh">Recent Pipeline Runs</div>
-      <div class="rp" id="rp"><div class="rr rh"><span>Date</span><span>Status</span><span>Posts</span><span>Top Pillar</span><span>Format</span></div><div class="em" id="re">No pipeline runs yet.</div></div>
-      <div class="sh">Echo Analysis</div>
-      <div class="ep" id="ep"><div class="em" id="ee">Enter this week's numbers to see Echo's analysis.</div></div>
-      <button class="stbtn" onclick="spl(document.querySelector('[data-s=p]'))">Start This Week's Content &#8594;</button>
-    </div>
-    <div class="sc-right">
-      <div class="rhd"><span class="cl" style="margin:0">Recent Posts</span><button class="bo" style="font-size:10px;padding:.25rem .55rem" onclick="ls()">&#8635;</button></div>
-      <div class="hscr" id="hl"><div class="em">Post history appears here after your first pipeline run.</div></div>
-    </div>
-  </div>
-  <div class="sc" id="sp">
-    <div class="pli">
-      <!-- Background pipeline launcher -->
-      <div class="phc scout" id="psc">
-        <div class="pht">&#128269; Scout &#8594; Sage &#8594; Atlas</div>
-        <p style="font-size:.82rem;color:var(--muted2);line-height:1.6;margin-bottom:.85rem">
-          Click to run the full pipeline as a background job. Scout researches trending topics, Sage writes 12 posts, Atlas builds the publishing schedule. Runs in the background &#8212; no timeout.
-        </p>
-        <div class="pha"><button class="bg" id="bsc" onclick="runBgPipeline()">&#9654; Start Full Pipeline</button></div>
-      </div>
+  <!-- (retired: Social/Pipeline/Review screens — replaced by Content Engine) -->
 
-      <!-- Running state -->
-      <div class="phc sage" id="psg" style="display:none">
-        <div class="pht">&#128340; Pipeline Running</div>
-        <div class="run" style="display:flex;margin-top:0"><div class="pls"></div><span class="rxt" id="pipe-status-txt">Scout &#8594; Sage &#8594; Atlas running in background&#8230;</span></div>
-        <div style="margin-top:1rem;font-size:.78rem;color:var(--muted2)">
-          Results will appear here automatically. Usually takes 1&#8211;3 minutes.
-        </div>
-        <div id="pipe-elapsed" style="font-family:'DM Mono',monospace;font-size:28px;color:var(--gold);margin-top:.75rem">0:00</div>
-        <div style="font-size:.68rem;color:var(--muted2);margin-top:.2rem">elapsed</div>
-        <div id="pipe-error" style="display:none;color:var(--red);font-size:.8rem;margin-top:.85rem"></div>
-      </div>
-
-      <!-- Done state -->
-      <div class="phc atlas" id="pat2" style="display:none">
-        <div class="pht">&#10003; Pipeline Complete</div>
-        <div id="pipe-summary" style="font-size:.82rem;color:var(--text);line-height:1.6;margin-bottom:.85rem"></div>
-        <div class="pha"><button class="bg" onclick="jr()">Review Posts &#8594;</button><button class="bo" onclick="rpl()">Run Again</button></div>
-      </div>
-    </div>
-  </div>
-  <div class="sc" id="sr">
-    <div class="rvi">
-      <div class="pgb" style="margin-bottom:1rem">
-        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Scout</span></div>
-        <div class="pln pd2"></div>
-        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Sage</span></div>
-        <div class="pln pd2"></div>
-        <div class="pbs"><div class="pbd pd2">&#10003;</div><span class="pbl pd2">Atlas</span></div>
-        <div class="pln pd2"></div>
-        <div class="pbs"><div class="pbd pa">&#9679;</div><span class="pbl pa">Review</span></div>
-      </div>
-      <div class="rvh" id="rvh">Your 12 Posts</div>
-      <div class="rvs" id="rvs">Review, edit, and approve before scheduling.</div>
-      <div class="pgr" id="pgr"></div>
-    </div>
-    <div class="ab">
-      <div class="abc"><strong id="act">12</strong> of <strong id="tct">12</strong> approved</div>
-      <div class="abm"><button class="aab" id="bap" onclick="aps()">Approve and Schedule in Buffer &#8594;</button></div>
-      <button class="dbn" onclick="svd()">Save Draft</button>
-    </div>
-  </div>
-<!-- CONTENT ENGINE SCREEN -->
-<div class="sc" id="sce">
+  <div class="sc" id="sce">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1200px;margin:0 auto">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
@@ -1203,7 +1129,7 @@ async function togglePricingFreeAccess(on){if(!window.confirm(on?'Turn ON free a
 
 function init(){
   try{
-    scd();ls();ldst();loadOverview();
+    ldst();loadOverview();
     checkSafetyAlerts();
     setInterval(checkSafetyAlerts,90000);
   }catch(err){

@@ -1,0 +1,24 @@
+-- 039_home_analytics_states_90d.sql
+-- Home redesign support: admin_home_analytics() now also returns
+--   • states {active, cooling, dormant, new}  — powers the Overview ring +
+--     client-state distribution bar
+--   • logins_90d / messages_90d (90 daily points, replacing the 14d arrays) —
+--     the client slices these to the selected 7/30/90-day range toggle and
+--     computes range-aware deltas.
+-- Applied live via the Supabase MCP on 2026-07-03; this file mirrors it.
+-- (Full function body lives in the DB; see migration 038 for the prior version.)
+-- NOTE: this is a CREATE OR REPLACE of the same function — safe to re-run.
+
+-- The authoritative body was applied via MCP (home_analytics_states_and_90d).
+-- Key additions vs 038:
+--   states as (
+--     select
+--       count(*) filter (where updated_at > now()-interval '2 days') as active,
+--       count(*) filter (where updated_at <= now()-interval '2 days'
+--                          and updated_at > now()-interval '7 days') as cooling,
+--       count(*) filter (where updated_at <= now()-interval '7 days') as dormant,
+--       count(*) filter (where created_at > now()-interval '7 days') as new
+--     from public.user_profiles
+--   ),
+--   logins_by_day / msgs_by_day → generate_series(current_date-89, current_date)
+--   output keys: 'states', 'logins_90d', 'messages_90d'

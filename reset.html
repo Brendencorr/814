@@ -151,7 +151,7 @@ function render(){
   const actionText = v.action ? v.action : day.action_body;   // persona voice wins if we have it
   const isDay1=DAY===1, isDay7=DAY===7;
 
-  let html = dots();
+  let html = pushCard() + dots();
 
   // Riley's framing line
   html += `<div class="riley-line"><span style="font-size:19px;flex-shrink:0">💛</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley</div><div style="font-size:14px;color:var(--parchment);line-height:1.65;font-style:italic">${esc(day.theme_line||'')}</div></div></div>`;
@@ -239,6 +239,51 @@ async function markEvening(){
   }catch(e){btn.disabled=false;btn.textContent='Close the day →';}
 }
 
+// ── Web-push opt-in (program-scoped: "Want me to nudge you?") ──
+function pushSupported(){return('Notification'in window)&&('serviceWorker'in navigator)&&('PushManager'in window);}
+function urlB64ToU8(base64){const pad='='.repeat((4-base64.length%4)%4);const b=(base64+pad).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(b);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)));}
+function pushCard(){
+  if(!pushSupported()||localStorage.getItem('riley_reset_push'))return'';
+  return `<div class="rcard" id="push-card" style="border-color:rgba(201,168,76,0.25)">
+    <div class="rlabel" style="color:var(--gold)">🔔 Want me to nudge you?</div>
+    <div id="push-msg" style="font-size:14px;color:var(--parchment);line-height:1.65">I can send two short notifications a day while you're doing the Reset — one in the morning to start, one at night to close. Just for these 7 days, then they stop on their own. You can turn them off anytime.</div>
+    <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn btn-gold" style="padding:9px 18px" onclick="enablePush()">Yes, nudge me</button>
+      <button class="btn btn-ghost" style="padding:9px 18px" onclick="declinePush()">No thanks — I'll come to you</button>
+    </div></div>`;
+}
+async function enablePush(){
+  const msg=document.getElementById('push-msg'); if(msg)msg.textContent='Setting up…';
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){dismissPush('later');return;}
+    const reg=await navigator.serviceWorker.ready;
+    const {publicKey}=await(await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})})).json();
+    if(!publicKey)throw new Error('no key');
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(publicKey)});
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
+    await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',token:TOK,subscription:sub,tz})});
+    localStorage.setItem('riley_reset_push','on');dismissPush('on');
+  }catch(e){dismissPush('later');}
+}
+async function declinePush(){
+  try{await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'decline',token:TOK})});}catch(e){}
+  localStorage.setItem('riley_reset_push','off');dismissPush('off');
+}
+function dismissPush(state){
+  const card=document.getElementById('push-card'); if(!card)return;
+  if(state==='on'){card.innerHTML='<div class="done-tag" style="padding:4px 0;flex-wrap:wrap;gap:6px"><span>✓</span> I\'ll send two short nudges a day — morning and night. <a href="#" onclick="sendTest(event)" style="color:var(--gold)">Send a test now →</a></div>';}
+  else card.remove();
+}
+async function sendTest(e){
+  if(e)e.preventDefault();
+  const tag=document.querySelector('#push-card .done-tag');
+  try{
+    const r=await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'test',token:TOK})});
+    if(tag)tag.innerHTML = r.ok ? '<span>✓</span> Test sent — check your notifications.' : '<span>⚠</span> Couldn\'t send just now — give it a moment after deploy.';
+  }catch(err){}
+}
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
 boot();
 </script>

@@ -96,6 +96,11 @@
 [functions."journey-step"]
   timeout = 26
 
+# The 8:14 Reset AM (~8:14am) / PM (~8pm) web-push nudges — scheduled every 15 min;
+# the function checks each member's local time + quiet hours + once-a-day dedup.
+[functions."reset-nudge-cron"]
+  schedule = "*/15 * * * *"
+
 # Workout & Nutrition plan generator runs as a BACKGROUND function
 # (plan-generate-background.js) — a full 7-day plan exceeds the synchronous
 # timeout, so the -background suffix gives it up to 15 min. The client fires it

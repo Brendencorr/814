@@ -171,11 +171,13 @@
   from = "https://riley.eight14.us/brief"
   to   = "/dashboard"
   status = 301
+  force = true
 
 [[redirects]]
   from = "https://riley.eight14.us/brief/"
   to   = "/dashboard"
   status = 301
+  force = true
 
 [[redirects]]
   from = "https://riley.eight14.us/conversations"
@@ -217,8 +219,8 @@
 
 [[redirects]]
   from   = "https://riley.eight14.us/brief.html"
-  to     = "/brief.html"
-  status = 200
+  to     = "/dashboard"
+  status = 301
   force  = true
 
 [[redirects]]

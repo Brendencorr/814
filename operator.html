@@ -379,6 +379,22 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .ce-job-plat{font-size:.7rem;font-weight:600;color:var(--gold);text-transform:uppercase;width:80px;flex-shrink:0}
 .ce-job-cap{flex:1;font-size:.78rem;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ce-job-when{font-size:.68rem;color:var(--muted);white-space:nowrap}
+
+/* ── Home movable widgets ── */
+.hw{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem}
+.hw-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+.hw-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.hw-grip{display:none;color:var(--muted2);cursor:grab;font-size:.9rem;user-select:none}
+.hw-hide{display:none;margin-left:auto;background:transparent;border:1px solid var(--border);color:var(--muted);width:20px;height:20px;border-radius:5px;cursor:pointer;font-size:.7rem;line-height:1}
+.hw-hide:hover{color:var(--red);border-color:var(--red)}
+#home-body.editing .hw{border-style:dashed;border-color:var(--gold-mid)}
+#home-body.editing .hw-grip{display:inline}
+#home-body.editing .hw-hide{display:inline-flex;align-items:center;justify-content:center}
+#home-body.editing .hw{cursor:move}
+.hw-hidden{padding:.75rem 0;font-size:.72rem;color:var(--muted);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.edit-layout-btn{padding:.4rem .8rem;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink2);font-size:.72rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.edit-layout-btn:hover{border-color:var(--gold)}
+.edit-layout-btn.editing-on{background:var(--gold-soft);border-color:var(--gold);color:var(--amber)}
 </style>
 </head>
 <body>
@@ -409,7 +425,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <div style="max-width:1200px;margin:0 auto">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.2rem">
           <div class="cl" style="margin:0">Mission Control</div>
-          <div id="ov-date" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.12em"></div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <div id="ov-date" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.12em"></div>
+            <button class="edit-layout-btn" id="home-edit-btn" onclick="toggleHomeEdit()">✎ Edit Layout</button>
+          </div>
         </div>
         <div id="home-body"><div class="em">Loading engagement data…</div></div>
       </div>
@@ -734,42 +753,33 @@ function svgBars(series,color,clickKind){
 }
 
 function renderHome(d){
+  _homeData=d;
   var c=d.clients||{}, t=d.totals||{};
   var stat=function(label,val,sub,kind){return '<div class="mc" style="margin:0;cursor:pointer" onclick="openDrill(\''+kind+'\',null,\''+label+'\')"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'—')+'</div><div class="ms">'+(sub||'')+' ›</div></div>';};
-  var html='';
-  // ── stat row ──
-  html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.25rem">'+
-    stat('Total Clients', c.total, 'all-time','total')+
-    stat('Active · 7d', c.active_7d, 'logged activity','active')+
-    stat('New · 7d', c.new_7d, 'signups','new')+
-    stat('Logins · 7d', (t.logins_7d||0), 'sessions','logins')+
-    stat('Riley Msgs · 7d', (t.riley_7d||0), 'conversations','messages')+
-  '</div>';
-  // ── charts row ──
-  function panel(title,inner,action){return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><span class="cl" style="margin:0">'+title+'</span>'+(action||'')+'</div>'+inner+'</div>';}
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
-    panel('Logins · 14 days', svgBars(d.logins_14d,'var(--gold)','logins'))+
-    panel('Riley Engagement · 14 days', svgBars(d.messages_14d,'var(--sage)','messages'))+
-  '</div>';
-  // ── pages + clicks ──
   function barList(rows,keyName,color,kind){
     if(!rows||!rows.length)return '<div class="em">Fills in as clients browse</div>';
     var max=1; rows.forEach(function(r){ if(r.n>max)max=r.n; });
     return rows.map(function(r){
       var lbl=r[keyName]||'—';var pct=Math.round((r.n/max)*100);
-      return '<div style="margin-bottom:.5rem;cursor:pointer" onclick="openDrill(\''+kind+'\',\''+String(lbl).split("'").join("").slice(0,120)+'\',\''+kind+': '+x(lbl)+'\')"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+' ›</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
+      return '<div style="margin-bottom:.5rem;cursor:pointer" onclick="openDrill(\''+kind+'\',\''+String(lbl).split("\'").join("").slice(0,120)+'\',\''+kind+': '+x(lbl)+'\')"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+' ›</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
     }).join('');
   }
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
-    panel('Most-Visited Pages', barList(d.top_pages,'page','var(--blue)','page'))+
-    panel('Top Clicks', barList(d.top_clicks,'target','var(--amber)','click'))+
-  '</div>';
-  // ── last active table ──
+  // ── build each widget's inner html ──
+  var W={};
+  W.stats='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem">'+
+    stat('Total Clients', c.total, 'all-time','total')+
+    stat('Active · 7d', c.active_7d, 'logged activity','active')+
+    stat('New · 7d', c.new_7d, 'signups','new')+
+    stat('Logins · 7d', (t.logins_7d||0), 'sessions','logins')+
+    stat('Riley Msgs · 7d', (t.riley_7d||0), 'conversations','messages')+'</div>';
+  W.chart_logins=svgBars(d.logins_14d,'var(--gold)','logins');
+  W.chart_riley=svgBars(d.messages_14d,'var(--sage)','messages');
+  W.pages=barList(d.top_pages,'page','var(--blue)','page');
+  W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
   var la=d.last_active||[];
-  var laInner='';
-  if(!la.length){laInner='<div class="em">No client activity logged yet — fills in as people use the app</div>';}
+  if(!la.length){W.lastactive='<div class="em">No client activity logged yet — fills in as people use the app</div>';}
   else{
-    laInner='<div class="rp" style="margin:0">'+la.map(function(u){
+    W.lastactive='<div class="rp" style="margin:0">'+la.map(function(u){
       var when=u.last_at?new Date(u.last_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
       return '<div class="rr" style="grid-template-columns:1fr 90px 140px 70px;cursor:pointer" onclick="openUserPanel(\''+u.user_id+'\')"><span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.name||'Member')+'</span>'+
         '<span style="color:var(--muted);font-size:.72rem">'+(u.programs||0)+' program'+(u.programs===1?'':'s')+'</span>'+
@@ -777,9 +787,42 @@ function renderHome(d){
         '<span style="color:var(--gold);font-weight:600">'+(u.events_7d||0)+'</span></div>';
     }).join('')+'</div>';
   }
-  html+=panel('Last Active Clients', laInner);
+  // ── lay out per saved order, minus hidden ──
+  var lay=homeLayout(), order=lay.order.slice();
+  HOME_WIDGETS.forEach(function(k){ if(order.indexOf(k)<0) order.push(k); });
+  var visible=order.filter(function(k){ return lay.hidden.indexOf(k)<0 && W[k]!=null; });
+  var html=visible.map(function(k){ return homeWidgetShell(k, HOME_TITLES[k], W[k]); }).join('');
+  var hidden=order.filter(function(k){ return lay.hidden.indexOf(k)>=0; });
+  if(hidden.length){
+    html+='<div class="hw-hidden">Hidden widgets: '+hidden.map(function(k){return '<button class="bt" onclick="homeShow(\''+k+'\')">+ '+x(HOME_TITLES[k]||k)+'</button>';}).join(' ')+'</div>';
+  }
   document.getElementById('home-body').innerHTML=html;
+  attachHomeDnD();
 }
+
+// ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
+var HOME_WIDGETS=['stats','chart_logins','chart_riley','pages','clicks','lastactive'];
+var HOME_TITLES={stats:'Key Metrics',chart_logins:'Logins · 14 days',chart_riley:'Riley Engagement · 14 days',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Last Active Clients'};
+var homeEditing=false, _homeData=null;
+function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); return {order:Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(), hidden:Array.isArray(l.hidden)?l.hidden:[]}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }
+function saveHomeLayout(l){ try{ localStorage.setItem('814_home_layout',JSON.stringify(l)); }catch(e){} }
+function toggleHomeEdit(){ homeEditing=!homeEditing; var b=document.getElementById('home-edit-btn'); if(b){b.textContent=homeEditing?'✓ Done':'✎ Edit Layout'; b.classList.toggle('editing-on',homeEditing);} var bd=document.getElementById('home-body'); if(bd)bd.classList.toggle('editing',homeEditing); attachHomeDnD(); }
+function homeWidgetShell(key,title,inner){
+  return '<div class="hw" data-w="'+key+'"><div class="hw-head"><span class="hw-grip">⠿</span><span class="hw-title">'+x(title||'')+'</span><button class="hw-hide" onclick="homeHide(\''+key+'\')" title="Hide widget">✕</button></div><div class="hw-body">'+inner+'</div></div>';
+}
+function attachHomeDnD(){
+  var els=document.querySelectorAll('#home-body .hw');
+  els.forEach(function(el){
+    el.setAttribute('draggable', homeEditing?'true':'false');
+    el.ondragstart=function(e){ if(!homeEditing){e.preventDefault();return;} e.dataTransfer.setData('text/plain', el.getAttribute('data-w')); el.style.opacity='.4'; };
+    el.ondragend=function(){ el.style.opacity=''; };
+    el.ondragover=function(e){ if(homeEditing)e.preventDefault(); };
+    el.ondrop=function(e){ e.preventDefault(); var from=e.dataTransfer.getData('text/plain'); var to=el.getAttribute('data-w'); if(from&&to&&from!==to)homeMove(from,to); };
+  });
+}
+function homeMove(from,to){ var l=homeLayout(); var o=l.order.slice(); HOME_WIDGETS.forEach(function(k){if(o.indexOf(k)<0)o.push(k);}); o=o.filter(function(k){return k!==from;}); var ti=o.indexOf(to); if(ti<0)ti=o.length; o.splice(ti,0,from); l.order=o; saveHomeLayout(l); renderHome(_homeData); }
+function homeHide(k){ var l=homeLayout(); if(l.hidden.indexOf(k)<0)l.hidden.push(k); saveHomeLayout(l); renderHome(_homeData); }
+function homeShow(k){ var l=homeLayout(); l.hidden=l.hidden.filter(function(x){return x!==k;}); saveHomeLayout(l); renderHome(_homeData); }
 // ── Live Programs card on Home — current member count per live membership ───
 // Never forces the operator-key prompt on page load (matches checkSafetyAlerts'
 // pattern): if no key is cached yet, show a quiet "click to unlock" affordance

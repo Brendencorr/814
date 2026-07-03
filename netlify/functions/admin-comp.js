@@ -5,6 +5,7 @@
  * (proves the Doc 0 §7 single-source design). NEVER touches conversation content.
  *
  * POST { action, user_id, ... } with header x-operator-key:
+ *   'lookup'      { email | query }                 → { user } identity + entitlement state (READ-ONLY, no chat content)
  *   'comp'        { user_id, plan_id: 'companion'|'coach', expires_at? } → comped subscription
  *   'weekend'     { user_id }                        → 48h Companion weekend (fresh or extended)
  *   'grant_alc'   { user_id, program_id }            → à la carte program grant (purchase row)
@@ -35,11 +36,42 @@ exports.handler = async (event) => {
   let body; try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Bad JSON" }); }
   const { action } = body;
   const userId = body.user_id;
-  if (!action || !userId) return json(400, { error: "action and user_id required" });
   const sb = getSupabaseClient();
   const now = new Date().toISOString();
 
   try {
+    // ── Read-only member lookup (email or user id) — identity + entitlement state ONLY.
+    // Never returns conversation content (Doc 3 privacy). Resolves the user_id the override
+    // actions below need, and shows the operator exactly who they're about to modify.
+    if (action === "lookup") {
+      const q = (body.email || body.query || "").toString().trim();
+      if (!q) return json(400, { error: "email or user id required" });
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+      const sel = "id,email,full_name,preferred_name";
+      const { data: prof } = isUuid
+        ? await sb.from("user_profiles").select(sel).eq("id", q).maybeSingle()
+        : await sb.from("user_profiles").select(sel).ilike("email", q).maybeSingle();
+      if (!prof) return json(404, { error: "No member found for that email or id." });
+      const uid = prof.id;
+      const [subs, purch, cred, reset] = await Promise.all([
+        sb.from("subscriptions").select("plan_id,term,status,expires_at,started_at").eq("user_id", uid).eq("status", "active"),
+        sb.from("purchases").select("program_id,purchased_at").eq("user_id", uid),
+        sb.from("credits").select("amount_cents,expires_at,redeemed_at").eq("user_id", uid).is("redeemed_at", null),
+        sb.from("reset_progress").select("day_number").eq("user_id", uid).order("day_number", { ascending: false }).limit(1),
+      ]);
+      return json(200, { ok: true, user: {
+        id: uid,
+        email: prof.email || null,
+        name: prof.full_name || prof.preferred_name || null,
+        subscriptions: subs.data || [],
+        purchases: (purch.data || []).map((p) => p.program_id),
+        credits: cred.data || [],
+        reset_day: (reset.data && reset.data[0] && reset.data[0].day_number) || 0,
+      } });
+    }
+
+    if (!userId) return json(400, { error: "action and user_id required" });
+
     if (action === "comp") {
       const plan = body.plan_id === "coach" ? "coach" : "companion";
       const { data: row } = await sb.from("subscriptions").insert({

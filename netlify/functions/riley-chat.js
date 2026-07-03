@@ -17,7 +17,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -899,6 +899,8 @@ exports.handler = async function (event) {
     // wall implying they don't have Riley at all" tone from the client spec.
     const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : usageInfo.period === "month" ? "this month" : "for now";
     const capReply = `We've used up our conversations ${periodWord} — Riley Guide includes a limited number so I can be here for everyone. More opens back up soon, or Riley Companion means we can talk as much as you want, any time. I'm not going anywhere either way.`;
+    // Funnel event (Doc 0 §9 / Doc 3 metrics: "Chat-limit encounters"). Fire-and-forget.
+    if (supabase && user_id) emitEvent(supabase, user_id, "chat_limit_reached", { period: usageInfo.period });
     if (supabase && user_id && session_id) persistMessages(supabase, user_id, session_id, latestUserText, capReply);
     return {
       statusCode: 200,

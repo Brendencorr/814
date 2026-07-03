@@ -74,6 +74,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 .timer{font-family:'DM Mono',monospace;font-size:34px;color:var(--gold);letter-spacing:0.04em}
 .riley-line{display:flex;gap:11px;align-items:flex-start;padding:15px 18px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(20,18,16,0.4));border:1px solid rgba(201,168,76,0.15);border-radius:6px;margin-bottom:22px}
 .done-tag{display:inline-flex;align-items:center;gap:7px;color:var(--green2);font-size:12.5px;font-weight:500}
+/* Week One Letter takeover (Doc 4 §8) — a letter, not a card stack; quiet fade, no confetti */
+#wol{position:fixed;inset:0;z-index:9999;background:var(--ink);overflow-y:auto;opacity:0;transition:opacity 1.6s ease}
+#wol.show{opacity:1}
+.wol-inner{max-width:640px;width:100%;margin:0 auto;padding:70px 30px 130px;display:flex;flex-direction:column}
+.wol-sun{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 26px rgba(201,168,76,0.5);margin:0 auto 46px;flex-shrink:0;animation:sbSunBreathe 5s ease-in-out infinite}
+.wol-loading{text-align:center;color:var(--smoke2);font-family:'DM Mono',monospace;font-size:19px;letter-spacing:0.32em}
+.wol-letter{opacity:0;transition:opacity 1.8s ease}
+.wol-letter.show{opacity:1}
+.wol-body{font-family:'DM Serif Display',serif;font-size:19px;line-height:1.95;color:var(--parchment);white-space:pre-wrap;letter-spacing:0.008em}
+.wol-ps{font-family:'DM Serif Display',serif;font-style:italic;font-size:14.5px;line-height:1.75;color:var(--gold);margin-top:32px;padding-top:22px;border-top:1px solid rgba(201,168,76,0.16);white-space:pre-wrap}
+.wol-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:50px}
+.wol-note{text-align:center;font-size:12px;color:var(--smoke);margin-top:18px;min-height:15px;font-family:'DM Mono',monospace}
+.wol-x{position:fixed;top:18px;right:22px;background:none;border:none;color:var(--smoke2);font-size:24px;line-height:1;cursor:pointer;z-index:10000;transition:color .15s}
+.wol-x:hover{color:var(--parchment)}
+@media(max-width:700px){.wol-inner{padding:56px 20px 110px}.wol-body{font-size:17px}}
 </style>
 </head>
 <body>
@@ -113,6 +128,9 @@ async function boot(){
   const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
   document.getElementById('sb-name').textContent=fullName;
   await load();
+  // Reread from Journeys (/reset?letter=1) opens the stored letter without re-granting the weekend.
+  if(new URLSearchParams(location.search).get('letter')==='1') openWeekOneLetter('reread');
+  else maybeShowLetterOnLoad();
 }
 
 function currentDay(prog){
@@ -225,6 +243,7 @@ async function markMorning(){
     try{await SB.from('journey_step_completions').upsert({user_id:UID,program_slug:'7-day-reset',day_number:DAY,journal_response:checkin||null,completed_at:new Date().toISOString()},{onConflict:'user_id,program_slug,day_number'});}catch(e){}
     PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{morning_done_at:new Date().toISOString()});
     render();
+    if(DAY===7) openWeekOneLetter('completion'); // Doc 4 §8: the Week One Letter takeover
   }catch(e){btn.disabled=false;btn.textContent='I did the action →';}
 }
 
@@ -237,6 +256,106 @@ async function markEvening(){
     PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{evening_done_at:new Date().toISOString()});
     render();
   }catch(e){btn.disabled=false;btn.textContent='Close the day →';}
+}
+
+// ── Week One Letter takeover (Doc 4 §8) ──────────────────────────────
+const WOL_URL='/.netlify/functions/week-one-letter';
+let WOL_OPEN=false, WOL_MODE='completion', WOL_DATA=null;
+
+function maybeShowLetterOnLoad(){
+  // Safety net for the crisis-delay (§6.1) + closed-during-generation cases: if Day 7
+  // is done and this device hasn't shown the letter yet, try (get() no-ops if not ready).
+  try{
+    if(PROG[7] && PROG[7].morning_done_at && !localStorage.getItem('wol_shown_'+UID)) openWeekOneLetter('completion');
+  }catch(e){}
+}
+
+async function openWeekOneLetter(mode){
+  if(WOL_OPEN)return; WOL_OPEN=true; WOL_MODE=mode||'completion';
+  let ov=document.getElementById('wol');
+  if(!ov){ ov=document.createElement('div'); ov.id='wol'; document.body.appendChild(ov); }
+  ov.innerHTML='<button class="wol-x" title="Close" aria-label="Close">&times;</button>'
+    +'<div class="wol-inner"><div class="wol-sun"></div><div class="wol-loading" id="wol-loading">&#8230;</div>'
+    +'<div class="wol-letter" id="wol-letter"></div></div>';
+  ov.querySelector('.wol-x').addEventListener('click',function(){closeWeekOneLetter();});
+  document.body.style.overflow='hidden';
+  requestAnimationFrame(function(){ov.classList.add('show');});
+  try{
+    const r=await fetch(WOL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',token:TOK})});
+    const d=await r.json();
+    if(!d||!d.ready){ quietCloseWOL(); return; } // not ready (e.g. crisis-delayed §6.1) — retry next session
+    WOL_DATA=d;
+    if(WOL_MODE==='completion'){ try{localStorage.setItem('wol_shown_'+UID,'1');}catch(e){} }
+    renderLetter(d);
+  }catch(e){ quietCloseWOL(); }
+}
+
+function quietCloseWOL(){
+  const ov=document.getElementById('wol');
+  if(ov){ ov.classList.remove('show'); setTimeout(function(){ if(ov&&ov.parentNode)ov.parentNode.removeChild(ov); },900); }
+  document.body.style.overflow=''; WOL_OPEN=false;
+}
+
+function renderLetter(d){
+  const box=document.getElementById('wol-letter'); const loading=document.getElementById('wol-loading'); if(loading)loading.remove();
+  const bodyEl=document.createElement('div'); bodyEl.className='wol-body'; bodyEl.textContent=d.body;
+  const psEl=document.createElement('div'); psEl.className='wol-ps'; psEl.textContent=d.ps||'';
+  const actions=document.createElement('div'); actions.className='wol-actions';
+  const saveBtn=document.createElement('button'); saveBtn.className='btn btn-gold'; saveBtn.style.padding='10px 20px'; saveBtn.textContent='Save this letter'; saveBtn.addEventListener('click',saveLetterImage);
+  const keepBtn=document.createElement('button'); keepBtn.className='btn btn-ghost'; keepBtn.style.padding='10px 20px'; keepBtn.id='wol-keep';
+  keepBtn.textContent=d.saved?'Kept in Journeys ✓':'Keep it in Journeys'; if(d.saved)keepBtn.disabled=true; keepBtn.addEventListener('click',keepInJourneys);
+  actions.appendChild(saveBtn); actions.appendChild(keepBtn);
+  const note=document.createElement('div'); note.className='wol-note'; note.id='wol-note';
+  const closer=document.createElement('div'); closer.style.cssText='text-align:center;margin-top:30px';
+  const closeBtn=document.createElement('button'); closeBtn.className='btn btn-ghost'; closeBtn.style.cssText='padding:8px 18px;opacity:.65'; closeBtn.textContent='Close'; closeBtn.addEventListener('click',function(){closeWeekOneLetter();});
+  closer.appendChild(closeBtn);
+  box.appendChild(bodyEl); box.appendChild(psEl); box.appendChild(actions); box.appendChild(note); box.appendChild(closer);
+  requestAnimationFrame(function(){box.classList.add('show');});
+}
+
+async function keepInJourneys(){
+  const note=document.getElementById('wol-note'), btn=document.getElementById('wol-keep');
+  try{
+    await fetch(WOL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',token:TOK})});
+    if(btn){btn.textContent='Kept in Journeys ✓';btn.disabled=true;}
+    if(note)note.textContent='Saved. You can reread it anytime in Journeys.';
+  }catch(e){ if(note)note.textContent='Could not save just now — it’s still yours; try again.'; }
+}
+
+async function saveLetterImage(){
+  const note=document.getElementById('wol-note'); if(note)note.textContent='Preparing your letter…';
+  try{
+    if(document.fonts&&document.fonts.ready){ try{await document.fonts.ready;}catch(e){} }
+    const W=1080, pad=100, maxW=W-pad*2;
+    const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d');
+    function wrap(text,font,lh){ ctx.font=font; const out=[]; String(text||'').split('\n').forEach(function(para){ if(para.trim()===''){ out.push({t:'',lh:Math.round(lh*0.5)}); return; } let line=''; para.split(/\s+/).forEach(function(w){ const test=line?line+' '+w:w; if(ctx.measureText(test).width>maxW&&line){out.push({t:line,lh});line=w;} else line=test; }); if(line)out.push({t:line,lh}); }); return out; }
+    const bodyFont="34px 'DM Serif Display', Georgia, serif", bodyLH=60;
+    const psFont="italic 27px 'DM Serif Display', Georgia, serif", psLH=46;
+    const bl=wrap(WOL_DATA.body,bodyFont,bodyLH), pl=wrap(WOL_DATA.ps,psFont,psLH);
+    const topPad=150, sunGap=90, midGap=54, botPad=130;
+    let H=topPad+sunGap; bl.forEach(function(l){H+=l.lh;}); H+=midGap; pl.forEach(function(l){H+=l.lh;}); H+=botPad;
+    canvas.width=W; canvas.height=Math.round(H);
+    ctx.fillStyle='#0a0908'; ctx.fillRect(0,0,W,canvas.height);
+    const sx=W/2, sy=topPad-30, sr=26; const g=ctx.createRadialGradient(sx-8,sy-8,3,sx,sy,sr); g.addColorStop(0,'#e8d5a3'); g.addColorStop(.55,'#c9a84c'); g.addColorStop(1,'#a8842f'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(sx,sy,sr,0,Math.PI*2); ctx.fill();
+    let y=topPad+sunGap; ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    bl.forEach(function(l){ if(l.t){ctx.font=bodyFont;ctx.fillStyle='#f5f0e8';ctx.fillText(l.t,pad,y);} y+=l.lh; });
+    y+=midGap-40; ctx.strokeStyle='rgba(201,168,76,0.28)'; ctx.beginPath(); ctx.moveTo(pad,y-20); ctx.lineTo(pad+120,y-20); ctx.stroke();
+    pl.forEach(function(l){ if(l.t){ctx.font=psFont;ctx.fillStyle='#c9a84c';ctx.fillText(l.t,pad,y);} y+=l.lh; });
+    canvas.toBlob(function(blob){ if(!blob){ if(note)note.textContent='Could not save just now — try again.'; return; } const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='your-week-one-letter.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},2000); if(note)note.textContent='Saved to your device.'; },'image/png');
+  }catch(e){
+    try{ const txt=(WOL_DATA.body||'')+'\n\n'+(WOL_DATA.ps||''); const blob=new Blob([txt],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='your-week-one-letter.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},2000); if(note)note.textContent='Saved to your device.'; }
+    catch(e2){ if(note)note.textContent='Could not save just now — try again.'; }
+  }
+}
+
+async function closeWeekOneLetter(){
+  // Doc 2 §5.2: the Companion Weekend grant fires ON CLOSE (idempotent server-side). Reread mode skips it.
+  if(WOL_MODE==='completion'){
+    try{ await fetch('/.netlify/functions/companion-weekend',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:TOK})}); }catch(e){}
+  }
+  const ov=document.getElementById('wol');
+  if(ov){ ov.classList.remove('show'); setTimeout(function(){ if(ov&&ov.parentNode)ov.parentNode.removeChild(ov); },1000); }
+  document.body.style.overflow=''; WOL_OPEN=false;
 }
 
 // ── Web-push opt-in (program-scoped: "Want me to nudge you?") ──

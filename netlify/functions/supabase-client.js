@@ -7,4 +7,20 @@ function getSupabaseClient() {
   return createClient(url, key);
 }
 
-module.exports = { getSupabaseClient };
+// Verify a Supabase access token (JWT) and return the authenticated user's id, or null.
+// SECURITY: identity for user-scoped functions must come from THIS — never from a
+// client-supplied user_id, which the caller can forge. Returns null on any failure
+// (missing/invalid/expired token), so callers can treat "no valid token" as anonymous
+// or reject with 401 as appropriate.
+async function getUserIdFromToken(supabase, token) {
+  if (!token || typeof token !== 'string') return null;
+  try {
+    const { data, error } = await supabase.auth.getUser(token);
+    if (error || !data || !data.user) return null;
+    return data.user.id;
+  } catch (e) {
+    return null;
+  }
+}
+
+module.exports = { getSupabaseClient, getUserIdFromToken };

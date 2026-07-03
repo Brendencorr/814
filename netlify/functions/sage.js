@@ -212,7 +212,7 @@ RULES:
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, x-operator-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -264,6 +264,11 @@ exports.handler = async function (event) {
       body: JSON.stringify({ error: "Method not allowed" }),
     };
   }
+
+  // Operator-only. Fail closed if OPERATOR_KEY is unset; 401 on mismatch.
+  const _op = process.env.OPERATOR_KEY;
+  if (!_op) return { statusCode: 503, headers: CORS_HEADERS, body: JSON.stringify({ error: "Not configured" }) };
+  if ((event.headers["x-operator-key"] || event.headers["X-Operator-Key"]) !== _op) return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: "Unauthorized" }) };
 
   try {
     const { message } = JSON.parse(event.body || "{}");

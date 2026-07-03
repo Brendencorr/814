@@ -897,8 +897,8 @@ async function send() {
     const payload = { messages: outboundMessages };
     // Include user_id for signed-in users; omit for anon (server handles null gracefully)
     if (currentUser) {
-      payload.user_id    = currentUser.id;
       payload.session_id = sessionId;
+      try { payload.token = (await sb.auth.getSession()).data.session?.access_token || null; } catch (e) {}
     }
 
     const res = await fetch(API_BASE + '/riley-chat', {

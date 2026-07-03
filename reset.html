@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0908">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Riley">
+<title>The 8:14 Reset — The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--red:#8b3a3a;--smoke:#8a8578;--smoke2:#5a5450;}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh}
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--ink2);border-right:1px solid rgba(255,255,255,0.05);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sb-logo-mark{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.sb-logo-mark span{color:var(--gold)}
+.sb-logo-sub{font-size:10px;color:var(--smoke);margin-top:2px}
+.snl{font-family:'DM Mono',monospace;font-size:8px;color:var(--smoke2);letter-spacing:0.2em;text-transform:uppercase;padding:12px 20px 3px}
+.sni{display:flex;align-items:center;gap:9px;padding:8px 20px;text-decoration:none;font-size:12px;color:var(--smoke);transition:all .15s;border-left:2px solid transparent}
+.sni:hover{color:var(--parchment);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-icon{font-size:13px;width:18px;text-align:center;flex-shrink:0}
+.sb-spacer{flex:1}
+.sb-user{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px}
+.sb-av{width:28px;height:28px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);flex-shrink:0;overflow:hidden}
+.sb-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.sb-name{font-size:11px;color:var(--parchment);font-weight:500}
+.sb-plan{font-size:9px;color:var(--gold)}
+.sb-out{margin-left:auto;background:none;border:none;color:var(--smoke2);font-size:14px;cursor:pointer}
+.sb-out:hover{color:var(--red)}
+.main{overflow-y:auto}
+.topbar{padding:18px 28px;background:rgba(0,0,0,0.25);backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.tb-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
+.tb-sub{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
+.btn{display:inline-block;padding:7px 16px;font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:2px;transition:opacity .15s;text-decoration:none;letter-spacing:0.04em}
+.btn-ghost{background:rgba(255,255,255,0.06);color:var(--parchment);border:1px solid rgba(255,255,255,0.1)}
+.btn-gold{background:var(--gold);color:var(--ink)}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.4;cursor:default}
+.content{padding:32px 28px;max-width:680px}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:20px 16px}}
+.sb-tier{border-top:1px solid rgba(255,255,255,0.04)}
+.sb-tier-head{display:flex;align-items:center;gap:6px;padding:10px 20px;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.16em;transition:color .15s;user-select:none}
+.sb-tier-head:hover{color:var(--smoke)}
+.sb-tier-head .sb-chev{margin-left:auto;font-size:8px;transition:transform .2s}
+.sb-tier-head.open .sb-chev{transform:rotate(90deg)}
+.sb-tier-head.locked{color:var(--smoke2)}
+.sb-tier-lock{font-size:9px;opacity:0.7}
+.sb-tier-items{display:none;flex-direction:column;overflow:hidden}
+.sb-tier-items.open{display:flex}
+.sb-tier-items .sni.locked{opacity:0.45;cursor:pointer}
+.sb-badge-soon{margin-left:auto;font-size:7px;font-family:'DM Mono',monospace;color:var(--gold);background:var(--gold-dim);padding:2px 5px;border-radius:8px;letter-spacing:0.06em;text-transform:uppercase}
+.sb-logo-mark{display:inline-flex !important;align-items:center;font-size:26px !important;color:#fff !important;line-height:1}.sb-logo-sun{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 12px rgba(201,168,76,0.5);animation:sbSunBreathe 5s ease-in-out infinite;flex-shrink:0;margin-right:9px}@keyframes sbSunBreathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+/* reset-specific */
+.dots{display:flex;gap:6px;margin-bottom:26px}
+.dot{width:100%;height:5px;border-radius:3px;background:rgba(255,255,255,0.07);position:relative;overflow:hidden}
+.dot.m{background:rgba(201,168,76,0.45)}
+.dot.e{background:var(--gold)}
+.dot.cur{box-shadow:0 0 0 1px var(--gold)}
+.rcard{background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:22px 24px;margin-bottom:16px}
+.rlabel{font-size:9px;font-family:'DM Mono',monospace;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:10px}
+.rq{font-size:15px;color:var(--parchment);line-height:1.7;font-style:italic}
+.rin{width:100%;min-height:74px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:11px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;resize:vertical;line-height:1.6;margin-top:12px}
+.rin:focus{border-color:rgba(201,168,76,0.4)}
+.timer{font-family:'DM Mono',monospace;font-size:34px;color:var(--gold);letter-spacing:0.04em}
+.riley-line{display:flex;gap:11px;align-items:flex-start;padding:15px 18px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(20,18,16,0.4));border:1px solid rgba(201,168,76,0.15);border-radius:6px;margin-bottom:22px}
+.done-tag{display:inline-flex;align-items:center;gap:7px;color:var(--green2);font-size:12.5px;font-weight:500}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-mark"><span class="sb-logo-sun"></span>Riley<span>.</span></div></div>
+  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <div id="sb-tiers"></div>
+  <div class="sb-spacer"></div>
+  <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan" id="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div><div class="tb-title">The 8:14 Reset</div><div class="tb-sub" id="tb-sub">Seven days. 8:14 a day.</div></div>
+    <a href="/dashboard" class="btn btn-ghost">← Today</a>
+  </div>
+  <div class="content" id="content"><div style="color:var(--smoke);font-size:13px">Loading your reset…</div></div>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+const RESET_URL='/.netlify/functions/reset-day';
+let USER=null,UID=null,TOK=null,DAY=1,DATA=null,PROG={};
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function boot(){
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){window.location.href='https://riley.eight14.us';return;}
+  USER=session.user;UID=USER.id;TOK=session.access_token;
+  const meta=USER.user_metadata||{};
+  const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
+  const avatarUrl=meta.avatar_url||meta.picture||'';
+  const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
+  const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+  document.getElementById('sb-name').textContent=fullName;
+  await load();
+}
+
+function currentDay(prog){
+  // The next day whose ACTION isn't done yet (action completes a day); cap at 7.
+  for(let d=1;d<=7;d++){ if(!prog[d]||!prog[d].morning_done_at) return d; }
+  return 7;
+}
+
+async function fetchDay(day){
+  const r=await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'day',day,token:TOK})});
+  return r.ok?await r.json():null;
+}
+
+async function load(){
+  // one call for progress + content of the current day
+  let d=await fetchDay(1);
+  if(!d){document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">Your reset is being prepared. Check back in a moment.</div>';return;}
+  (d.progress||[]).forEach(p=>{PROG[p.day_number]=p;});
+  DAY=currentDay(PROG);
+  DATA=DAY===1?d:await fetchDay(DAY);
+  if(DATA){(DATA.progress||[]).forEach(p=>{PROG[p.day_number]=p;});}
+  render();
+}
+
+function dots(){
+  let h='<div class="dots">';
+  for(let i=1;i<=7;i++){const p=PROG[i]||{};const c=p.evening_done_at?'e':(p.morning_done_at?'m':'');h+=`<div class="dot ${c}${i===DAY?' cur':''}" title="Day ${i}"></div>`;}
+  return h+'</div>';
+}
+
+function render(){
+  const day=DATA.day, v=DATA.variants||{}, p=PROG[DAY]||{};
+  const personas=DATA.personas||[];
+  document.getElementById('tb-sub').textContent='DAY '+DAY+' OF 7 · '+day.theme.toUpperCase();
+  const morningDone=!!p.morning_done_at, eveningDone=!!p.evening_done_at;
+  const actionText = v.action ? v.action : day.action_body;   // persona voice wins if we have it
+  const isDay1=DAY===1, isDay7=DAY===7;
+
+  let html = dots();
+
+  // Riley's framing line
+  html += `<div class="riley-line"><span style="font-size:19px;flex-shrink:0">💛</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley</div><div style="font-size:14px;color:var(--parchment);line-height:1.65;font-style:italic">${esc(day.theme_line||'')}</div></div></div>`;
+
+  html += `<div style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--parchment);margin-bottom:6px">${esc(day.theme)}</div>`;
+  html += `<div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);letter-spacing:0.06em;margin-bottom:26px">MORNING ACTION &nbsp;·&nbsp; EVENING CLOSE &nbsp;·&nbsp; 8:14 A DAY</div>`;
+
+  // ── MORNING ──
+  html += `<div class="rcard"><div class="rlabel" style="color:var(--gold)">☀️ Morning — the check-in</div><div class="rq">${esc(isDay7 && DATA.day1_sentence ? day.morning_checkin.replace('the heaviest thing you were carrying','“'+DATA.day1_sentence+'”') : day.morning_checkin)}</div>`;
+  if(isDay1 && !morningDone){
+    html += `<textarea class="rin" id="checkin" placeholder="One honest sentence. Just name it."></textarea>`;
+  } else if(!morningDone){
+    html += `<textarea class="rin" id="checkin" placeholder="A sentence, if you want. Optional."></textarea>`;
+  }
+  html += `</div>`;
+
+  // The One Thing
+  html += `<div class="rcard"><div class="rlabel" style="color:var(--gold)">${esc(day.action_title||'The One Thing')} &nbsp;·&nbsp; ~5 min</div>`;
+  if(v.action) html += `<div style="font-size:13.5px;color:var(--gold-light,#e8d5a3);font-style:italic;margin-bottom:10px;opacity:.95">${esc(v.action)}</div>`;
+  html += `<div style="font-size:15px;color:var(--parchment);line-height:1.7">${esc(v.action?day.action_body:day.action_body)}</div>`;
+  if(v.fuel) html += `<div style="font-size:13px;color:var(--smoke);line-height:1.6;margin-top:10px">${esc(v.fuel)}</div>`;
+  // 8:14 timer
+  html += `<div style="display:flex;align-items:center;gap:16px;margin-top:16px"><span class="timer" id="timer">8:14</span><button class="btn btn-ghost" id="timer-btn" onclick="toggleTimer()">Start the 8:14</button></div>`;
+  html += `<div style="margin-top:18px" id="m-area">`;
+  html += morningDone
+    ? `<div class="done-tag"><span>✓</span> Action done. That's the day. The evening close is a bonus.</div>`
+    : `<button class="btn btn-gold" style="padding:10px 24px" onclick="markMorning()">I did the action →</button>`;
+  html += `</div></div>`;
+
+  // ── EVENING ──
+  html += `<div class="rcard" style="${morningDone?'':'opacity:.7'}"><div class="rlabel" style="color:var(--smoke)">🌙 Evening — the close &nbsp;·&nbsp; ~2 min</div>`;
+  html += `<div class="rq" style="font-size:14px">${esc(day.evening_reflection)}</div>`;
+  html += `<textarea class="rin" id="evening" placeholder="One line to Riley." ${eveningDone?'disabled':''}>${eveningDone?'(closed)':''}</textarea>`;
+  if(day.fuel_setup) html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)"><div class="rlabel" style="color:var(--smoke2)">🍃 Fuel — set up tomorrow</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(day.fuel_setup)}</div></div>`;
+  html += `<div style="margin-top:16px" id="e-area">`;
+  html += eveningDone
+    ? `<div class="done-tag"><span>✓</span> Day ${DAY} closed. ${DAY<7?'Tomorrow is Day '+(DAY+1)+'.':'You reached Day 7.'}</div>`
+    : `<button class="btn ${morningDone?'btn-gold':'btn-ghost'}" style="padding:10px 24px" onclick="markEvening()">Close the day →</button>`;
+  html += `</div></div>`;
+
+  // Day 7 handoff (after the action)
+  if(isDay7 && morningDone){
+    html += `<div class="rcard" style="border-color:rgba(201,168,76,0.3)"><div class="rlabel" style="color:var(--gold)">The handoff</div><div style="font-size:14.5px;color:var(--parchment);line-height:1.75">You showed up for seven days. The Guide — this — stays free and never expires. If you want me checking on you, or here every day without limits, that's what Companion and Coach are. No pressure, and no wrong answer.</div><div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><a href="/programs" class="btn btn-gold" style="padding:10px 20px">See what's next →</a><a href="/dashboard" class="btn btn-ghost" style="padding:10px 20px">Stay right here</a></div></div>`;
+  }
+
+  document.getElementById('content').innerHTML=html;
+}
+
+// ── 8:14 countdown ──
+let tInt=null,tLeft=494;
+function toggleTimer(){
+  const btn=document.getElementById('timer-btn'),el=document.getElementById('timer');
+  if(tInt){clearInterval(tInt);tInt=null;btn.textContent='Resume';return;}
+  btn.textContent='Pause';
+  tInt=setInterval(()=>{
+    tLeft--; if(tLeft<=0){tLeft=0;clearInterval(tInt);tInt=null;btn.textContent='Done ✓';}
+    el.textContent=Math.floor(tLeft/60)+':'+String(tLeft%60).padStart(2,'0');
+  },1000);
+}
+
+async function markMorning(){
+  const btn=event.target;btn.disabled=true;btn.textContent='Saving…';
+  const checkin=document.getElementById('checkin')?.value?.trim();
+  try{
+    if(DAY===1 && checkin){ // Day-1 enrollment: capture their words + classify persona
+      await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'enroll',day1_sentence:checkin,token:TOK})});
+    }
+    if(checkin){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date().toLocaleDateString('en-CA'),notes:checkin},{onConflict:'user_id,checkin_date'});}catch(e){}}
+    await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',day:DAY,touch:'morning',token:TOK})});
+    // mirror into journey progress so the dashboard/journey view stays in sync
+    try{await SB.from('journey_step_completions').upsert({user_id:UID,program_slug:'7-day-reset',day_number:DAY,journal_response:checkin||null,completed_at:new Date().toISOString()},{onConflict:'user_id,program_slug,day_number'});}catch(e){}
+    PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{morning_done_at:new Date().toISOString()});
+    render();
+  }catch(e){btn.disabled=false;btn.textContent='I did the action →';}
+}
+
+async function markEvening(){
+  const btn=event.target;btn.disabled=true;btn.textContent='Saving…';
+  const ev=document.getElementById('evening')?.value?.trim();
+  try{
+    await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',day:DAY,touch:'evening',token:TOK})});
+    if(ev){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date().toLocaleDateString('en-CA'),notes:ev},{onConflict:'user_id,checkin_date'});}catch(e){}}
+    PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{evening_done_at:new Date().toISOString()});
+    render();
+  }catch(e){btn.disabled=false;btn.textContent='Close the day →';}
+}
+
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+boot();
+</script>
+<script>
+/* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */
+(function(){
+  const TIER_NAV = {
+    guide:    {label:'Guide',     items:[
+      {href:'/reset', icon:'🌱', label:'The 8:14 Reset'},
+      {href:'/conversations', icon:'💭', label:'Conversations'}
+    ]},
+    companion:{label:'Companion', items:[
+      {href:'/tracker', icon:'📖', label:'Reflection', feat:'daily_checkin'},
+      {href:'/workouts', icon:'🤍', label:'Movement', feat:'tracker_fitness'},
+      {href:'/nutrition', icon:'🍃', label:'Nourishment', feat:'tracker_nutrition'},
+      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'}
+    ]},
+    coach:    {label:'Coach',     items:[
+      {href:'/finance', icon:'💰', label:'Financial Goals', feat:'tracker_finance'},
+      {href:'/lifemap', icon:'🗺️', label:'Life Map', feat:'knowledge_graph'},
+      {href:'/community', icon:'🤝', label:'Community', comingSoon:true}
+    ]}
+  };
+  const RESOURCES = [
+    {href:'/programs', icon:'🗂️', label:'Journeys'},
+    {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
+  ];
+  const TIER_ORDER = ['guide','companion','coach'];
+  async function loadEnt(uid){
+    const k='ent_'+uid, c=sessionStorage.getItem(k);
+    if(c){try{return JSON.parse(c);}catch(e){}}
+    try{
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+      const d=await r.json(); sessionStorage.setItem(k,JSON.stringify(d)); return d;
+    }catch(e){ return {products:[],tier:'guide',features:{}}; }
+  }
+  const can=(e,k)=>!k||(e&&e.features&&e.features[k]&&e.features[k].access===true);
+  const tierIdx=t=>{const i=TIER_ORDER.indexOf(t);return i<0?0:i;};
+  function navItem(it, locked){
+    const path=location.pathname.replace(/\/$/,'')||'/dashboard';
+    const base=it.href.split('?')[0].replace(/\/$/,'');
+    const isActive=path===base;
+    const cls='sni'+(isActive?' active':'')+(locked?' locked':'');
+    const badge=it.comingSoon?'<span class="sb-badge-soon">Soon</span>':(locked?'<span class="sb-tier-lock">🔒</span>':'');
+    return `<a href="${locked?'#':it.href}" class="${cls}" data-feat="${it.feat||''}" data-upsell="${locked?'1':'0'}"><span class="sni-icon">${it.icon}</span>${it.label}${badge}</a>`;
+  }
+  function renderSidebar(ent){
+    const mount=document.getElementById('sb-tiers');
+    if(!mount)return;
+    const myIdx=tierIdx(ent.tier||'guide');
+    let html='';
+    TIER_ORDER.forEach((key,idx)=>{
+      const tier=TIER_NAV[key];
+      const tierLocked=idx>myIdx;
+      const items=tier.items.map(it=>navItem(it, tierLocked && !it.comingSoon)).join('');
+      const open=idx<=myIdx;
+      html+=`<div class="sb-tier"><div class="sb-tier-head${open?' open':''}${tierLocked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${tierLocked?'<span class="sb-tier-lock">🔒</span>':''}<span class="sb-chev">▸</span></div><div class="sb-tier-items${open?' open':''}">${items}</div></div>`;
+    });
+    const resItems=RESOURCES.map(it=>navItem(it, it.feat ? !can(ent,it.feat) : false)).join('');
+    html+=`<div class="sb-tier"><div class="sb-tier-head open" onclick="sbToggleTier(this)">Additional Resources<span class="sb-chev">▸</span></div><div class="sb-tier-items open">${resItems}</div></div>`;
+    mount.innerHTML=html;
+    mount.querySelectorAll('a[data-upsell="1"]').forEach(a=>{
+      a.addEventListener('click',e=>{e.preventDefault();window.location.href='/programs?unlock='+(a.dataset.feat||'');});
+    });
+    const planEl=document.getElementById('sb-plan');
+    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+  }
+  window.sbToggleTier=function(head){head.classList.toggle('open');const items=head.nextElementSibling;if(items)items.classList.toggle('open');};
+  async function run(){
+    if(typeof SB==='undefined')return;
+    try{
+      const {data:{session}}=await SB.auth.getSession();
+      if(!session)return;
+      const ent=await loadEnt(session.user.id);
+      renderSidebar(ent);
+    }catch(e){console.error('gating:',e);}
+  }
+  if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
+})();
+</script>
+<script src="/pwa.js"></script>
+<script src="/track.js"></script>
+</body>
+</html>

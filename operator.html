@@ -407,7 +407,13 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .ce-job-when{font-size:.68rem;color:var(--muted);white-space:nowrap}
 
 /* ── Home movable widgets ── */
-.hw{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.1rem}
+#home-body{display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem;align-items:start}
+.hw{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;grid-column:span 2;min-width:0}
+.hw.half{grid-column:span 1}
+.rtog{display:inline-flex;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;overflow:hidden}
+.rtog-btn{padding:.36rem .72rem;background:transparent;border:none;color:var(--muted);font-size:.72rem;font-weight:600;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:.04em}
+.rtog-btn+.rtog-btn{border-left:1px solid var(--border)}
+.rtog-btn.on{background:var(--gold-soft);color:var(--amber)}
 .hw-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
 .hw-title{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
 .hw-grip{display:none;color:var(--muted2);cursor:grab;font-size:.9rem;user-select:none}
@@ -417,7 +423,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 #home-body.editing .hw-grip{display:inline}
 #home-body.editing .hw-hide{display:inline-flex;align-items:center;justify-content:center}
 #home-body.editing .hw{cursor:move}
-.hw-hidden{padding:.75rem 0;font-size:.72rem;color:var(--muted);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.hw-hidden{padding:.75rem 0;font-size:.72rem;color:var(--muted);display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;grid-column:span 2}
 .edit-layout-btn{padding:.4rem .8rem;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink2);font-size:.72rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
 .edit-layout-btn:hover{border-color:var(--gold)}
 .edit-layout-btn.editing-on{background:var(--gold-soft);border-color:var(--gold);color:var(--amber)}
@@ -451,6 +457,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <div class="cl" style="margin:0">Mission Control</div>
           <div style="display:flex;align-items:center;gap:.75rem">
             <div id="ov-date" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.12em"></div>
+            <div class="rtog" id="home-rtog">
+              <button class="rtog-btn" data-r="7" onclick="setHomeRange(7)">7D</button>
+              <button class="rtog-btn on" data-r="30" onclick="setHomeRange(30)">30D</button>
+              <button class="rtog-btn" data-r="90" onclick="setHomeRange(90)">90D</button>
+            </div>
             <button class="edit-layout-btn" id="home-edit-btn" onclick="toggleHomeEdit()">✎ Edit Layout</button>
           </div>
         </div>
@@ -792,20 +803,42 @@ function renderHome(d){
       return '<div style="margin-bottom:.5rem;cursor:pointer" onclick="openDrill(\''+kind+'\',\''+String(lbl).split("\'").join("").slice(0,120)+'\',\''+kind+': '+x(lbl)+'\')"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+' ›</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
     }).join('');
   }
+  // ── range-aware series: slice the 90-day arrays to the selected window ──
+  var R=_homeRange||30;
+  var loginArr=d.logins_90d||d.logins_14d||[];
+  var rileyArr=d.messages_90d||d.messages_14d||[];
+  var sliceR=function(a){a=a||[];return a.slice(Math.max(0,a.length-R));};
+  var deltaR=function(a){a=a||[];var f=function(x){return x.reduce(function(s,r){return s+(r.n||0);},0);};return {cur:f(a.slice(-R)),prev:f(a.slice(-2*R,-R))};};
+  var loginSlice=sliceR(loginArr), rileySlice=sliceR(rileyArr);
+  var loginD=deltaR(loginArr), rileyD=deltaR(rileyArr);
+
   // ── build each widget's inner html ──
   var W={};
-  var p=d.prev||{};
-  var loginSpark=(d.logins_14d||[]).map(function(r){return r.n;});
-  var rileySpark=(d.messages_14d||[]).map(function(r){return r.n;});
+  var p=d.prev||{}, s=d.states||{};
+  var totalC=(c.total!=null?c.total:0);
+  var stActive=(s.active!=null?s.active:(c.active_7d||0));
+  var activePct=totalC?Math.round(stActive/totalC*100):0;
+  W.hero='<div style="display:grid;grid-template-columns:auto 1fr;gap:1.8rem;align-items:center">'+
+    ring(activePct,'Engaged this week',stActive+' of '+totalC+' clients active in the last 2 days','var(--green)')+
+    '<div style="min-width:0"><div class="sh" style="margin:0 0 .55rem">Client States</div>'+
+      distBar([{label:'Active',n:s.active||0,color:'var(--green)'},{label:'Cooling',n:s.cooling||0,color:'var(--gold)'},{label:'Dormant',n:s.dormant||0,color:'var(--red)'},{label:'New',n:s.new||0,color:'var(--blue)'}])+
+      '<div style="display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:1.1rem;font-size:.74rem;color:var(--muted);align-items:center">'+
+        '<span>Logins · '+R+'d '+deltaChip(loginD.cur,loginD.prev)+'</span>'+
+        '<span>Riley · '+R+'d '+deltaChip(rileyD.cur,rileyD.prev)+'</span>'+
+        '<span>Active this wk '+deltaChip(c.active_7d,p.active_7d)+'</span>'+
+        '<span>New signups '+deltaChip(c.new_7d,p.new_7d)+'</span>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
   W.stats='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem">'+
     statCard({label:'Total Clients',value:(c.total!=null?c.total:'—'),sub:'all-time',kind:'total',color:'var(--gold)'})+
     statCard({label:'Active · 7d',value:(c.active_7d!=null?c.active_7d:'—'),sub:'vs prior week',kind:'active',color:'var(--green)',delta:{cur:c.active_7d,prev:p.active_7d}})+
     statCard({label:'New · 7d',value:(c.new_7d!=null?c.new_7d:'—'),sub:'signups vs prior',kind:'new',color:'var(--blue)',delta:{cur:c.new_7d,prev:p.new_7d}})+
-    statCard({label:'Logins · 7d',value:(t.logins_7d||0),sub:'14-day trend',kind:'logins',color:'var(--gold)',delta:{cur:t.logins_7d,prev:p.logins_7d},spark:{series:loginSpark,color:'var(--gold)'}})+
-    statCard({label:'Riley Msgs · 7d',value:(t.riley_7d||0),sub:'14-day trend',kind:'messages',color:'var(--sage)',delta:{cur:t.riley_7d,prev:p.riley_7d},spark:{series:rileySpark,color:'var(--sage)'}})+
+    statCard({label:'Logins · '+R+'d',value:loginD.cur,sub:'vs prior '+R+'d',kind:'logins',color:'var(--gold)',delta:{cur:loginD.cur,prev:loginD.prev},spark:{series:loginSlice.map(function(r){return r.n;}),color:'var(--gold)'}})+
+    statCard({label:'Riley · '+R+'d',value:rileyD.cur,sub:'vs prior '+R+'d',kind:'messages',color:'var(--sage)',delta:{cur:rileyD.cur,prev:rileyD.prev},spark:{series:rileySlice.map(function(r){return r.n;}),color:'var(--sage)'}})+
   '</div>';
-  W.chart_logins=svgBars(d.logins_14d,'var(--gold)','logins');
-  W.chart_riley=svgBars(d.messages_14d,'var(--sage)','messages');
+  W.chart_logins=svgBars(loginSlice,'var(--gold)','logins');
+  W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
   var la=d.last_active||[];
@@ -819,11 +852,13 @@ function renderHome(d){
         '<span style="color:var(--gold);font-weight:600">'+(u.events_7d||0)+'</span></div>';
     }).join('')+'</div>';
   }
-  // ── lay out per saved order, minus hidden ──
+  // ── lay out per saved order, minus hidden. Hero is always pinned first. ──
+  var titles=Object.assign({},HOME_TITLES,{chart_logins:'Logins · '+R+' days',chart_riley:'Riley Engagement · '+R+' days'});
   var lay=homeLayout(), order=lay.order.slice();
   HOME_WIDGETS.forEach(function(k){ if(order.indexOf(k)<0) order.push(k); });
+  order=order.filter(function(k){return k!=='hero';}); order.unshift('hero');
   var visible=order.filter(function(k){ return lay.hidden.indexOf(k)<0 && W[k]!=null; });
-  var html=visible.map(function(k){ return homeWidgetShell(k, HOME_TITLES[k], W[k]); }).join('');
+  var html=visible.map(function(k){ return homeWidgetShell(k, titles[k], W[k]); }).join('');
   var hidden=order.filter(function(k){ return lay.hidden.indexOf(k)>=0; });
   if(hidden.length){
     html+='<div class="hw-hidden">Hidden widgets: '+hidden.map(function(k){return '<button class="bt" onclick="homeShow(\''+k+'\')">+ '+x(HOME_TITLES[k]||k)+'</button>';}).join(' ')+'</div>';
@@ -833,14 +868,16 @@ function renderHome(d){
 }
 
 // ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
-var HOME_WIDGETS=['stats','chart_logins','chart_riley','pages','clicks','lastactive'];
-var HOME_TITLES={stats:'Key Metrics',chart_logins:'Logins · 14 days',chart_riley:'Riley Engagement · 14 days',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Last Active Clients'};
-var homeEditing=false, _homeData=null;
+var HOME_WIDGETS=['hero','stats','chart_logins','chart_riley','pages','clicks','lastactive'];
+var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Last Active Clients'};
+var homeEditing=false, _homeData=null, _homeRange=30;
+function setHomeRange(r){ _homeRange=r; var t=document.getElementById('home-rtog'); if(t){t.querySelectorAll('.rtog-btn').forEach(function(b){b.classList.toggle('on',+b.getAttribute('data-r')===r);});} if(_homeData)renderHome(_homeData); }
 function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); return {order:Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(), hidden:Array.isArray(l.hidden)?l.hidden:[]}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }
 function saveHomeLayout(l){ try{ localStorage.setItem('814_home_layout',JSON.stringify(l)); }catch(e){} }
 function toggleHomeEdit(){ homeEditing=!homeEditing; var b=document.getElementById('home-edit-btn'); if(b){b.textContent=homeEditing?'✓ Done':'✎ Edit Layout'; b.classList.toggle('editing-on',homeEditing);} var bd=document.getElementById('home-body'); if(bd)bd.classList.toggle('editing',homeEditing); attachHomeDnD(); }
 function homeWidgetShell(key,title,inner){
-  return '<div class="hw" data-w="'+key+'"><div class="hw-head"><span class="hw-grip">⠿</span><span class="hw-title">'+x(title||'')+'</span><button class="hw-hide" onclick="homeHide(\''+key+'\')" title="Hide widget">✕</button></div><div class="hw-body">'+inner+'</div></div>';
+  var half=(key==='pages'||key==='clicks')?' half':'';
+  return '<div class="hw'+half+'" data-w="'+key+'"><div class="hw-head"><span class="hw-grip">⠿</span><span class="hw-title">'+x(title||'')+'</span><button class="hw-hide" onclick="homeHide(\''+key+'\')" title="Hide widget">✕</button></div><div class="hw-body">'+inner+'</div></div>';
 }
 function attachHomeDnD(){
   var els=document.querySelectorAll('#home-body .hw');

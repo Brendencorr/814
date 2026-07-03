@@ -774,7 +774,8 @@ async function loadExplore(){
 // ── RILEY BRAIN — the decision engine drives "For You Today" ──────────────────
 async function loadRileyBrain(){
   try{
-    const res=await fetch('/.netlify/functions/riley-brain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
+    const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
+    const res=await fetch('/.netlify/functions/riley-brain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok})});
     if(!res.ok)return;
     const brain=await res.json();
     window._brain=brain;

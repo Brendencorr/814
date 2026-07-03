@@ -280,7 +280,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div id="alist"><div class="aempty">No notifications yet.</div></div>
         </div>
       </div>
-      <a href="/brief" class="tbtn tbtn-ghost">Today's Brief</a></div>
+      </div>
   </div>
   <div class="content">
 
@@ -335,12 +335,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <!-- Brief -->
         <div class="brief">
           <div class="brief-head">
-            <div><div class="bc-label" id="bc-label">Daily Intelligence Brief</div><div class="bc-title" id="bc-title">Your Daily Blueprint</div><div class="bc-sub" id="bc-sub">Your brief, updating through the day as you check in.</div></div>
-            <div style="text-align:right;flex-shrink:0;padding-left:16px"><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2);margin-bottom:6px" id="bc-prog">— / —</div>
-            <svg viewBox="0 0 52 52" width="48" height="48" style="transform:rotate(-90deg)"><circle cx="26" cy="26" r="20" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4"/><circle id="brief-ring" cx="26" cy="26" r="20" fill="none" stroke="var(--gold)" stroke-width="4" stroke-dasharray="125.7" stroke-dashoffset="125.7" stroke-linecap="round"/></svg></div>
+            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals.</div></div>
+            <div id="bc-regen-wrap" style="text-align:right;flex-shrink:0;padding-left:16px;display:none"><button onclick="genDashBrief(true)" id="bc-regen" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--smoke2);padding:5px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em">↻ Regenerate</button></div>
           </div>
-          <div class="mod-grid" id="mod-grid"></div>
-          <div class="brief-foot"><span class="bf-msg" id="bf-msg">Brief engine coming soon · 6:00 AM delivery</span><a href="/brief" class="bf-link">OPEN FULL BRIEF →</a></div>
+          <div id="brief-body" style="padding:4px 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
         </div>
         <!-- Conversations -->
         <div class="panel">
@@ -544,6 +542,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     ]);
     const g=r=>r.status==='fulfilled'?r.value?.data:null;
     const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[];
+    // Entitlement (for the inline Brief gating) — reuse the gating IIFE's sessionStorage cache.
+    let ENT={tier:'guide',features:{}};
+    try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;
@@ -626,21 +627,47 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       trend('Mood',moodToday?['','Low','Off','OK','Good','🔥'][moodToday]:'—','7-day trend',moodHist,'#c9a84c','sp3')+
       trend('Training',workouts.length||'—','workouts · 14d',wkHist,'#4a7ab0','sp4');
 
-    // ── BRIEF ──
-    const icons={mindset:'🧠',meditation:'🙏',hydration:'💧',workout:'🏋️',nutrition:'🍳',reading:'📚',linkedin:'🎥',calendar:'📅',podcast:'🎧',journaling:'📖',goals:'🎯'};
-    const order=['mindset','meditation','hydration','workout','nutrition','reading','linkedin','calendar'];
-    if(brief&&brief.modules&&Object.keys(brief.modules).length){
-      const mods=brief.modules,done=brief.completion||{};const total=brief.total_modules||Object.keys(mods).length;const comp=brief.completed_modules||0;
-      document.getElementById('bc-label').textContent='Daily Intelligence Brief · '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric'});
-      document.getElementById('bc-title').textContent='Your '+new Date().toLocaleDateString('en-US',{weekday:'long'})+' Blueprint';
-      document.getElementById('bc-sub').textContent='Riley assembled today\'s brief from your goals, mood, and schedule.';
-      document.getElementById('bc-prog').textContent=comp+' / '+total;
-      const r=document.getElementById('brief-ring');setTimeout(()=>{r.style.transition='stroke-dashoffset 1s';r.style.strokeDashoffset=125.7*(1-comp/Math.max(1,total));},150);
-      document.getElementById('bf-msg').textContent=comp===total?'All modules complete — great day!':comp+' of '+total+' done';
-      const keys=[...order.filter(k=>mods[k]),...Object.keys(mods).filter(k=>!order.includes(k))];
-      document.getElementById('mod-grid').innerHTML=keys.map(k=>`<div class="mod ${done[k]?'done':''}" onclick="location.href='/brief'"><div class="mod-ico">${icons[k]||'•'}</div><div class="mod-label">${k}</div><div class="mod-text">${esc(String(mods[k]).slice(0,70))}</div></div>`).join('');
-    }else{
-      document.getElementById('mod-grid').innerHTML=order.map(k=>`<div class="mod" style="opacity:0.35" onclick="location.href='/brief'"><div class="mod-ico">${icons[k]}</div><div class="mod-label">${k}</div><div class="mod-text" style="color:var(--smoke)">In today's brief →</div></div>`).join('');
+    // ── BRIEF (consolidated: the real narrative brief, inline + plan-gated) ──
+    const _brBody=document.getElementById('brief-body');
+    const _entBrief=!!(ENT&&ENT.features&&ENT.features.adaptive_programming&&ENT.features.adaptive_programming.access===true);
+    const _bt=document.getElementById('bc-title'); if(_bt)_bt.textContent='Your '+new Date().toLocaleDateString('en-US',{weekday:'long'})+' Brief';
+    function _briefHTML(m){
+      const S=[];
+      if(m.riley_note)S.push(`<div style="padding:14px 16px;background:rgba(74,122,176,0.08);border:1px solid rgba(74,122,176,0.2);border-radius:4px;display:flex;gap:11px;align-items:flex-start;margin-bottom:14px"><div style="font-size:18px;flex-shrink:0">🤝</div><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley noticed</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(m.riley_note)}</div></div></div>`);
+      if(m.mood_note)S.push(`<div style="font-family:'DM Serif Display',serif;font-size:16px;color:var(--parchment);line-height:1.6;margin-bottom:16px;padding-left:12px;border-left:2px solid var(--gold)">${esc(m.mood_note)}</div>`);
+      const fe=[];
+      if(m.focus)fe.push(`<div style="padding:12px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's focus</div><div style="font-size:13px;color:var(--parchment);font-weight:500">${esc(m.focus)}</div></div>`);
+      if(m.encouragement)fe.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Encouragement</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.encouragement)}</div></div>`);
+      if(fe.length)S.push(`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${fe.join('')}</div>`);
+      if(m.quote)S.push(`<div style="text-align:center;padding:12px 16px;margin-bottom:14px"><div style="font-family:'DM Serif Display',serif;font-size:15px;font-style:italic;color:var(--smoke);line-height:1.6">"${esc(m.quote)}"</div></div>`);
+      const cr=[];
+      if(m.challenge)cr.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's challenge</div><div style="font-size:13px;color:var(--parchment);line-height:1.5">${esc(m.challenge)}</div></div>`);
+      if(m.reflection_prompt)cr.push(`<div style="padding:12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1;min-width:150px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Sit with this</div><div style="font-size:13px;font-style:italic;color:var(--smoke);line-height:1.5">${esc(m.reflection_prompt)}</div></div>`);
+      if(cr.length)S.push(`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${cr.join('')}</div>`);
+      if(m.action)S.push(`<div style="padding:14px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);border-radius:3px;display:flex;gap:11px;align-items:flex-start"><div style="font-size:16px">✅</div><div><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">One action today</div><div style="font-size:13.5px;color:var(--parchment);font-weight:500">${esc(m.action)}</div></div></div>`);
+      return S.join('')||'<div style="font-size:12px;color:var(--smoke)">Your brief is ready — check back in a moment.</div>';
+    }
+    window.genDashBrief=async function(forceNew){
+      const b=document.getElementById('dash-gen-btn')||document.getElementById('bc-regen');
+      if(forceNew&&!confirm('Generate a fresh brief? This replaces today\'s.'))return;
+      if(b){b.disabled=true;b.textContent='Generating…';}
+      try{
+        if(forceNew)await SB.from('daily_briefs').delete().eq('user_id',UID).eq('brief_date',TODAY);
+        const _t=(await SB.auth.getSession()).data.session?.access_token||null;
+        await fetch('/.netlify/functions/daily-brief',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_t})});
+        location.reload();
+      }catch(e){if(b){b.disabled=false;b.textContent='Generate today\'s brief';}}
+    };
+    if(_brBody){
+      if(!_entBrief){
+        const _sub=document.getElementById('bc-sub'); if(_sub)_sub.textContent='A personalized 45-second briefing to start every day with intention.';
+        _brBody.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:26px 20px"><div style="font-size:22px">🔒</div><div style="font-size:13px;color:var(--parchment);max-width:320px;line-height:1.55">Your Morning Brief is part of <b style="color:var(--gold)">Riley Companion</b> — Riley reads your week and hands you one focused page each morning.</div><a href="/programs?unlock=adaptive_programming" style="background:var(--gold);color:var(--ink);padding:9px 18px;font-size:12px;font-weight:600;text-decoration:none;border-radius:3px">Unlock with Companion →</a></div>';
+      } else if(brief&&brief.modules&&Object.keys(brief.modules).length){
+        const rw=document.getElementById('bc-regen-wrap'); if(rw)rw.style.display='block';
+        _brBody.innerHTML=_briefHTML(brief.modules);
+      } else {
+        _brBody.innerHTML='<div style="font-size:13px;color:var(--smoke);line-height:1.7;margin-bottom:16px">Your brief is assembled fresh each morning from your check-ins, streak, and goals.</div><button id="dash-gen-btn" onclick="genDashBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:11px 24px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate today\'s brief</button>';
+      }
     }
 
     // ── CONVERSATIONS ──

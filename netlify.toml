@@ -169,13 +169,13 @@
 
 [[redirects]]
   from = "https://riley.eight14.us/brief"
-  to   = "/brief.html"
-  status = 200
+  to   = "/dashboard"
+  status = 301
 
 [[redirects]]
   from = "https://riley.eight14.us/brief/"
-  to   = "/brief.html"
-  status = 200
+  to   = "/dashboard"
+  status = 301
 
 [[redirects]]
   from = "https://riley.eight14.us/conversations"

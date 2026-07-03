@@ -489,21 +489,6 @@
   status = 200
   force = true
 
-# ── Admin metrics + operator-actions console (Doc 3) ──
-# MUST come before the operator.html catch-all below — that rule is force=true and
-# would otherwise swallow /admin-console.html and serve operator.html instead. These
-# more-specific rules match first and rewrite to the real file.
-[[redirects]]
-  from = "https://admin.eight14.us/admin-console"
-  to = "/admin-console.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://admin.eight14.us/admin-console.html"
-  to = "/admin-console.html"
-  status = 200
-  force = true
-
 [[redirects]]
   from = "https://admin.eight14.us/*"
   to = "/operator.html"

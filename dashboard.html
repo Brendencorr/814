@@ -366,8 +366,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
             <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:4px" id="sober-mile"></div><div style="font-size:11px;color:var(--smoke);line-height:1.5" id="sober-msg">Set your date in Tracker</div><div class="sober-dots" id="sober-dots"></div></div>
           </div>
         </div></div>
-        <div class="panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
-        <div class="panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
+        <div class="panel" id="habits-panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
+        <div class="panel" id="goals-panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
         <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs — <a href="/programs">enroll</a></div></div></div>
       </div>
     </div>
@@ -545,6 +545,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Entitlement (for the inline Brief gating) — reuse the gating IIFE's sessionStorage cache.
     let ENT={tier:'guide',features:{}};
     try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
+    // Doc 2 §1.2/§2: the habit tracker (habits + goals) is Companion+ (plan_entitlements.habit_tracker).
+    // Guide hides the module entirely — never an empty "Habits: 0". Fail-open if entitlements missing.
+    if(ENT.entitlements && ENT.entitlements.habit_tracker==='false'){ ['habits-panel','goals-panel'].forEach(function(id){var el=document.getElementById(id); if(el)el.style.display='none';}); }
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;

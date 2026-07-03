@@ -377,6 +377,7 @@ header {
         Sign in with Google
       </button>
       <button class="save-prompt-dismiss" onclick="dismissSavePrompt()" title="Dismiss">&#215;</button>
+      <div style="flex-basis:100%;width:100%;font-size:11px;color:rgba(255,255,255,0.35);margin-top:6px">Private to you. Never sold, never used for ads. <a href="/privacy" target="_blank" style="color:rgba(255,255,255,0.5);text-decoration:underline">Privacy</a></div>
     </div>
 
     <div class="input-row">
@@ -384,6 +385,9 @@ header {
         onkeydown="onKey(event)"
         oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
       <button class="send-btn" id="send-btn" onclick="send()">&#9658;</button>
+    </div>
+    <div class="chat-foot" style="text-align:center;font-size:11px;padding:9px 14px 6px;line-height:1.6;color:rgba(255,255,255,0.3)">
+      <span style="color:rgba(201,168,76,0.72)">In crisis? Call or text <a href="tel:988" style="color:#c9a84c;text-decoration:underline;font-weight:600">988</a></span><span id="anon-note"> &middot; This chat isn&rsquo;t saved unless you <a href="#" onclick="signInWithGoogle();return false" style="color:rgba(255,255,255,0.5);text-decoration:underline">sign in</a> &middot; <a href="/privacy" target="_blank" style="color:rgba(255,255,255,0.5);text-decoration:underline">Privacy</a></span>
     </div>
   </div>
 </div>
@@ -464,6 +468,7 @@ boot();
 async function onSignedIn(session) {
   // Hide the save prompt — they just signed in
   hideSavePrompt();
+  var _an = document.getElementById('anon-note'); if (_an) _an.style.display = 'none';  // signed-in conversations ARE saved
 
   // Show user pill in header
   const pill = document.getElementById('user-pill');
@@ -774,6 +779,7 @@ function showSignInModal(reason) {
       Sign in with Google
     </button>
     <button onclick="document.getElementById('signin-modal').remove()" style="background:none;border:none;color:#4a5a6a;font-size:.8rem;cursor:pointer">Continue without saving</button>
+    <div style="font-size:11px;color:#4a5a6a;margin-top:12px">Private to you. Never sold, never used for ads. <a href="/privacy" target="_blank" style="color:#7a8a9a;text-decoration:underline">Privacy</a></div>
   </div>`;
   document.body.appendChild(modal);
 }

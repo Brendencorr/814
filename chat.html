@@ -260,6 +260,7 @@ body.embed .topbar-actions a.topbar-btn{display:none}
           style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
       </div>
       <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley knows your sobriety streak, goals, habits, and programs</div>
+      <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:'DM Sans',sans-serif">Want conversations that don’t end? <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Companion is $19/month</a>.</div>
     </div>
   </main>
 </div>
@@ -436,6 +437,7 @@ async function send() {
   document.getElementById('messages').scrollTop = 999999;
 
   let reply = '';
+  let _atLimit = false;
   try {
     const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
     const res = await fetch(RILEY_URL, {
@@ -444,6 +446,7 @@ async function send() {
       body: JSON.stringify({ message: text, messages: _history, session_id: _sessionId, token: _tok })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
+    _atLimit = res.headers.get('X-Chat-Atlimit') === 'true'; // Doc 2 §3
 
     // Stream or plain text
     const reader  = res.body.getReader();
@@ -468,6 +471,21 @@ async function send() {
   if (_history.length > 40) _history = _history.slice(-40);
   saveLiveChat();
   btn.disabled = false; btn.style.opacity = '1';
+  // Doc 2 §3: at the Guide daily cap, disable the composer + show the once/day caption.
+  if (_atLimit) applyChatCap(); else clearChatCap();
+}
+
+// Doc 2 §3 — Guide chat-cap composer state (crisis always bypasses the cap server-side).
+function applyChatCap(){
+  const input=document.getElementById('msg-input'), btn=document.getElementById('send-btn'), cap=document.getElementById('cap-caption');
+  if(input){ input.disabled=true; input.placeholder='Riley will be here in the morning.'; }
+  if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
+  if(cap) cap.style.display='block';
+}
+function clearChatCap(){
+  const input=document.getElementById('msg-input'), cap=document.getElementById('cap-caption');
+  if(input && input.disabled){ input.disabled=false; input.placeholder='Message Riley…'; }
+  if(cap) cap.style.display='none';
 }
 
 async function signOut() {

@@ -33,6 +33,9 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  // Doc 2 §3: let the browser read the Guide chat-cap state so chat.html can show the
+  // once/day caption + disable the input at the limit. Additive — never changes the reply.
+  "Access-Control-Expose-Headers": "X-Chat-Atlimit, X-Chat-Remaining",
 };
 
 // ── System prompt ─────────────────────────────────────────────────────────────
@@ -904,7 +907,7 @@ exports.handler = async function (event) {
     if (supabase && user_id && session_id) persistMessages(supabase, user_id, session_id, latestUserText, capReply);
     return {
       statusCode: 200,
-      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
+      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8", "X-Chat-Atlimit": "true", "X-Chat-Remaining": "0" },
       body: capReply,
     };
   }
@@ -977,6 +980,9 @@ exports.handler = async function (event) {
     headers: {
       ...CORS_HEADERS,
       "Content-Type": "text/plain; charset=utf-8",
+      // Doc 2 §3: how many Guide replies remain AFTER this one (omit/blank for uncapped tiers).
+      "X-Chat-Atlimit": "false",
+      "X-Chat-Remaining": usageInfo ? String(Math.max(0, usageInfo.remaining - 1)) : "",
     },
     body: reply,
   };

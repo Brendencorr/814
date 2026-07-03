@@ -234,27 +234,32 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   <div class="wrap center">
     <div class="eyebrow mt-e">Membership</div>
     <div class="h2">Start where you are.</div>
+    <!-- Billing toggle — annual pre-selected (Doc 0 §2 / Doc 1 §1) -->
+    <div class="bill-toggle" style="display:inline-flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;margin:4px auto 26px">
+      <button type="button" id="bt-annual" onclick="setBilling('annual')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gold,#c9a84c);color:#0a0908">Annual</button>
+      <button type="button" id="bt-monthly" onclick="setBilling('monthly')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--parchment,#f5f0e8)">Monthly</button>
+    </div>
     <div class="prog-grid">
-      <div class="pcard reveal">
-        <div class="ptag">Free forever</div>
+      <div class="pcard reveal" data-plan="guide">
+        <div class="ptag">Free, forever</div>
         <h3>The Riley Guide</h3>
-        <div class="price">Free</div>
-        <div class="pdesc">Riley in your corner — not a trial, not a timer. Start here and stay as long as you like. Every topic open, and real support the moment you need it.</div>
-        <a href="https://riley.eight14.us/login" class="btn btn-gold btn-sm">Start Free</a>
+        <div class="price" data-price>Free</div>
+        <div class="pdesc">For people who simply want to begin. Riley in your corner — not a trial, not a timer. Every topic open, real support the moment you need it.</div>
+        <a href="https://riley.eight14.us/login" class="btn btn-gold btn-sm">Meet Riley, free</a>
       </div>
-      <div class="pcard feat reveal">
-        <div class="ptag">Most popular</div>
+      <div class="pcard feat reveal" data-plan="companion">
+        <div class="ptag" data-badge>The primary membership</div>
         <h3>The Riley Companion</h3>
-        <div class="price">$29<span>/mo</span></div>
-        <div class="pdesc">Unlimited Riley — any hour, any topic — plus the full community walking the same road beside you.</div>
-        <a href="https://riley.eight14.us/login" class="btn btn-gold btn-sm">Get Companion</a>
+        <div class="price" data-price>$175<span>/yr</span></div>
+        <div class="pdesc">You're not doing this alone. Unlimited Riley — any hour, any topic — long-term memory, every program, daily check-ins, the habit tracker, and monthly workshops.</div>
+        <a href="https://riley.eight14.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="companion">Start with Companion</a>
       </div>
-      <div class="pcard reveal">
+      <div class="pcard reveal" data-plan="coach">
         <div class="ptag">Go all in</div>
         <h3>The Riley Coach</h3>
-        <div class="price">$49<span>/mo</span></div>
-        <div class="pdesc">Everything in Companion, plus a Riley who plans ahead with you — adaptive workouts and nutrition, proactive check-ins, and your personal map of it all.</div>
-        <a href="https://riley.eight14.us/login" class="btn btn-ghost btn-sm">Get Coach</a>
+        <div class="price" data-price>$350<span>/yr</span></div>
+        <div class="pdesc">Personalized guidance that grows with you. Everything in Companion, plus adaptive workouts + nutrition, proactive check-ins Riley starts, and your Knowledge Graph.</div>
+        <a href="https://riley.eight14.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="coach">Go all-in with Coach</a>
       </div>
     </div>
     <p class="sub" style="margin:34px auto 0;max-width:560px;font-size:14px">Every plan includes every topic — sobriety, movement, food, grief, all of it. The only thing that changes is how much of Riley you want beside you.</p>
@@ -389,6 +394,36 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
     }catch(err){}
     window.location.href='/talk?signin=1';
   });
+})();
+</script>
+<script>
+/* Doc 1 §1 + Doc 0 §7: pricing renders from the `plans` table (public-read) — one row change
+   updates the site, no deploy. Annual pre-selected. Fail-safe: the cards keep their correct
+   fallback figures ($175 / $350 annual) if the fetch fails. */
+(function(){
+  var SB='https://tglljvjixlolaguycvbb.supabase.co', KEY='sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
+  var P={}, mode='annual';
+  function d(c){return '$'+Math.round(c/100);}
+  function paint(){
+    ['companion','coach'].forEach(function(id){
+      var card=document.querySelector('.pcard[data-plan="'+id+'"]'); if(!card)return; var p=P[id]; if(!p)return;
+      var el=card.querySelector('[data-price]'); if(!el)return;
+      if(mode==='annual'&&p.price_annual_cents){ el.innerHTML=d(p.price_annual_cents)+'<span>/yr</span>'; }
+      else if(p.price_monthly_cents){ el.innerHTML=d(p.price_monthly_cents)+'<span>/mo</span>'; }
+    });
+  }
+  window.setBilling=function(m){
+    mode=m; paint();
+    var a=document.getElementById('bt-annual'), mo=document.getElementById('bt-monthly');
+    if(a){a.style.background=m==='annual'?'#c9a84c':'transparent';a.style.color=m==='annual'?'#0a0908':'#f5f0e8';}
+    if(mo){mo.style.background=m==='monthly'?'#c9a84c':'transparent';mo.style.color=m==='monthly'?'#0a0908':'#f5f0e8';}
+  };
+  try{
+    fetch(SB+'/rest/v1/plans?select=id,price_monthly_cents,price_annual_cents,annual_savings_cents&status=eq.active',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}})
+      .then(function(r){return r.json();})
+      .then(function(rows){ if(Array.isArray(rows)){rows.forEach(function(p){P[p.id]=p;}); paint();} })
+      .catch(function(){});
+  }catch(e){}
 })();
 </script>
 </body>

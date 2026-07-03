@@ -302,6 +302,10 @@ let _db, _user, _uid, _sessionId, _history = [];
   //    Riley kept "forgetting" — the server path is reliable.
   const _inp = document.getElementById('msg-input');
   const _snd = document.getElementById('send-btn');
+  // Instant cross-page continuity: restore a live thread mirrored in localStorage
+  // (shared across every same-origin page) before falling back to the server.
+  const _live = loadLiveChat();
+  if (_live) { resumeSession(_live.sid, _live.history); return; }
   if (_inp) { _inp.disabled = true; _inp.placeholder = 'One moment…'; }
   if (_snd) _snd.disabled = true;
   try {
@@ -326,9 +330,26 @@ let _db, _user, _uid, _sessionId, _history = [];
   }
 })();
 
+// ── Live-chat continuity across pages ────────────────────────────────────────
+// The popup is a fresh iframe on every page load, so mirror the conversation to
+// localStorage (shared by all same-origin pages) and restore it instantly on open —
+// no server round-trip, so changing screens never "starts over."
+function saveLiveChat() {
+  try { localStorage.setItem('riley_live_chat', JSON.stringify({ sid: _sessionId, history: _history, at: Date.now() })); } catch (e) {}
+}
+function loadLiveChat() {
+  try {
+    const o = JSON.parse(localStorage.getItem('riley_live_chat') || 'null');
+    if (!o || !o.sid || !Array.isArray(o.history) || !o.history.length) return null;
+    if (Date.now() - (o.at || 0) > 864e5) return null;   // >24h old → let the server resume decide
+    return o;
+  } catch (e) { return null; }
+}
+
 function newConversation() {
   _sessionId = crypto.randomUUID();
   _history = [];
+  try { localStorage.removeItem('riley_live_chat'); } catch (e) {}
   document.getElementById('messages').innerHTML = '';
   document.getElementById('messages').appendChild(document.getElementById('welcome') || createWelcome());
   document.getElementById('welcome').style.display = 'block';
@@ -342,6 +363,7 @@ function resumeSession(sid, history) {
   const box = document.getElementById('messages');
   box.innerHTML = '';
   history.forEach(m => appendMsg(m.role, m.content));
+  saveLiveChat();
 }
 
 // Older thread: Riley asks whether to pick up where we left off or start fresh.
@@ -444,6 +466,7 @@ async function send() {
 
   _history.push({ role: 'assistant', content: reply });
   if (_history.length > 40) _history = _history.slice(-40);
+  saveLiveChat();
   btn.disabled = false; btn.style.opacity = '1';
 }
 

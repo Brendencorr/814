@@ -167,13 +167,26 @@ async function updateProfile(supabase, body) {
   return json(200, { profile: data });
 }
 
-// Tables holding a member's personal / journal data, keyed by user_id.
-// crisis_log is intentionally EXCLUDED — it's restricted safety data handled
-// only inside the safety workflow (Trust architecture §1.4), not self-service.
+// Every table holding a member's personal / journal / wellness data, keyed by user_id.
+// Intentionally EXCLUDED: crisis_log (restricted safety data, Trust architecture §1.4);
+// entitlements + usage_counters/usage_limits (access-control + rate-limit metadata, not
+// personal content — a paid member must not lose access by wiping their journal).
+// user_profiles is handled separately below (reset to a shell via PROFILE_CLEAR).
 const USER_DATA_TABLES = [
-  "daily_checkins", "riley_conversations", "riley_memory", "user_goals",
-  "habits", "habit_completions", "sobriety_tracker", "life_events",
-  "important_dates", "user_program_progress", "engagement_events",
+  // Conversations + Riley's long-term memory/model of you
+  "riley_conversations", "riley_memory", "life_map",
+  // Profile detail, goals, program + journey progress
+  "profile_details", "user_goals", "user_program_progress", "journey_step_completions",
+  // Daily life: check-ins, briefs, state, habits
+  "daily_checkins", "daily_briefs", "user_daily_state", "habits", "habit_completions",
+  // Sobriety
+  "sobriety_tracker", "sobriety_checkins",
+  // Wellness engine
+  "sleep_logs", "nutrition_logs", "fitness_logs",
+  "wellness_baseline", "wellness_profile", "wellness_plans", "wellness_weekly",
+  // Dates, documents, legacy, recommendations, interactions, events
+  "life_events", "important_dates", "member_docs", "legacy_vault",
+  "recommendation_history", "content_interactions", "engagement_events",
 ];
 
 // Personal fields cleared from the profile on delete (the shell stays so the

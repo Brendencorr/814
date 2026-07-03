@@ -90,6 +90,20 @@ exports.handler = async function (event) {
     // history; this is the guarantee, not a substitute for that.)
     owned.add('reset_free');
 
+    // Bridge (Doc 2 §5 / Doc 0 §7): an active new-system subscription — a comp, a Companion
+    // Weekend gift, or a real paid plan — grants that plan's access in the LEGACY feature gating
+    // too, by adding its product to `owned`. So `features` (sidebar/wall) and `entitlements`
+    // (plan_entitlements) agree, and a grant actually unlocks the app + reverts cleanly at expiry.
+    // Inert until any subscription rows exist; fail-open (never blocks).
+    try {
+      const { data: _subs } = await sb.from('subscriptions').select('plan_id, expires_at').eq('user_id', userId).eq('status', 'active');
+      const _now = Date.now();
+      (_subs || []).forEach(function (s) {
+        const live = !s.expires_at || new Date(s.expires_at).getTime() > _now;
+        if (live && (s.plan_id === 'companion' || s.plan_id === 'coach' || s.plan_id === 'mentor')) owned.add(s.plan_id);
+      });
+    } catch (_) {}
+
     // Master admin: full access to everything + an `admin` flag that drives the
     // tier-preview toggle + edit controls in the app. Flagged on user_profiles.is_admin.
     let isAdmin = false;

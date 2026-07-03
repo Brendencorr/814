@@ -2,7 +2,7 @@
  * journey-step.js — Journey daily content (generate + cache)
  *
  * Returns the step for (program_slug, day_number). If it's hand-written in
- * journey_steps (e.g. the 7-Day Reset), returns that. Otherwise generates it
+ * journey_steps (e.g. the 8:14 Reset), returns that. Otherwise generates it
  * from the journey's emotional arc via Claude — ONCE — and caches it into
  * journey_steps so it's shared and consistent for every client thereafter.
  *

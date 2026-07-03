@@ -7,7 +7,7 @@
  * "Programs & Pricing" tab + its "Usage Limits" sub-section.
  *
  * Distinct from admin-programs.js, which manages the CONTENT curriculum table
- * (`programs` — 7-Day Reset, Recovery Journey, etc.) — a different table for a
+ * (`programs` — 8:14 Reset, Recovery Journey, etc.) — a different table for a
  * different purpose that happens to share the word "program."
  *
  * Protected by the same OPERATOR_KEY as Safety/Content/Programs. Fails closed

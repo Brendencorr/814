@@ -25,7 +25,7 @@ CONTENT GAPS WE OWN (do not recommend these — we already cover them):
 - Sobriety timeline week by week (covered)
 - HALT method (covered)
 - Gut-brain connection basics (covered)
-- 7-Day Reset concept (covered)
+- 8:14 Reset concept (covered)
 
 ALWAYS OUTPUT IN THIS EXACT FORMAT — Sage reads this directly:
 

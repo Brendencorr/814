@@ -52,7 +52,7 @@ SLIDE 6:
 [The practical tool or takeaway]
 
 SLIDE 7 (Black bg, gold #c9a84c text):
-[CTA: "Start with the free 7-Day Reset → eight14.us" or "Talk to Riley → eight14.us/riley"]
+[CTA: "Start with the free 8:14 Reset → eight14.us" or "Talk to Riley → eight14.us/riley"]
 
 CAPTION:
 [150-200 words. Hook line first. Story. Insight. CTA. Hashtags last.]

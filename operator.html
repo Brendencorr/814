@@ -589,6 +589,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </div>
 
 <!-- USER DETAIL PANEL -->
+<div id="drillpn" style="position:fixed;top:0;right:-560px;width:520px;max-width:92vw;height:100dvh;background:var(--surface);border-left:1px solid var(--border);box-shadow:-8px 0 32px rgba(0,0,0,.1);z-index:520;display:flex;flex-direction:column;transition:right .28s cubic-bezier(.4,0,.2,1)">
+  <div style="padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--surface2)">
+    <span id="drill-title" style="font-size:.8rem;font-weight:700;color:var(--ink);letter-spacing:.06em">Detail</span>
+    <button onclick="closeDrill()" style="background:transparent;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:.3rem">&#215;</button>
+  </div>
+  <div id="drill-body" style="flex:1;overflow-y:auto;padding:.5rem 0"><div class="em">Loading…</div></div>
+</div>
+
 <div id="udpn">
   <div class="udph">
     <div class="udav" id="ud-av">?</div>
@@ -710,49 +718,51 @@ async function loadOverview(btn){
 }
 
 // Tiny dependency-free SVG bar chart. series=[{label,n}]
-function svgBars(series,color){
+function svgBars(series,color,clickKind){
   if(!series||!series.length)return '<div class="em">No data yet</div>';
   var max=1; series.forEach(function(s){ if(s.n>max)max=s.n; });
   var bw=16, gap=8, h=96, pad=16, totalW=series.length*(bw+gap);
   var bars=series.map(function(s,i){
     var bh=Math.round((s.n/max)*(h-pad));
     var xx=i*(bw+gap);
-    return '<rect x="'+xx+'" y="'+(h-bh)+'" width="'+bw+'" height="'+Math.max(bh,1)+'" rx="2" fill="'+color+'"><title>'+s.label+': '+s.n+'</title></rect>'+
-      '<text x="'+(xx+bw/2)+'" y="'+(h+9)+'" text-anchor="middle" font-size="6.5" fill="var(--muted2)">'+x(String(s.label).slice(-5))+'</text>';
+    var clk=clickKind?' style="cursor:pointer" onclick="openDrill(\''+clickKind+'\',\''+s.label+'\',\''+x(clickKind)+' · '+s.label+'\')"':'';
+    return '<g'+clk+'><rect x="'+xx+'" y="'+(h-bh)+'" width="'+bw+'" height="'+Math.max(bh,1)+'" rx="2" fill="'+color+'"><title>'+s.label+': '+s.n+'</title></rect>'+
+      '<rect x="'+xx+'" y="0" width="'+bw+'" height="'+h+'" fill="transparent"></rect>'+
+      '<text x="'+(xx+bw/2)+'" y="'+(h+9)+'" text-anchor="middle" font-size="6.5" fill="var(--muted2)">'+x(String(s.label).slice(-5))+'</text></g>';
   }).join('');
   return '<svg viewBox="0 0 '+totalW+' '+(h+12)+'" preserveAspectRatio="none" style="width:100%;height:120px;display:block">'+bars+'</svg>';
 }
 
 function renderHome(d){
   var c=d.clients||{}, t=d.totals||{};
-  var stat=function(label,val,sub){return '<div class="mc" style="margin:0"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'—')+'</div><div class="ms">'+(sub||'')+'</div></div>';};
+  var stat=function(label,val,sub,kind){return '<div class="mc" style="margin:0;cursor:pointer" onclick="openDrill(\''+kind+'\',null,\''+label+'\')"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'—')+'</div><div class="ms">'+(sub||'')+' ›</div></div>';};
   var html='';
   // ── stat row ──
   html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem;margin-bottom:1.25rem">'+
-    stat('Total Clients', c.total, 'all-time')+
-    stat('Active · 7d', c.active_7d, 'logged activity')+
-    stat('New · 7d', c.new_7d, 'signups')+
-    stat('Logins · 7d', (t.logins_7d||0), 'sessions')+
-    stat('Riley Msgs · 7d', (t.riley_7d||0), 'conversations')+
+    stat('Total Clients', c.total, 'all-time','total')+
+    stat('Active · 7d', c.active_7d, 'logged activity','active')+
+    stat('New · 7d', c.new_7d, 'signups','new')+
+    stat('Logins · 7d', (t.logins_7d||0), 'sessions','logins')+
+    stat('Riley Msgs · 7d', (t.riley_7d||0), 'conversations','messages')+
   '</div>';
   // ── charts row ──
   function panel(title,inner,action){return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem"><span class="cl" style="margin:0">'+title+'</span>'+(action||'')+'</div>'+inner+'</div>';}
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
-    panel('Logins · 14 days', svgBars(d.logins_14d,'var(--gold)'))+
-    panel('Riley Engagement · 14 days', svgBars(d.messages_14d,'var(--sage)'))+
+    panel('Logins · 14 days', svgBars(d.logins_14d,'var(--gold)','logins'))+
+    panel('Riley Engagement · 14 days', svgBars(d.messages_14d,'var(--sage)','messages'))+
   '</div>';
   // ── pages + clicks ──
-  function barList(rows,keyName,color){
+  function barList(rows,keyName,color,kind){
     if(!rows||!rows.length)return '<div class="em">Fills in as clients browse</div>';
     var max=1; rows.forEach(function(r){ if(r.n>max)max=r.n; });
     return rows.map(function(r){
       var lbl=r[keyName]||'—';var pct=Math.round((r.n/max)*100);
-      return '<div style="margin-bottom:.5rem"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+'</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
+      return '<div style="margin-bottom:.5rem;cursor:pointer" onclick="openDrill(\''+kind+'\',\''+String(lbl).split("'").join("").slice(0,120)+'\',\''+kind+': '+x(lbl)+'\')"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+' ›</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
     }).join('');
   }
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem">'+
-    panel('Most-Visited Pages', barList(d.top_pages,'page','var(--blue)'))+
-    panel('Top Clicks', barList(d.top_clicks,'target','var(--amber)'))+
+    panel('Most-Visited Pages', barList(d.top_pages,'page','var(--blue)','page'))+
+    panel('Top Clicks', barList(d.top_clicks,'target','var(--amber)','click'))+
   '</div>';
   // ── last active table ──
   var la=d.last_active||[];
@@ -761,7 +771,7 @@ function renderHome(d){
   else{
     laInner='<div class="rp" style="margin:0">'+la.map(function(u){
       var when=u.last_at?new Date(u.last_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
-      return '<div class="rr" style="grid-template-columns:1fr 90px 140px 70px"><span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.name||'Member')+'</span>'+
+      return '<div class="rr" style="grid-template-columns:1fr 90px 140px 70px;cursor:pointer" onclick="openUserPanel(\''+u.user_id+'\')"><span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.name||'Member')+'</span>'+
         '<span style="color:var(--muted);font-size:.72rem">'+(u.programs||0)+' program'+(u.programs===1?'':'s')+'</span>'+
         '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
         '<span style="color:var(--gold);font-weight:600">'+(u.events_7d||0)+'</span></div>';
@@ -1946,6 +1956,30 @@ async function ceSaveTemplate(slug){
     if(!r.ok){var d=await r.json();throw new Error(d.error||'failed');}
     ceLoadTemplates();
   }catch(e){alert('Could not save: '+e.message);}
+}
+
+
+/* ═══════════ HOME DRILL-DOWNS ═══════════ */
+function closeDrill(){document.getElementById('drillpn').style.right='-560px';}
+async function openDrill(kind,val,title){
+  var pn=document.getElementById('drillpn'); pn.style.right='0';
+  document.getElementById('drill-title').textContent=title||kind;
+  var body=document.getElementById('drill-body'); body.innerHTML='<div class="em">Loading…</div>';
+  try{
+    var url=B+'/admin-home?detail='+encodeURIComponent(kind)+(val?'&val='+encodeURIComponent(val):'');
+    var d=await fetch(url).then(function(r){return r.json();});
+    var rows=d.rows||[];
+    if(!rows.length){body.innerHTML='<div class="em" style="padding:1.5rem">No records yet.</div>';return;}
+    body.innerHTML='<div style="padding:.25rem 0">'+rows.map(function(r){
+      var when=r.at?new Date(r.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+      var clickable=r.user_id?' style="cursor:pointer" onclick="closeDrill();openUserPanel(\''+r.user_id+'\')"':'';
+      return '<div class="rr" '+clickable+'style="grid-template-columns:1fr auto;border-bottom:1px solid var(--border);padding:.6rem 1.25rem">'+
+        '<div style="min-width:0"><div style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.name||'—')+(r.user_id?' ›':'')+'</div>'+
+        (r.detail?'<div style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.detail)+'</div>':'')+'</div>'+
+        '<div style="color:var(--muted2);font-size:.7rem;white-space:nowrap">'+when+'</div></div>';
+    }).join('')+'</div>'+
+    '<div style="padding:.75rem 1.25rem;font-size:.7rem;color:var(--muted2)">'+rows.length+' record'+(rows.length===1?'':'s')+(rows.length>=200?' (showing latest 200)':'')+'</div>';
+  }catch(e){body.innerHTML='<div class="em" style="color:var(--red);padding:1.5rem">Error: '+x(e.message)+'</div>';}
 }
 
 </script>

@@ -52,6 +52,7 @@ exports.handler = async function (event) {
     const now      = Date.now();
     const sevenAgoTs  = new Date(now - 7 * 86400000).toISOString();
     const sevenAgoDay = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
+    const fourteenAgoTs = new Date(now - 14 * 86400000).toISOString();
 
     const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes] = await Promise.all([
       supabase.from("user_profiles")
@@ -61,8 +62,8 @@ exports.handler = async function (event) {
         .limit(5000),
       supabase.from("engagement_events")
         .select("event_type,user_id,created_at")
-        .gte("created_at", sevenAgoTs)
-        .limit(100000),
+        .gte("created_at", fourteenAgoTs)
+        .limit(200000),
       supabase.from("daily_checkins")
         .select("user_id,mood,checkin_date")
         .gte("checkin_date", sevenAgoDay)
@@ -113,27 +114,40 @@ exports.handler = async function (event) {
       activeProgramByUser[r.user_id] = { title, days_completed: r.days_completed ?? r.day_completed ?? 0, duration_days: total };
     });
 
-    // Week event tallies + per-user latest email/open times for win-back detection
+    // 14-day event scan: current-7d tallies, prior-7d tallies (for deltas), and
+    // per-day series (for sparklines/trend charts). Win-back uses current-7d only.
+    const sevenAgo = new Date(now - 7 * 86400000);
+    const dayList = [];
+    for (let i = 13; i >= 0; i--) dayList.push(new Date(now - i * 86400000).toISOString().slice(0, 10));
+    const serApp = {}, serRiley = {}, serBrief = {};
+    dayList.forEach(d => { serApp[d] = 0; serRiley[d] = 0; serBrief[d] = 0; });
     let briefOpens7d = 0, rileyMsgs7d = 0, appOpens7d = 0, reengEmails7d = 0;
+    let briefOpensPrev = 0, rileyMsgsPrev = 0, appOpensPrev = 0;
     const lastEmailAt = {}, lastOpenAt = {};
     for (const e of events) {
-      if (e.event_type === "brief_opened")  briefOpens7d++;
-      else if (e.event_type === "riley_message") rileyMsgs7d++;
-      else if (e.event_type === "app_open")  { appOpens7d++; const t = new Date(e.created_at); if (!lastOpenAt[e.user_id] || t > lastOpenAt[e.user_id]) lastOpenAt[e.user_id] = t; }
-      else if (e.event_type === "reengagement_email_sent") { reengEmails7d++; const t = new Date(e.created_at); if (!lastEmailAt[e.user_id] || t > lastEmailAt[e.user_id]) lastEmailAt[e.user_id] = t; }
+      const t = new Date(e.created_at), cur = t >= sevenAgo, dk = (e.created_at || "").slice(0, 10);
+      if (e.event_type === "brief_opened")  { if (cur) briefOpens7d++; else briefOpensPrev++; if (serBrief[dk] !== undefined) serBrief[dk]++; }
+      else if (e.event_type === "riley_message") { if (cur) rileyMsgs7d++; else rileyMsgsPrev++; if (serRiley[dk] !== undefined) serRiley[dk]++; }
+      else if (e.event_type === "app_open")  { if (cur) { appOpens7d++; if (!lastOpenAt[e.user_id] || t > lastOpenAt[e.user_id]) lastOpenAt[e.user_id] = t; } else appOpensPrev++; if (serApp[dk] !== undefined) serApp[dk]++; }
+      else if (e.event_type === "reengagement_email_sent") { if (cur) { reengEmails7d++; if (!lastEmailAt[e.user_id] || t > lastEmailAt[e.user_id]) lastEmailAt[e.user_id] = t; } }
     }
+    const mkSeries = (obj) => dayList.map(d => ({ label: d.slice(5), n: obj[d] }));
     // Win-backs: emailed in the window, then opened the app AFTER the email
     let winBacks7d = 0;
     for (const uid in lastEmailAt) { if (lastOpenAt[uid] && lastOpenAt[uid] > lastEmailAt[uid]) winBacks7d++; }
 
     // Per-user rows + aggregate state counts
     const counts = { active: 0, cooling: 0, dormant: 0, new: 0 };
-    let newSignups7d = 0, totalBriefOpens = 0;
+    let newSignups7d = 0, newSignupsPrev = 0, totalBriefOpens = 0;
 
     const rows = users.map(u => {
       const state = stateFromLastActive(u.last_active_at);
       counts[state] = (counts[state] || 0) + 1;
-      if (u.created_at && new Date(u.created_at) >= new Date(sevenAgoTs)) newSignups7d++;
+      if (u.created_at) {
+        const ct = new Date(u.created_at);
+        if (ct >= new Date(sevenAgoTs)) newSignups7d++;
+        else if (ct >= new Date(fourteenAgoTs)) newSignupsPrev++;
+      }
       totalBriefOpens += u.brief_open_count || 0;
       const soberDays = u.sobriety_date ? Math.max(0, Math.floor((now - new Date(u.sobriety_date)) / 86400000)) : null;
       const owned = ownedByUser[u.id] || [];
@@ -182,10 +196,19 @@ exports.handler = async function (event) {
       win_backs_7d: winBacks7d,
     };
 
+    // Prior-7d values for trend deltas + 14-day daily series for sparklines/trend chart.
+    const deltas = {
+      brief_opens_7d: briefOpensPrev,
+      riley_msgs_7d: rileyMsgsPrev,
+      app_opens_7d: appOpensPrev,
+      new_signups_7d: newSignupsPrev,
+    };
+    const series_14d = { app_opens: mkSeries(serApp), riley: mkSeries(serRiley), brief: mkSeries(serBrief) };
+
     return {
       statusCode: 200,
       headers: { ...CORS, "Content-Type": "application/json" },
-      body: JSON.stringify({ aggregate, users: rows, needs_attention }),
+      body: JSON.stringify({ aggregate, deltas, series_14d, users: rows, needs_attention }),
     };
 
   } catch (err) {

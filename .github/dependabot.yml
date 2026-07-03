@@ -1,0 +1,20 @@
+# Dependabot — automatic dependency + security-update PRs.
+# GitHub also surfaces vulnerable-dependency alerts once this is on the default branch.
+version: 2
+updates:
+  # npm — Netlify functions use @supabase/supabase-js, etc.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "deps"
+
+  # Keep any GitHub Actions we add pinned + patched.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

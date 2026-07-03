@@ -55,8 +55,9 @@ exports.handler = async function (event) {
 
     // Resolve user_id: from body, query string, or auth token
     let userId = null;
+    let previewTier = null;   // admin tier-preview (honored only for admins, below)
     if (event.body) {
-      try { userId = JSON.parse(event.body).user_id; } catch (_) {}
+      try { const _b = JSON.parse(event.body); userId = _b.user_id; previewTier = _b.preview_tier || null; } catch (_) {}
     }
     if (!userId && event.queryStringParameters) {
       userId = event.queryStringParameters.user_id;
@@ -96,10 +97,17 @@ exports.handler = async function (event) {
       const { data: prof } = await sb.from('user_profiles').select('is_admin').eq('id', userId).maybeSingle();
       isAdmin = !!(prof && prof.is_admin === true);
       if (isAdmin) {
-        try { const r = await sb.from('products').select('product_key'); (r.data || []).forEach(p => owned.add(p.product_key)); } catch (_) {}
-        owned.add('coach'); owned.add('companion');
-      }
-    } catch (_) {}
+        const PREVIEW = { guide: ['reset_free'], companion: ['reset_free', 'companion'], coach: ['reset_free', 'companion', 'coach'] };
+        if (PREVIEW[previewTier]) {
+          // Tier-preview (admin only): render EXACTLY as that tier would see it.
+          owned.clear(); PREVIEW[previewTier].forEach(p => owned.add(p));
+        } else {
+          previewTier = null;
+          try { const r = await sb.from('products').select('product_key'); (r.data || []).forEach(p => owned.add(p.product_key)); } catch (_) {}
+          owned.add('coach'); owned.add('companion');
+        }
+      } else { previewTier = null; }
+    } catch (_) { previewTier = null; }
 
     // Free-access mode (friends & family testing): grant everyone every product
     // so testers see the whole app for free. Toggled in the operator Pricing
@@ -108,7 +116,7 @@ exports.handler = async function (event) {
     let freeAccess = false;
     try {
       const { data: fa } = await sb.from('app_settings').select('value').eq('key', 'free_access_mode').maybeSingle();
-      if (fa && String(fa.value).toLowerCase() === 'true') {
+      if (fa && String(fa.value).toLowerCase() === 'true' && !previewTier) {
         freeAccess = true;
         // .eq('status','live') needs migration 033 (products.status). Fall back
         // to "every product" pre-migration so free-access mode still works.
@@ -178,6 +186,7 @@ exports.handler = async function (event) {
       products: [...owned],
       tier: currentTier(owned),
       admin: isAdmin,
+      preview_tier: previewTier,
       features,
     });
 

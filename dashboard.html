@@ -544,7 +544,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[];
     // Entitlement (for the inline Brief gating) — reuse the gating IIFE's sessionStorage cache.
     let ENT={tier:'guide',features:{}};
-    try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
+    try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;
@@ -778,7 +778,7 @@ async function loadExplore(){
     const cached=sessionStorage.getItem(k);
     if(cached){try{ent=JSON.parse(cached);}catch(e){}}
     if(!ent){
-      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID})});
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})});
       ent=await r.json(); try{sessionStorage.setItem(k,JSON.stringify(ent));}catch(e){}
     }
     const has=f=>ent&&ent.features&&ent.features[f]&&ent.features[f].access===true;
@@ -1236,7 +1236,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
     const k='ent_'+uid, c=sessionStorage.getItem(k);
     if(c){try{return JSON.parse(c);}catch(e){}}
     try{
-      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})});
       const d=await r.json(); sessionStorage.setItem(k,JSON.stringify(d)); return d;
     }catch(e){ return {products:[],tier:'guide',features:{}}; }
   }
@@ -1332,5 +1332,42 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 <script src="/track.js"></script>
 <!-- The "Chat with Riley" floating pill + embedded popup are now provided globally by pwa.js
      (on every page), so the old dashboard-only inline popup was removed to avoid a double intercept. -->
+<script>
+/* Admin tier-preview toggle — visible only to master admins (entitlements.admin).
+   Flips the whole home between Guide / Companion / Coach by re-fetching entitlements
+   with a preview_tier (honored server-side for admins only). */
+(function(){
+  window.setPreviewTier=function(t){
+    try{ Object.keys(sessionStorage).filter(function(k){return k.indexOf('ent_')===0;}).forEach(function(k){sessionStorage.removeItem(k);}); }catch(e){}
+    if(t){sessionStorage.setItem('admin_preview_tier',t);}else{sessionStorage.removeItem('admin_preview_tier');}
+    location.reload();
+  };
+  function render(ent){
+    if(!ent||!ent.admin||document.getElementById('admin-tier-bar'))return;
+    var cur=sessionStorage.getItem('admin_preview_tier')||'';
+    var bar=document.createElement('div');
+    bar.id='admin-tier-bar';
+    bar.style.cssText='position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:5000;display:flex;gap:3px;align-items:center;background:rgba(10,9,8,0.95);border:1px solid rgba(201,168,76,0.35);border-radius:999px;padding:4px 5px;box-shadow:0 10px 34px rgba(0,0,0,0.55)';
+    var lab=document.createElement('span');
+    lab.textContent='PREVIEW'; lab.style.cssText='font-size:8px;font-family:DM Mono,monospace;color:#c9a84c;letter-spacing:0.12em;padding:0 8px';
+    bar.appendChild(lab);
+    [['','Admin'],['guide','Guide'],['companion','Companion'],['coach','Coach']].forEach(function(t){
+      var on=cur===t[0];
+      var b=document.createElement('button');
+      b.textContent=t[1];
+      b.style.cssText='padding:6px 13px;border-radius:999px;border:none;cursor:pointer;font-size:11px;font-weight:600;font-family:DM Sans,sans-serif;background:'+(on?'#c9a84c':'transparent')+';color:'+(on?'#0a0908':'#f5f0e8');
+      b.addEventListener('click',function(){ window.setPreviewTier(t[0]); });
+      bar.appendChild(b);
+    });
+    document.body.appendChild(bar);
+  }
+  var tries=0, iv=setInterval(function(){
+    tries++;
+    var k=Object.keys(sessionStorage).find(function(x){return x.indexOf('ent_')===0;});
+    if(k){ try{ render(JSON.parse(sessionStorage.getItem(k))); }catch(e){} clearInterval(iv); }
+    else if(tries>40){ clearInterval(iv); }
+  },150);
+})();
+</script>
 </body>
 </html>

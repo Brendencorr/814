@@ -23,4 +23,10 @@ async function getUserIdFromToken(supabase, token) {
   }
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken };
+// Emit a canonical event (Doc 0 §9) to the `events` table — the single source for admin
+// metrics (Doc 3). Fail-open + non-blocking: analytics must NEVER break a user action.
+async function emitEvent(supabase, userId, name, props) {
+  try { await supabase.from('events').insert({ user_id: userId || null, name, props: props || {} }); } catch (e) {}
+}
+
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent };

@@ -10,7 +10,7 @@
  * Uses SERVICE_KEY to bypass RLS after verifying the user's JWT.
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, emitEvent } = require("./supabase-client");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -55,6 +55,7 @@ async function getSession(supabase, body) {
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     };
     await supabase.from("user_profiles").upsert(newProfile);
+    emitEvent(supabase, user.id, "signup_guide", {});   // Doc 0 §9 — a new Guide account
     // v4 pricing — grantGuideOnSignup(): every new account gets Riley Guide
     // immediately, no purchase needed. (entitlements.js also defends against
     // any signup path that doesn't reach this function, so this is belt-and-

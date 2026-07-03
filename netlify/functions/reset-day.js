@@ -10,7 +10,7 @@
  * reset_days / reset_day_variants are public content; progress + enrollment are owner-scoped.
  * Model: claude-sonnet-4-6
  */
-const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 const CORS = {
@@ -74,6 +74,11 @@ exports.handler = async (event) => {
       const row = { user_id: userId, day_number: dayNum, updated_at: stamp };
       row[body.touch === "evening" ? "evening_done_at" : "morning_done_at"] = stamp;
       await supabase.from("reset_progress").upsert(row, { onConflict: "user_id,day_number" });
+      // Funnel events (Doc 0 §9): the ACTION completes the day; Day-7 action = reset complete.
+      if (body.touch !== "evening") {
+        emitEvent(supabase, userId, "reset_day_completed", { day: dayNum });
+        if (dayNum >= 7) emitEvent(supabase, userId, "reset_completed", {});
+      }
       return json(200, { ok: true });
     }
 

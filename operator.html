@@ -2119,7 +2119,7 @@ async function ceRefresh(){
 
 function ceRenderPerformance(d){
   var body=document.getElementById('ce-body');
-  var plats=d.platforms||[], top=d.top||[], bottom=d.bottom||[], learn=d.learnings;
+  var plats=d.platforms||[], top=d.top||[], bottom=d.bottom||[], learn=d.learnings, posts=d.posts||[];
   var html='';
   // learnings banner
   if(learn&&learn.digest){
@@ -2131,12 +2131,35 @@ function ceRenderPerformance(d){
     html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once Buffer is connected and posts go live, engagement + reach + clicks land here nightly — then Riley starts weighting new content toward what your audience responds to.</div>';
     body.innerHTML=html;return;
   }
-  // platform rollup cards
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem">';
+  // ── totals + engagement rate ──
+  var tReach=0,tEng=0,tClicks=0,tImpr=0;
+  posts.forEach(function(pp){tReach+=pp.reach||0;tEng+=pp.engagement||0;tClicks+=pp.clicks||0;tImpr+=pp.impressions||0;});
+  var base=tReach||tImpr||0;
+  var engRate=base?Math.round(tEng/base*100):0;
+  var palette=['var(--gold)','var(--sage)','var(--blue)','var(--red)','var(--gold2)'];
+  var platSegs=plats.map(function(pl,i){return {label:pl.platform,n:pl.engagement||0,color:palette[i%palette.length]};});
+  // hero: engagement-rate ring + engagement-by-platform distribution
+  html+='<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.5rem;margin-bottom:1rem;display:grid;grid-template-columns:auto 1fr;gap:1.8rem;align-items:center">'+
+    ring(engRate,'Engagement rate',tEng.toLocaleString()+' engagements on '+base.toLocaleString()+' '+(tReach?'reach':'impressions')+' · 30d','var(--gold)')+
+    '<div style="min-width:0"><div class="sh" style="margin:0 0 .55rem">Engagement by Platform</div>'+distBar(platSegs)+'</div>'+
+  '</div>';
+  // summary cards
+  html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin-bottom:1rem">'+
+    statCard({label:'Reach · 30d',value:tReach.toLocaleString(),color:'var(--gold)'})+
+    statCard({label:'Engagement · 30d',value:tEng.toLocaleString(),color:'var(--sage)'})+
+    statCard({label:'Link clicks · 30d',value:tClicks.toLocaleString(),color:'var(--blue)'})+
+    statCard({label:'Posts published',value:posts.length,color:'var(--gold)'})+
+  '</div>';
+  // engagement trend (posts bucketed by published day)
+  var dayList=[]; for(var i=29;i>=0;i--)dayList.push(new Date(Date.now()-i*86400000).toISOString().slice(0,10));
+  var byDay={}; dayList.forEach(function(dd){byDay[dd]=0;});
+  posts.forEach(function(pp){var dk=(pp.published_at||'').slice(0,10); if(byDay[dk]!==undefined)byDay[dk]+=pp.engagement||0;});
+  html+='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem"><div class="sh" style="margin:0 0 .2rem">Engagement · 30 days</div>'+svgBars(dayList.map(function(dd){return {label:dd.slice(5),n:byDay[dd]};}),'var(--gold)',null)+'</div>';
+  // per-platform richer cards
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.7rem;margin-bottom:1.25rem">';
   plats.forEach(function(pl){
-    html+='<div class="mc" style="margin:0"><div class="mn">'+x(pl.platform)+'</div>'+
-      '<div class="mv" style="font-size:26px">'+(pl.engagement||0)+'</div>'+
-      '<div class="ms">engagement · '+(pl.posts||0)+' posts · '+(pl.clicks||0)+' clicks</div></div>';
+    var er=pl.reach?Math.round(pl.engagement/pl.reach*100):0;
+    html+=statCard({label:pl.platform,value:(pl.engagement||0).toLocaleString(),color:'var(--sage)',sub:(pl.posts||0)+' posts · '+(pl.clicks||0)+' clicks · '+er+'% eng'});
   });
   html+='</div>';
   // top / bottom tables

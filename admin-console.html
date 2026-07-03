@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Metrics · The 8:14 Project</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#0a0908;color:#f5f0e8;min-height:100vh;padding:34px 22px}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-family:'DM Serif Display',serif;font-size:28px;margin-bottom:4px}
+.sub{font-size:11px;color:#8a8578;font-family:'DM Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:26px}
+.stars{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
+.star{background:#141210;border:1px solid rgba(201,168,76,0.22);border-radius:10px;padding:24px}
+.star-label{font-size:10px;font-family:'DM Mono',monospace;color:#c9a84c;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:10px}
+.star-val{font-family:'DM Serif Display',serif;font-size:46px;line-height:1;color:#f5f0e8}
+.star-target{font-size:11px;color:#8a8578;margin-top:8px}
+.star-detail{font-size:11px;color:#5a5450;margin-top:3px}
+.section-label{font-size:10px;font-family:'DM Mono',monospace;color:#8a8578;letter-spacing:0.16em;text-transform:uppercase;margin:26px 0 12px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#141210;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin-bottom:8px}
+.row-label{font-size:13px}
+.row-val{font-family:'DM Mono',monospace;font-size:15px;color:#c9a84c}
+.row-target{font-size:10px;color:#5a5450;margin-left:10px}
+.fstep{display:flex;justify-content:space-between;padding:11px 16px;background:#141210;border-left:2px solid #c9a84c;border-radius:4px;margin-bottom:6px}
+.err{color:#c98a4c;font-size:13px;margin-top:16px}
+a{color:#c9a84c}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Admin — Metrics</h1>
+  <div class="sub">Doc 3 · Phase 1 — the funnel, from the events table only</div>
+  <div id="content"><div style="color:#8a8578;font-size:13px">Loading…</div></div>
+</div>
+<script>
+function opKey(){ var k=sessionStorage.getItem('814_opkey')||''; if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(k)sessionStorage.setItem('814_opkey',k); } return k; }
+function vs(v,u){ return v==null?'—':(v+(u||'')); }
+async function load(){
+  var k=opKey();
+  if(!k){ document.getElementById('content').innerHTML='<div class="err">Operator key required. <a href="#" onclick="location.reload()">retry</a></div>'; return; }
+  try{
+    var r=await fetch('/.netlify/functions/admin-metrics',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({})});
+    if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); document.getElementById('content').innerHTML='<div class="err">Bad operator key. <a href="#" onclick="location.reload()">retry</a></div>'; return; }
+    var d=await r.json();
+    var h='<div class="stars">';
+    (d.northStars||[]).forEach(function(s){ h+='<div class="star"><div class="star-label">'+s.label+'</div><div class="star-val">'+vs(s.value,s.unit)+'</div><div class="star-target">Target '+s.target+'</div><div class="star-detail">'+(s.detail||'')+'</div></div>'; });
+    h+='</div>';
+    h+='<div class="section-label">Funnel</div>';
+    (d.funnel||[]).forEach(function(f){ h+='<div class="fstep"><span class="row-label">'+f.step+'</span><span class="row-val">'+f.count+'</span></div>'; });
+    h+='<div class="section-label">Supporting metrics</div>';
+    (d.rows||[]).forEach(function(x){ h+='<div class="row"><span class="row-label">'+x.label+'</span><span><span class="row-val">'+vs(x.value,x.unit)+'</span><span class="row-target">'+x.target+'</span></span></div>'; });
+    document.getElementById('content').innerHTML=h;
+  }catch(e){ document.getElementById('content').innerHTML='<div class="err">Failed to load metrics — check the operator key.</div>'; }
+}
+load();
+</script>
+</body>
+</html>

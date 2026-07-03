@@ -189,6 +189,28 @@
   to   = "/programs.html"
   status = 200
 
+# ── Legal / trust clean URLs (must come BEFORE the catch-all) ──
+[[redirects]]
+  from = "https://riley.eight14.us/privacy"
+  to   = "/privacy.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.eight14.us/terms"
+  to   = "/terms.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.eight14.us/disclaimer"
+  to   = "/disclaimer.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.eight14.us/safety"
+  to   = "/safety.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.eight14.us/contact"
+  to   = "/contact.html"
+  status = 200
+
 
 # ── Direct .html paths — force override needed since catch-all has force=true ──
 [[redirects]]

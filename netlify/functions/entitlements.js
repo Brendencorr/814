@@ -182,9 +182,33 @@ exports.handler = async function (event) {
       if (r) Object.assign(features[key], { remaining: r.remaining, limit: r.limit, period: r.period });
     }));
 
+    // 5. NEW (Doc 0 §7): resolve the user's PLAN + its entitlements from plan_entitlements.
+    //    Backward-compatible — {} until migration 042 seeds the tables; the existing `features`
+    //    gating is untouched. New surfaces (chat limit, DB-driven pricing) read these keys.
+    let plan = currentTier(owned) || 'guide';
+    let planEntitlements = {};
+    try {
+      // An active subscription in the new commerce tables wins (comps, weekend grants, paid).
+      // Skipped while admin-previewing a tier so the preview stays faithful.
+      if (!previewTier) {
+        const { data: subs } = await sb.from('subscriptions')
+          .select('plan_id, expires_at').eq('user_id', userId).eq('status', 'active');
+        const RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
+        const now = Date.now();
+        (subs || []).forEach(s => {
+          const live = !s.expires_at || new Date(s.expires_at).getTime() > now;
+          if (live && (RANK[s.plan_id] || 0) > (RANK[plan] || 0)) plan = s.plan_id;
+        });
+      }
+      const { data: pe } = await sb.from('plan_entitlements').select('key, value').eq('plan_id', plan);
+      (pe || []).forEach(r => { planEntitlements[r.key] = r.value; });
+    } catch (_) { /* plan tables not seeded yet → empty; app falls back to `features` */ }
+
     return json(200, {
       products: [...owned],
       tier: currentTier(owned),
+      plan,
+      entitlements: planEntitlements,
       admin: isAdmin,
       preview_tier: previewTier,
       features,

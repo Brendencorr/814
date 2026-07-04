@@ -495,6 +495,236 @@
   status = 200
   force = true
 
+# ===== meetriley.us mirror (rebrand) — host-specific, cannot affect eight14.us =====
+# apex -> marketing home; riley.* -> app; login.* -> login. Generated from the eight14 rules.
+[[redirects]]
+  from = "https://riley.meetriley.us/dashboard"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/dashboard/"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/brief"
+  to   = "/dashboard"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://riley.meetriley.us/brief/"
+  to   = "/dashboard"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://riley.meetriley.us/conversations"
+  to   = "/conversations.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/conversations/"
+  to   = "/conversations.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/tracker"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/tracker/"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/programs"
+  to   = "/programs.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/programs/"
+  to   = "/programs.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/workouts"
+  to   = "/workouts.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/workouts/"
+  to   = "/workouts.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/lifemap"
+  to   = "/lifemap.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/lifemap/"
+  to   = "/lifemap.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/nutrition"
+  to   = "/nutrition.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/nutrition/"
+  to   = "/nutrition.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/progress"
+  to   = "/progress.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/progress/"
+  to   = "/progress.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/sleep"
+  to   = "/sleep.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/sleep/"
+  to   = "/sleep.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/finance"
+  to   = "/finance.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/finance/"
+  to   = "/finance.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/calendar"
+  to   = "/calendar.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/calendar/"
+  to   = "/calendar.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/community"
+  to   = "/community.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/community/"
+  to   = "/community.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/journey"
+  to   = "/journey.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/journey/"
+  to   = "/journey.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/reset"
+  to   = "/reset.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/reset/"
+  to   = "/reset.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/onboarding"
+  to   = "/onboarding.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/onboarding/"
+  to   = "/onboarding.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/roadmap"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/roadmap/"
+  to   = "/tracker.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/chat"
+  to   = "/chat.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/chat/"
+  to   = "/chat.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/login"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/login/"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/signup"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/signup/"
+  to   = "/login.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/welcome"
+  to   = "/home.html"
+  status = 200
+
+[[redirects]]
+  from = "https://meetriley.us/"
+  to   = "/home.html"
+  status = 200
+
+[[redirects]]
+  from = "https://www.meetriley.us/"
+  to   = "/home.html"
+  status = 200
+
+[[redirects]]
+  from = "https://riley.meetriley.us/*"
+  to = "/riley-auth.html"
+  status = 200
+
+[[redirects]]
+  from = "https://login.meetriley.us/*"
+  to = "/login.html"
+  status = 200
+  force = true
+
 [[redirects]]
   from = "/"
   to = "/operator.html"

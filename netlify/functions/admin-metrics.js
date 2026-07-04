@@ -67,7 +67,14 @@ exports.handler = async (event) => {
       { step: "Upgraded",                 count: c("upgrade_completed") },
     ];
 
-    return json(200, { range: days ? days + "d" : "all", northStars, rows, funnel, counts: byName });
+    // Waitlist (Doc 3 Phase 3): who's waiting to buy, newest first. From waitlist_joined events
+    // (email/plan captured server-side by waitlist-join.js). Operator-only, like everything here.
+    const waitlist = E.filter((e) => e.name === "waitlist_joined")
+      .map((e) => ({ email: (e.props && e.props.email) || null, plan: (e.props && e.props.plan) || null, at: e.created_at }))
+      .sort((a, b) => (a.at < b.at ? 1 : -1))
+      .slice(0, 100);
+
+    return json(200, { range: days ? days + "d" : "all", northStars, rows, funnel, waitlist, counts: byName });
   } catch (e) {
     console.error("admin-metrics:", e.message);
     return json(500, { error: "Failed to compute metrics" });

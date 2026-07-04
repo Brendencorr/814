@@ -2370,6 +2370,10 @@ function mxRenderMetrics(d){
   (d.funnel||[]).forEach(function(f){ h+='<div style="display:flex;justify-content:space-between;padding:.55rem .85rem;background:var(--surface);border-left:2px solid var(--gold);border-radius:4px;margin-bottom:.35rem"><span style="font-size:.82rem;color:var(--ink2)">'+x(f.step)+'</span><span style="font-family:DM Mono,monospace;font-size:.9rem;color:var(--gold)">'+x(String(f.count))+'</span></div>'; });
   h+='<div class="lbl" style="margin:1.1rem 0 .5rem">Supporting metrics</div>';
   (d.rows||[]).forEach(function(r){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.35rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(r.label)+'</span><span><span style="font-family:DM Mono,monospace;font-size:.85rem;color:var(--gold)">'+(r.value==null?'&mdash;':x(String(r.value)))+x(r.unit||'')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.4rem">'+x(r.target||'')+'</span></span></div>'; });
+  var wl=d.waitlist||[];
+  h+='<div class="lbl" style="margin:1.1rem 0 .5rem">Waitlist &middot; '+wl.length+(wl.length===100?'+':'')+'</div>';
+  if(!wl.length){ h+='<div style="font-size:.78rem;color:var(--muted2);padding:.3rem .2rem">No signups yet.</div>'; }
+  else { wl.forEach(function(w){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.3rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(w.email||'(no email)')+'</span><span><span style="font-family:DM Mono,monospace;font-size:.72rem;color:var(--gold)">'+x(w.plan||'—')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.5rem">'+x(String(w.at||'').slice(0,10))+'</span></span></div>'; }); }
   return h;
 }
 var mxCurrent=null;
@@ -2384,6 +2388,14 @@ function mxPost(action,extra){
     .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Done — "'+action+'" applied. Refreshing…','var(--green)'); mxLookup(mxCurrent.id); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
 }
+function mxRegenLetter(){
+  if(!mxCurrent)return; var k=opKey(); if(!k){ mxStatus('Operator key required.','var(--red)'); return; }
+  mxStatus('Regenerating letter…');
+  fetch(B+'/week-one-letter',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'regenerate',user_id:mxCurrent.id})})
+    .then(function(r){ if(r.status===401){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Letter regenerated'+(res.d&&res.d.is_fallback?' (fallback — sparse data)':'')+'.','var(--green)'); })
+    .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
+}
 function mxOp(op){
   if(!mxCurrent)return; var who=mxCurrent.name||mxCurrent.email||mxCurrent.id;
   if(op==='comp-companion'){ if(confirm('Comp '+who+' to Companion? (free, no expiry)')) mxPost('comp',{plan_id:'companion'}); }
@@ -2392,6 +2404,7 @@ function mxOp(op){
   else if(op==='alc'){ var sel=document.getElementById('mx-alc'); var p=sel?sel.value:'sobriety'; if(confirm('Grant '+who+' the "'+p+'" program? (free)')) mxPost('grant_alc',{program_id:p}); }
   else if(op==='credit'){ if(confirm('Issue '+who+' a $8.14 credit? (90-day expiry)')) mxPost('credit',{}); }
   else if(op==='reset'){ if(confirm('RESET '+who+'’s 8:14 Reset back to Day 1?\n\nThis deletes their Reset progress and persona. Cannot be undone.')) mxPost('reset_reset',{}); }
+  else if(op==='regen'){ if(confirm('Regenerate '+who+'’s Week One Letter?\n\nThe current letter is replaced (audit-logged). Use only if a letter came out wrong.')) mxRegenLetter(); }
 }
 function mxRenderMember(u){
   mxCurrent=u;
@@ -2412,6 +2425,7 @@ function mxRenderMember(u){
     +'<select id="mx-alc" style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.5rem .6rem;font-family:\'DM Sans\',sans-serif;font-size:.78rem"><option value="sobriety">sobriety</option><option value="grief">grief</option><option value="body_rebuild">body_rebuild</option></select>'
     +'<button class="bo" data-mxop="alc">Grant à la carte</button>'
     +'<button class="bo" data-mxop="credit">Issue $8.14 credit</button>'
+    +'<button class="bo" data-mxop="regen">Regenerate letter</button>'
     +'<button class="bo" style="border-color:var(--red);color:var(--red)" data-mxop="reset">Reset the 8:14 Reset</button>'
     +'</div></div>';
   var box=document.getElementById('mx-member'); box.innerHTML=h;

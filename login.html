@@ -54,7 +54,9 @@ var _sb = window.supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-var DEST = 'https://riley.eight14.us/dashboard';
+// Origin-aware so sign-in works on any domain (eight14 during migration, meetriley after):
+// login.<base> → the app at riley.<base>/dashboard. Falls back to eight14 if the host is unexpected.
+var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/dashboard' : 'https://riley.eight14.us/dashboard'; })();
 
 // If already logged in, go straight to dashboard
 _sb.auth.getSession().then(function(r) {

@@ -722,7 +722,7 @@ async function signInWithGoogle() {
   try {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://riley.eight14.us/riley-auth.html' },
+      options: { redirectTo: window.location.origin + '/riley-auth.html' }, // origin-aware (eight14 + meetriley)
     });
     if (error) throw error;
   } catch (err) {

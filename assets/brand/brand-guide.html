@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riley — Brand Guidelines</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a0908; --ink2:#141210; --ink3:#1c1a18; --ink4:#252019;
+    --parchment:#f5f0e8; --smoke:#8a8578; --smoke2:#5a5450;
+    --gold:#c9a84c; --gold-light:#e8d5a3; --gold-deep:#a8842f; --gold-glow:rgba(201,168,76,0.4);
+    --sage:#4aad72; --sage-deep:#3a7c56; --blue:#4a7ab0; --red:#e0685c;
+    --line:rgba(245,240,232,0.09);
+    --maxw:1000px;
+  }
+  *{margin:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--ink);color:var(--parchment);font-family:'DM Sans',sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+  @keyframes breathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+
+  /* ── shared ── */
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px}
+  .eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+  .serif{font-family:'DM Serif Display',serif;font-weight:400}
+  h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(28px,4vw,40px);letter-spacing:-.01em;color:var(--parchment);margin:14px 0 6px}
+  h3{font-family:'DM Serif Display',serif;font-weight:400;font-size:20px;color:var(--parchment);margin-bottom:10px}
+  p{color:#cfc8ba;font-size:15px;max-width:62ch}
+  section{padding:70px 0;border-top:1px solid var(--line)}
+  .sec-intro{color:var(--smoke);font-size:15px;max-width:60ch;margin-bottom:34px}
+  .gold{color:var(--gold)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .card{background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:26px}
+  .muted{color:var(--smoke);font-size:13px}
+  .mono{font-family:'DM Mono',monospace}
+  a{color:var(--gold)}
+  @media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr}}
+
+  /* ── the mark (reusable, sized by --u) ── */
+  .orb{border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold-light),var(--gold) 55%,var(--gold-deep));animation:breathe 5s ease-in-out infinite;flex-shrink:0}
+  /* hero lockup: orb + "I'm Riley." stacked */
+  .lockup-hero{display:flex;flex-direction:column;align-items:center;gap:var(--gap,28px)}
+  .lockup-hero .orb{width:var(--sun,150px);height:var(--sun,150px);box-shadow:0 0 var(--glow,80px) var(--gold-glow)}
+  .lockup-hero .word{font-family:'DM Serif Display',serif;font-size:var(--fs,44px);color:#fff;line-height:1}
+  .lockup-hero .word .p{color:var(--gold)}
+  /* nav lockup: sun + "Riley." inline */
+  .lockup-nav{display:inline-flex;align-items:center;font-family:'DM Serif Display',serif;color:#fff;line-height:1;font-size:var(--fs,34px)}
+  .lockup-nav .orb{width:calc(var(--fs,34px)*0.84);height:calc(var(--fs,34px)*0.84);box-shadow:0 0 calc(var(--fs,34px)*0.47) var(--gold-glow);margin-right:calc(var(--fs,34px)*0.34)}
+  .lockup-nav .p{color:var(--gold)}
+
+  /* stage for showing a logo on dark */
+  .stage{background:radial-gradient(circle at 38% 34%,rgba(201,168,76,0.10),var(--ink) 70%);border:1px solid var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;padding:48px;min-height:220px}
+
+  /* color swatches */
+  .swatch{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--ink2)}
+  .swatch .chip{height:88px}
+  .swatch .meta{padding:12px 14px}
+  .swatch .nm{font-size:13px;color:var(--parchment);font-weight:600}
+  .swatch .hex{font-family:'DM Mono',monospace;font-size:11px;color:var(--smoke);margin-top:3px;text-transform:uppercase}
+  .swatch .role{font-size:11px;color:var(--smoke2);margin-top:6px;line-height:1.4}
+  .swgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:720px){.swgrid{grid-template-columns:repeat(2,1fr)}}
+
+  /* do / don't */
+  .dd{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media(max-width:720px){.dd{grid-template-columns:repeat(2,1fr)}}
+  .dd .box{background:var(--ink2);border:1px solid var(--line);border-radius:10px;height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+  .dd .tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-top:8px;display:flex;align-items:center;gap:6px}
+  .dd .no{color:var(--red)} .dd .yes{color:var(--sage)}
+
+  /* type specimen */
+  .type-row{display:flex;align-items:baseline;gap:18px;padding:16px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .type-row .lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke);text-transform:uppercase;letter-spacing:.14em;width:120px;flex-shrink:0}
+
+  /* code */
+  code,pre{font-family:'DM Mono',monospace;font-size:12.5px;color:var(--gold-light)}
+  pre{background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;overflow:auto;color:#cfc8ba;line-height:1.7}
+
+  /* cover */
+  .cover{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px 32px;background:radial-gradient(circle at 50% 42%,rgba(201,168,76,0.08),var(--ink) 72%)}
+  .cover .word{font-family:'DM Serif Display',serif;font-size:clamp(34px,6vw,56px);color:#fff}
+  .cover .word .p{color:var(--gold)}
+  .cover .sub{color:var(--smoke);margin-top:26px;font-size:15px;max-width:52ch}
+  .divider-note{font-family:'DM Mono',monospace;font-size:10px;color:var(--smoke2);letter-spacing:.18em;text-transform:uppercase;margin-top:40px}
+</style>
+</head>
+<body>
+
+<!-- ══ COVER ══ -->
+<div class="cover">
+  <div class="eyebrow" style="margin-bottom:34px">Brand Guidelines · v1 · 2026</div>
+  <div class="lockup-hero" style="--sun:132px;--fs:clamp(34px,6vw,54px);--glow:70px;--gap:26px">
+    <div class="orb"></div>
+    <div class="word">I&rsquo;m&nbsp;Riley<span class="p">.</span></div>
+  </div>
+  <div class="sub">The visual system for Riley — a whole-person companion for the hard chapters: grief, recovery, burnout, overwhelm. Warm, honest, and quietly alive.</div>
+  <div class="divider-note">↓ Logo · Color · Type · Motion · Voice</div>
+</div>
+
+<div class="wrap">
+
+<!-- ══ 1. LOGO SUITE ══ -->
+<section id="logo">
+  <div class="eyebrow">01 — Logo Suite</div>
+  <h2>Two lockups, one light.</h2>
+  <p class="sec-intro">Everything is built around one mark: a glowing gold sun. It appears full-size as the <span class="gold">hero</span> and compact as the <span class="gold">nav</span> lockup. Both breathe. Nothing else is a logo.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">Primary · Hero</div>
+      <div class="stage" style="margin-top:14px">
+        <div class="lockup-hero" style="--sun:104px;--fs:34px;--glow:56px;--gap:20px">
+          <div class="orb"></div><div class="word">I&rsquo;m&nbsp;Riley<span class="p">.</span></div>
+        </div>
+      </div>
+      <p class="muted" style="margin-top:14px">Marketing, splash, app launch, social. Sun above the wordmark. Files: <span class="mono">meet-riley.png</span> (static) · <span class="mono">meet-riley-breathing.gif/.mp4/.html</span> (animated).</p>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">Secondary · Nav</div>
+      <div class="stage" style="margin-top:14px">
+        <div class="lockup-nav" style="--fs:34px"><div class="orb"></div>Riley<span class="p">.</span></div>
+      </div>
+      <p class="muted" style="margin-top:14px">Nav bars, app headers, sidebars, favicons. Sun to the left of the word. Files: <span class="mono">riley-nav-logo.png</span> (transparent) · <span class="mono">riley-nav-logo.html</span> (animated).</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:22px">
+    <div class="card">
+      <h3>The sun</h3>
+      <p>A single gold orb — sunrise at 8:14, the moment light returns. It is the whole identity distilled: warmth, hope, a new day. It gently <span class="gold">breathes</span> so the brand always feels alive, never static.</p>
+      <pre style="margin-top:14px">/* the mark */
+background: radial-gradient(circle at 40% 35%,
+   #e8d5a3, #c9a84c 55%, #a8842f);
+box-shadow: 0 0 80px rgba(201,168,76,0.40);</pre>
+    </div>
+    <div class="card">
+      <h3>The wordmark</h3>
+      <p>Set in <span class="gold">DM Serif Display</span>, white, with a single <span class="gold">gold period</span>. The period is the signature — a calm full stop, a moment of arrival. Hero says <em>"I&rsquo;m Riley."</em>; nav says <em>"Riley."</em></p>
+      <div style="display:flex;gap:24px;align-items:baseline;margin-top:18px;flex-wrap:wrap">
+        <span class="serif" style="font-size:40px;color:#fff">I&rsquo;m Riley<span class="gold">.</span></span>
+        <span class="serif" style="font-size:40px;color:#fff">Riley<span class="gold">.</span></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 2. CLEAR SPACE & SIZING ══ -->
+<section id="space">
+  <div class="eyebrow">02 — Clear Space &amp; Minimum Size</div>
+  <h2>Give it room to glow.</h2>
+  <p class="sec-intro">The glow is part of the logo — never crop it. Keep clear space of at least <span class="gold">one sun-diameter</span> on every side. The light must always fall on a dark or deep background.</p>
+  <div class="grid3">
+    <div class="card" style="text-align:center">
+      <div class="stage" style="padding:30px"><div class="lockup-nav" style="--fs:28px"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <p class="muted" style="margin-top:12px">Clear space ≥ the sun&rsquo;s diameter, all sides.</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="stage" style="padding:30px"><div class="lockup-nav" style="--fs:16px"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <p class="muted" style="margin-top:12px">Nav minimum: <span class="mono">~18px</span> sun / <span class="mono">120px</span> wide.</p>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="stage" style="padding:24px"><div class="lockup-hero" style="--sun:44px;--fs:15px;--glow:22px;--gap:9px"><div class="orb"></div><div class="word">I&rsquo;m Riley<span class="p">.</span></div></div></div>
+      <p class="muted" style="margin-top:12px">Hero minimum: <span class="mono">~96px</span> tall.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. MISUSE ══ -->
+<section id="misuse">
+  <div class="eyebrow">03 — Misuse</div>
+  <h2>What not to do.</h2>
+  <p class="sec-intro">The mark is finished. Scale it, don&rsquo;t rebuild it. These are the most common mistakes.</p>
+  <div class="dd">
+    <div>
+      <div class="box"><div class="lockup-nav" style="--fs:24px"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <div class="tag yes">✓ &nbsp;Correct — glow on dark</div>
+    </div>
+    <div>
+      <div class="box"><div style="border:1.5px solid var(--gold);border-radius:10px;padding:8px 12px"><div class="lockup-nav" style="--fs:22px"><div class="orb"></div>Riley<span class="p">.</span></div></div></div>
+      <div class="tag no">✕ &nbsp;No box or border</div>
+    </div>
+    <div>
+      <div class="box"><div class="lockup-nav" style="--fs:24px;transform:scaleX(1.6)"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <div class="tag no">✕ &nbsp;Don&rsquo;t stretch</div>
+    </div>
+    <div>
+      <div class="box" style="background:#f5f0e8"><div class="lockup-nav" style="--fs:24px"><div class="orb"></div><span style="color:#111">Riley</span><span style="color:var(--gold)">.</span></div></div>
+      <div class="tag no">✕ &nbsp;Not on light / low-contrast</div>
+    </div>
+    <div>
+      <div class="box"><div class="lockup-nav" style="--fs:24px"><div class="orb" style="background:radial-gradient(circle at 40% 35%,#a9c8e8,#4a7ab0 55%,#2d557f)"></div>Riley<span class="p" style="color:#4a7ab0">.</span></div></div>
+      <div class="tag no">✕ &nbsp;Don&rsquo;t recolor the sun</div>
+    </div>
+    <div>
+      <div class="box"><div class="lockup-nav" style="--fs:24px;font-family:Arial,sans-serif;font-weight:700"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <div class="tag no">✕ &nbsp;Don&rsquo;t change the font</div>
+    </div>
+    <div>
+      <div class="box"><div class="lockup-nav" style="--fs:24px;transform:rotate(-12deg)"><div class="orb"></div>Riley<span class="p">.</span></div></div>
+      <div class="tag no">✕ &nbsp;Don&rsquo;t rotate or tilt</div>
+    </div>
+    <div>
+      <div class="box"><div class="lockup-hero" style="--sun:30px;--fs:0;--glow:0;--gap:0"><div class="orb" style="box-shadow:none"></div></div></div>
+      <div class="tag no">✕ &nbsp;Don&rsquo;t drop the glow</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. COLOR ══ -->
+<section id="color">
+  <div class="eyebrow">04 — Color</div>
+  <h2>Ink, gold, and warmth.</h2>
+  <p class="sec-intro">Near-black ink lets the gold light glow. Gold is the single accent — used sparingly, it means warmth, hope, and "you matter." Parchment carries the words. Sage and blue support quietly.</p>
+  <div class="swgrid">
+    <div class="swatch"><div class="chip" style="background:#0a0908"></div><div class="meta"><div class="nm">Ink</div><div class="hex">#0A0908</div><div class="role">Primary background</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#141210"></div><div class="meta"><div class="nm">Ink 2</div><div class="hex">#141210</div><div class="role">Cards, raised surfaces</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#1c1a18"></div><div class="meta"><div class="nm">Ink 3</div><div class="hex">#1C1A18</div><div class="role">Borders, hover</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#f5f0e8"></div><div class="meta"><div class="nm">Parchment</div><div class="hex">#F5F0E8</div><div class="role">Primary text on dark</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#c9a84c"></div><div class="meta"><div class="nm">Gold</div><div class="hex">#C9A84C</div><div class="role">Primary accent · the period · CTAs</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#e8d5a3"></div><div class="meta"><div class="nm">Gold Light</div><div class="hex">#E8D5A3</div><div class="role">Sun highlight, hover</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#a8842f"></div><div class="meta"><div class="nm">Gold Deep</div><div class="hex">#A8842F</div><div class="role">Sun edge, shadow</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#8a8578"></div><div class="meta"><div class="nm">Smoke</div><div class="hex">#8A8578</div><div class="role">Secondary / muted text</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#4aad72"></div><div class="meta"><div class="nm">Sage</div><div class="hex">#4AAD72</div><div class="role">Growth, progress, success</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#4a7ab0"></div><div class="meta"><div class="nm">Blue</div><div class="hex">#4A7AB0</div><div class="role">Calm, info</div></div></div>
+    <div class="swatch"><div class="chip" style="background:#e0685c"></div><div class="meta"><div class="nm">Signal Red</div><div class="hex">#E0685C</div><div class="role">Care flags only, sparingly</div></div></div>
+    <div class="swatch"><div class="chip" style="background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f)"></div><div class="meta"><div class="nm">Sun Gradient</div><div class="hex">E8D5A3 → C9A84C → A8842F</div><div class="role">The orb only</div></div></div>
+  </div>
+</section>
+
+<!-- ══ 5. TYPOGRAPHY ══ -->
+<section id="type">
+  <div class="eyebrow">05 — Typography</div>
+  <h2>Serif for soul, sans for clarity.</h2>
+  <p class="sec-intro">Three faces, each with a job. Never substitute — all three are free on Google Fonts.</p>
+
+  <div class="card" style="margin-bottom:18px">
+    <div class="eyebrow" style="color:var(--smoke)">Display · DM Serif Display</div>
+    <div class="serif" style="font-size:clamp(30px,5vw,52px);color:#fff;margin-top:10px;line-height:1.1">You&rsquo;re not starting over<span class="gold">.</span></div>
+    <p class="muted" style="margin-top:12px">Headlines, the wordmark, big numbers, emotional moments. Warm, human, literary. Regular weight (400) + italic.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">Body · DM Sans</div>
+      <div style="margin-top:10px">
+        <div class="type-row"><span class="lbl">Light 300</span><span style="font-weight:300;font-size:20px">Whole-person wellbeing</span></div>
+        <div class="type-row"><span class="lbl">Regular 400</span><span style="font-weight:400;font-size:20px">Whole-person wellbeing</span></div>
+        <div class="type-row"><span class="lbl">Medium 500</span><span style="font-weight:500;font-size:20px">Whole-person wellbeing</span></div>
+        <div class="type-row"><span class="lbl">Bold 700</span><span style="font-weight:700;font-size:20px">Whole-person wellbeing</span></div>
+      </div>
+      <p class="muted" style="margin-top:12px">All UI, paragraphs, buttons. 16px base, line-height 1.6.</p>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">Labels · DM Mono</div>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:14px">
+        <span class="mono" style="font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold)">Eyebrow Label</span>
+        <span class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--smoke)">Metadata · 6:00 AM · Day 3</span>
+        <span class="mono" style="font-size:22px;color:var(--parchment)">8:14</span>
+      </div>
+      <p class="muted" style="margin-top:18px">Eyebrows, tags, timestamps, data. Always uppercase with wide tracking (0.16–0.28em).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 6. MOTION ══ -->
+<section id="motion">
+  <div class="eyebrow">06 — Motion</div>
+  <h2>It breathes.</h2>
+  <p class="sec-intro">The sun has one signature motion — a slow, calm breath. It signals a presence that&rsquo;s alive and unhurried. Use it wherever the mark can animate; never speed it up or make it bounce.</p>
+  <div class="grid2">
+    <div class="card" style="display:flex;align-items:center;justify-content:center;min-height:200px">
+      <div class="orb" style="width:120px;height:120px;box-shadow:0 0 64px var(--gold-glow)"></div>
+    </div>
+    <div class="card">
+      <h3>Breathe</h3>
+      <pre>@keyframes breathe{
+  0%, 100% { transform: scale(1);    opacity: .92 }
+  50%      { transform: scale(1.06); opacity: 1   }
+}
+/* 5s · ease-in-out · infinite */</pre>
+      <p class="muted" style="margin-top:12px">Duration 5s, ease-in-out, infinite. Scale 1 → 1.06, opacity 0.92 → 1. Slow enough to feel like a real breath.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7. VOICE ══ -->
+<section id="voice">
+  <div class="eyebrow">07 — Voice &amp; Tone</div>
+  <h2>How Riley speaks.</h2>
+  <p class="sec-intro">The words carry the brand as much as the light does. Riley is a steady friend who has been there — present, honest, never clinical.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3 class="gold">We are</h3>
+      <ul style="color:#cfc8ba;font-size:14.5px;line-height:1.9;padding-left:18px;margin-top:4px">
+        <li>Whole-person — grief, burnout, overwhelm, recovery. Recovery is <em>one chapter</em>, never the whole story.</li>
+        <li>Warm, honest, unhurried. A friend, not a clinician.</li>
+        <li>Trauma-aware and inclusive — we never assume anyone&rsquo;s gender, pronouns, faith, or that substances are their only struggle.</li>
+        <li>Hopeful without pretending everything is fine.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 style="color:var(--red)">We are not</h3>
+      <ul style="color:#cfc8ba;font-size:14.5px;line-height:1.9;padding-left:18px;margin-top:4px">
+        <li>Toxic positivity, hustle, or "good vibes only."</li>
+        <li>Preachy, clinical, or diagnostic. No medical claims.</li>
+        <li>Shaming, judgmental, or fear-based.</li>
+        <li>Sobriety-only. That framing erases most of who we serve.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px;border-left:3px solid var(--gold)">
+    <div class="eyebrow" style="color:var(--smoke)">In one line</div>
+    <div class="serif" style="font-size:24px;color:var(--parchment);font-style:italic;margin-top:10px;line-height:1.5">"You&rsquo;re not starting over. You&rsquo;re continuing — and you don&rsquo;t have to do it alone."</div>
+  </div>
+</section>
+
+<!-- ══ 8. APPLICATIONS ══ -->
+<section id="apply">
+  <div class="eyebrow">08 — Applications</div>
+  <h2>In the wild.</h2>
+  <div class="grid2">
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">Website nav</div>
+      <div style="background:linear-gradient(90deg,#0d0c0b,#141210);border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;margin-top:14px">
+        <div class="lockup-nav" style="--fs:24px"><div class="orb"></div>Riley<span class="p">.</span></div>
+        <div class="mono" style="font-size:11px;color:var(--smoke);letter-spacing:.1em">HOME · ABOUT · PROGRAMS</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="eyebrow" style="color:var(--smoke)">App icon</div>
+      <div style="display:flex;gap:16px;align-items:center;margin-top:14px">
+        <div style="width:76px;height:76px;border-radius:18px;background:radial-gradient(circle at 38% 32%,rgba(201,168,76,0.22),#141210 66%);display:flex;align-items:center;justify-content:center">
+          <div class="orb" style="width:38px;height:38px;box-shadow:0 0 20px var(--gold-glow)"></div>
+        </div>
+        <p class="muted">Sun centered on ink. <span class="mono">app-icon-512/192.png</span>, <span class="mono">apple-touch-icon.png</span>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 9. ASSETS ══ -->
+<section id="assets">
+  <div class="eyebrow">09 — Assets</div>
+  <h2>The files.</h2>
+  <p class="sec-intro">Everything ships in <span class="mono">8-14-logo-assets.zip</span>. Source lives in the repo at <span class="mono">assets/hero-logo/</span>.</p>
+  <div class="grid2">
+    <div class="card">
+      <h3>Hero — "I&rsquo;m Riley."</h3>
+      <ul class="muted" style="line-height:2;padding-left:18px">
+        <li><span class="mono">meet-riley.png</span> — 512×512 static</li>
+        <li><span class="mono">meet-riley-breathing.gif</span> — looping</li>
+        <li><span class="mono">meet-riley-breathing.mp4</span> — video</li>
+        <li><span class="mono">meet-riley-animated.html</span> — live</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Nav — "Riley."</h3>
+      <ul class="muted" style="line-height:2;padding-left:18px">
+        <li><span class="mono">riley-nav-logo.png</span> — transparent, 568×258</li>
+        <li><span class="mono">riley-nav-logo.html</span> — live / breathing</li>
+        <li><span class="mono">app-icon-512.png · app-icon-192.png</span></li>
+        <li><span class="mono">apple-touch-icon.png</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer style="padding:50px 0 70px;text-align:center;border-top:1px solid var(--line)">
+  <div class="lockup-nav" style="--fs:22px"><div class="orb"></div>Riley<span class="p">.</span></div>
+  <div class="mono" style="font-size:10px;color:var(--smoke2);letter-spacing:.2em;text-transform:uppercase;margin-top:18px">Brand Guidelines · The 8:14 Project · 2026</div>
+</footer>
+
+</div>
+</body>
+</html>

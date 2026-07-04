@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Riley — horizontal nav logo (sun + "Riley.")</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;box-sizing:border-box}
+  body{background:#0a0908;min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+  /* EXACT live nav lockup (home.html .logo / .logo-sun), scaled 2x. Sun on the
+     left of "Riley." with a gold period. The sun "breathes" like the site.
+     To resize: everything is proportional to --u (base unit). */
+  .logo{
+    --u: 32px;                         /* = live font-size; scale this only */
+    display:inline-flex; align-items:center;
+    font-family:'DM Serif Display',serif; font-size:calc(var(--u)*2); color:#fff; line-height:1;
+  }
+  .logo .p{ color:#c9a84c; }           /* the gold period */
+  .logo-sun{
+    width:calc(var(--u)*1.6875); height:calc(var(--u)*1.6875); border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);
+    box-shadow:0 0 calc(var(--u)*0.94) rgba(201,168,76,0.5);
+    animation:breathe 5s ease-in-out infinite; flex-shrink:0; margin-right:calc(var(--u)*0.6875);
+  }
+  @keyframes breathe{ 0%,100%{ transform:scale(1); opacity:0.92 } 50%{ transform:scale(1.06); opacity:1 } }
+</style></head><body>
+  <div class="logo"><span class="logo-sun"></span>Riley<span class="p">.</span></div>
+</body></html>

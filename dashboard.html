@@ -435,7 +435,7 @@ let ALERTS=[];
 async function loadClientAlerts(){
   if(!UID)return;
   try{
-    const r=await fetch('/.netlify/functions/client-alerts?user_id='+encodeURIComponent(UID));
+    const r=await fetch('/.netlify/functions/client-alerts',{headers:{Authorization:'Bearer '+(await authToken()||'')}});
     const d=await r.json();
     ALERTS=d.alerts||[];
     renderAlerts(d.unread||0);
@@ -467,7 +467,7 @@ function toggleAlerts(ev){
   var open=p.classList.toggle('open');
   if(open){
     var badge=document.getElementById('abadge');if(badge)badge.style.display='none';
-    if(UID){try{fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',user_id:UID})});}catch(e){}}
+    if(UID){try{authToken().then(function(t){fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',token:t})});});}catch(e){}}
   }
 }
 async function markAllAlertsRead(ev){
@@ -476,7 +476,7 @@ async function markAllAlertsRead(ev){
   ALERTS=ALERTS.map(function(a){var c=Object.assign({},a);c.read=true;return c;});
   renderAlerts(0);
   if(!UID)return;
-  try{await fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',user_id:UID})});}catch(e){}
+  try{await fetch('/.netlify/functions/client-alerts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'read_all',token:(await authToken())})});}catch(e){}
 }
 document.addEventListener('click',function(e){
   var p=document.getElementById('apanel');var b=document.getElementById('abell');

@@ -23,6 +23,13 @@
       return (j.user && j.user.id) || (j.currentSession && j.currentSession.user && j.currentSession.user.id) || null;
     } catch (e) { return null; }
   }
+  // Access token so the SERVER can verify identity (it no longer trusts a client-supplied user_id).
+  function token() {
+    try {
+      var j = JSON.parse(localStorage.getItem(SUPA_KEY) || "null");
+      return (j && (j.access_token || (j.currentSession && j.currentSession.access_token))) || null;
+    } catch (e) { return null; }
+  }
   function sid() {
     try {
       var s = localStorage.getItem("814_visitor");
@@ -43,7 +50,7 @@
   }
   function flush(useBeacon) {
     if (!queue.length) return;
-    var payload = JSON.stringify({ events: queue.splice(0, queue.length) });
+    var payload = JSON.stringify({ token: token(), events: queue.splice(0, queue.length) });
     try {
       if (useBeacon && navigator.sendBeacon) {
         navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: "application/json" }));

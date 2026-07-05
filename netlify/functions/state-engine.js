@@ -116,17 +116,16 @@ exports.handler = async function (event) {
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
   const { event_type, event_data, text } = body;
-  let userId = body.user_id || null;
   if (!event_type) return json(400, { error: "event_type is required" });
 
   let supabase;
   try { supabase = getSupabaseClient(); } catch (e) { return json(500, { error: "Server configuration error" }); }
 
-  // Verify token if provided; trust its user id over the body's.
-  if (body.token) {
-    try { const { data } = await supabase.auth.getUser(body.token); if (data?.user?.id) userId = data.user.id; } catch (_) {}
-  }
-  if (!userId) return json(400, { error: "user_id (or a valid token) is required" });
+  // SECURITY: identity comes ONLY from the verified token — never a client-supplied user_id. The
+  // service key bypasses RLS, so trusting body.user_id would let anyone forge another user's state/crisis.
+  let userId = null;
+  try { const { data } = await supabase.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
+  if (!userId) return json(401, { error: "Unauthorized" });
 
   const tier = isTier1(event_type) ? 1 : 2;
 

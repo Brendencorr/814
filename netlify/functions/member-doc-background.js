@@ -72,12 +72,14 @@ exports.handler = async function (event) {
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
   let body; try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON" }); }
   const docType = body.doc_type === "story" ? "story" : "manual";
-  let userId = body.user_id || null;
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return json(500, { error: "Server configuration error" });
   let sb; try { sb = getSupabaseClient(); } catch { return json(500, { error: "Server configuration error" }); }
-  if (body.token) { try { const { data } = await sb.auth.getUser(body.token); if (data?.user?.id) userId = data.user.id; } catch (_) {} }
-  if (!userId) return json(400, { error: "user_id required" });
+  // SECURITY: identity from the verified token only — never body.user_id (this reads a member's
+  // deepest personal data + overwrites their doc; a forged user_id would expose/clobber anyone's).
+  let userId = null;
+  try { const { data } = await sb.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
+  if (!userId) return json(401, { error: "Unauthorized" });
 
   const ctx = await gather(sb, userId);
   const nm = (ctx.profile.preferred_name || ctx.profile.full_name || "").split(" ")[0] || "friend";

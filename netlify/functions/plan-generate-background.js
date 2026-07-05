@@ -119,15 +119,17 @@ exports.handler = async function (event) {
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
   const plan_type = body.plan_type === "nutrition" ? "nutrition" : "workout";
-  let userId = body.user_id || null;
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return json(500, { error: "Server configuration error" });
 
   let sb;
   try { sb = getSupabaseClient(); } catch { return json(500, { error: "Server configuration error" }); }
-  if (body.token) { try { const { data } = await sb.auth.getUser(body.token); if (data?.user?.id) userId = data.user.id; } catch (_) {} }
-  if (!userId) return json(400, { error: "user_id (or a valid token) is required" });
+  // SECURITY: identity from the verified token only — never body.user_id (reads a member's data +
+  // overwrites their plan; a forged user_id would expose/clobber anyone's).
+  let userId = null;
+  try { const { data } = await sb.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
+  if (!userId) return json(401, { error: "Unauthorized" });
 
   const ctx = await gatherContext(sb, userId);
   const doneFlag = plan_type === "workout" ? "workout_intake_done" : "nutrition_intake_done";

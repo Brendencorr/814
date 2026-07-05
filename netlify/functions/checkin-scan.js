@@ -52,18 +52,16 @@ exports.handler = async function (event) {
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
 
   const text = (body.text || "").toString();
-  let userId = body.user_id || null;
   if (!text.trim()) return json(200, { level: 0, response: null });
 
   let supabase = null;
   try { supabase = getSupabaseClient(); } catch (e) { console.warn("supabase init failed:", e.message); }
 
-  // If a token is supplied, verify it and trust its user id over the body's.
+  // SECURITY: identity comes ONLY from the verified token — never body.user_id (else anyone could
+  // forge a crisis_log / operator alert about another member). No valid token → no user attribution.
+  let userId = null;
   if (supabase && body.token) {
-    try {
-      const { data } = await supabase.auth.getUser(body.token);
-      if (data?.user?.id) userId = data.user.id;
-    } catch (_) { /* fall back to body.user_id */ }
+    try { const { data } = await supabase.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
   }
 
   let crisis = { level: 0, matches: [] };

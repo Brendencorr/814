@@ -41,7 +41,7 @@ exports.handler = async function (event) {
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
 
-  let userId = body.user_id || null;
+  let userId = null;   // SECURITY: set from the verified token below — never body.user_id
   const { content_id, content_type } = body;
   const status   = STATUSES.includes(body.status) ? body.status : null;
   const feedback = FEEDBACKS.includes(body.feedback) ? body.feedback : null;
@@ -50,10 +50,8 @@ exports.handler = async function (event) {
   let supabase;
   try { supabase = getSupabaseClient(); } catch { return json(500, { error: "Server configuration error" }); }
 
-  if (body.token) {
-    try { const { data } = await supabase.auth.getUser(body.token); if (data?.user?.id) userId = data.user.id; } catch (_) {}
-  }
-  if (!userId) return json(400, { error: "user_id (or a valid token) is required" });
+  try { const { data } = await supabase.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
+  if (!userId) return json(401, { error: "Unauthorized" });
 
   const today = new Date().toISOString().slice(0, 10);
 

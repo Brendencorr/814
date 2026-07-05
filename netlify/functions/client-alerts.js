@@ -14,7 +14,7 @@ const { getSupabaseClient } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
@@ -82,18 +82,23 @@ exports.handler = async function (event) {
   try {
     const db = getSupabaseClient();
 
+    // SECURITY: identity from the verified Supabase token only — never a client-supplied user_id.
+    const verify = async (tok) => { try { const { data } = await db.auth.getUser(tok); return data?.user?.id || null; } catch (_) { return null; } };
+
     if (event.httpMethod === "GET") {
-      const userId = (event.queryStringParameters || {}).user_id;
-      if (!isUuid(userId)) return json(200, { alerts: [], unread: 0 }); // anon / logged-out → empty, never error
+      const tok = (event.headers.authorization || event.headers.Authorization || "").replace(/^Bearer\s+/i, "");
+      const userId = await verify(tok);
+      if (!userId) return json(200, { alerts: [], unread: 0 }); // anon / logged-out / bad token → empty, never error
       return await listAlerts(db, userId);
     }
 
     if (event.httpMethod === "POST") {
       let body = {};
       try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON" }); }
-      if (!isUuid(body.user_id)) return json(400, { error: "user_id required" });
-      if (body.action === "read")      return await markRead(db, body.user_id, body.alert_id);
-      if (body.action === "read_all")  return await markAllRead(db, body.user_id);
+      const userId = await verify(body.token);
+      if (!userId) return json(401, { error: "Unauthorized" });
+      if (body.action === "read")      return await markRead(db, userId, body.alert_id);
+      if (body.action === "read_all")  return await markAllRead(db, userId);
       return json(400, { error: "Unknown action" });
     }
 

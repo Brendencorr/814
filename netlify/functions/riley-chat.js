@@ -311,9 +311,16 @@ Before any goodbye, always ask: "Is there anything else I can help you with toda
 
 [USER_CONTEXT_PLACEHOLDER]`;
 
+// Time-of-day from the user's stored timezone (default America/Denver) so Riley greets + references
+// the day to match — never "how was your morning?" at night. (A client-sent local bucket can override
+// this later for travel accuracy; the dashboard check-in already uses device-local time.)
+function todFromTz(tz){ try{ const h=parseInt(new Intl.DateTimeFormat("en-US",{timeZone:tz||"America/Denver",hour:"numeric",hour12:false}).format(new Date()),10); return h<12?"morning":(h<17?"midday":"evening"); }catch(e){ return null; } }
+
 // ── User context builder ──────────────────────────────────────────────────────
 function buildUserContext(profile, clientData) {
   const lines = [];
+  const _tod = (clientData && ["morning","midday","evening"].includes(clientData.tod)) ? clientData.tod : todFromTz(profile && profile.timezone);
+  if (_tod) lines.push(`TIME OF DAY (their local time): it's the ${_tod === "midday" ? "afternoon" : _tod} for them right now. Greet and reference the day to match — never ask how their morning was in the evening; in the evening, gently catch up on their day and yesterday. Any daily check-in you weave in must fit this time.`);
 
   if (!profile) {
     lines.push("USER CONTEXT:\nThis visitor is not logged in.");
@@ -366,7 +373,8 @@ function buildUserContext(profile, clientData) {
       if (dl.sleep)      dailyBits.push(`slept: ${dl.sleep}`);
       if (dl.last_night) dailyBits.push(`last night: ${dl.last_night}`);
       if (dl.water === false)     dailyBits.push("hasn't had water yet today");
-      if (dl.breakfast === false) dailyBits.push("hasn't eaten this morning");
+      if (dl.breakfast === false) dailyBits.push("hasn't eaten yet today");
+      if (dl.meals)      dailyBits.push(`eaten today: ${dl.meals}`);
       if (dl.dinner)     dailyBits.push(`dinner last night: ${dl.dinner}`);
       if (dailyBits.length) lines.push(`TODAY'S DAILY CHECK-IN DETAIL: ${dailyBits.join("; ")}. Reference these naturally and gently if relevant — never interrogate.`);
     } else {

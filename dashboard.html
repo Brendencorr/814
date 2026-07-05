@@ -1032,15 +1032,33 @@ async function wbSave(){
 async function p2skipBaseline(){await markP2('wellness_baseline','skipped');closeP2();}
 
 // ── DAILY CHECK-IN — the daily learning heartbeat (once per 24h) ────────────
-const DAILY_Q=[
-  {key:'mood',type:'mood',q:"How are you feeling this morning?",sub:"No wrong answer — just honest."},
-  {key:'sleep',type:'choice',q:"How did you sleep?",opts:[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']]},
-  {key:'last_night',type:'choice',q:"How was last night?",opts:[['hard','Hard'],['quiet','Quiet'],['good','Good'],['great','Great']]},
-  {key:'water',type:'yn',q:"Had any water yet today?"},
-  {key:'breakfast',type:'yn',q:"Eaten anything this morning?"},
-  {key:'dinner',type:'text',q:"What did you have for dinner last night?",ph:"No judgment — just curious.",optional:true},
-  {key:'note',type:'text',q:"Anything on your mind today?",ph:"As much or as little as you want.",optional:true}
-];
+// Day-aware daily check-in: the questions move with the user's LOCAL time of day, so an 11pm
+// login never gets a morning script. timeOfDay() matches the greeting thresholds (see line ~518).
+function timeOfDay(){ const h=new Date().getHours(); return h<12?'morning':(h<17?'midday':'evening'); }
+const DAILY_SETS={
+  morning:[
+    {key:'mood',type:'mood',q:"How are you feeling this morning?",sub:"No wrong answer — just honest."},
+    {key:'sleep',type:'choice',q:"How did you sleep?",opts:[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']]},
+    {key:'water',type:'yn',q:"Had any water yet today?"},
+    {key:'breakfast',type:'yn',q:"Eaten anything yet this morning?"},
+    {key:'note',type:'text',q:"Anything on your mind today?",ph:"As much or as little as you want.",optional:true}
+  ],
+  midday:[
+    {key:'mood',type:'mood',q:"How's your day going so far?",sub:"No wrong answer — just honest."},
+    {key:'sleep',type:'choice',q:"How did you sleep last night?",opts:[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']]},
+    {key:'water',type:'yn',q:"Staying hydrated today?"},
+    {key:'meals',type:'text',q:"What have you eaten so far today?",ph:"No judgment — just curious.",optional:true},
+    {key:'note',type:'text',q:"Anything on your mind?",ph:"As much or as little as you want.",optional:true}
+  ],
+  evening:[
+    {key:'mood',type:'mood',q:"How was your day?",sub:"Let's catch up on it — no wrong answer."},
+    {key:'sleep',type:'choice',q:"How did you sleep last night?",opts:[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']]},
+    {key:'breakfast',type:'yn',q:"Did you get a good breakfast today?"},
+    {key:'dinner',type:'text',q:"What did you have for dinner?",ph:"No judgment — just curious.",optional:true},
+    {key:'note',type:'text',q:"Anything on your mind tonight?",ph:"As much or as little as you want.",optional:true}
+  ]
+};
+let DAILY_Q=DAILY_SETS.morning; // repointed to the current bucket when the check-in opens
 let DC={};
 async function loadDailyCheckin(){
   try{
@@ -1050,7 +1068,7 @@ async function loadDailyCheckin(){
     const {data:ci}=await SB.from('daily_checkins').select('checkin_completed').eq('user_id',UID).eq('checkin_date',TODAY).maybeSingle();
     if(ci&&ci.checkin_completed)return false;                            // already completed today
     sessionStorage.setItem('dc_seen_'+UID,TODAY);
-    DC={};dcShow(0);return true;
+    DC={};DAILY_Q=DAILY_SETS[timeOfDay()];dcShow(0);return true;   // day-aware question set
   }catch(e){return false;}
 }
 function dcShow(i){

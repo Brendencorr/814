@@ -254,6 +254,17 @@ Return ONLY valid JSON with exactly these 11 keys — no other text:
 
   } catch (e) {
     console.error("daily-brief:", e.message);
-    return { statusCode: 500, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ error: e.message }) };
+    // Non-fatal: a transient Claude/Supabase hiccup must NEVER blank the member's Home. Serve a
+    // warm generic brief with 200 instead of a 500 (Supabase failures are non-fatal by project rule).
+    const modules = {
+      riley_note:        "You came back today. That matters.",
+      mood_note:         "A new day. That takes something.",
+      focus:             "One step forward",
+      quote:             "Progress is not linear. It is persistent.",
+      reflection_prompt: "What would make today feel worth it?",
+      action:            "Drink a glass of water and take three slow breaths.",
+    };
+    return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" },
+      body: JSON.stringify({ brief: { modules, total_modules: Object.keys(modules).length, completed_modules: 0, completion: {} }, cached: false, fallback: true }) };
   }
 };

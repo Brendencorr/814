@@ -151,14 +151,18 @@ exports.handler = async function () {
         if (!prof || !prof.email) { result.skipped++; continue; }
 
         const email = buildFollowup(nextStage, prof);
-        const r = await sendEmail(prof.email, email);
-        if (r.skipped) { result.skipped++; continue; } // no provider key yet
-
-        await supabase.from("crisis_log").update({
+        if (!process.env.RESEND_API_KEY) { result.skipped++; continue; } // no provider — don't advance; retry when configured
+        // Advance the stage FIRST, conditional on the stage we read. This makes the follow-up
+        // idempotent: a crash/timeout after sending never re-sends the same stage, and two
+        // overlapping runs can't both send. A rare missed send is far kinder than a duplicate
+        // "just checking in" email to someone in crisis.
+        const { data: adv } = await supabase.from("crisis_log").update({
           followup_stage:   nextStage,
           last_followup_at: new Date().toISOString(),
           resolved:         nextStage >= 4,
-        }).eq("id", row.id);
+        }).eq("id", row.id).eq("followup_stage", row.followup_stage || 0).select("id");
+        if (!adv || !adv.length) continue; // another run already advanced this row — don't re-send
+        await sendEmail(prof.email, email);
         result.sent++;
       } catch (e) {
         result.errors++;

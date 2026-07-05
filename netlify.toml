@@ -186,9 +186,13 @@
   force = true
 
 [[redirects]]
+  # TEMP (rebrand cutover): admin.meetriley.us SSL cert is still provisioning, so
+  # keep the operator dashboard on admin.eight14.us for now — identical to current
+  # production behavior, zero breakage. Once the cert is valid, restore the forward
+  # to finish the admin cutover:  to = "https://admin.meetriley.us/:splat" status=301
   from = "https://admin.eight14.us/*"
-  to = "https://admin.meetriley.us/:splat"
-  status = 301
+  to = "/operator.html"
+  status = 200
   force = true
 
 [[redirects]]

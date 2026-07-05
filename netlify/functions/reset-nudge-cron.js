@@ -46,8 +46,17 @@ exports.handler = async (event) => {
   const { data: consents } = await supabase.from("notification_consents")
     .select("*").eq("channel", "push").eq("granted", true).eq("status", "active").gt("ends_at", nowIso);
 
+  // Honor the push-notifications preference (migration 047). Resilient: missing column → no rows → unchanged.
+  const pushOff = new Set();
+  const _uids = [...new Set((consents || []).map((c) => c.user_id).filter(Boolean))];
+  if (_uids.length) {
+    const { data: offs } = await supabase.from("user_profiles").select("id").eq("push_notifications", false).in("id", _uids);
+    (offs || []).forEach((o) => pushOff.add(o.id));
+  }
+
   let sent = 0;
   for (const c of (consents || [])) {
+    if (pushOff.has(c.user_id)) continue;            // opted out of push
     try {
       const { h, m, date } = localParts(c.tz || "America/Denver");
       const amDue = minsSince(h, m, AM_H, AM_M) >= 0 && minsSince(h, m, AM_H, AM_M) < WINDOW_MIN && c.last_am_date !== date;

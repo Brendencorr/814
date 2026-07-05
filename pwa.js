@@ -138,6 +138,18 @@
   }
   function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
   function closeChat() { if (_cov) { _cov.style.display = 'none'; document.body.style.overflow = ''; } }
+  // Once per LOCAL day, on the app home, auto-open the chat so Riley greets with the
+  // day-aware daily check-in. Strictly one auto-open per day — non-naggy by design.
+  function autoOpenDaily() {
+    try {
+      var p = location.pathname.replace(/\/+$/, '').toLowerCase();
+      if (p.indexOf('/dashboard') !== 0) return;           // only the authed home / PWA start_url
+      var today = new Date().toLocaleDateString('en-CA');   // user-LOCAL date
+      if (localStorage.getItem('riley_autochat') === today) return;
+      localStorage.setItem('riley_autochat', today);
+      setTimeout(openChat, 1000);                           // let the page settle first
+    } catch (e) {}
+  }
   function chatPill() {
     if (document.getElementById('riley-chat-btn')) return;
     styleOnce('riley-pill-css', '@keyframes rilePop{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}#riley-chat-btn:hover,#riley-install-btn:hover{transform:translateY(-2px)}');
@@ -183,6 +195,7 @@
   window.addEventListener('load', function () {
     setTimeout(function () {
       chatPill();                                          // always-on: Chat with Riley
+      autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)
       installFirstLogin();                                 // first-ever login → offer install
     }, onLogin ? 900 : 500);

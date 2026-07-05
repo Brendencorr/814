@@ -5,7 +5,7 @@
  * GET /.netlify/functions/pipeline-status
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -17,6 +17,7 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
+  const _gate = requireOperator(event); if (_gate) return _gate;
   if (event.httpMethod !== "GET") {
     return {
       statusCode: 405,

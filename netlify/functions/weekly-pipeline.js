@@ -16,7 +16,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -164,6 +164,7 @@ exports.handler = async function (event) {
     return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   }
 
+  const _gate = requireOperator(event); if (_gate) return _gate;
   // Allow GET/POST for manual trigger; scheduled invocations come with no httpMethod
   const isManual = event.httpMethod === "POST" || event.httpMethod === "GET";
   console.log(`[weekly-pipeline] Starting — ${isManual ? "manual" : "scheduled"} run`);

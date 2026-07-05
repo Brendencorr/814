@@ -10,7 +10,7 @@
  * HARD RULE: an item with safety_verdict='block' can NEVER be approved here.
  */
 
-const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS } = require("./content-lib");
+const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
 
 function json(status, data) {
   return { statusCode: status, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data) };
@@ -18,6 +18,7 @@ function json(status, data) {
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const _gate = requireOperator(event); if (_gate) return _gate;
   const db = contentDb();
 
   try {

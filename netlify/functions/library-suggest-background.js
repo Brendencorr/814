@@ -18,7 +18,7 @@
  * Prompt: loaded at runtime from content_prompt_versions (agent='library_scout').
  */
 
-const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS } = require("./content-lib");
+const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
 
 // Must match admin-content.js CONTENT_TYPES (the DB has no enum on this column).
 const CONTENT_TYPES = ["book","podcast","video","music","meditation","breathwork","workout","recipe","article","journal_prompt","community_prompt","quote"];
@@ -123,6 +123,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const _gate = requireOperator(event); if (_gate) return _gate;
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch { /* defaults */ }
   try {

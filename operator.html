@@ -666,6 +666,25 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </div>
 <script>
 var B='/.netlify/functions',PW='Riley814';
+// ── Operator-key injector ──────────────────────────────────────────────────
+// The pipeline / content-engine + admin endpoints are OPERATOR_KEY-gated server-side; this makes
+// EVERY dashboard call to our functions carry x-operator-key (prompting once). Only touches
+// /.netlify/functions/ URLs — never Supabase. Redundant-but-harmless for calls that already set it.
+(function(){
+  var _origFetch = window.fetch.bind(window);
+  window.fetch = function(url, opts){
+    try{
+      var u = (typeof url === 'string') ? url : (url && url.url) || '';
+      if (u.indexOf('/.netlify/functions/') !== -1){
+        var k = sessionStorage.getItem('814_opkey') || '';
+        if(!k){ k = (window.prompt('Operator key:') || '').trim(); if(k) sessionStorage.setItem('814_opkey', k); }
+        opts = opts || {};
+        opts.headers = Object.assign({}, opts.headers || {}, { 'x-operator-key': k });
+      }
+    }catch(e){}
+    return _origFetch(url, opts);
+  };
+})();
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}

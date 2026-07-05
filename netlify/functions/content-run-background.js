@@ -21,7 +21,7 @@
  *   - Reposts are native shares/quotes with attribution — never re-uploaded media.
  */
 
-const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS } = require("./content-lib");
+const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
 const { renderBrief } = require("./content-atlas");
 
 const MAX_CANDIDATES = 8; // bound cost/time per run
@@ -271,6 +271,7 @@ async function runSentinel(sentinelPrompt, payload) {
 // ── HTTP handler (background function, manual trigger) ─────────────────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const _gate = requireOperator(event); if (_gate) return _gate;
   const trigger = event.httpMethod === "POST" ? "manual" : "cron";
   const result = await runDaily(trigger);
   return {

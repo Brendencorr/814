@@ -7,12 +7,13 @@
  * Lets Brenden paste each Canva Brand Template ID without touching SQL, which
  * is what "arms" Atlas to auto-design that family (Phase 2 §2.1).
  */
-const { contentDb, CORS } = require("./content-lib");
+const { contentDb, CORS, requireOperator } = require("./content-lib");
 
 function json(s, d) { return { statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) }; }
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const _gate = requireOperator(event); if (_gate) return _gate;
   const db = contentDb();
   try {
     if (event.httpMethod === "GET") {

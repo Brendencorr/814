@@ -29,4 +29,23 @@ async function emitEvent(supabase, userId, name, props) {
   try { await supabase.from('events').insert({ user_id: userId || null, name, props: props || {} }); } catch (e) {}
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent };
+// Operator-only gate. Returns null when the request carries the correct OPERATOR_KEY header,
+// or a fail-closed 401/503 response object otherwise. For operator/pipeline endpoints that must
+// NOT be reachable unauthenticated at their public Netlify URL (cost-drain / tamper / publish
+// vectors). Same secret the operator dashboard sends via `x-operator-key`. Scheduled functions
+// that invoke their runner INLINE (e.g. content-daily-cron → runDaily) are unaffected — this only
+// gates the public HTTP handler. Usage: `const gate = requireOperator(event); if (gate) return gate;`
+function requireOperator(event) {
+  const CORS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, x-operator-key',
+    'Content-Type': 'application/json',
+  };
+  const expected = process.env.OPERATOR_KEY;
+  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: 'OPERATOR_KEY not configured' }) };
+  const provided = (event.headers && (event.headers['x-operator-key'] || event.headers['X-Operator-Key'])) || '';
+  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
+  return null;
+}
+
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator };

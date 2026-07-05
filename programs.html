@@ -147,7 +147,7 @@ function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-
 async function boot(cb){
   try{
     const {data:{session}}=await SB.auth.getSession();
-    if(!session){window.location.href='https://riley.eight14.us';return;}
+    if(!session){window.location.href='https://riley.meetriley.us';return;}
     USER=session.user;UID=USER.id;
     const meta=USER.user_metadata||{};
     const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
@@ -162,7 +162,7 @@ async function boot(cb){
     await cb();
   }catch(e){console.error('Boot:',e);}
 }
-async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 
 
 (async()=>{ await boot(async()=>{await loadPrograms();}); })();
@@ -205,7 +205,7 @@ async function loadPrograms(){
       return `<div class="card"><div style="font-size:36px;margin-bottom:10px">${p.emoji||'🎯'}</div>${head}<button class="btn btn-gold" style="width:100%;text-align:center" onclick="enroll('${p.id}','${esc(p.title)}')">Begin This Journey →</button></div>`;
     }
     // Locked preview — visible, dimmed, with an upsell to the storefront.
-    return `<div class="card" style="position:relative"><div style="position:absolute;top:14px;right:16px;font-size:15px;opacity:0.75">🔒</div><div style="font-size:36px;margin-bottom:10px;opacity:0.5;filter:grayscale(0.4)">${p.emoji||'🎯'}</div>${head}<a href="https://www.eight14.us" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;text-align:center;display:block;border-color:rgba(201,168,76,0.45);color:var(--gold)">Unlock · ${priceLabel(p)} →</a></div>`;
+    return `<div class="card" style="position:relative"><div style="position:absolute;top:14px;right:16px;font-size:15px;opacity:0.75">🔒</div><div style="font-size:36px;margin-bottom:10px;opacity:0.5;filter:grayscale(0.4)">${p.emoji||'🎯'}</div>${head}<a href="https://www.meetriley.us" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;text-align:center;display:block;border-color:rgba(201,168,76,0.45);color:var(--gold)">Unlock · ${priceLabel(p)} →</a></div>`;
   }).join('');}
 }
 async function enroll(id,name){try{const {error}=await SB.from('user_program_progress').insert({user_id:UID,program_id:id,program_name:name,day_completed:0,days_completed:0,status:'active',enrolled_at:new Date().toISOString()});if(error)throw error;A('pg-alert','✓ Enrolled in '+name+'!',true);await loadPrograms();}catch(e){A('pg-alert','Error: '+e.message,false);}}

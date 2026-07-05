@@ -278,7 +278,7 @@ let _db, _user, _uid, _sessionId, _history = [];
 (async function() {
   _db = supabase.createClient(SB_URL, SB_KEY);
   const { data } = await _db.auth.getSession();
-  if (!data.session) { window.location.href = 'https://riley.eight14.us'; return; }
+  if (!data.session) { window.location.href = 'https://riley.meetriley.us'; return; }
   _user = data.session.user;
   _uid  = _user.id;
   _sessionId = crypto.randomUUID();
@@ -490,7 +490,7 @@ function clearChatCap(){
 
 async function signOut() {
   await _db.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
+  window.location.href = 'https://riley.meetriley.us';
 }
 </script>
 

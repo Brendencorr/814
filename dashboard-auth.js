@@ -16,7 +16,7 @@ let currentUser = null;
 // ─── BOOT ────────────────────────────────────────────────────
 // Call this at the top of every dashboard page's <script> block.
 // Returns { user, client } or null on failure.
-// Redirects to riley.eight14.us if not authenticated.
+// Redirects to riley.meetriley.us if not authenticated.
 
 async function initDashboard() {
   try {
@@ -25,7 +25,7 @@ async function initDashboard() {
 
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session) {
-      window.location.href = 'https://riley.eight14.us';
+      window.location.href = 'https://riley.meetriley.us';
       return null;
     }
 
@@ -53,7 +53,7 @@ async function initDashboard() {
 async function signOut() {
   if (!supabase) return;
   await supabase.auth.signOut();
-  window.location.href = 'https://riley.eight14.us';
+  window.location.href = 'https://riley.meetriley.us';
 }
 
 // ─── SITE CONFIG LOADER ───────────────────────────────────────
@@ -110,7 +110,7 @@ function renderSidebar(activePage, user) {
       label: 'Today',
       items: [
         { id: 'dashboard', label: 'Morning Brief',   icon: '🌅', href: '/dashboard.html' },
-        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.eight14.us' },
+        { id: 'chat',      label: 'Chat with Riley', icon: '💬', href: 'https://riley.meetriley.us' },
         { id: 'checkin',   label: 'Daily Check-In',  icon: '✅', href: '/tracker.html' },
       ]
     },

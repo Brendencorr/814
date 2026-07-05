@@ -62,7 +62,7 @@ Set all of these in Netlify → Site configuration → Environment variables:
 - SUPABASE_SERVICE_KEY — Supabase secret key for server-side operations
 - BUFFER_API_TOKEN — Buffer API token for auto-publishing to social platforms
 - BUFFER_PROFILE_IDS — Comma-separated Buffer profile IDs (one per platform)
-- URL — Netlify site URL (set automatically by Netlify, e.g. https://admin.eight14.us)
+- URL — Netlify site URL (set automatically by Netlify, e.g. https://admin.meetriley.us)
 
 ## Supabase
 The shared client is at netlify/functions/supabase-client.js.
@@ -164,8 +164,8 @@ When user_id and session_id are provided:
 - Riley's system prompt is personalized with the user's profile (name, sobriety date, programs)
 - Both the user message and Riley's reply are saved to riley_conversations automatically
 
-## Operator Dashboard (admin.eight14.us)
-admin.eight14.us serves dashboard.html — private operator tool for Brenden only.
+## Operator Dashboard (admin.meetriley.us)
+admin.meetriley.us serves dashboard.html — private operator tool for Brenden only.
 Password gate: Riley814 (stored in sessionStorage).
 
 Design system:

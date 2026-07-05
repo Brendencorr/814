@@ -22,8 +22,8 @@
 
 const { getSupabaseClient } = require("./supabase-client");
 
-const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@eight14.us>";
-const APP_URL    = "https://riley.eight14.us";
+const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const APP_URL    = "https://riley.meetriley.us";
 
 // ── Compose the email — warm, specific, never guilt ──────────────────────────
 function buildEmail(u) {

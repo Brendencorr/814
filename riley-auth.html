@@ -696,14 +696,14 @@ async function runOnboarding(session, consentAt) {
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 async function signInWithGoogle() {
   // If we're inside an iframe, Google will block the OAuth flow.
-  // Instead, save the conversation and open riley.eight14.us in the top-level window.
+  // Instead, save the conversation and open riley.meetriley.us in the top-level window.
   if (window.self !== window.top) {
     // We're in the marketing-site popup. Google blocks OAuth inside an iframe, so
     // hand the conversation to the parent page and let it run the top-level flow.
     try {
       window.parent.postMessage({ type: 'riley_signin', history: chatHistory, count: userMsgCount }, '*');
     } catch (e) {
-      window.top.location.href = 'https://riley.eight14.us/talk?signin=1';
+      window.top.location.href = 'https://riley.meetriley.us/talk?signin=1';
     }
     return;
   }
@@ -737,7 +737,7 @@ async function signInWithGoogle() {
 async function signOut() {
   try { if (sb) await sb.auth.signOut(); } catch (e) {}
   // Always return to the main landing page after signing out.
-  window.location.href = 'https://riley.eight14.us';
+  window.location.href = 'https://riley.meetriley.us';
 }
 
 // ── Save prompt ───────────────────────────────────────────────────────────────

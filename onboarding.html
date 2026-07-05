@@ -95,13 +95,13 @@ async function saveMemory(rows){
 // ── Boot ─────────────────────────────────────────────────────────────────────
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
-  if(!session){window.location.href='https://login.eight14.us';return;}
+  if(!session){window.location.href='https://login.meetriley.us';return;}
   USER=session.user;UID=USER.id;
   const meta=USER.user_metadata||{};
   FIRST=(meta.full_name||meta.name||USER.email.split('@')[0]||'').split(' ')[0];
   // Resume or start
   const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_step,preferred_name').eq('id',UID).maybeSingle();
-  if(p&&p.onboarding_completed){window.location.href='https://riley.eight14.us/dashboard';return;}
+  if(p&&p.onboarding_completed){window.location.href='https://riley.meetriley.us/dashboard';return;}
   if(p&&p.preferred_name)FIRST=p.preferred_name.split(' ')[0];
   if(!p||!p.onboarding_started_at)await save({onboarding_started_at:new Date().toISOString()},0);
   const step=(p&&p.onboarding_step)||0;
@@ -328,7 +328,7 @@ async function buildHome(){
     el().innerHTML=`<div class="build-stage"><div class="cardinal" style="animation:none;font-size:40px">🐦</div><div class="build-msg" style="opacity:1;animation:rise .8s">Welcome home, ${esc(FIRST)}.</div><div style="margin-top:32px"><button class="btn" onclick="enter()">Enter</button></div></div>`;
   },8400);
 }
-function enter(){window.location.href='https://riley.eight14.us/dashboard';}
+function enter(){window.location.href='https://riley.meetriley.us/dashboard';}
 
 boot();
 </script>

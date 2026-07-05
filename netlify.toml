@@ -156,264 +156,298 @@
 [functions."crisis-followup-cron"]
   schedule = "0 1,15,21 * * *"
 
-# ── Dashboard clean URLs (must come BEFORE the riley.eight14.us catch-all) ──
+# ── Dashboard clean URLs (must come BEFORE the riley.meetriley.us catch-all) ──
+# ===== eight14.us -> meetriley.us (rebrand cutover) — forward EVERYTHING to the new domain.
+# Placed before the per-path rules so these host-wide 301s win. Retire the old
+# eight14.us per-path blocks below once this is confirmed live. admin.* forward
+# needs admin.meetriley.us set up as a Netlify alias first.
 [[redirects]]
-  from = "https://riley.eight14.us/dashboard"
+  from = "https://eight14.us/*"
+  to = "https://meetriley.us/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://www.eight14.us/*"
+  to = "https://www.meetriley.us/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://riley.eight14.us/*"
+  to = "https://riley.meetriley.us/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://login.eight14.us/*"
+  to = "https://login.meetriley.us/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://admin.eight14.us/*"
+  to = "https://admin.meetriley.us/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://riley.meetriley.us/dashboard"
   to   = "/dashboard.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/dashboard/"
+  from = "https://riley.meetriley.us/dashboard/"
   to   = "/dashboard.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/brief"
+  from = "https://riley.meetriley.us/brief"
   to   = "/dashboard"
   status = 301
   force = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/brief/"
+  from = "https://riley.meetriley.us/brief/"
   to   = "/dashboard"
   status = 301
   force = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/conversations"
+  from = "https://riley.meetriley.us/conversations"
   to   = "/conversations.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/conversations/"
+  from = "https://riley.meetriley.us/conversations/"
   to   = "/conversations.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/tracker"
+  from = "https://riley.meetriley.us/tracker"
   to   = "/tracker.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/tracker/"
+  from = "https://riley.meetriley.us/tracker/"
   to   = "/tracker.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/programs"
+  from = "https://riley.meetriley.us/programs"
   to   = "/programs.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/programs/"
+  from = "https://riley.meetriley.us/programs/"
   to   = "/programs.html"
   status = 200
 
 
 # ── Direct .html paths — force override needed since catch-all has force=true ──
 [[redirects]]
-  from   = "https://riley.eight14.us/dashboard.html"
+  from   = "https://riley.meetriley.us/dashboard.html"
   to     = "/dashboard.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from   = "https://riley.eight14.us/brief.html"
+  from   = "https://riley.meetriley.us/brief.html"
   to     = "/dashboard"
   status = 301
   force  = true
 
 [[redirects]]
-  from   = "https://riley.eight14.us/conversations.html"
+  from   = "https://riley.meetriley.us/conversations.html"
   to     = "/conversations.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from   = "https://riley.eight14.us/tracker.html"
+  from   = "https://riley.meetriley.us/tracker.html"
   to     = "/tracker.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from   = "https://riley.eight14.us/programs.html"
+  from   = "https://riley.meetriley.us/programs.html"
   to     = "/programs.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/workouts"
+  from = "https://riley.meetriley.us/workouts"
   to   = "/workouts.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/workouts/"
+  from = "https://riley.meetriley.us/workouts/"
   to   = "/workouts.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/workouts.html"
+  from   = "https://riley.meetriley.us/workouts.html"
   to     = "/workouts.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/lifemap"
+  from = "https://riley.meetriley.us/lifemap"
   to   = "/lifemap.html"
   status = 200
 [[redirects]]
-  from = "https://riley.eight14.us/lifemap/"
+  from = "https://riley.meetriley.us/lifemap/"
   to   = "/lifemap.html"
   status = 200
 [[redirects]]
-  from   = "https://riley.eight14.us/lifemap.html"
+  from   = "https://riley.meetriley.us/lifemap.html"
   to     = "/lifemap.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/nutrition"
+  from = "https://riley.meetriley.us/nutrition"
   to   = "/nutrition.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/nutrition/"
+  from = "https://riley.meetriley.us/nutrition/"
   to   = "/nutrition.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/nutrition.html"
+  from   = "https://riley.meetriley.us/nutrition.html"
   to     = "/nutrition.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/progress"
+  from = "https://riley.meetriley.us/progress"
   to   = "/progress.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/progress/"
+  from = "https://riley.meetriley.us/progress/"
   to   = "/progress.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/progress.html"
+  from   = "https://riley.meetriley.us/progress.html"
   to     = "/progress.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/sleep"
+  from = "https://riley.meetriley.us/sleep"
   to   = "/sleep.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/sleep/"
+  from = "https://riley.meetriley.us/sleep/"
   to   = "/sleep.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/sleep.html"
+  from   = "https://riley.meetriley.us/sleep.html"
   to     = "/sleep.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/finance"
+  from = "https://riley.meetriley.us/finance"
   to   = "/finance.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/finance/"
+  from = "https://riley.meetriley.us/finance/"
   to   = "/finance.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/finance.html"
+  from   = "https://riley.meetriley.us/finance.html"
   to     = "/finance.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/calendar"
+  from = "https://riley.meetriley.us/calendar"
   to   = "/calendar.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/calendar/"
+  from = "https://riley.meetriley.us/calendar/"
   to   = "/calendar.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/community"
+  from = "https://riley.meetriley.us/community"
   to   = "/community.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/community/"
+  from = "https://riley.meetriley.us/community/"
   to   = "/community.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/journey"
+  from = "https://riley.meetriley.us/journey"
   to   = "/journey.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/journey/"
+  from = "https://riley.meetriley.us/journey/"
   to   = "/journey.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/reset"
+  from = "https://riley.meetriley.us/reset"
   to   = "/reset.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/reset/"
+  from = "https://riley.meetriley.us/reset/"
   to   = "/reset.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/onboarding"
+  from = "https://riley.meetriley.us/onboarding"
   to   = "/onboarding.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/onboarding/"
+  from = "https://riley.meetriley.us/onboarding/"
   to   = "/onboarding.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/calendar.html"
+  from   = "https://riley.meetriley.us/calendar.html"
   to     = "/calendar.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/roadmap"
+  from = "https://riley.meetriley.us/roadmap"
   to   = "/tracker.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/roadmap/"
+  from = "https://riley.meetriley.us/roadmap/"
   to   = "/tracker.html"
   status = 200
 
 
 [[redirects]]
-  from = "https://riley.eight14.us/chat"
+  from = "https://riley.meetriley.us/chat"
   to   = "/chat.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/chat/"
+  from = "https://riley.meetriley.us/chat/"
   to   = "/chat.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/chat.html"
+  from   = "https://riley.meetriley.us/chat.html"
   to     = "/chat.html"
   status = 200
   force  = true
@@ -421,57 +455,57 @@
 
 # ── Sign-up / Login — direct to clean Google OAuth page ──────
 [[redirects]]
-  from = "https://riley.eight14.us/login"
+  from = "https://riley.meetriley.us/login"
   to   = "/login.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/login/"
+  from = "https://riley.meetriley.us/login/"
   to   = "/login.html"
   status = 200
 
 [[redirects]]
-  from   = "https://riley.eight14.us/login.html"
+  from   = "https://riley.meetriley.us/login.html"
   to     = "/login.html"
   status = 200
   force  = true
 
 [[redirects]]
-  from = "https://riley.eight14.us/signup"
+  from = "https://riley.meetriley.us/signup"
   to   = "/login.html"
   status = 200
 
 [[redirects]]
-  from = "https://riley.eight14.us/signup/"
+  from = "https://riley.meetriley.us/signup/"
   to   = "/login.html"
   status = 200
 
 # ── Static assets — serve directly, never catch-all ──────────
 [[redirects]]
-  from   = "https://riley.eight14.us/dashboard-auth.js"
+  from   = "https://riley.meetriley.us/dashboard-auth.js"
   to     = "/dashboard-auth.js"
   status = 200
   force  = true
 
 [[redirects]]
-  from   = "https://riley.eight14.us/dashboard.css"
+  from   = "https://riley.meetriley.us/dashboard.css"
   to     = "/dashboard.css"
   status = 200
   force  = true
 
 # ── Marketing site preview (home.html) ──
-# Reviewable now at riley.eight14.us/welcome. The apex rules below are pre-staged
-# and stay inert until eight14.us DNS is pointed at Netlify (then it serves as root).
+# Reviewable now at riley.meetriley.us/welcome. The apex rules below are pre-staged
+# and stay inert until meetriley.us DNS is pointed at Netlify (then it serves as root).
 [[redirects]]
-  from = "https://riley.eight14.us/welcome"
+  from = "https://riley.meetriley.us/welcome"
   to   = "/home.html"
   status = 200
 [[redirects]]
-  from = "https://eight14.us/"
+  from = "https://meetriley.us/"
   to   = "/home.html"
   status = 200
 [[redirects]]
-  from = "https://www.eight14.us/"
+  from = "https://www.meetriley.us/"
   to   = "/home.html"
   status = 200
 
@@ -479,23 +513,23 @@
 # No force=true here — lets actual files (CSS, JS, HTML) be served directly.
 # Only applies to paths that don't match an existing file.
 [[redirects]]
-  from = "https://riley.eight14.us/*"
+  from = "https://riley.meetriley.us/*"
   to = "/riley-auth.html"
   status = 200
 
 [[redirects]]
-  from = "https://login.eight14.us/*"
+  from = "https://login.meetriley.us/*"
   to = "/login.html"
   status = 200
   force = true
 
 [[redirects]]
-  from = "https://admin.eight14.us/*"
+  from = "https://admin.meetriley.us/*"
   to = "/operator.html"
   status = 200
   force = true
 
-# ===== meetriley.us mirror (rebrand) — host-specific, cannot affect eight14.us =====
+# ===== meetriley.us mirror (rebrand) — host-specific, cannot affect meetriley.us =====
 # apex -> marketing home; riley.* -> app; login.* -> login. Generated from the eight14 rules.
 [[redirects]]
   from = "https://riley.meetriley.us/dashboard"

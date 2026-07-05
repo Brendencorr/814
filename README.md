@@ -1,12 +1,12 @@
 # The 8:14 Project — Netlify Serverless Backend
 
-AI-powered backend for [eight14.us](https://eight14.us) — a mental health and wellness platform built on the Claude AI API (Anthropic).
+AI-powered backend for [meetriley.us](https://meetriley.us) — a mental health and wellness platform built on the Claude AI API (Anthropic).
 
 ## Functions
 
 | Function | Path | Visibility | Description |
 |---|---|---|---|
-| `riley-chat` | `/.netlify/functions/riley-chat` | Public | Public-facing wellness chatbot on eight14.us/riley |
+| `riley-chat` | `/.netlify/functions/riley-chat` | Public | Public-facing wellness chatbot on meetriley.us/riley |
 | `scout` | `/.netlify/functions/scout` | Private dashboard | Content research and trending topics agent |
 | `sage` | `/.netlify/functions/sage` | Private dashboard | Scriptwriter for YouTube, captions, and emails |
 | `atlas` | `/.netlify/functions/atlas` | Private dashboard | Content organizer and weekly publishing scheduler |
@@ -14,7 +14,7 @@ AI-powered backend for [eight14.us](https://eight14.us) — a mental health and 
 
 ### riley-chat
 
-Public chatbot available at `eight14.us/riley`. Riley is a warm, direct wellness guide who helps people rebuild through sobriety, fitness, food, and mental health tools. Responses are capped at 2–3 short paragraphs and always include a next step or question. In a crisis, Riley points to the **988 Suicide and Crisis Lifeline** (call or text 988) or **SAMHSA** at 1-800-662-4357.
+Public chatbot available at `meetriley.us/riley`. Riley is a warm, direct wellness guide who helps people rebuild through sobriety, fitness, food, and mental health tools. Responses are capped at 2–3 short paragraphs and always include a next step or question. In a crisis, Riley points to the **988 Suicide and Crisis Lifeline** (call or text 988) or **SAMHSA** at 1-800-662-4357.
 
 ### scout
 

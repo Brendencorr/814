@@ -18,8 +18,8 @@
 
 const { getSupabaseClient } = require("./supabase-client");
 
-const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@eight14.us>";
-const APP_URL    = "https://riley.eight14.us";
+const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const APP_URL    = "https://riley.meetriley.us";
 const SCHEDULE_HOUR = { morning: 8, lunch: 12, afternoon: 15, evening: 19 }; // local hour per choice
 
 function localHour(tz) {

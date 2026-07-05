@@ -497,14 +497,14 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 (async()=>{
   try{
     const {data:{session}}=await SB.auth.getSession();
-    if(!session){window.location.href='https://riley.eight14.us';return;}
+    if(!session){window.location.href='https://riley.meetriley.us';return;}
     USER=session.user;UID=USER.id;
     track('app_open');
     loadClientAlerts();
     // Onboarding guard — new users build their profile with Riley first.
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
-      if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.eight14.us/riley-auth.html';return;}
+      if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/riley-auth.html';return;}
       // One-time consent for members who onboarded before consent existed.
       // Blocks here (serial) so it never stacks with the daily check-in modal.
       await requireConsent(ob.consent_at);
@@ -1220,11 +1220,11 @@ async function doDeleteData(){
     const j=await r.json();
     if(j.failed&&j.failed.length)console.warn('delete partial — failed:',j.failed);
     p2Modal(`<div style="text-align:center;padding:12px 0"><div style="font-size:28px;margin-bottom:12px">🕊️</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">Your data has been cleared.</div><div style="font-size:14px;color:var(--smoke);margin-top:10px;line-height:1.6">Thank you for trusting me with it. Signing you out now.</div></div>`);
-    setTimeout(async()=>{try{await SB.auth.signOut();}catch(e){}window.location.href='https://riley.eight14.us';},2800);
+    setTimeout(async()=>{try{await SB.auth.signOut();}catch(e){}window.location.href='https://riley.meetriley.us';},2800);
   }catch(e){console.warn('delete',e.message);const bb=document.getElementById('del-confirm-btn');if(bb){bb.disabled=false;bb.textContent='Try again';}}
 }
 
-async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 </script>
 <script>
 /* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */

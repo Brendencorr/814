@@ -10,7 +10,7 @@
  * Config (Netlify env):
  *   SAFETY_ALERT_EMAIL — where alerts go (the operator's inbox). Required.
  *   RESEND_API_KEY     — email provider. Required to actually send.
- *   SAFETY_ALERT_FROM  — optional From (defaults to Riley <riley@eight14.us>).
+ *   SAFETY_ALERT_FROM  — optional From (defaults to Riley <riley@meetriley.us>).
  *
  * If either required var is missing, it logs who WOULD be alerted and returns
  * cleanly — never throws, never blocks the member's crisis response.
@@ -18,7 +18,7 @@
  * Export: sendOperatorAlert(supabase, { userId, level, matches, excerpt, source })
  */
 
-const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@eight14.us>";
+const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const LEVEL_LABEL = { 2: "Relapse risk (Level 2)", 3: "ACTIVE CRISIS / self-harm risk (Level 3)" };
 
 function esc(s) {

@@ -240,7 +240,7 @@ async function runDaily(trigger = "cron") {
       finished_at: new Date().toISOString(),
     });
 
-    await notify(`Content run complete (${trigger}) — ${stats.candidates} candidates, ${stats.fast_tracked} reposts fast-tracked, ${stats.briefs} briefs. Review at admin.eight14.us → Social Media → Review.`);
+    await notify(`Content run complete (${trigger}) — ${stats.candidates} candidates, ${stats.fast_tracked} reposts fast-tracked, ${stats.briefs} briefs. Review at admin.meetriley.us → Social Media → Review.`);
     return { ok: true, stats };
 
   } catch (err) {

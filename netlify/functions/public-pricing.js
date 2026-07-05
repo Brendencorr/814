@@ -1,7 +1,7 @@
 /**
  * public-pricing.js — Public pricing feed for the marketing site (Squarespace).
  *
- * No auth — this is meant to be fetched directly from eight14.us. Returns only
+ * No auth — this is meant to be fetched directly from meetriley.us. Returns only
  * `live` and `locked` products (never `draft`, so Riley Mentor stays invisible
  * everywhere but the operator Pricing tab until it's explicitly flipped live —
  * no manual exclusion logic needed on the Squarespace side).

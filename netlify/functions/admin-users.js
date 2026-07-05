@@ -3,7 +3,7 @@
  *
  * Uses SUPABASE_SERVICE_KEY to bypass RLS so the admin can read all user data.
  * This endpoint is NOT for public use — it should only be called from
- * the operator dashboard (admin.eight14.us) which is password-protected.
+ * the operator dashboard (admin.meetriley.us) which is password-protected.
  *
  * GET /.netlify/functions/admin-users
  *   → returns list of all user_profiles with summary stats

@@ -39,7 +39,7 @@ const CORS_HEADERS = {
 };
 
 // ── System prompt ─────────────────────────────────────────────────────────────
-const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for The 8:14 Project at eight14.us.
+const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for The 8:14 Project at meetriley.us.
 
 RESPONSE STYLE — CRITICAL:
 Keep responses SHORT. 2-4 sentences for most messages.

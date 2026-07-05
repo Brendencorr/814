@@ -44,7 +44,7 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
   </button>
 
   <div class="status" id="status"></div>
-  <p class="note">By signing in you agree to our <a href="https://eight14.us/privacy" target="_blank">Privacy Policy</a>. Your conversations with Riley are private.</p>
+  <p class="note">By signing in you agree to our <a href="https://meetriley.us/privacy" target="_blank">Privacy Policy</a>. Your conversations with Riley are private.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -56,7 +56,7 @@ var _sb = window.supabase.createClient(
 );
 // Origin-aware so sign-in works on any domain (eight14 during migration, meetriley after):
 // login.<base> → the app at riley.<base>/dashboard. Falls back to eight14 if the host is unexpected.
-var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/dashboard' : 'https://riley.eight14.us/dashboard'; })();
+var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/dashboard' : 'https://riley.meetriley.us/dashboard'; })();
 
 // If already logged in, go straight to dashboard
 _sb.auth.getSession().then(function(r) {

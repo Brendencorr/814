@@ -2,7 +2,7 @@
  * admin-engagement.js — Operator-only engagement analytics
  *
  * Uses SUPABASE_SERVICE_KEY to read across all users. Operator dashboard only
- * (admin.eight14.us, password-gated). Built for 5,000-user scale: reads the
+ * (admin.meetriley.us, password-gated). Built for 5,000-user scale: reads the
  * denormalized counters on user_profiles + a single week-window events scan.
  *
  * GET → {

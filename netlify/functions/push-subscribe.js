@@ -73,7 +73,7 @@ exports.handler = async (event) => {
     const { data: c } = await supabase.from("notification_consents")
       .select("push_subscription").eq("user_id", userId).eq("program_key", PROGRAM).maybeSingle();
     if (!c || !c.push_subscription) return json(400, { error: "No subscription yet" });
-    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@eight14.us", pub, priv);
+    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@meetriley.us", pub, priv);
     try {
       await webpush.sendNotification(c.push_subscription, JSON.stringify({
         title: "Riley — test nudge",

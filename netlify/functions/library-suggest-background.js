@@ -115,7 +115,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
   await notify(
     `Library Scout: ${inserted} new suggestion${inserted === 1 ? "" : "s"} added to the approval queue` +
     (dropped.length ? ` (${dropped.length} dropped — no live link / dupe)` : "") +
-    `. Review at admin.eight14.us → Content Library → Suggestions.`
+    `. Review at admin.meetriley.us → Content Library → Suggestions.`
   );
 
   return { ok: true, inserted, dropped: dropped.length, dropped_detail: dropped };

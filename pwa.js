@@ -252,7 +252,7 @@
         else location.href = '/dashboard#data';
       } else if (act === 'signout') {
         if (typeof window.doSignOut === 'function') window.doSignOut();
-        else location.href = 'https://riley.eight14.us';
+        else location.href = 'https://riley.meetriley.us';
       }
     });
   }

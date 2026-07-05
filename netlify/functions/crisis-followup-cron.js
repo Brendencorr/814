@@ -28,8 +28,8 @@
 
 const { getSupabaseClient } = require("./supabase-client");
 
-const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@eight14.us>";
-const APP_URL    = "https://riley.eight14.us";
+const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const APP_URL    = "https://riley.meetriley.us";
 
 const THRESHOLD_HOURS = { 1: 6, 2: 20, 3: 72, 4: 168 };
 

@@ -116,7 +116,7 @@ const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_pu
 async function boot(){
   try{
     const {data:{session}}=await SB.auth.getSession();
-    if(!session){window.location.href='https://riley.eight14.us';return;}
+    if(!session){window.location.href='https://riley.meetriley.us';return;}
     const meta=session.user.user_metadata||{};
     const fullName=meta.full_name||meta.name||session.user.email.split('@')[0]||'Member';
     const firstName=fullName.split(' ')[0];
@@ -148,7 +148,7 @@ async function joinWaitlist(){
     msg.textContent="You're on the list — we'll be in touch.";
   }
 }
-async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 boot();
 </script>
 <script>

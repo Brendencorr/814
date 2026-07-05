@@ -92,7 +92,7 @@ function showAvatar(url,name){
 
 async function load(){
   const {data:{session}}=await SB.auth.getSession();
-  if(!session){location.href='https://riley.eight14.us';return;}
+  if(!session){location.href='https://riley.meetriley.us';return;}
   USER=session.user; UID=USER.id;
   const meta=USER.user_metadata||{};
   let prof=null;

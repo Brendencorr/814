@@ -102,7 +102,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 let USER=null,UID=null;
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');}
-async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.eight14.us';}
+async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 
 // Facets shown on the page, in order. Riley auto-fills; members can add too.
 const FACETS=[
@@ -133,7 +133,7 @@ function lockedPage(){
 }
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
-  if(!session){window.location.href='https://riley.eight14.us';return;}
+  if(!session){window.location.href='https://riley.meetriley.us';return;}
   USER=session.user;UID=USER.id;
   const meta=USER.user_metadata||{};
   const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';

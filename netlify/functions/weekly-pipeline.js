@@ -58,7 +58,7 @@ Read last week's performance data from Supabase and produce a brief:
 
 Output as JSON: { "best_pillar": "", "format_winner": "", "worst_pillar": "", "insight": "" }`;
 
-const SCOUT_PIPELINE_PROMPT = `You are Scout — content research agent for The 8:14 Project (eight14.us).
+const SCOUT_PIPELINE_PROMPT = `You are Scout — content research agent for The 8:14 Project (meetriley.us).
 Find 5 trending topics in sobriety, recovery, mental health, fitness, nutrition.
 Focus on the best_pillar and avoid topics listed as recent.
 Output exactly:
@@ -70,7 +70,7 @@ Pillar: [pillar name]
 HIGH-VALUE SEARCH TERMS:
 [10 search phrases, one per line]`;
 
-const SAGE_PIPELINE_PROMPT = `You are Sage — content writer for The 8:14 Project (eight14.us).
+const SAGE_PIPELINE_PROMPT = `You are Sage — content writer for The 8:14 Project (meetriley.us).
 Write 3 complete posts from Scout's research.
 For each post output:
 POST [N] — [TYPE]
@@ -83,7 +83,7 @@ HASHTAGS:
 ---
 Produce exactly 3 posts. Make captions publish-ready in Riley's voice: warm, direct, honest.`;
 
-const ATLAS_PIPELINE_PROMPT = `You are Atlas — publishing agent for The 8:14 Project (eight14.us).
+const ATLAS_PIPELINE_PROMPT = `You are Atlas — publishing agent for The 8:14 Project (meetriley.us).
 Take Sage's posts and output a Buffer-ready schedule.
 For each post output exactly:
 POST: [number]

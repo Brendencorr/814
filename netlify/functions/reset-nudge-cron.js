@@ -38,7 +38,7 @@ async function currentDayTheme(supabase, userId) {
 exports.handler = async () => {
   const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) { console.warn("reset-nudge-cron: VAPID keys not set"); return { statusCode: 200, body: "no-vapid" }; }
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@eight14.us", pub, priv);
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@meetriley.us", pub, priv);
 
   const supabase = getSupabaseClient();
   const nowIso = new Date().toISOString();

@@ -378,7 +378,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA'),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
+// "App day" rolls at 4am LOCAL, not midnight — a night owl checking in at 1am is still on
+// today, never bumped to tomorrow. Anchors check-in dedup/save + the streak + grid together.
+let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
 
 // ── SEASON ────────────────────────────────────────────────────────────────────
 function getSeason(){const m=new Date().getMonth();return m>=2&&m<=4?'spring':m>=5&&m<=7?'summer':m>=8&&m<=10?'fall':'winter';}

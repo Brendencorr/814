@@ -20,7 +20,7 @@
  *   (16:00 UTC = 10am Mountain — a kind hour to land in someone's inbox)
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 
 const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -85,7 +85,8 @@ async function sendEmail(to, email) {
   return await resp.json();
 }
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const supabase = getSupabaseClient();
   const now = Date.now();
   const sevenAgo = new Date(now - 7 * 86400000).toISOString();

@@ -22,7 +22,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 
 // ── Claude API call (non-streaming) ──────────────────────────────────────────
 async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 2000) {
@@ -138,6 +138,7 @@ async function publishToFeedHive(siteUrl, post, scheduledAt) {
 
 // ── Main handler (background function — no response needed) ───────────────────
 exports.handler = async function (event) {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const startTime = Date.now();
   console.log("[pipeline-bg] Starting Sunday pipeline run");
 

@@ -26,7 +26,7 @@
  * stages land at humane hours. schedule = "0 1,15,21 * * *"
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 
 const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -90,7 +90,8 @@ async function sendEmail(to, email) {
   return await resp.json();
 }
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const supabase = getSupabaseClient();
   const now = Date.now();
   const result = { candidates: 0, sent: 0, skipped: 0, resolved: 0, declined: 0, errors: 0, provider_configured: !!process.env.RESEND_API_KEY };

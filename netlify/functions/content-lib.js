@@ -5,7 +5,7 @@
  * (never hardcoded) so prompts can be versioned without a redeploy.
  */
 
-const { getSupabaseClient, requireOperator } = require("./supabase-client");
+const { getSupabaseClient, requireOperator, requireScheduledOrOperator } = require("./supabase-client");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const MODEL = "claude-sonnet-4-6"; // repo standard — do not change
@@ -126,4 +126,4 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
-module.exports = { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, MODEL, requireOperator };
+module.exports = { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, MODEL, requireOperator, requireScheduledOrOperator };

@@ -12,7 +12,7 @@
  * skipped (the digest step still runs on whatever metrics exist).
  */
 
-const { contentDb, loadPrompt, callClaude, extractJson, notify } = require("./content-lib");
+const { contentDb, loadPrompt, callClaude, extractJson, notify, requireScheduledOrOperator } = require("./content-lib");
 
 const BUFFER_API = "https://api.bufferapp.com/1";
 
@@ -97,7 +97,8 @@ async function weeklyDigest(db) {
   return { digest: !!out.digest };
 }
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const db = contentDb();
   try {
     const m = await pullBufferMetrics(db);

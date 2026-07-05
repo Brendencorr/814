@@ -16,7 +16,7 @@
  * Schedule: netlify.toml [functions."brief-delivery-cron"] schedule = "0 * * * *"
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 
 const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -70,7 +70,8 @@ async function sendEmail(to, email) {
   return await resp.json();
 }
 
-exports.handler = async function () {
+exports.handler = async function (event) {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const supabase = getSupabaseClient();
   const todayUTC = new Date().toISOString().slice(0, 10);
   const result = { scanned: 0, due: 0, sent: 0, skipped: 0, errors: 0, provider_configured: !!process.env.RESEND_API_KEY };

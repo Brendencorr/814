@@ -48,4 +48,19 @@ function requireOperator(event) {
   return null;
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator };
+// Gate for SCHEDULED cron functions. Allows the Netlify scheduler — which sends BOTH an
+// `x-nf-event: schedule` header AND a `{"next_run":...}` body (two independent signals, so a
+// stripped header still passes) — or an operator-key manual trigger; rejects anonymous direct HTTP.
+// Netlify does NOT reliably block direct invocation of netlify.toml-scheduled functions in production
+// (verified empirically 2026-07-05: a direct POST ran them), so this app-level guard is REQUIRED.
+// Returns null when allowed, or a 403 response object otherwise.
+function requireScheduledOrOperator(event) {
+  const h = (event && event.headers) || {};
+  if ((h['x-nf-event'] || h['X-Nf-Event']) === 'schedule') return null;      // Netlify scheduler header
+  try { if (JSON.parse((event && event.body) || '{}').next_run) return null; } catch (_) {}  // scheduler body
+  const opk = process.env.OPERATOR_KEY;                                        // operator manual trigger
+  if (opk && (h['x-operator-key'] || h['X-Operator-Key']) === opk) return null;
+  return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Forbidden' }) };
+}
+
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator };

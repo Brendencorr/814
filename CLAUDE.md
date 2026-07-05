@@ -62,7 +62,8 @@ Set all of these in Netlify → Site configuration → Environment variables:
 - SUPABASE_SERVICE_KEY — Supabase secret key for server-side operations
 - FEEDHIVE_API_KEY — FeedHive API key for scheduling/publishing to social platforms (REPLACED Buffer)
 - FEEDHIVE_ACCOUNT_IDS — (optional) comma-separated FeedHive account IDs to target; if unset, feedhive-publish targets ALL active connected accounts
-- FEEDHIVE_AUTOSCHEDULE — (optional) "true" lets the pipeline auto-schedule posts; DEFAULT creates DRAFTS in FeedHive (a human approves/schedules there — nothing auto-publishes)
+- FEEDHIVE_MODE — "draft" (default) or "live". draft = nothing auto-publishes (a human approves/schedules in FeedHive); live = pipeline schedules already-approved items. Per CONTENT_ENGINE_v3 §A7; Phase A moves this to a DB-stored admin toggle.
+- FEEDHIVE_TRIGGER_URL — (Phase A, optional) FeedHive Trigger-URL endpoint for the create-and-schedule hot path (REST POST /posts is the current path)
 - URL — Netlify site URL (set automatically by Netlify, e.g. https://admin.meetriley.us)
 
 ## Supabase

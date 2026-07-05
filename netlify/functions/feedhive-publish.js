@@ -56,9 +56,12 @@ exports.handler = async function (event) {
     const accounts = await resolveAccounts(token, body.accounts || body.profile_ids);
     if (!accounts.length) return json(400, { error: "no target FeedHive accounts (set FEEDHIVE_ACCOUNT_IDS or connect an account)" });
 
-    // Safety: draft unless a human/env explicitly opts into auto-scheduling.
-    const autoSchedule = process.env.FEEDHIVE_AUTOSCHEDULE === "true";
-    const status = body.status || (autoSchedule && scheduled_at ? "scheduled" : "draft");
+    // Safety default = draft (CODE_SPEC §A7: FEEDHIVE_MODE=draft|live, default draft). Draft means
+    // nothing auto-publishes — a human approves/schedules in FeedHive. "live" only schedules items the
+    // pipeline already routed here (approval still gates upstream). Phase A will move this to a
+    // DB-stored setting (admin toggle, no redeploy); the env var is the bootstrap default.
+    const mode = (process.env.FEEDHIVE_MODE || "draft").toLowerCase();
+    const status = body.status || (mode === "live" && scheduled_at ? "scheduled" : "draft");
 
     const payload = { text, accounts, status };
     if (status === "scheduled" && scheduled_at) payload.scheduled_at = scheduled_at;

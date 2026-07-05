@@ -60,8 +60,9 @@ Set all of these in Netlify → Site configuration → Environment variables:
 - SUPABASE_URL — Supabase project URL
 - SUPABASE_ANON_KEY — Supabase publishable key
 - SUPABASE_SERVICE_KEY — Supabase secret key for server-side operations
-- BUFFER_API_TOKEN — Buffer API token for auto-publishing to social platforms
-- BUFFER_PROFILE_IDS — Comma-separated Buffer profile IDs (one per platform)
+- FEEDHIVE_API_KEY — FeedHive API key for scheduling/publishing to social platforms (REPLACED Buffer)
+- FEEDHIVE_ACCOUNT_IDS — (optional) comma-separated FeedHive account IDs to target; if unset, feedhive-publish targets ALL active connected accounts
+- FEEDHIVE_AUTOSCHEDULE — (optional) "true" lets the pipeline auto-schedule posts; DEFAULT creates DRAFTS in FeedHive (a human approves/schedules there — nothing auto-publishes)
 - URL — Netlify site URL (set automatically by Netlify, e.g. https://admin.meetriley.us)
 
 ## Supabase
@@ -89,13 +90,13 @@ Run in order in Supabase SQL editor:
 ### Agent functions (manual, called from dashboard)
 - scout.js — research agent, injects echo performance data + history before calling Claude
 - sage.js — writer agent, injects format_winner + pillar performance before calling Claude
-- atlas.js — scheduler, calls buffer-publish for each post after Claude responds
+- atlas.js — scheduler, calls feedhive-publish for each post after Claude responds
 - echo.js — analytics agent, saves metrics to echo_scores after each run
 - riley-chat.js — chatbot; accepts user_id + session_id for persistent memory; reads user profile for personalization
 
 ### Infrastructure functions
 - auth-handler.js — POST endpoint; actions: get_session, save_message, update_profile; uses SERVICE_KEY
-- buffer-publish.js — POST endpoint to schedule one post to Buffer API
+- feedhive-publish.js — POST endpoint to create/schedule one post via the FeedHive API (drafts by default; auto-schedules only when FEEDHIVE_AUTOSCHEDULE=true). Resolves target accounts from FEEDHIVE_ACCOUNT_IDS or all active connected accounts.
 - pipeline-status.js — GET endpoint, returns pipeline_runs + echo_scores + published_posts for dashboard
 - weekly-pipeline.js — HTTP POST manual trigger; returns JSON status; callable from dashboard
 - weekly-pipeline-cron.js — cron-scheduled function (Sunday 6am MT); runs as background; full pipeline
@@ -109,7 +110,7 @@ Run in order in Supabase SQL editor:
 - Configured in netlify.toml: schedule = "0 12 * * 0"
 - Do NOT add -background suffix to scheduled functions — it conflicts with Netlify's cron handling
 - Background functions have no HTTP timeout — run until complete (10 min free / 15 min Pro)
-- Sequence: Echo data read → Scout → Sage → Atlas → Buffer publish → log to pipeline_runs
+- Sequence: Echo data read → Scout → Sage → Atlas → FeedHive publish → log to pipeline_runs
 - Each step is individually fault-tolerant; pipeline logs partial status and continues
 - Status logged to pipeline_runs table (success / partial / failed)
 - weekly-pipeline.js remains as manual HTTP trigger from dashboard (returns JSON status)

@@ -140,19 +140,19 @@ function parseSagePosts(reply) {
 }
 
 // ─── Call Buffer publish endpoint ───────────────────────────────────────────
-async function publishToBuffer(siteUrl, post, profileIds, scheduledAt) {
-  if (!siteUrl || !profileIds.length) return null;
+async function publishToFeedHive(siteUrl, post, scheduledAt) {
+  if (!siteUrl) return null;
   try {
     const text = post.caption + (post.hashtags ? "\n\n" + post.hashtags : "");
-    const res = await fetch(`${siteUrl}/.netlify/functions/buffer-publish`, {
+    const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, profile_ids: profileIds, scheduled_at: scheduledAt }),
+      body: JSON.stringify({ text, scheduled_at: scheduledAt }),
     });
     const data = await res.json();
     return data.update_id || null;
   } catch (e) {
-    console.warn("Buffer publish failed (non-fatal):", e.message);
+    console.warn("FeedHive publish failed (non-fatal):", e.message);
     return null;
   }
 }
@@ -170,7 +170,7 @@ exports.handler = async function (event) {
 
   const apiKey    = process.env.ANTHROPIC_API_KEY;
   const siteUrl   = process.env.URL || "";
-  const bufferIds = (process.env.BUFFER_PROFILE_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const bufferIds = (process.env.FEEDHIVE_ACCOUNT_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
 
   if (!apiKey) {
     return {
@@ -341,7 +341,7 @@ exports.handler = async function (event) {
       const post        = sagePosts[i];
       const daysFromNow = i + 1; // Mon, Tue, Wed
       const scheduledAt = getScheduledTime(daysFromNow, 8);
-      const updateId    = await publishToBuffer(siteUrl, post, bufferIds, scheduledAt);
+      const updateId    = await publishToFeedHive(siteUrl, post, scheduledAt);
       if (updateId) bufferedCount++;
 
       if (supabase) {

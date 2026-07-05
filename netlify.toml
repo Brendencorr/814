@@ -26,7 +26,7 @@
 [functions."auth-handler"]
   timeout = 26
 
-[functions."buffer-publish"]
+[functions."feedhive-publish"]
   timeout = 26
 
 [functions."pipeline-status"]

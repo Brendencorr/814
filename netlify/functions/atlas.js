@@ -113,42 +113,40 @@ function extractCaptionPreview(reply, postNum) {
   return m ? m[1].trim().slice(0, 200) : null;
 }
 
-// Call buffer-publish for a single post, return Buffer update ID
-async function publishToBuffer(siteUrl, text, profileIds, scheduledAt) {
-  if (!siteUrl || !profileIds.length) return null;
+// Call feedhive-publish for a single post, return the FeedHive post ID
+async function publishToFeedHive(siteUrl, text, scheduledAt) {
+  if (!siteUrl) return null;
   try {
-    const res = await fetch(`${siteUrl}/.netlify/functions/buffer-publish`, {
+    const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, profile_ids: profileIds, scheduled_at: scheduledAt }),
+      body: JSON.stringify({ text, scheduled_at: scheduledAt }),
     });
     const data = await res.json();
     if (data.success) return data.update_id || "scheduled";
-    console.warn("Buffer publish returned error:", data.error);
+    console.warn("FeedHive publish returned error:", data.error);
     return null;
   } catch (e) {
-    console.warn("publishToBuffer failed (non-fatal):", e.message);
+    console.warn("publishToFeedHive failed (non-fatal):", e.message);
     return null;
   }
 }
 
-// Save published posts to Supabase and optionally push to Buffer
+// Save published posts to Supabase and optionally push to FeedHive
 async function savePublishedPosts(supabase, reply) {
   try {
     const weekOf     = new Date().toISOString().slice(0, 10);
     const siteUrl    = process.env.URL || "";
-    const profileIds = (process.env.BUFFER_PROFILE_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
-    const token      = process.env.BUFFER_API_TOKEN;
 
     for (const slot of DEFAULT_SCHEDULE) {
       const captionPreview = extractCaptionPreview(reply, slot.post_number);
-      let bufferUpdateId   = null;
+      let bufferUpdateId   = null;   // stores the FeedHive post id (legacy column name)
 
-      // Only call Buffer if token + profile IDs are configured
-      if (token && profileIds.length && captionPreview) {
-        // Build rough ISO time from day/time string
+      // Push to FeedHive (drafts by default; auto-schedules only if FEEDHIVE_AUTOSCHEDULE=true).
+      // feedhive-publish resolves target accounts + checks FEEDHIVE_API_KEY itself; no-ops safely if unset.
+      if (captionPreview) {
         const scheduledAt = buildScheduledTime(slot.scheduled_time);
-        bufferUpdateId = await publishToBuffer(siteUrl, captionPreview, profileIds, scheduledAt);
+        bufferUpdateId = await publishToFeedHive(siteUrl, captionPreview, scheduledAt);
       }
 
       const { error } = await supabase.from("published_posts").insert({

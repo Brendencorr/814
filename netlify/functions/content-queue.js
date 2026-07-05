@@ -138,17 +138,15 @@ exports.handler = async function (event) {
       const echo = extractJson(echoRaw) || { packages: [] };
       const packages = Array.isArray(echo.packages) ? echo.packages : [];
 
-      // Create publishing jobs + push to Buffer
+      // Create publishing jobs + push to FeedHive (feedhive-publish resolves accounts + key itself)
       const siteUrl = process.env.URL || "";
-      const bufferIds = (process.env.BUFFER_PROFILE_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
-      const bufferToken = process.env.BUFFER_API_TOKEN;
       let scheduledCount = 0;
 
       for (const pkg of packages) {
         const jobRow = {
           approval_id: id,
           platform: ["instagram","tiktok","linkedin","facebook","youtube_shorts","pinterest","x"].includes(pkg.platform) ? pkg.platform : "instagram",
-          publisher: "buffer",
+          publisher: "feedhive",
           caption_final: pkg.caption_final || masterCaption,
           hashtags_final: pkg.hashtags_final || [],
           media_urls: pkg.media_urls || mediaUrls,
@@ -158,18 +156,18 @@ exports.handler = async function (event) {
         };
         const { data: job } = await db.from("content_publishing_jobs").insert(jobRow).select().single();
 
-        // Push to Buffer if configured (reposts = quote/link with attribution, never re-upload)
-        if (bufferToken && bufferIds.length && siteUrl) {
+        // Push to FeedHive if the site URL is set (reposts = quote/link with attribution, never re-upload)
+        if (siteUrl) {
           try {
             let text = jobRow.caption_final;
             if (jobRow.hashtags_final?.length) text += "\n\n" + jobRow.hashtags_final.join(" ");
             if (item.kind === "repost" && item.original_url) {
               text = `${jobRow.caption_final}\n\nvia ${item.original_creator || "original creator"}: ${item.original_url}`;
             }
-            const res = await fetch(`${siteUrl}/.netlify/functions/buffer-publish`, {
+            const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ text, profile_ids: bufferIds, scheduled_at: jobRow.scheduled_for }),
+              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for }),
             });
             const bd = await res.json();
             if (bd.success) {

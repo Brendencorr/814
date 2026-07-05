@@ -620,7 +620,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="tr" id="str"></div>
   </div>
   <div class="sps">
-    <div class="spsl">Buffer Integration</div>
+    <div class="spsl">FeedHive Integration</div>
     <div class="spr"><span class="sprl">Status</span><span class="sprv" id="sbs">&#8212;</span></div>
     <label style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);letter-spacing:.15em;display:block;margin-bottom:.3rem">Profile IDs</label>
     <input class="spi" id="spids" placeholder="abc123, def456">
@@ -1546,7 +1546,7 @@ async function runBgPipeline(){
           document.getElementById('pipe-summary').innerHTML=
             '<strong style="color:var(--gold)">'+latest.status.toUpperCase()+'</strong><br>'+
             (latest.sage_posts_count||0)+' posts written &middot; '+
-            (latest.buffer_posts_scheduled||0)+' scheduled in Buffer<br>'+
+            (latest.buffer_posts_scheduled||0)+' scheduled in FeedHive<br>'+
             (latest.echo_top_pillar?'Top pillar: '+x(latest.echo_top_pillar)+'<br>':'')+
             (latest.error_message?'<span style="color:var(--red)">'+x(latest.error_message)+'</span>':'');
           // Load fresh data into home screen
@@ -2152,7 +2152,7 @@ function ceRenderPerformance(d){
       '<div style="font-size:.85rem;color:var(--ink2);line-height:1.6">'+x(learn.digest)+'</div></div>';
   }
   if(!d.has_data){
-    html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once Buffer is connected and posts go live, engagement + reach + clicks land here nightly — then Riley starts weighting new content toward what your audience responds to.</div>';
+    html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once FeedHive is connected and posts go live, engagement + reach + clicks land here nightly — then Riley starts weighting new content toward what your audience responds to.</div>';
     body.innerHTML=html;return;
   }
   // ── totals + engagement rate ──

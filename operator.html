@@ -1972,9 +1972,9 @@ function renderUserDetail(d){
     var p=profile.programs_purchased;
     if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Coach · $34/mo';tierColor='var(--gold)';}
     else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $19/mo';tierColor='var(--gold)';}
-    else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0||x.indexOf('Sobriety')>=0;})){tier='Sobriety (self-guided) · $9';tierColor='var(--sage)';}
-    else if(p.some(function(x){return x.indexOf('Nourish')>=0||x.indexOf('Body')>=0;})){tier='Body Rebuild (self-guided) · $9';tierColor='var(--sage)';}
-    else if(p.some(function(x){return x.indexOf('Carry')>=0||x.indexOf('Grief')>=0;})){tier='Grief & Life Transitions (self-guided) · $9';tierColor='var(--sage)';}
+    else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0||x.indexOf('Sobriety')>=0;})){tier='Sobriety (self-guided) · $8.14';tierColor='var(--sage)';}
+    else if(p.some(function(x){return x.indexOf('Nourish')>=0||x.indexOf('Body')>=0;})){tier='Body Rebuild (self-guided) · $8.14';tierColor='var(--sage)';}
+    else if(p.some(function(x){return x.indexOf('Carry')>=0||x.indexOf('Grief')>=0;})){tier='Grief & Life Transitions (self-guided) · $8.14';tierColor='var(--sage)';}
     else tier=p[p.length-1];
   }
   html+='<div style="background:var(--gold-dim);border-left:3px solid var(--gold);padding:.75rem 1rem;margin-bottom:.85rem;display:flex;align-items:center;justify-content:space-between">';
@@ -2062,7 +2062,7 @@ async function membershipApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($9)'],['prog_grief','Grief & Transitions ($9)'],['prog_body','Body Rebuild ($9)']];
+var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)']];
 async function loadMembershipPanel(userId){
   var el=document.getElementById('ud-membership');if(!el)return;
   try{

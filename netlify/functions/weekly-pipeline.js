@@ -146,7 +146,7 @@ async function publishToFeedHive(siteUrl, post, scheduledAt) {
     const text = post.caption + (post.hashtags ? "\n\n" + post.hashtags : "");
     const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-operator-key": process.env.OPERATOR_KEY || "" },
       body: JSON.stringify({ text, scheduled_at: scheduledAt }),
     });
     const data = await res.json();

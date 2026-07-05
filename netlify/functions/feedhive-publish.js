@@ -44,6 +44,13 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
 
+  // SECURITY: operator-only. This publishes to REAL Instagram/Facebook — it must never be reachable
+  // unauthenticated (a public POST could post spam/abuse to the recovery brand + drain the FeedHive
+  // quota). Called server-to-server by the pipeline + content-queue, which send x-operator-key.
+  const _opk = process.env.OPERATOR_KEY;
+  if (!_opk) return json(503, { error: "OPERATOR_KEY not configured" });
+  if ((event.headers["x-operator-key"] || event.headers["X-Operator-Key"]) !== _opk) return json(401, { error: "Unauthorized" });
+
   try {
     const token = process.env.FEEDHIVE_API_KEY;
     if (!token) return json(500, { error: "FEEDHIVE_API_KEY not configured" });
@@ -61,7 +68,8 @@ exports.handler = async function (event) {
     // pipeline already routed here (approval still gates upstream). Phase A will move this to a
     // DB-stored setting (admin toggle, no redeploy); the env var is the bootstrap default.
     const mode = (process.env.FEEDHIVE_MODE || "draft").toLowerCase();
-    const status = body.status || (mode === "live" && scheduled_at ? "scheduled" : "draft");
+    // Mode gates draft-vs-live — NO client override (a forged body.status could bypass draft-safety).
+    const status = (mode === "live" && scheduled_at) ? "scheduled" : "draft";
 
     const payload = { text, accounts, status };
     if (status === "scheduled" && scheduled_at) payload.scheduled_at = scheduled_at;

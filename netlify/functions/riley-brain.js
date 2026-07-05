@@ -79,9 +79,13 @@ exports.handler = async (event) => {
     const user_id = await getUserIdFromToken(supabase, body.token);
     if (!user_id) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     const today    = new Date();
-    const todayISO = today.toISOString().slice(0, 10);
-    const month    = today.getUTCMonth() + 1;
-    const day      = today.getUTCDate();
+    // Member-local 4am "app day" (was UTC — anniversaries fired a day off; the check-in/dormancy read drifted).
+    const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
+    let _tz = "America/Denver";
+    try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", user_id).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+    const todayISO = appDay(_tz);                        // member-local 4am date
+    const month    = parseInt(todayISO.slice(5, 7), 10); // local month/day → correct anniversary matching
+    const day      = parseInt(todayISO.slice(8, 10), 10);
     const fourteenAgo = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
     const sevenAgo    = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 

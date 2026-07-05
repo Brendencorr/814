@@ -34,6 +34,9 @@ const CORS = {
 const json = (statusCode, data) => ({ statusCode, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data) });
 const todayUTC = () => new Date().toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+// "App day" = the member's LOCAL date with a 4am rollover — matches the client so user_daily_state
+// lines up with the dashboard's clarity read (was UTC, which drifted a day for evening users).
+const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
 
 // Restricted safety write (mirrors riley-chat / checkin-scan). Non-fatal.
 async function logCrisis(supabase, userId, level, matches, snippet, via) {
@@ -135,7 +138,9 @@ exports.handler = async function (event) {
   // Tier 2 — log only, no recompute. This is the scaling fix.
   if (tier === 2) return json(200, { tier: 2, recompute: false });
 
-  const today = todayUTC();
+  let _tz = "America/Denver";
+  try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+  const today = appDay(_tz);   // member-local 4am app-day (was UTC)
   const [sig, prevRes] = await Promise.all([
     gatherSignals(supabase, userId),
     supabase.from("user_daily_state").select("*").eq("user_id", userId).lte("date", today).order("date", { ascending: false }).limit(1),

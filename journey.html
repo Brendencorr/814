@@ -87,7 +87,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA'),ENROLL=null,STEP=null,PROGRAM=null;
+let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),ENROLL=null,STEP=null,PROGRAM=null;   // "app day": 4am-local rollover (matches the daily check-in)
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function qs(k){return new URLSearchParams(location.search).get(k);}
 

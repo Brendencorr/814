@@ -31,7 +31,11 @@ exports.handler = async (event) => {
     // SECURITY: identity from the verified token, never the client-supplied user_id.
     const user_id = await getUserIdFromToken(supabase, body.token);
     if (!user_id) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
-    const today     = new Date().toISOString().slice(0, 10);
+    // Member-local 4am "app day" (was UTC — the brief key + crisis-state read drifted a day for evening users).
+    const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
+    let _tz = "America/Denver";
+    try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", user_id).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+    const today     = appDay(_tz);
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const sevenAgo  = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
@@ -77,8 +81,8 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ brief: existing, cached: true }) };
     }
 
-    const briefMonth = new Date().getUTCMonth() + 1;
-    const briefDay   = new Date().getUTCDate();
+    const briefMonth = parseInt(today.slice(5, 7), 10);   // member-local month/day → correct anniversary matching
+    const briefDay   = parseInt(today.slice(8, 10), 10);
 
     // Gather user context in parallel — all non-fatal
     const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes, lifeEventsRes, importantRes, calRes, memoryRes] = await Promise.allSettled([

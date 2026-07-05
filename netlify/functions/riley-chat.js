@@ -315,6 +315,9 @@ Before any goodbye, always ask: "Is there anything else I can help you with toda
 // the day to match — never "how was your morning?" at night. (A client-sent local bucket can override
 // this later for travel accuracy; the dashboard check-in already uses device-local time.)
 function todFromTz(tz){ try{ const h=parseInt(new Intl.DateTimeFormat("en-US",{timeZone:tz||"America/Denver",hour:"numeric",hour12:false}).format(new Date()),10); return h<12?"morning":(h<17?"midday":"evening"); }catch(e){ return null; } }
+// "App day" = the user's LOCAL date with a 4am rollover — matches the client (dashboard/chat save
+// check-ins under this same key). Fixes the old UTC read that missed evening check-ins in the Americas.
+function appDay(tz){ const shifted=new Date(Date.now()-4*3600*1000); try{ return new Intl.DateTimeFormat("en-CA",{timeZone:tz||"America/Denver"}).format(shifted); }catch(e){ return shifted.toISOString().slice(0,10); } }
 
 // ── User context builder ──────────────────────────────────────────────────────
 function buildUserContext(profile, clientData) {
@@ -524,16 +527,20 @@ async function getUserProfile(supabase, userId) {
 async function getClientData(supabase, userId) {
   if (!userId) return null;
   try {
-    const now = new Date();
-    const todayISO = now.toISOString().split("T")[0];
-    const month = now.getUTCMonth() + 1;
-    const day = now.getUTCDate();
+    // Resolve the user's timezone FIRST so every "which day is it" below uses their LOCAL 4am
+    // app-day (not UTC) — fixes evening check-ins being missed AND anniversaries firing a day off.
+    let _tz = "America/Denver";
+    try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+    const appToday = appDay(_tz);                       // 4am-local YYYY-MM-DD
+    const month = parseInt(appToday.slice(5, 7), 10);   // local month/day → correct anniversary matching
+    const day = parseInt(appToday.slice(8, 10), 10);
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
     const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
-      supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", todayISO).limit(1),
+      // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
+      supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
       supabase.from("user_goals").select("title,category,target_value,current_value,unit").eq("user_id", userId).eq("is_active", true).limit(8),
       supabase.from("habits").select("id,title,emoji").eq("user_id", userId).eq("is_active", true),
       supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", sevenISO),

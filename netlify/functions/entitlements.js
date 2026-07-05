@@ -53,25 +53,20 @@ exports.handler = async function (event) {
   try {
     const sb = getSupabaseClient();
 
-    // Resolve user_id: from body, query string, or auth token
-    let userId = null;
-    let previewTier = null;   // admin tier-preview (honored only for admins, below)
+    // SECURITY: identity from the VERIFIED token ONLY — never an unauthenticated body/query user_id
+    // (this used to return ANY user's plan/tier/features to an unauthenticated caller who passed a UUID).
+    // The token may arrive in the JSON body (token) or an Authorization: Bearer header. preview_tier is
+    // still read from the body but is honored only when the VERIFIED user is an admin (below).
+    let previewTier = null;
+    let bodyTok = null;
     if (event.body) {
-      try { const _b = JSON.parse(event.body); userId = _b.user_id; previewTier = _b.preview_tier || null; } catch (_) {}
+      try { const _b = JSON.parse(event.body); previewTier = _b.preview_tier || null; bodyTok = _b.token || null; } catch (_) {}
     }
-    if (!userId && event.queryStringParameters) {
-      userId = event.queryStringParameters.user_id;
-    }
-    if (!userId) {
-      const auth = event.headers.authorization || event.headers.Authorization;
-      if (auth && auth.startsWith('Bearer ')) {
-        const { data } = await sb.auth.getUser(auth.slice(7));
-        userId = data?.user?.id || null;
-      }
-    }
-    if (!userId) {
-      return json(400, { error: 'No user_id provided' });
-    }
+    const _auth = event.headers.authorization || event.headers.Authorization || '';
+    const _token = bodyTok || (_auth.startsWith('Bearer ') ? _auth.slice(7) : null);
+    let userId = null;
+    if (_token) { try { const { data } = await sb.auth.getUser(_token); userId = data?.user?.id || null; } catch (_) {} }
+    if (!userId) return json(401, { error: 'Unauthorized' });
 
     // 1. Resolved active products (view expands implies_all_programs + reset_free)
     const { data: prodRows, error: prodErr } = await sb

@@ -245,7 +245,7 @@ async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {err
     const k='ent_'+uid, c=sessionStorage.getItem(k);
     if(c){try{return JSON.parse(c);}catch(e){}}
     try{
-      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
+      const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,token:(await SB.auth.getSession()).data.session?.access_token||null})});
       const d=await r.json(); sessionStorage.setItem(k,JSON.stringify(d)); return d;
     }catch(e){ return {products:[],tier:'guide',features:{}}; }
   }

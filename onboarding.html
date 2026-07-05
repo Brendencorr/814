@@ -14,7 +14,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;}
+:root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;--rust:#c0604a;}
 body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(201,168,76,0.07) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 50% 110%,rgba(74,122,176,0.04) 0%,transparent 55%);pointer-events:none;z-index:0}
 .stage{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px}
@@ -28,19 +28,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 input[type=text],input[type=date],select,textarea{width:100%;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .2s;margin-bottom:12px}
 input:focus,select:focus,textarea:focus{border-color:var(--gold)}
 input::placeholder,textarea::placeholder{color:var(--smoke2)}
-textarea{resize:vertical;min-height:96px;line-height:1.6}
+textarea{resize:vertical;min-height:84px;line-height:1.6}
 label.fld{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;margin-top:8px}
 .opts{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
-.opt{padding:14px 16px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:15px;color:var(--parchment);cursor:pointer;transition:all .18s;text-align:left}
+.opt{padding:14px 16px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:15px;color:var(--parchment);cursor:pointer;transition:all .18s;text-align:left;min-height:24px}
 .opt:hover{border-color:rgba(201,168,76,0.4);background:var(--ink3)}
 .opt.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold2)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-.chip{padding:9px 15px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:24px;font-size:13px;color:var(--parchment);cursor:pointer;transition:all .18s}
+.chip{padding:9px 15px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:24px;font-size:13px;color:var(--parchment);cursor:pointer;transition:all .18s;min-height:24px}
 .chip:hover{border-color:rgba(201,168,76,0.4)}
 .chip.sel{border-color:var(--gold);background:var(--gold-dim);color:var(--gold2)}
-.chip-count{font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke2);margin:4px 0 16px}
-.row{display:flex;gap:10px}
-.row>div{flex:1}
+.row{display:flex;gap:10px}.row>div{flex:1}
 .actions{display:flex;align-items:center;gap:14px;margin-top:24px}
 .btn{padding:13px 32px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;border-radius:3px;transition:all .2s;letter-spacing:0.02em;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);box-shadow:0 3px 16px rgba(201,168,76,0.25)}
 .btn:hover{box-shadow:0 5px 24px rgba(201,168,76,0.4)}
@@ -50,15 +48,31 @@ label.fld{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var
 .progress-dots{display:flex;gap:6px;justify-content:center;margin-top:40px}
 .pdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.12);transition:all .3s}
 .pdot.on{background:var(--gold);width:18px;border-radius:3px}
-/* Building animation */
+/* 0–10 ruler */
+.ruler{display:flex;gap:5px;justify-content:space-between;margin:6px 0 8px}
+.rnum{flex:1;min-width:24px;min-height:44px;display:flex;align-items:center;justify-content:center;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:5px;font-family:'DM Mono',monospace;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s}
+.rnum:hover{border-color:rgba(201,168,76,0.5)}
+.rnum.sel{background:var(--gold);border-color:var(--gold);color:var(--ink);font-weight:600}
+.ranchor{display:flex;justify-content:space-between;font-size:11px;color:var(--smoke2);font-family:'DM Mono',monospace;margin-bottom:16px}
+/* toggle rows */
+.toggle-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:13px 0;border-top:1px solid rgba(255,255,255,0.06)}
+.toggle-row:first-child{border-top:none}
+.toggle-row .tl{font-size:14px;color:var(--parchment)}.toggle-row .td{font-size:12.5px;color:var(--smoke);line-height:1.5;margin-top:3px}
+.sw{position:relative;width:44px;height:26px;flex-shrink:0;background:var(--ink3);border:1px solid rgba(255,255,255,0.14);border-radius:14px;cursor:pointer;transition:all .18s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--smoke);transition:all .18s}
+.sw.on{background:var(--gold-dim);border-color:var(--gold)}.sw.on::after{left:20px;background:var(--gold)}
+/* plan preview card */
+.plan-card{background:linear-gradient(180deg,rgba(201,168,76,0.09),rgba(26,23,20,0.6));border:1px solid rgba(201,168,76,0.22);border-radius:14px;padding:22px 22px;margin:6px 0 8px;font-size:16px;line-height:1.7;color:var(--parchment)}
+.plan-card b{color:var(--gold2);font-weight:600}
+/* crisis card */
+.crisis-card{background:var(--ink2);border:1px solid rgba(192,96,74,0.4);border-radius:12px;padding:20px 22px}
+.crisis-card a.line{display:block;padding:13px 16px;margin-top:10px;background:rgba(192,96,74,0.12);border:1px solid rgba(192,96,74,0.35);border-radius:8px;color:var(--parchment);font-weight:600;text-decoration:none}
+.crisis-card a.line:hover{border-color:var(--rust)}
 .build-stage{text-align:center}
 .cardinal{font-size:48px;display:inline-block;animation:flyin 1.4s cubic-bezier(.2,.7,.2,1)}
 @keyframes flyin{from{opacity:0;transform:translateX(-120px) translateY(-30px)}to{opacity:1;transform:translateX(0) translateY(0)}}
-.feathers{display:flex;justify-content:center;gap:10px;margin:24px 0;min-height:30px}
-.feather{font-size:20px;opacity:0;animation:dropfeather .5s forwards}
-@keyframes dropfeather{from{opacity:0;transform:translateY(-14px) rotate(-20deg)}to{opacity:0.9;transform:translateY(0) rotate(0)}}
 .build-msg{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.55;color:var(--parchment);margin-top:20px;opacity:0;animation:rise .8s forwards}
-@media(max-width:560px){.riley-says{font-size:23px}}
+@media(max-width:560px){.riley-says{font-size:23px}.rnum{font-size:13px}}
 </style>
 </head>
 <body>
@@ -68,267 +82,298 @@ label.fld{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 let USER=null,UID=null,FIRST='';
-const A={}; // collected answers
-const FOCUS=['Sleep','Nutrition','Fitness','Purpose','Mental Health','Stress','Relationships','Recovery','Leadership','Career','Adventure','Creativity','Community','Learning','Financial Wellness'];
-const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am working on my sobriety.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
-const TIMING=[['morning','Morning'],['lunch','Lunch'],['afternoon','Afternoon'],['evening','Evening'],['on_demand','Only when I ask']];
-const HUMAN_OS=[
-  {k:'energy',q:'What gives you energy?',sub:'The people, places, or moments that fill you up.'},
-  {k:'drains',q:'And what drains you?',sub:'No judgment. Just honesty.'},
-  {k:'proud',q:'What are you most proud of?',sub:'It can be big or quiet. Both count.'},
-  {k:'change',q:'What is one thing you would like to change?',sub:'The thing you think about when it is quiet.'},
-  {k:'dream',q:'What is one dream you have never given up on?',sub:'The one that is still there, underneath everything.'}
-];
+const A={secondary_focuses:[]}; // collected answers
 
+// ── Data ──────────────────────────────────────────────────────────────────────
+const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am working on my sobriety.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
+const FOCUS=['Sleep','Nutrition','Fitness','Purpose','Mental Health','Stress','Relationships','Recovery','Leadership','Career','Adventure','Creativity','Community','Learning','Financial Wellness'];
+const TIMING=[['morning','Morning'],['lunch','Lunch'],['afternoon','Afternoon'],['evening','Evening'],['on_demand','Only when I ask']];
+// motivation ("two weeks from now") options by lane
+const MOTIV={
+  sobriety:["I'd have more days behind me","I'd feel less pulled","I'd stop white-knuckling evenings"],
+  grief:["I'd get through a day without drowning","I'd sleep","I'd feel less alone in it"],
+  body:["I'd have moved a few times","I'd have more energy","I'd feel at home in my body again"],
+  other:["I'd feel a little more like myself","I'd have some momentum","I'd feel less stuck"]
+};
+function laneFor(why){
+  if(why==='I am working on my sobriety.')return 'sobriety';
+  if(why==='I am grieving.')return 'grief';
+  if(why==='I want to improve my health.')return 'body';
+  return 'other';
+}
+const LANE_LABEL={sobriety:'your sobriety',grief:'your grief',body:'rebuilding your health',other:"what you're carrying"};
+const TIME_LABEL={morning:'each morning',lunch:'around lunch',afternoon:'in the afternoon',evening:'in the evening',on_demand:'whenever you reach for me'};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 const el=()=>document.getElementById('moment');
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function swap(html){const m=el();m.style.animation='fadeout .3s forwards';setTimeout(()=>{m.innerHTML=html;m.style.animation='rise .7s cubic-bezier(.2,.7,.2,1) backwards';window.scrollTo(0,0);},300);}
-
-// ── Persist helpers ──────────────────────────────────────────────────────────
-async function save(patch,step){
-  try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,...patch,onboarding_step:step},{onConflict:'id'});}catch(e){console.warn('save',e.message);}
+function dots(n){return `<div class="progress-dots">${[1,2,3,4,5,6,7,8,9].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
+async function save(patch,step){try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_version:2,...patch,...(step!=null?{onboarding_step:step}:{})},{onConflict:'id'});}catch(e){console.warn('save',e.message);}}
+async function saveMemory(rows){try{await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true})));}catch(e){console.warn('mem',e.message);}}
+function ruler(id,lo,hi,cur){
+  const nums=[...Array(11).keys()].map(n=>`<button class="rnum ${cur===n?'sel':''}" data-r="${n}" onclick="pickRuler('${id}',${n})">${n}</button>`).join('');
+  return `<div class="ruler" id="${id}">${nums}</div><div class="ranchor"><span>${lo}</span><span>${hi}</span></div>`;
 }
-async function saveMemory(rows){
-  try{await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true})));}catch(e){console.warn('mem',e.message);}
+function pickRuler(id,n){A['_'+id]=n;document.querySelectorAll('#'+id+' .rnum').forEach(b=>b.classList.toggle('sel',+b.dataset.r===n));const b=document.getElementById(id+'-btn');if(b)b.disabled=false;}
+
+// ── Shared crisis check (same detector as chat + check-in) ─────────────────────
+// Explicit self-harm/suicide language interrupts onboarding into the 988 support UI.
+async function crisisScan(text){
+  if(!text||text.trim().length<2)return 0;
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    const r=await fetch('/.netlify/functions/checkin-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,text})});
+    const j=await r.json();return j.level||0;
+  }catch(e){return 0;}
+}
+function crisisInterrupt(resumeFn){
+  el().innerHTML=`<div class="crisis-card">
+    <div style="font-size:28px;margin-bottom:10px">🐦</div>
+    <div class="riley-says" style="font-size:22px;margin-bottom:6px">I'm really glad you told me.</div>
+    <div class="riley-sub" style="margin-bottom:6px">You don't have to carry this alone right now, and you don't have to keep going with any of this. Talking to a real person can help — right now, any time.</div>
+    <a class="line" href="tel:988">📞 Call 988 — Suicide &amp; Crisis Lifeline</a>
+    <a class="line" href="sms:988">💬 Text 988</a>
+    <a class="line" href="https://988lifeline.org/chat/" target="_blank" rel="noopener">🌐 Chat online at 988lifeline.org</a>
+    <div style="margin-top:18px;display:flex;gap:14px;align-items:center">
+      <button class="btn" onclick="(${resumeFn.name})()">I'm okay — let's keep going</button>
+    </div>
+  </div>`;
 }
 
-// ── Boot ─────────────────────────────────────────────────────────────────────
+// ── Boot / resume ──────────────────────────────────────────────────────────────
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
   if(!session){window.location.href='https://login.meetriley.us';return;}
   USER=session.user;UID=USER.id;
   const meta=USER.user_metadata||{};
   FIRST=(meta.full_name||meta.name||USER.email.split('@')[0]||'').split(' ')[0];
-  // Resume or start
-  const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_step,preferred_name').eq('id',UID).maybeSingle();
+  const {data:p}=await SB.from('user_profiles').select('onboarding_completed,onboarding_step,onboarding_version,preferred_name').eq('id',UID).maybeSingle();
   if(p&&p.onboarding_completed){window.location.href='https://riley.meetriley.us/dashboard';return;}
-  if(p&&p.preferred_name)FIRST=p.preferred_name.split(' ')[0];
+  if(p&&p.preferred_name){FIRST=p.preferred_name.split(' ')[0];A.preferred_name=p.preferred_name;}
   if(!p||!p.onboarding_started_at)await save({onboarding_started_at:new Date().toISOString()},0);
-  const step=(p&&p.onboarding_step)||0;
-  if(step>=1&&step<=5){renderSection(step);}else{renderWelcome();}
+  renderWelcome(); // resume is answer-preserving within a session; a fresh load restarts at welcome (short flow)
 }
 
-// ── Moment 0: Welcome ────────────────────────────────────────────────────────
+// ── Screen 1 · Welcome (copy kept verbatim) ────────────────────────────────────
 function renderWelcome(){
-  el().innerHTML=`
-    <div style="text-align:center">
-      <div style="font-size:40px;margin-bottom:24px">🐦</div>
-      <div class="riley-says" style="font-size:30px">Welcome.<br>I'm really glad you're here.</div>
-      <div class="riley-sub" style="max-width:400px;margin:18px auto 0">Before we begin, I'd love to get to know you.<br>There's no rush. We'll build this together.</div>
-      <div class="sig">— Riley</div>
-      <div style="margin-top:36px"><button class="btn" onclick="renderConsent()">Begin</button></div>
-    </div>`;
+  el().innerHTML=`<div style="text-align:center">
+    <div style="font-size:40px;margin-bottom:24px">🐦</div>
+    <div class="riley-says" style="font-size:30px">Welcome.<br>I'm really glad you're here.</div>
+    <div class="riley-sub" style="max-width:400px;margin:18px auto 0">Before we begin, I'd love to get to know you.<br>There's no rush. We'll build this together.</div>
+    <div class="sig">— Riley</div>
+    <div style="margin-top:36px"><button class="btn" onclick="sName()">Begin</button></div>
+  </div>`;
 }
 
-// ── Consent gate — plain language, before Phase 1 begins (Trust doc §1.4) ──────
-function renderConsent(){
-  swap(`
-    <div class="section-label">Before we begin · Your privacy</div>
-    <div class="riley-says">First, an honest note about what I remember.</div>
-    <div class="riley-sub">So this never feels like fine print, here it is in plain words.</div>
-    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:18px 20px;margin-bottom:18px">
-      <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:12px">What I keep, so I can know you</div>
-      <div style="font-size:14.5px;line-height:1.7;color:var(--parchment)">
-        · <b>What you tell me</b> — your name, your story, what you're reaching for<br>
-        · <b>How you're doing</b> — your check-ins, mood, sleep, and reflections<br>
-        · <b>Our conversations</b> — so I remember, and you never have to repeat yourself
-      </div>
-    </div>
-    <div class="riley-sub" style="margin-bottom:8px">I keep these for one reason: so I can actually know you and support you over time. <b style="color:var(--parchment);font-weight:600">Your information is never sold and never used for advertising.</b></div>
-    <div class="riley-sub" style="margin-bottom:8px">If you ever tell me you're in a hard or unsafe moment, that stays private — used only to keep you safe and follow up with care, never for anything else.</div>
-    <div class="riley-sub">You're always in control. You can see everything I've saved, or delete it, anytime from your settings.</div>
-    <div class="actions" style="flex-direction:column;align-items:stretch;gap:10px">
-      <button class="btn" id="consent-btn" onclick="acceptConsent()" style="width:100%">I understand — let's begin</button>
-      <div style="text-align:center;font-size:12px;color:var(--smoke2);line-height:1.5">By continuing, you're okay with me storing what you share so I can support you.</div>
-    </div>`);
-}
-async function acceptConsent(){
-  const b=document.getElementById('consent-btn');if(b){b.disabled=true;b.textContent='Thank you…';}
-  try{await save({consent_at:new Date().toISOString(),consent_version:'1.0'},0);}catch(e){console.warn('consent',e.message);}
-  renderSection(1);
-}
-
-function dots(n){return `<div class="progress-dots">${[1,2,3,4,5].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
-
-// Capture current input into A before navigating back, so nothing is lost.
-function capS1(){const n=document.getElementById('i-name');if(n&&n.value.trim())A.preferred_name=n.value.trim();const p=document.getElementById('i-pron');if(p)A.pronouns=p.value.trim()||A.pronouns;const b=document.getElementById('i-bday');if(b)A.birthday=b.value||A.birthday;const c=document.getElementById('i-city');if(c)A.city=c.value.trim()||A.city;}
-function capWhyText(){const t=document.getElementById('why-text');if(t)A.why_here_detail=t.value.trim()||A.why_here_detail;}
-function capVision(){const v=document.getElementById('vision');if(v)A.one_year_vision=v.value.trim()||A.one_year_vision;}
-function capOS(i){const a=document.getElementById('os-ans');if(a){A.human_os=A.human_os||{};const val=a.value.trim();if(val)A.human_os[HUMAN_OS[i].k]=val;}}
-
-// ── Sections ─────────────────────────────────────────────────────────────────
-function renderSection(n){
-  if(n===1)return s1();if(n===2)return s2();if(n===3)return s3a();
-  if(n===4)return s4(0);if(n===5)return s5();
-}
-
-// Section 1 — Identity
-function s1(){
-  swap(`
-    <div class="section-label">Section 1 of 5 · Identity</div>
+// ── Screen 2 · Name ────────────────────────────────────────────────────────────
+function sName(){
+  swap(`<div class="section-label">A little about you</div>
     <div class="riley-says">Hi. What should I call you?</div>
     <div class="riley-sub">Just your first name is perfect.</div>
     <input type="text" id="i-name" placeholder="Your name" value="${esc(A.preferred_name||FIRST||'')}" autofocus>
-    <div class="row">
-      <div><label class="fld">Pronouns · optional</label><input type="text" id="i-pron" placeholder="she / he / they" value="${esc(A.pronouns||'')}"></div>
-      <div><label class="fld">Birthday · optional</label><input type="date" id="i-bday" value="${A.birthday||''}"></div>
-    </div>
-    <label class="fld">Where are you? · optional</label>
-    <input type="text" id="i-city" placeholder="City, country" value="${esc(A.city||'')}">
-    <div class="actions"><button class="skip" onclick="capS1();renderWelcome()" style="margin-right:auto">← Back</button><button class="btn" id="b1" onclick="doneS1()">Continue</button></div>
+    <div class="actions"><button class="skip" onclick="renderWelcome()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneName()">Continue</button></div>
     ${dots(1)}`);
+  setTimeout(()=>{const n=document.getElementById('i-name');if(n)n.focus();},350);
 }
-async function doneS1(){
+async function doneName(){
   const name=document.getElementById('i-name').value.trim();
   if(!name){document.getElementById('i-name').style.borderColor='#8b3a3a';document.getElementById('i-name').focus();return;}
-  A.preferred_name=name;A.pronouns=document.getElementById('i-pron').value.trim()||null;
-  A.birthday=document.getElementById('i-bday').value||null;A.city=document.getElementById('i-city').value.trim()||null;
-  FIRST=name.split(' ')[0];
-  await save({preferred_name:A.preferred_name,pronouns:A.pronouns,birthday:A.birthday,city:A.city,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
-  // Riley acknowledges, then advances
-  swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">I'm glad we're doing this together.</div><div class="actions"><button class="btn" onclick="renderSection(2)">Continue</button></div>`);
+  A.preferred_name=name;FIRST=name.split(' ')[0];
+  await save({preferred_name:name,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
+  swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">Let's start where you are.</div><div class="actions"><button class="btn" onclick="sBrings()">Continue</button></div>`);
 }
 
-// Section 2 — Story (multi-select: people often carry more than one thing)
-function s2(){
+// ── Screen 3 · What brings you here (multi-select persona sorter + crisis scan) ─
+function sBrings(){
   A.why_set=A.why_set||[];
   const elseOpen=A.why_set.includes(WHY.length-1);
-  swap(`
-    <div class="section-label">Section 2 of 5 · Your Story</div>
+  swap(`<div class="section-label">What brings you here</div>
     <div class="riley-says">What brings you here?</div>
     <div class="riley-sub">Choose anything that fits — you can pick more than one. There's no wrong answer.</div>
     <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt ${A.why_set.includes(i)?'sel':''}" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
     <div id="why-else" style="display:${elseOpen?'block':'none'};margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want.">${esc(A.why_here_detail||'')}</textarea></div>
-    <div class="actions"><button class="skip" onclick="capWhyText();s1()" style="margin-right:auto">← Back</button><button class="btn" id="b2" onclick="doneS2()" ${A.why_set.length?'':'disabled'}>Continue</button></div>
+    <div class="actions"><button class="skip" onclick="sName()" style="margin-right:auto">← Back</button><button class="btn" id="b-brings" onclick="doneBrings()" ${A.why_set.length?'':'disabled'}>Continue</button></div>
     ${dots(2)}`);
 }
 function pickWhy(i){
-  A.why_set=A.why_set||[];
-  const idx=A.why_set.indexOf(i);
+  A.why_set=A.why_set||[];const idx=A.why_set.indexOf(i);
   if(idx>=0)A.why_set.splice(idx,1);else A.why_set.push(i);
   document.querySelectorAll('#why-opts .opt').forEach(o=>o.classList.toggle('sel',A.why_set.includes(+o.dataset.i)));
   document.getElementById('why-else').style.display=A.why_set.includes(WHY.length-1)?'block':'none';
-  document.getElementById('b2').disabled=A.why_set.length===0;
+  document.getElementById('b-brings').disabled=A.why_set.length===0;
 }
-async function doneS2(){
+async function doneBrings(){
   if(!A.why_set||!A.why_set.length)return;
+  const txt=document.getElementById('why-text')?document.getElementById('why-text').value.trim():'';
+  A.why_here_detail=txt||null;
+  // Same crisis detector as chat + check-in — explicit risk interrupts into 988 UI.
+  if(txt){const lvl=await crisisScan(txt);if(lvl>=3){return crisisInterrupt(sBrings);}}
   A.why_here=A.why_set.map(i=>WHY[i]).join('; ');
-  A.why_here_detail=document.getElementById('why-text')?.value?.trim()||null;
-  const sobrietyInterest=A.why_set.some(i=>WHY[i]==='I am working on my sobriety.');
-  await save({why_here:A.why_here,why_here_detail:A.why_here_detail,sobriety_interest:sobrietyInterest},2);
-  await saveMemory([{content:`Why they came to 8:14: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
-  renderSection(3);
+  const sob=A.why_set.some(i=>WHY[i]==='I am working on my sobriety.');
+  await save({why_here:A.why_here,why_here_detail:A.why_here_detail,sobriety_interest:sob},2);
+  await saveMemory([{content:`Why they came to Riley: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
+  sStart();
 }
 
-// Section 3 — Goals (vision then focus areas)
-function s3a(){
-  swap(`
-    <div class="section-label">Section 3 of 5 · What You're Reaching For</div>
-    <div class="riley-says">What would success look like, one year from today?</div>
-    <div class="riley-sub">Picture it honestly. This becomes one of the most important things I know about you.</div>
-    <textarea id="vision" placeholder="A year from now, I want to..." autofocus>${esc(A.one_year_vision||'')}</textarea>
-    <div class="actions"><button class="skip" onclick="capVision();s2()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS3a()">Continue</button><button class="skip" onclick="doneS3a(true)">Skip for now</button></div>
+// ── Screen 4 · Where we start (single primary focus) ───────────────────────────
+function sStart(){
+  // Candidate set = the specific things they chose (excluding "not sure"/"something else"),
+  // else the full focus list.
+  const chosen=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!=='I am not really sure.'&&w!=='Something else.');
+  const usingFocus=chosen.length===0;
+  const cand=usingFocus?FOCUS:chosen;
+  A._startCand=cand;
+  swap(`<div class="section-label">Where we start</div>
+    <div class="riley-says">Where should we start?</div>
+    <div class="riley-sub">You don't have to pick one thing to fix — I'll hold all of it. But every rebuild starts somewhere.</div>
+    <div class="opts" id="start-opts">${cand.map((c,i)=>`<button class="opt ${A._startIdx===i?'sel':''}" data-i="${i}" onclick="pickStart(${i})">${esc(c)}</button>`).join('')}</div>
+    <div class="actions"><button class="skip" onclick="sBrings()" style="margin-right:auto">← Back</button><button class="btn" id="b-start" onclick="doneStart()" ${A._startIdx!=null?'':'disabled'}>Continue</button></div>
     ${dots(3)}`);
 }
-async function doneS3a(skip){
-  A.one_year_vision=skip?null:(document.getElementById('vision').value.trim()||null);
-  if(A.one_year_vision){await save({one_year_vision:A.one_year_vision},3);await saveMemory([{content:`Their one-year vision: ${A.one_year_vision}`,type:'long_term'}]);}
-  s3b();
-}
-function s3b(){
-  A.focus=A.focus||[];
-  swap(`
-    <div class="section-label">Section 3 of 5 · What You're Reaching For</div>
-    <div class="riley-says">Where should we focus together?</div>
-    <div class="riley-sub">Choose up to five. We can always adjust.</div>
-    <div class="chips" id="focus-chips">${FOCUS.map(f=>`<button class="chip ${A.focus.includes(f)?'sel':''}" data-f="${esc(f)}" onclick="toggleFocus('${esc(f)}')">${esc(f)}</button>`).join('')}</div>
-    <div class="chip-count" id="focus-count">${A.focus.length}/5 selected</div>
-    <div class="actions"><button class="skip" onclick="s3a()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS3b()">Continue</button></div>
-    ${dots(3)}`);
-}
-function toggleFocus(f){
-  A.focus=A.focus||[];
-  const idx=A.focus.indexOf(f);
-  if(idx>=0)A.focus.splice(idx,1);else{if(A.focus.length>=5)return;A.focus.push(f);}
-  document.querySelectorAll('#focus-chips .chip').forEach(c=>c.classList.toggle('sel',A.focus.includes(c.dataset.f)));
-  document.getElementById('focus-count').textContent=A.focus.length+'/5 selected';
-}
-async function doneS3b(){
-  await save({primary_goals:A.focus||[]},3);
-  if(A.focus&&A.focus.length)await saveMemory([{content:`Focus areas they chose: ${A.focus.join(', ')}`,type:'long_term'}]);
-  renderSection(4);
+function pickStart(i){A._startIdx=i;document.querySelectorAll('#start-opts .opt').forEach(o=>o.classList.toggle('sel',+o.dataset.i===i));document.getElementById('b-start').disabled=false;}
+async function doneStart(){
+  if(A._startIdx==null)return;
+  const primary=A._startCand[A._startIdx];
+  A.primary_focus=primary;
+  A.focus_lane=laneFor(primary); // FOCUS-list picks fall to 'other' unless they map
+  A.secondary_focuses=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!==primary&&w!=='Something else.');
+  await save({primary_focus:A.primary_focus,focus_lane:A.focus_lane,secondary_focuses:A.secondary_focuses},3);
+  await saveMemory([{content:`Where we're starting together: ${primary}`,type:'long_term'}]);
+  sTwoWeeks();
 }
 
-// Section 4 — Human OS (one question at a time)
-function s4(i){
-  if(i>=HUMAN_OS.length){return doneS4();}
-  const q=HUMAN_OS[i];
-  swap(`
-    <div class="section-label">Section 4 of 5 · The Heart of It</div>
-    <div class="riley-says">${esc(q.q)}</div>
-    <div class="riley-sub">${esc(q.sub)}</div>
-    <textarea id="os-ans" placeholder="Take your time." autofocus>${esc((A.human_os&&A.human_os[q.k])||'')}</textarea>
-    <div class="actions"><button class="skip" onclick="capOS(${i});${i>0?'s4('+(i-1)+')':'s3b()'}" style="margin-right:auto">← Back</button><button class="btn" onclick="doneS4q(${i})">Continue</button><button class="skip" onclick="doneS4q(${i},true)">Skip</button></div>
-    <div class="progress-dots" style="margin-top:28px">${HUMAN_OS.map((_,j)=>`<div class="pdot ${j<=i?'on':''}"></div>`).join('')}</div>`);
+// ── Screen 5 · Two weeks from now (motivation, options vary by lane) ───────────
+function sTwoWeeks(){
+  const opts=MOTIV[A.focus_lane]||MOTIV.other;
+  const elseOpen=A._motivElse;
+  swap(`<div class="section-label">Two weeks from now</div>
+    <div class="riley-says">If the next two weeks went well, what would feel different?</div>
+    <div class="riley-sub">Not the finish line — just the next honest step.</div>
+    <div class="opts" id="mv-opts">${opts.map((o,i)=>`<button class="opt ${A._motivIdx===i?'sel':''}" data-i="${i}" onclick="pickMotiv(${i})">${esc(o)}</button>`).join('')}
+      <button class="opt ${elseOpen?'sel':''}" data-i="else" onclick="pickMotiv('else')">Something else…</button></div>
+    <div id="mv-else" style="display:${elseOpen?'block':'none'};margin-top:6px"><textarea id="mv-text" placeholder="In your words.">${esc(A._motivText||'')}</textarea></div>
+    <div class="actions"><button class="skip" onclick="sStart()" style="margin-right:auto">← Back</button><button class="btn" id="b-mv" onclick="doneTwoWeeks()" ${(A._motivIdx!=null||elseOpen)?'':'disabled'}>Continue</button></div>
+    ${dots(4)}`);
 }
-function doneS4q(i,skip){
-  const q=HUMAN_OS[i];
-  A.human_os=A.human_os||{};
-  if(!skip){const v=document.getElementById('os-ans').value.trim();if(v)A.human_os[q.k]=v;}
-  s4(i+1);
+function pickMotiv(i){
+  if(i==='else'){A._motivElse=true;A._motivIdx=null;}else{A._motivIdx=i;A._motivElse=false;}
+  document.querySelectorAll('#mv-opts .opt').forEach(o=>o.classList.toggle('sel',o.dataset.i==(i==='else'?'else':String(i))));
+  document.getElementById('mv-else').style.display=A._motivElse?'block':'none';
+  document.getElementById('b-mv').disabled=false;
 }
-async function doneS4(){
-  await save({human_os:A.human_os||{}},4);
-  // These become permanent memories — the foundation of every brief
-  const mem=[];const labels={energy:'What gives them energy',drains:'What drains them',proud:'What they are most proud of',change:'What they want to change',dream:'A dream they have never given up on'};
-  Object.keys(A.human_os||{}).forEach(k=>{if(A.human_os[k])mem.push({content:`${labels[k]}: ${A.human_os[k]}`,type:k==='change'||k==='dream'?'long_term':'long_term'});});
-  if(mem.length)await saveMemory(mem);
-  renderSection(5);
+async function doneTwoWeeks(){
+  const opts=MOTIV[A.focus_lane]||MOTIV.other;
+  if(A._motivElse){A.motivation=(document.getElementById('mv-text').value.trim())||null;}
+  else if(A._motivIdx!=null){A.motivation=opts[A._motivIdx];}
+  if(!A.motivation){document.getElementById('b-mv').disabled=true;return;}
+  await save({motivation:A.motivation},5);
+  await saveMemory([{content:`What they want to feel in two weeks: ${A.motivation}`,type:'long_term'}]);
+  sReadiness();
 }
 
-// Section 5 — Timing
-function s5(){
-  swap(`
-    <div class="section-label">Section 5 of 5 · Staying Close</div>
+// ── Screen 6 · Readiness (0–10 ruler, branches the plan) ───────────────────────
+function sReadiness(){
+  swap(`<div class="section-label">Being honest</div>
+    <div class="riley-says">How ready are you to work on this right now?</div>
+    <div class="riley-sub">Honest answer — there's no wrong one.</div>
+    ${ruler('readiness','Not yet','All in',A.readiness)}
+    <div class="actions"><button class="skip" onclick="sTwoWeeks()" style="margin-right:auto">← Back</button><button class="btn" id="readiness-btn" onclick="doneReadiness()" ${A.readiness!=null?'':'disabled'}>Continue</button></div>
+    ${dots(5)}`);
+  if(A.readiness!=null)A._readiness=A.readiness;
+}
+async function doneReadiness(){
+  A.readiness=A._readiness;if(A.readiness==null)return;
+  await save({readiness:A.readiness},6);sConfidence();
+}
+
+// ── Screen 7 · Confidence (0–10 ruler, suppresses streaks if low) ──────────────
+function sConfidence(){
+  swap(`<div class="section-label">One more</div>
+    <div class="riley-says">How confident are you that you can check in a few times this week?</div>
+    <div class="riley-sub">Thirty seconds counts.</div>
+    ${ruler('confidence','Not sure','Confident',A.confidence)}
+    <div class="actions"><button class="skip" onclick="sReadiness()" style="margin-right:auto">← Back</button><button class="btn" id="confidence-btn" onclick="doneConfidence()" ${A.confidence!=null?'':'disabled'}>Continue</button></div>
+    ${dots(6)}`);
+  if(A.confidence!=null)A._confidence=A.confidence;
+}
+async function doneConfidence(){
+  A.confidence=A._confidence;if(A.confidence==null)return;
+  await save({confidence:A.confidence},7);sClose();
+}
+
+// ── Screen 8 · Staying close (time) → notification rationale ───────────────────
+function sClose(){
+  swap(`<div class="section-label">Staying close</div>
     <div class="riley-says">When would you like me to check in?</div>
     <div class="riley-sub">I'll show up when it helps — and stay quiet when it doesn't.</div>
     <div class="opts" id="time-opts">${TIMING.map(([v,l])=>`<button class="opt ${A.notification_schedule===v?'sel':''}" data-v="${v}" onclick="pickTime('${v}')">${esc(l)}</button>`).join('')}</div>
-    <div class="actions"><button class="skip" onclick="s4(${HUMAN_OS.length-1})" style="margin-right:auto">← Back</button><button class="btn" id="b5" onclick="doneS5()" ${A.notification_schedule?'':'disabled'}>Continue</button></div>
-    ${dots(5)}`);
+    <div class="actions"><button class="skip" onclick="sConfidence()" style="margin-right:auto">← Back</button><button class="btn" id="b-time" onclick="doneClose()" ${A.notification_schedule?'':'disabled'}>Continue</button></div>
+    ${dots(7)}`);
 }
-function pickTime(v){A.notification_schedule=v;document.querySelectorAll('#time-opts .opt').forEach(o=>o.classList.toggle('sel',o.dataset.v===v));document.getElementById('b5').disabled=false;}
-async function doneS5(){
-  await save({notification_schedule:A.notification_schedule||'morning'},5);
-  buildHome();
+function pickTime(v){A.notification_schedule=v;document.querySelectorAll('#time-opts .opt').forEach(o=>o.classList.toggle('sel',o.dataset.v===v));document.getElementById('b-time').disabled=false;}
+async function doneClose(){
+  await save({notification_schedule:A.notification_schedule||'morning'},7);
+  if(A.notification_schedule&&A.notification_schedule!=='on_demand'&&'Notification'in window){return notifRationale();}
+  sPrivacy();
+}
+function notifRationale(){
+  swap(`<div class="section-label">Staying close</div>
+    <div class="riley-says">Want a gentle nudge at that time?</div>
+    <div class="riley-sub">One quiet reminder to check in — nothing more. You can change or turn this off anytime.</div>
+    <div class="actions"><button class="btn" onclick="askNotif()">Turn on gentle nudges</button><button class="skip" onclick="sPrivacy()">Not now</button></div>
+    ${dots(7)}`);
+}
+async function askNotif(){
+  try{await Notification.requestPermission();}catch(e){}
+  sPrivacy(); // declining preserves in-app scheduling
 }
 
-// ── Building Your Home — the emotional peak ──────────────────────────────────
-async function buildHome(){
-  // Mark complete + write a last_engagement_note for the very first Return Moment
-  const note=A.human_os&&A.human_os.dream?`They shared a dream they have never given up on: ${A.human_os.dream}`:(A.one_year_vision?`Their one-year vision: ${A.one_year_vision}`:`They just began their journey.`);
-  await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_completed:true,onboarding_step:7,onboarding_completed_at:new Date().toISOString(),last_engagement_note:note},{onConflict:'id'});
-
-  const learned=['name','story','vision'].concat((A.focus||[]).slice(0,3).map(f=>f.toLowerCase()));
-  el().innerHTML=`<div class="build-stage">
-    <div class="cardinal">🐦</div>
-    <div class="feathers" id="feathers"></div>
-    <div class="build-msg" id="bmsg"></div>
-  </div>`;
-  // Drop feathers one by one — each represents something learned
-  const fc=document.getElementById('feathers');
-  let fi=0;const drop=setInterval(()=>{if(fi>=Math.min(6,learned.length+2)){clearInterval(drop);return;}const f=document.createElement('span');f.className='feather';f.textContent='🪶';f.style.animationDelay='0s';fc.appendChild(f);fi++;},420);
-
-  setTimeout(()=>{
-    document.getElementById('bmsg').innerHTML=`Perfect.<br>I think I know enough to get started.`;
-  },2600);
-  setTimeout(()=>{
-    document.getElementById('bmsg').innerHTML=`I promise I'll keep learning as we go.<br>You don't have to have everything figured out today.<br><span style="color:var(--gold)">Just keep showing up. I'll walk beside you.</span>`;
-  },5200);
-  setTimeout(()=>{
-    el().innerHTML=`<div class="build-stage"><div class="cardinal" style="animation:none;font-size:40px">🐦</div><div class="build-msg" style="opacity:1;animation:rise .8s">Welcome home, ${esc(FIRST)}.</div><div style="margin-top:32px"><button class="btn" onclick="enter()">Enter</button></div></div>`;
-  },8400);
+// ── Screen 9 · Your data, your choice (upgraded privacy gate) ──────────────────
+function sPrivacy(){
+  A.note_storage_consent=A.note_storage_consent||false;
+  swap(`<div class="section-label">Your data, your choice</div>
+    <div class="riley-says">An honest note about what I keep.</div>
+    <div class="riley-sub">Plain words — no fine print.</div>
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px 18px;margin-bottom:16px">
+      <div style="font-size:14px;line-height:1.7">
+        · <b>What I keep</b> — your check-ins and our conversations, in our secure database, so I can know you over time.<br>
+        · <b>Always optional</b> — reflections, deeper questions, reminders.<br>
+        · <b>You're in control</b> — you can <a href="/privacy" style="color:var(--gold)" target="_blank">export or delete everything</a>, anytime.
+      </div>
+    </div>
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 18px 10px;margin-bottom:6px">
+      <div class="toggle-row"><div><div class="tl">Remember my written reflections</div><div class="td">Off by default. When on, I keep the notes you write so I can refer back with care.</div></div><div class="sw" id="sw-note" onclick="tglNote()"></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--smoke2);line-height:1.5;margin-bottom:4px">Your information is never sold or used for advertising. If you ever share an unsafe moment, that stays private — used only to keep you safe. <a href="/safety" style="color:var(--smoke)" target="_blank">Our safety approach</a>.</div>
+    <div class="actions" style="flex-direction:column;align-items:stretch"><button class="btn" onclick="acceptPrivacy()" style="width:100%">I understand — let's begin</button></div>
+    ${dots(8)}`);
 }
-function enter(){window.location.href='https://riley.meetriley.us/dashboard';}
+function tglNote(){A.note_storage_consent=!A.note_storage_consent;document.getElementById('sw-note').classList.toggle('on',A.note_storage_consent);}
+async function acceptPrivacy(){
+  await save({consent_at:new Date().toISOString(),consent_version:'2.0',note_storage_consent:!!A.note_storage_consent},8);
+  sPreview();
+}
+
+// ── Screen 10 · Plan preview — the aha moment ──────────────────────────────────
+function sPreview(){
+  const lane=A.focus_lane||'other';
+  const pace=(A.readiness!=null&&A.readiness<=4)?'take this gently, one honest check-in at a time':'start moving — one small step a day';
+  const timeLabel=TIME_LABEL[A.notification_schedule]||'when it helps';
+  const plan=`Okay, ${esc(FIRST)}. Here's how we start: you're carrying <b>${esc(LANE_LABEL[lane])}</b>, and in two weeks you want <b>${esc((A.motivation||'').replace(/^I'?d\s*/i,'to ')||'to feel a little more like yourself')}</b>. You told me you're at a <b>${A.readiness}</b> on readiness — so we'll <b>${pace}</b>. I'll check in <b>${esc(timeLabel)}</b>.<br><br>First up: your very first check-in — thirty seconds, and I'll give you something back.`;
+  swap(`<div class="section-label">Here's our start</div>
+    <div class="plan-card">${plan}</div>
+    <div class="actions" style="flex-direction:column;align-items:stretch;gap:10px;margin-top:18px">
+      <button class="btn" onclick="finish(true)" style="width:100%">Try your first check-in now</button>
+      <button class="skip" onclick="finish(false)">I'll start later</button>
+    </div>`);
+}
+async function finish(nowCheckin){
+  const note=A.motivation?`In two weeks they want: ${A.motivation}`:`They just began their journey.`;
+  try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_completed:true,onboarding_step:9,onboarding_version:2,onboarding_completed_at:new Date().toISOString(),last_engagement_note:note},{onConflict:'id'});}catch(e){console.warn('finish',e.message);}
+  el().innerHTML=`<div class="build-stage"><div class="cardinal" style="font-size:44px">🐦</div><div class="build-msg" style="opacity:1;animation:rise .8s">Welcome home, ${esc(FIRST)}.</div></div>`;
+  setTimeout(()=>{window.location.href='https://riley.meetriley.us/dashboard'+(nowCheckin?'?checkin=1':'');},1400);
+}
 
 boot();
 </script>

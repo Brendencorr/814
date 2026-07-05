@@ -144,7 +144,7 @@
     try {
       var p = location.pathname.replace(/\/+$/, '').toLowerCase();
       if (p.indexOf('/dashboard') !== 0) return;           // only the authed home / PWA start_url
-      var today = new Date().toLocaleDateString('en-CA');   // user-LOCAL date
+      var today = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": 4am-local rollover (matches the check-in)
       if (localStorage.getItem('riley_autochat') === today) return;
       localStorage.setItem('riley_autochat', today);
       setTimeout(openChat, 1000);                           // let the page settle first

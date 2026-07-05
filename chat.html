@@ -338,7 +338,7 @@ async function openConversation() {
 }
 
 // ── Day-aware daily check-in — Riley-led, quick chips, once/day (Phase 2) ───────
-const RC_TODAY = new Date().toLocaleDateString('en-CA');   // user-LOCAL date
+const RC_TODAY = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": rolls at 4am LOCAL (matches dashboard)
 let RC = {};
 function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (h < 17 ? 'midday' : 'evening'); }
 const SLEEP_CHIPS = [['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']];

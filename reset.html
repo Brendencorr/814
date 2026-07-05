@@ -237,7 +237,7 @@ async function markMorning(){
     if(DAY===1 && checkin){ // Day-1 enrollment: capture their words + classify persona
       await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'enroll',day1_sentence:checkin,token:TOK})});
     }
-    if(checkin){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date().toLocaleDateString('en-CA'),notes:checkin},{onConflict:'user_id,checkin_date'});}catch(e){}}
+    if(checkin){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),notes:checkin},{onConflict:'user_id,checkin_date'});}catch(e){}}   // 4am-local "app day"
     await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',day:DAY,touch:'morning',token:TOK})});
     // mirror into journey progress so the dashboard/journey view stays in sync
     try{await SB.from('journey_step_completions').upsert({user_id:UID,program_slug:'7-day-reset',day_number:DAY,journal_response:checkin||null,completed_at:new Date().toISOString()},{onConflict:'user_id,program_slug,day_number'});}catch(e){}
@@ -252,7 +252,7 @@ async function markEvening(){
   const ev=document.getElementById('evening')?.value?.trim();
   try{
     await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',day:DAY,touch:'evening',token:TOK})});
-    if(ev){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date().toLocaleDateString('en-CA'),notes:ev},{onConflict:'user_id,checkin_date'});}catch(e){}}
+    if(ev){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),notes:ev},{onConflict:'user_id,checkin_date'});}catch(e){}}   // 4am-local "app day"
     PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{evening_done_at:new Date().toISOString()});
     render();
   }catch(e){btn.disabled=false;btn.textContent='Close the day →';}

@@ -31,7 +31,21 @@ exports.handler = async function (event) {
     }
     const { data, error } = await db.rpc("admin_home_analytics");
     if (error) throw error;
-    return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data || {}) };
+    const blob = data || {};
+    // Recent signups → drives the operator Home "new members" alert (newest first). Resilient: if the
+    // query fails (e.g. no created_at), the Home still renders without the alert.
+    try {
+      const { data: signups } = await db.from("user_profiles")
+        .select("id,full_name,preferred_name,email,created_at")
+        .order("created_at", { ascending: false }).limit(25);
+      blob.recent_signups = (signups || []).map((s) => ({
+        id: s.id,
+        name: s.preferred_name || s.full_name || (s.email || "").split("@")[0] || "Member",
+        email: s.email || null,
+        created_at: s.created_at,
+      }));
+    } catch (_) { blob.recent_signups = []; }
+    return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(blob) };
   } catch (err) {
     return { statusCode: 500, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ error: err.message }) };
   }

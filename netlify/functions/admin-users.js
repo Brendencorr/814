@@ -41,7 +41,8 @@ exports.handler = async function (event) {
     const supabase = getSupabaseClient(); // SERVICE_KEY — bypasses RLS
     const params   = event.queryStringParameters || {};
     const userId   = params.user_id;
-    const search   = params.search;
+    // Strip PostgREST filter metacharacters so `search` can't alter the .or() filter logic (injection).
+    const search   = (params.search || "").replace(/[,()*:%]/g, " ").trim();
 
     // ── Single user detail (+ 30-day trends for the profile deep-dive) ──────────
     if (userId) {

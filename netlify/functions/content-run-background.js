@@ -1,7 +1,7 @@
 /**
  * content-run-background.js — Netlify Background Function (no timeout)
  *
- * The daily content pipeline for The 8:14 Project, adapted from the n8n spec
+ * The daily content pipeline for Meet Riley, adapted from the n8n spec
  * to run natively on Netlify + Supabase (everything lives in the admin dash).
  *
  * Flow (Phase 1):

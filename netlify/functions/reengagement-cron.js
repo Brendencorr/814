@@ -49,7 +49,7 @@ function buildEmail(u) {
     `${APP_URL}`,
     ``,
     `— Riley`,
-    `The 8:14 Project`,
+    `Meet Riley`,
     ``,
     `(If you'd rather not hear from me, just reply and say so — no hard feelings, ever.)`
   );
@@ -57,7 +57,7 @@ function buildEmail(u) {
 
   const safeVision = vision ? vision.replace(/</g, "&lt;").replace(/>/g, "&gt;") : null;
   const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
-    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:24px">The 8:14 Project</p>
+    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:24px">Meet Riley</p>
     <p>Hi ${name},</p>
     <p>It's Riley.</p>
     <p>It's been about a week since we first talked, and I noticed you haven't been back. I'm not writing to nudge you or make you feel behind — there's none of that here.</p>
@@ -65,7 +65,7 @@ function buildEmail(u) {
     ${safeVision ? `<p>What you told me you're reaching for — <em>"${safeVision}"</em> — is still worth it. And you don't have to do it all at once. Just the next small step.</p>` : (why ? `<p>You came here for a reason that mattered to you. That reason is still valid. So are you.</p>` : "")}
     <p>Whenever you're ready, I'm right here.</p>
     <p style="margin:28px 0"><a href="${APP_URL}" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Come back home →</a></p>
-    <p style="color:#555">— Riley<br>The 8:14 Project</p>
+    <p style="color:#555">— Riley<br>Meet Riley</p>
     <p style="color:#999;font-size:12px;margin-top:28px">If you'd rather not hear from me, just reply and say so — no hard feelings, ever.</p>
   </div>`;
 

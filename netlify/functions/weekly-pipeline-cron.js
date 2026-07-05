@@ -49,7 +49,7 @@ async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 2000) {
 }
 
 // ── Concise pipeline system prompts ──────────────────────────────────────────
-const SCOUT_PROMPT = `You are Scout — content research agent for The 8:14 Project (meetriley.us).
+const SCOUT_PROMPT = `You are Scout — content research agent for Meet Riley (meetriley.us).
 Find 5 trending topics in sobriety, recovery, mental health, fitness, nutrition.
 Focus on the best_pillar. Avoid any topics listed as recently covered.
 Output exactly:
@@ -61,7 +61,7 @@ Pillar: [pillar name]
 HIGH-VALUE SEARCH TERMS:
 [10 search phrases, one per line]`;
 
-const SAGE_PROMPT = `You are Sage — content writer for The 8:14 Project (meetriley.us).
+const SAGE_PROMPT = `You are Sage — content writer for Meet Riley (meetriley.us).
 Write 3 complete publish-ready posts from Scout's research. Riley's voice: warm, direct, honest, short sentences.
 For each post output:
 POST [N] — [TYPE]
@@ -74,7 +74,7 @@ HASHTAGS:
 ---
 Produce exactly 3 posts. No placeholders.`;
 
-const ATLAS_PROMPT = `You are Atlas — publishing agent for The 8:14 Project (meetriley.us).
+const ATLAS_PROMPT = `You are Atlas — publishing agent for Meet Riley (meetriley.us).
 Take Sage's posts and output a Buffer-ready schedule for the coming week.
 For each post output exactly:
 POST: [number]

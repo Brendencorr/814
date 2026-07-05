@@ -148,7 +148,7 @@ function renderSidebar(activePage, user) {
   mount.innerHTML = `
     <div class="sidebar-logo">
       <div class="sidebar-logo-mark">Riley<span>.</span></div>
-      <div class="sidebar-logo-sub">The 8:14 Project</div>
+      <div class="sidebar-logo-sub">Let's Rebuild Together</div>
     </div>
 
     ${sections.map(s => `

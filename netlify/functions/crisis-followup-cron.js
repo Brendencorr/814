@@ -61,17 +61,17 @@ function buildFollowup(stage, u) {
   const text = [
     `Hi ${name},`, ``, m.body, ``,
     `Whenever you want, I'm right here:`, APP_URL, ``,
-    `— Riley`, `The 8:14 Project`, ``,
+    `— Riley`, `Meet Riley`, ``,
     `(If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.)`,
   ].join("\n");
 
   const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
-    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:24px">The 8:14 Project</p>
+    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:24px">Meet Riley</p>
     <p>Hi ${name},</p>
     <p>${m.body}</p>
     <p>Whenever you want, I'm right here.</p>
     <p style="margin:28px 0"><a href="${APP_URL}" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Talk with Riley →</a></p>
-    <p style="color:#555">— Riley<br>The 8:14 Project</p>
+    <p style="color:#555">— Riley<br>Meet Riley</p>
     <p style="color:#999;font-size:12px;margin-top:28px">If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.</p>
   </div>`;
 

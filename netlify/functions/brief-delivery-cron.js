@@ -47,7 +47,7 @@ function buildEmail(name, brief, schedule) {
     `— Riley`,
   ].join("\n");
   const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
-    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:20px">The 8:14 Project</p>
+    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:20px">Meet Riley</p>
     <p>${greet}, ${name}.</p>
     <p>${greetLine}</p>
     ${focus ? `<p style="padding:12px 16px;background:#f7f3ea;border-left:3px solid #c9a84c;border-radius:0 3px 3px 0"><strong>Today's focus:</strong> ${focus}</p>` : ``}

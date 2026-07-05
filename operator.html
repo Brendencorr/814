@@ -697,7 +697,7 @@ async function loadOverview(btn){
   var dt=document.getElementById('ov-date'); if(dt)dt.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   var body=document.getElementById('home-body');
   try{
-    var d=await fetch(B+'/admin-home').then(function(r){return r.json();});
+    var d=await opGet('/admin-home');
     if(d.error)throw new Error(d.error);
     renderHome(d);
   }catch(e){
@@ -2033,21 +2033,13 @@ function renderUserDetail(d){
   if(sessions.length){
     html+='<div class="ud-section">';
     html+='<div class="ud-section-label">Riley Conversations ('+sessions.length+' sessions, '+totalMsgs+' messages)</div>';
-    sessions.forEach(function(s,si){
-      var sid='sess-'+si;
+    // Privacy: session METADATA only. Member conversation content is never sent to, or shown in,
+    // the operator dashboard — these are people's lives and secrets. Counts + timestamps only.
+    sessions.forEach(function(s){
       html+='<div class="session-block">';
-      html+='<div class="session-hd" onclick="toggleSession(\''+sid+'\')">';
+      html+='<div class="session-hd" style="cursor:default">';
       html+='<span class="session-date">'+fdt(s.last_message_at)+'</span>';
       html+='<span class="session-ct">'+s.message_count+' messages</span>';
-      html+='<span style="font-size:.7rem;color:var(--muted2)">&#9660;</span>';
-      html+='</div>';
-      html+='<div class="session-msgs" id="'+sid+'">';
-      s.messages.forEach(function(m){
-        html+='<div class="conv-msg '+m.role+'">';
-        html+='<div class="conv-bubble">'+x(m.content)+'</div>';
-        html+='<div class="conv-time">'+fdt(m.created_at)+'</div>';
-        html+='</div>';
-      });
       html+='</div>';
       html+='</div>';
     });
@@ -2333,8 +2325,7 @@ async function openDrill(kind,val,title){
   document.getElementById('drill-title').textContent=title||kind;
   var body=document.getElementById('drill-body'); body.innerHTML='<div class="em">Loading…</div>';
   try{
-    var url=B+'/admin-home?detail='+encodeURIComponent(kind)+(val?'&val='+encodeURIComponent(val):'');
-    var d=await fetch(url).then(function(r){return r.json();});
+    var d=await opGet('/admin-home?detail='+encodeURIComponent(kind)+(val?'&val='+encodeURIComponent(val):''));
     var rows=d.rows||[];
     if(!rows.length){body.innerHTML='<div class="em" style="padding:1.5rem">No records yet.</div>';return;}
     body.innerHTML='<div style="padding:.25rem 0">'+rows.map(function(r){

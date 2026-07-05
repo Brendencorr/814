@@ -52,26 +52,26 @@ exports.handler = async function (event) {
 
       const [profileRes, convsRes, progRes, evRes, ciRes] = await Promise.all([
         supabase.from("user_profiles").select("*").eq("id", userId).single(),
-        supabase.from("riley_conversations").select("role, content, session_id, created_at").eq("user_id", userId).order("created_at", { ascending: true }).limit(200),
+        supabase.from("riley_conversations").select("session_id, created_at").eq("user_id", userId).order("created_at", { ascending: true }).limit(200),
         supabase.from("user_program_progress").select("*").eq("user_id", userId).order("last_activity", { ascending: false }),
         supabase.from("engagement_events").select("event_type,created_at").eq("user_id", userId).gte("created_at", thirtyAgoTs).limit(20000),
         supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).gte("checkin_date", thirtyAgoDay).not("mood", "is", null).order("checkin_date", { ascending: true }).limit(400),
       ]);
 
-      // Group conversations by session (most recent first)
+      // Session METADATA ONLY — the operator must NEVER see members' conversation content.
+      // (Hard rule: "these are people's lives and secrets." Counts/timestamps only, never text.)
       const convsBySession = {};
       (convsRes.data || []).forEach((msg) => {
         const sid = msg.session_id || "default";
         if (!convsBySession[sid]) convsBySession[sid] = [];
-        convsBySession[sid].push({ role: msg.role, content: msg.content, created_at: msg.created_at });
+        convsBySession[sid].push(msg.created_at);
       });
       const sessions = Object.entries(convsBySession)
-        .map(([sid, msgs]) => ({
+        .map(([sid, times]) => ({
           session_id: sid,
-          message_count: msgs.length,
-          started_at: msgs[0]?.created_at,
-          last_message_at: msgs[msgs.length - 1]?.created_at,
-          messages: msgs,
+          message_count: times.length,
+          started_at: times[0],
+          last_message_at: times[times.length - 1],
         }))
         .sort((a, b) => new Date(b.last_message_at) - new Date(a.last_message_at));
 
@@ -96,11 +96,18 @@ exports.handler = async function (event) {
       const days = la ? (now - new Date(la)) / 86400000 : 999;
       const state = !la ? "new" : days <= 2 ? "active" : days <= 7 ? "cooling" : "dormant";
 
+      // Redact personal, journal-like reflective fields — the operator gets operational data only,
+      // never the member's private onboarding reflections / Human OS. (Same hard rule as above.)
+      const _pfull = profileRes.data || null;
+      const safeProfile = _pfull
+        ? (({ why_here, one_year_vision, human_os, last_engagement_note, influences, primary_goals, preferred_encouragement, communication_style, ...rest }) => rest)(_pfull)
+        : null;
+
       return {
         statusCode: 200,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
         body: JSON.stringify({
-          profile:  profileRes.data  || null,
+          profile:  safeProfile,
           sessions: sessions,
           progress: progRes.data     || [],
           series: { activity_30d: mk(serAll), riley_30d: mk(serRiley), mood: moodSeries },

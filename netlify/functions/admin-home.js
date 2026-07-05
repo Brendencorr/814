@@ -10,12 +10,17 @@ const { getSupabaseClient } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers": "Content-Type, x-operator-key",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  // Operator-only. Fail closed: without the secret, never serve member analytics/PII (names, emails).
+  const expected = process.env.OPERATOR_KEY;
+  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY." }) };
+  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
+  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
   try {
     const db = getSupabaseClient();
     const q = event.queryStringParameters || {};

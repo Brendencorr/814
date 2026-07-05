@@ -242,6 +242,79 @@ async function deleteData(supabase, body) {
   return json(200, { success: failed.length === 0, cleared, failed });
 }
 
+// Tables wiped on a FULL account deletion (self-service, irreversible). Superset of
+// USER_DATA_TABLES — everything keyed to the member's user_id, incl. billing
+// (subscriptions/purchases/entitlements/credits) so any subscription is terminated.
+//
+// DELIBERATELY RETAINED: crisis_log. Per clinical/therapeutic norms and GDPR's
+// vital-interests / safety carve-out to the right-to-erasure, crisis-safety records
+// are kept as a DE-IDENTIFIED safety record — once the auth user + user_profiles
+// (name/email) are gone, and with no cascade FKs, the remaining rows are no longer
+// linked to an identifiable person. This is disclosed to the member at delete time
+// (bounded ~12-month retention; a purge cron can enforce the window later).
+// DELIBERATELY UNTOUCHED: admins (operator role infra, not member personal data).
+const ACCOUNT_DELETE_TABLES = [
+  "chat_usage", "client_alert_reads", "client_alerts", "client_events",
+  "content_interactions", "credits", "daily_briefs", "daily_checkins",
+  "engagement_events", "entitlements", "events", "fitness_logs",
+  "habit_completions", "habits", "important_dates", "journey_step_completions",
+  "legacy_vault", "life_events", "life_map", "member_docs", "notification_consents",
+  "nutrition_logs", "profile_details", "purchases", "recommendation_history",
+  "reset_enrollment", "reset_progress", "riley_conversations", "riley_memory",
+  "sleep_logs", "sobriety_checkins", "sobriety_tracker", "subscriptions",
+  "usage_counters", "user_daily_state", "user_goals", "user_program_progress",
+  "week_one_letters", "wellness_baseline", "wellness_plans", "wellness_profile",
+  "wellness_weekly",
+];
+
+// ── Action: delete_account — permanently close the account + erase all data ────
+// Wipes every member-owned row, the profile, and the auth login itself (the member
+// cannot sign back in). crisis_log is retained, de-identified (see note above).
+async function deleteAccount(supabase, body) {
+  const user = await verifyToken(supabase, body.token);
+  if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete the account" });
+
+  // Best-effort: remove an uploaded avatar from storage (skip external OAuth photos).
+  try {
+    const { data: prof } = await supabase.from("user_profiles").select("avatar_url").eq("id", user.id).maybeSingle();
+    const url = prof?.avatar_url || "";
+    const marker = "/storage/v1/object/public/avatars/";
+    if (url.includes(marker)) {
+      const path = decodeURIComponent(url.split(marker)[1].split("?")[0]);
+      await supabase.storage.from("avatars").remove([path]);
+    }
+  } catch (e) { console.warn("delete_account avatar cleanup (non-fatal):", e.message); }
+
+  // Wipe all member-owned rows. Two passes so any FK-ordering hiccup self-heals.
+  let failed = ACCOUNT_DELETE_TABLES.slice();
+  for (let pass = 0; pass < 2 && failed.length; pass++) {
+    const targets = failed;
+    const results = await Promise.allSettled(targets.map((t) => supabase.from(t).delete().eq("user_id", user.id)));
+    failed = targets.filter((t, i) => results[i].status !== "fulfilled" || results[i].value.error);
+  }
+  if (failed.length) console.error("delete_account residual table failures:", failed.join(", "));
+
+  // Delete the profile row entirely — this de-identifies any retained crisis_log.
+  try { await supabase.from("user_profiles").delete().eq("id", user.id); }
+  catch (e) { console.error("delete_account profile delete failed:", e.message); failed.push("user_profiles"); }
+
+  // Remove the auth login — the account is now truly closed.
+  let authDeleted = false;
+  try {
+    const { error } = await supabase.auth.admin.deleteUser(user.id);
+    if (error) throw error;
+    authDeleted = true;
+  } catch (e) {
+    console.error("delete_account auth.admin.deleteUser failed:", e.message);
+  }
+
+  console.log(`delete_account ${user.id}: auth_deleted=${authDeleted}, table_failures=${failed.length}`);
+  if (!authDeleted) {
+    return json(500, { error: "Your data was cleared, but the login couldn't be fully removed. Please contact support so we can finish closing the account.", auth_deleted: false });
+  }
+  return json(200, { success: true, auth_deleted: true });
+}
+
 // ── Main handler ──────────────────────────────────────────────────────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -270,6 +343,7 @@ exports.handler = async function (event) {
       case "update_profile": return await updateProfile(supabase, body);
       case "export_data":    return await exportData(supabase, body);
       case "delete_data":    return await deleteData(supabase, body);
+      case "delete_account": return await deleteAccount(supabase, body);
       default:               return json(400, { error: `Unknown action: ${action}` });
     }
   } catch (err) {

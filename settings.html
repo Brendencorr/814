@@ -64,6 +64,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="row"><div class="lbl">Email<div class="val" id="acct-email">…</div></div><a class="linkbtn" href="/profile">Edit profile</a></div>
     <div class="row"><div class="lbl">Your data<div class="val">View, download, or delete everything</div></div><a class="linkbtn" href="/dashboard#data">Manage data</a></div>
     <div class="row"><div class="lbl">Sign out<div class="val">End this session</div></div><button class="linkbtn danger" id="signout">Sign out</button></div>
+    <div class="row"><div class="lbl">Delete account<div class="val">Permanently erase your account &amp; data</div></div><button class="linkbtn danger" id="del-account">Delete account</button></div>
   </div>
 
   <div class="card">
@@ -110,6 +111,8 @@ $('signout').addEventListener('click', async ()=>{
   location.href='https://riley.meetriley.us';
 });
 
+$('del-account').addEventListener('click', ()=> RileyDeleteAccount.open({ supabase: SB, redirectTo: 'https://meetriley.us' }));
+
 // Install lives here for returning members (pwa.js only auto-offers on first login).
 $('install-app').addEventListener('click', ()=>{
   if (typeof window.rileyTriggerInstall === 'function') window.rileyTriggerInstall();
@@ -117,6 +120,7 @@ $('install-app').addEventListener('click', ()=>{
 
 load();
 </script>
+<script src="/account-delete.js"></script>
 <script src="/pwa.js"></script>
 <script src="/track.js"></script>
 </body>

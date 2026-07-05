@@ -326,6 +326,7 @@ header {
       <img id="user-avatar" class="user-avatar" src="" alt="">
       <span id="user-name"></span>
       <button class="sign-out-btn" onclick="signOut()">Sign out</button>
+      <button class="sign-out-btn" onclick="RileyDeleteAccount.open({supabase:sb, redirectTo:'https://meetriley.us'})" style="color:#c0604a;opacity:0.75" title="Permanently delete your account &amp; data">Delete account</button>
     </div>
   </header>
 
@@ -943,6 +944,7 @@ async function send() {
   }
 }
 </script>
+<script src="/account-delete.js"></script>
 <script src="/pwa.js"></script>
 <script src="/track.js"></script>
 </body>

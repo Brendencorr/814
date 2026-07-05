@@ -213,7 +213,7 @@ function coachLockCard(slot,title,body){
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
   if(!(await coachEntitled('adaptive_nutrition'))){
-    return coachLockCard(slot,'Your adaptive nutrition plan','Riley Coach builds a personalized 7-day meal plan + grocery list that adapts to you — included with Riley Coach ($49/mo). Your meal log below still works on Companion.');
+    return coachLockCard(slot,'Your adaptive nutrition plan','Riley Coach builds a personalized 7-day meal plan + grocery list that adapts to you — included with Riley Coach ($34/mo). Your meal log below still works on Companion.');
   }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}

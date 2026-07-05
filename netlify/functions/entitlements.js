@@ -1,7 +1,7 @@
 /**
  * entitlements.js — Server-side source of truth for what a user can access.
  *
- * v4 — Riley Guide (free, persistent) / Companion ($29) / Coach ($49) /
+ * v4 — Riley Guide (free, persistent) / Companion ($19) / Coach ($34) /
  * Mentor (future, draft) + à la carte ($9, content-only). No domain-locking,
  * ever — every active tier unlocks every domain; tiers differ in platform
  * depth, and Guide's depth is CAPPED (has access, limited quantity) rather

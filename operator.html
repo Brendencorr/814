@@ -1455,7 +1455,7 @@ function renderPricing(products,limits,freeAccess){
 }
 async function setProductStatus(key,status){try{await pricingApi('update_product',{key:key,patch:{status:status}});loadPricing();}catch(e){window.alert(e.message);}}
 async function editProductPrice(key,current){
-  var v=window.prompt('New price in cents (e.g. 2900 = $29.00; 0 = free):',current);
+  var v=window.prompt('New price in cents (e.g. 1900 = $19.00; 0 = free):',current);
   if(v===null)return;
   var cents=parseInt(v,10);if(isNaN(cents)||cents<0){window.alert('Enter a whole number of cents, 0 or more.');return;}
   try{await pricingApi('update_product',{key:key,patch:{price_cents:cents}});loadPricing();}catch(e){window.alert(e.message);}
@@ -1970,8 +1970,8 @@ function renderUserDetail(d){
   var tier='Riley Guide · Free';var tierColor='var(--muted2)';
   if(profile.programs_purchased&&profile.programs_purchased.length){
     var p=profile.programs_purchased;
-    if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Coach · $49/mo';tierColor='var(--gold)';}
-    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $29/mo';tierColor='var(--gold)';}
+    if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Coach · $34/mo';tierColor='var(--gold)';}
+    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $19/mo';tierColor='var(--gold)';}
     else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0||x.indexOf('Sobriety')>=0;})){tier='Sobriety (self-guided) · $9';tierColor='var(--sage)';}
     else if(p.some(function(x){return x.indexOf('Nourish')>=0||x.indexOf('Body')>=0;})){tier='Body Rebuild (self-guided) · $9';tierColor='var(--sage)';}
     else if(p.some(function(x){return x.indexOf('Carry')>=0||x.indexOf('Grief')>=0;})){tier='Grief & Life Transitions (self-guided) · $9';tierColor='var(--sage)';}

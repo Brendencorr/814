@@ -158,9 +158,9 @@ Online community vs in-person: both matter, differently, for different reasons
 
 THE 8:14 MEMBERSHIPS — recommend naturally when relevant, never list everything at once:
 Free, forever: Riley Guide — the 8:14 Reset, limited chat, community previews, weekly check-in, a taste of the resource library. Not a trial. It never expires. Always the honest first offer to anyone brand new or hesitant.
-Primary membership: Riley Companion $29/mo — "You're not doing this alone." Unlimited Riley conversations, every domain (sobriety, grief, body, whatever they're carrying), full community, monthly workshops, full resource library.
-Deeper partnership: Riley Coach $49/mo — "Personalized guidance that grows with you." Everything in Companion, plus adaptive workout & nutrition plans, proactive check-ins (Riley reaches out first), the Knowledge Graph (Riley remembers who they're becoming), progress dashboards and trend analysis. The difference isn't more content — it's deeper partnership.
-Self-guided, no relationship: Sobriety / Grief & Life Transitions / Body Rebuild — $9 each, content only, lifetime access, no Riley, no tracking, no community. For someone who explicitly doesn't want an ongoing relationship with Riley — the book, not the coach.
+Primary membership: Riley Companion $19/mo — "You're not doing this alone." Unlimited Riley conversations, every domain (sobriety, grief, body, whatever they're carrying), full community, monthly workshops, full resource library.
+Deeper partnership: Riley Coach $34/mo — "Personalized guidance that grows with you." Everything in Companion, plus adaptive workout & nutrition plans, proactive check-ins (Riley reaches out first), the Knowledge Graph (Riley remembers who they're becoming), progress dashboards and trend analysis. The difference isn't more content — it's deeper partnership.
+Self-guided, no relationship: Sobriety / Grief & Life Transitions / Body Rebuild — $8.14 each, content only, lifetime access, no Riley, no tracking, no community. For someone who explicitly doesn't want an ongoing relationship with Riley — the book, not the coach.
 
 RILEY APPROACH — HOW TO RECOMMEND (no urgency games, ever):
 Never push. Never list all memberships at once. Recommend ONE thing based on what they just said.
@@ -484,12 +484,12 @@ function buildUserContext(profile, clientData) {
   // ── ENTITLEMENTS — shapes what Riley sells and how she talks ──
   if (clientData && clientData.tier) {
     const PRODUCT_NAMES = {
-      reset_free:"Riley Guide (free)", companion:"Riley Companion ($29/mo)",
-      coach:"Riley Coach ($49/mo)", concierge:"Riley Coach ($49/mo)", mentor:"Riley Mentor",
-      prog_sobriety:"Sobriety (self-guided, $9)", prog_sobriety_90:"Sobriety (self-guided, $9)",
-      prog_grief:"Grief & Life Transitions (self-guided, $9)",
-      prog_body:"Body Rebuild (self-guided, $9)", prog_body_90:"Body Rebuild (self-guided, $9)",
-      prog_first30:"Sobriety (self-guided, $9)", prog_eat:"Body Rebuild (self-guided, $9)", prog_move:"Body Rebuild (self-guided, $9)"
+      reset_free:"Riley Guide (free)", companion:"Riley Companion ($19/mo)",
+      coach:"Riley Coach ($34/mo)", concierge:"Riley Coach ($34/mo)", mentor:"Riley Mentor",
+      prog_sobriety:"Sobriety (self-guided, $8.14)", prog_sobriety_90:"Sobriety (self-guided, $8.14)",
+      prog_grief:"Grief & Life Transitions (self-guided, $8.14)",
+      prog_body:"Body Rebuild (self-guided, $8.14)", prog_body_90:"Body Rebuild (self-guided, $8.14)",
+      prog_first30:"Sobriety (self-guided, $8.14)", prog_eat:"Body Rebuild (self-guided, $8.14)", prog_move:"Body Rebuild (self-guided, $8.14)"
     };
     const owns = (clientData.ownedProducts || []).map(p => PRODUCT_NAMES[p] || p);
     lines.push("\nACCESS & ENTITLEMENTS:");

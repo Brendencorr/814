@@ -113,11 +113,11 @@ async function getSession(supabase, body) {
 async function saveMessage(supabase, body) {
   const { token, user_id, session_id, role, content } = body;
 
-  // Verify identity — must match the JWT
-  if (token) {
-    const user = await verifyToken(supabase, token);
-    if (user.id !== user_id) throw new Error("Token / user_id mismatch");
-  }
+  // SECURITY: identity MUST match a verified JWT — an untokened call could inject forged messages into
+  // any user's chat history (Riley reads them back as context). Token required (like the other actions).
+  if (!token) return json(401, { error: "Unauthorized: token required" });
+  const user = await verifyToken(supabase, token);
+  if (user.id !== user_id) throw new Error("Token / user_id mismatch");
 
   if (!user_id || !session_id || !role || !content) {
     return json(400, { error: "user_id, session_id, role, and content are required" });

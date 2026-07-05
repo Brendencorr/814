@@ -14,7 +14,7 @@
  * Model: claude-sonnet-4-6
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 const CORS = {
@@ -63,10 +63,15 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST")    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
 
   try {
-    const { program_slug, day_number } = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const { program_slug, day_number } = body;
     if (!program_slug || !day_number) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "program_slug and day_number required" }) };
 
     const supabase = getSupabaseClient();
+    // SECURITY: require a verified member token — a cache-miss triggers a Claude generation, so this
+    // must not be an unauthenticated cost-drain lever. (Journey content is shared/cached; abuse-prevention.)
+    const _uid = await getUserIdFromToken(supabase, body.token);
+    if (!_uid) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
 
     // 1. Already have it (hand-written or previously generated)?
     const { data: existing } = await supabase

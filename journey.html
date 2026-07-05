@@ -146,7 +146,7 @@ async function loadJourney(){
   if(!step){
     document.getElementById('content').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:48px 0;text-align:center"><div style="font-size:28px">🐦</div><div style="color:var(--smoke);font-size:13px;line-height:1.6">Riley is preparing today\'s step…<br>Just a moment.</div></div>';
     try{
-      const res=await fetch('/.netlify/functions/journey-step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({program_slug:pslug,day_number:currentDay})});
+      const res=await fetch('/.netlify/functions/journey-step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({program_slug:pslug,day_number:currentDay,token:(await SB.auth.getSession()).data.session?.access_token})});
       const j=await res.json();
       step=j.step;
     }catch(e){}

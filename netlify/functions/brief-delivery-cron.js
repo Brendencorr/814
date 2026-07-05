@@ -31,12 +31,15 @@ function localDate(tz) {
   catch { return new Date().toISOString().slice(0, 10); }
 }
 
-function buildEmail(name, brief) {
+function buildEmail(name, brief, schedule) {
+  // Greeting moves with the delivery slot — a user on evening briefs never gets "Good morning" at 7pm.
+  const GREET = { morning: "Good morning", lunch: "Good afternoon", afternoon: "Good afternoon", evening: "Good evening" };
+  const greet = GREET[schedule] || "Good morning";
   const focus = brief?.modules?.focus || null;
   const note  = brief?.modules?.riley_note || brief?.modules?.mood_note || null;
   const greetLine = note ? note : "However today feels, you don't have to meet it alone.";
   const text = [
-    `Good morning, ${name}.`, ``,
+    `${greet}, ${name}.`, ``,
     greetLine, ``,
     focus ? `Today's focus: ${focus}` : `Your brief is ready whenever you are.`,
     ``,
@@ -45,14 +48,14 @@ function buildEmail(name, brief) {
   ].join("\n");
   const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
     <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:20px">The 8:14 Project</p>
-    <p>Good morning, ${name}.</p>
+    <p>${greet}, ${name}.</p>
     <p>${greetLine}</p>
     ${focus ? `<p style="padding:12px 16px;background:#f7f3ea;border-left:3px solid #c9a84c;border-radius:0 3px 3px 0"><strong>Today's focus:</strong> ${focus}</p>` : ``}
     <p style="margin:24px 0"><a href="${APP_URL}/brief" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Open today's brief →</a></p>
     <p style="color:#999;font-size:13px">About 45 seconds. I'll be here.</p>
     <p style="color:#555">— Riley</p>
   </div>`;
-  return { subject: `Good morning, ${name} — your brief is ready`, text, html };
+  return { subject: `${greet}, ${name} — your brief is ready`, text, html };
 }
 
 async function sendEmail(to, email) {
@@ -99,7 +102,7 @@ exports.handler = async function () {
         const { data: brief } = await supabase
           .from("daily_briefs").select("modules").eq("user_id", u.id).eq("brief_date", localToday).maybeSingle();
         const name = (u.preferred_name || u.full_name || "").split(" ")[0] || "friend";
-        const r = await sendEmail(u.email, buildEmail(name, brief));
+        const r = await sendEmail(u.email, buildEmail(name, brief, u.notification_schedule || "morning"));
         if (r.skipped) { result.skipped++; continue; }
         await supabase.from("user_profiles").update({ brief_email_sent_date: localToday }).eq("id", u.id);
         await supabase.from("engagement_events").insert({ user_id: u.id, event_type: "brief_email_sent", event_data: {} });

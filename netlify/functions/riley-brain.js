@@ -275,7 +275,7 @@ exports.handler = async (event) => {
     // Spec: every return login, Riley references something real. No LLM needed —
     // pull from signals, memory, and the Human OS captured in onboarding.
     const returnRefs = [];
-    if (latestMood && latestMood <= 2) returnRefs.push("You mentioned energy has been low. How are you feeling this morning?");
+    if (latestMood && latestMood <= 2) returnRefs.push("You mentioned energy has been low. How are you feeling right now?");
     if (recentSleep && recentSleep < 6) returnRefs.push(`You logged ${recentSleep} hours of sleep. Let's build today around that.`);
     if (recentSleep && recentSleep >= 8) returnRefs.push(`${recentSleep} hours of sleep — your body got what it needed. Let's use it.`);
     const dreamMem = memory.find(m => /dream/i.test(m.content));

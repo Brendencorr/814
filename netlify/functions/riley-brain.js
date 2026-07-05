@@ -92,7 +92,7 @@ exports.handler = async (event) => {
     // ── Pull every signal in parallel — all non-fatal ──
     const [
       profileR, checkinsR, soberR, programsR, memoryR,
-      lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR, lastVisitR,
+      lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR, lastVisitR, activeProductsR,
     ] = await Promise.allSettled([
       supabase.from("user_profiles").select("full_name,preferred_name,subscription_tier,do_not_recommend,risk_flags,communication_style,current_focus,one_year_vision,human_os,last_engagement_note,notification_schedule").eq("id", user_id).maybeSingle(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours").eq("user_id", user_id).gte("checkin_date", fourteenAgo).order("checkin_date", { ascending: false }),
@@ -106,6 +106,8 @@ exports.handler = async (event) => {
       supabase.from("recommendation_history").select("content_id,reaction").eq("user_id", user_id).gte("recommended_on", fourteenAgo),
       // Last app open BEFORE today — robust dormancy signal (today's open is already logged)
       supabase.from("engagement_events").select("created_at").eq("user_id", user_id).eq("event_type", "app_open").lt("created_at", todayISO).order("created_at", { ascending: false }).limit(1),
+      // Tier from the CANONICAL source (user_active_products) — NOT the dead subscription_tier column.
+      supabase.from("user_active_products").select("product_key").eq("user_id", user_id),
     ]);
 
     const get = r => r.status === "fulfilled" ? r.value?.data : null;
@@ -168,12 +170,18 @@ exports.handler = async (event) => {
     // ── Assemble modules from the registry ──
     // A module shows if: its state_match includes our state (or is empty/universal)
     // AND our state isn't in its suppress list AND the user is entitled.
-    const tier = profile.subscription_tier || "free";
+    // Tier from the CANONICAL entitlements source (user_active_products), mirroring entitlements.js
+    // currentTier(). The dead `subscription_tier` column was never written, so this used to treat EVERY
+    // paying member as free — hiding their paid modules AND upselling them a tier they already own.
+    const _owned = new Set(((activeProductsR.status === "fulfilled" && activeProductsR.value?.data) || []).map(r => r.product_key));
+    const tier = _owned.has("mentor") ? "mentor"
+               : (_owned.has("coach") || _owned.has("concierge")) ? "coach"
+               : _owned.has("companion") ? "companion"
+               : "guide";
     const entitled = (m) => {
       if (!m.entitlement_required) return true;
-      // companion/coach (concierge = legacy pre-v4 name, kept for back-compat)
-      // unlock adaptive features; guide/free users see free modules
-      return tier === "companion" || tier === "coach" || tier === "concierge";
+      // companion / coach / mentor unlock adaptive features; guide sees free modules.
+      return tier === "companion" || tier === "coach" || tier === "mentor";
     };
     const stateForMatch = griefActive ? "grieving" : priorityState === "emotional_support" ? "struggling" : moodState;
 

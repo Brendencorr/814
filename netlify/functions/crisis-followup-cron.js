@@ -42,8 +42,10 @@ function buildFollowup(stage, u) {
       body: `it's Riley. I've been thinking about you since we talked. No agenda here — I just wanted to see how you're doing right now. I'm here whenever you want to talk, even if it's just to sit for a minute.`,
     },
     2: {
-      subject: `Good morning, ${name}`,
-      body: `it's Riley. New morning. I just wanted you to know I'm still here, and I'm really glad you are too. However today feels, you don't have to carry it on your own.`,
+      // Stage 2 is the "next day" restart. Copy stays time-neutral — this cron fires at
+      // several UTC hours, so it must never assert "morning" when it's someone's evening.
+      subject: `A new day, ${name}`,
+      body: `it's Riley. A new day. I just wanted you to know I'm still here, and I'm really glad you are too. However today feels, you don't have to carry it on your own.`,
     },
     3: {
       subject: `Thinking of you, ${name}`,

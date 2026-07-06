@@ -45,6 +45,17 @@ exports.handler = async (event) => {
     const now = Date.now();
     (subs || []).forEach((s) => { const live = !s.expires_at || new Date(s.expires_at).getTime() > now; if (live && ["companion", "coach", "mentor"].includes(s.plan_id)) owned.add(s.plan_id); });
   } catch (_) {}
+  // Admin tier-preview: render the list exactly as the previewed tier would see it (drives the app's
+  // Preview toggle). Honored ONLY for admins; ignored for everyone else.
+  let isAdmin = false;
+  try { const { data: pr } = await sb.from("user_profiles").select("is_admin").eq("id", userId).maybeSingle(); isAdmin = !!(pr && pr.is_admin === true); } catch (_) {}
+  const preview = (isAdmin && ["guide", "companion", "coach"].includes(body.preview_tier)) ? body.preview_tier : null;
+  if (preview) {
+    owned.clear(); owned.add("reset_free");
+    if (preview === "companion") owned.add("companion");
+    if (preview === "coach") owned.add("coach");
+  }
+
   // Expand any owned subscription/bundle to its implied programs (mirrors the entitlement view, but also
   // covers comp-via-subscriptions, so "included" is correct however access was granted).
   const programKeys = (allProds || []).filter((p) => p.type === "program").map((p) => p.product_key);

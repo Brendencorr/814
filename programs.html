@@ -255,7 +255,7 @@ async function loadPrograms(){
   let data={tier:'guide',included:[],available:[]};
   try{
     const tok=(await SB.auth.getSession()).data.session && (await SB.auth.getSession()).data.session.access_token;
-    const r=await fetch('/.netlify/functions/program-list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok})});
+    const r=await fetch('/.netlify/functions/program-list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})});
     data=await r.json();
   }catch(e){}
   const inc=data.included||[];

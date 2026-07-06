@@ -738,7 +738,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   <button class="sucb" onclick="rth()">&#8592; Return to Home</button>
 </div>
 <script>
-var B='/.netlify/functions',PW='Riley814';
+var B='/.netlify/functions';
 // One operator key, optionally remembered on THIS device. opForget() clears it everywhere.
 function opForget(){try{['814_opkey','814_a','814_rem'].forEach(function(k){sessionStorage.removeItem(k);localStorage.removeItem(k);});}catch(e){}}
 // Rehydrate a remembered key into the session so every existing session-based read keeps working.
@@ -762,24 +762,33 @@ try{ if(localStorage.getItem('814_rem')==='1'&&localStorage.getItem('814_opkey')
     return _origFetch(url, opts);
   };
 })();
-function unlock(){
-  var pw=document.getElementById('pw').value;
-  if(pw===PW){
-    // ONE password: the gate value IS the operator key for server calls — seed it so the
-    // injector never prompts a second time. Persist to this device only if "remember" is checked.
-    var remember=!!(document.getElementById('rmb')&&document.getElementById('rmb').checked);
-    try{
-      sessionStorage.setItem('814_opkey',pw); sessionStorage.setItem('814_a','1');
-      if(remember){ localStorage.setItem('814_opkey',pw); localStorage.setItem('814_rem','1'); }
-      else { localStorage.removeItem('814_opkey'); localStorage.removeItem('814_rem'); }
-    }catch(e){}
-    document.getElementById('gate').style.display='none';
-    document.getElementById('app').style.display='flex';
-    init();
-  }else{
-    document.getElementById('pw-err').textContent='Incorrect password.';
-    document.getElementById('pw').value=''; document.getElementById('pw').focus();
+async function unlock(){
+  var pw=document.getElementById('pw').value.trim();
+  if(!pw){document.getElementById('pw').focus();return;}
+  var remember=!!(document.getElementById('rmb')&&document.getElementById('rmb').checked);
+  var err=document.getElementById('pw-err'); err.textContent='Checking…';
+  // No client-side password: the single entry IS the operator key, validated by the SERVER (the
+  // real gate). Seed it first so the fetch injector sends it on the check (no second prompt).
+  try{ sessionStorage.setItem('814_opkey',pw); }catch(e){}
+  var status=0;
+  try{ var r=await fetch(B+'/admin-home'); status=r.status; }catch(e){ status=-1; }
+  if(status!==200){
+    opForget();  // wipe the rejected key from every store
+    if(status===401||status===403){ err.textContent='Incorrect key.'; document.getElementById('pw').value=''; }
+    else { err.textContent='Couldn’t verify with the server — check your connection and try again.'; }
+    document.getElementById('pw').focus();
+    return;
   }
+  // Valid — persist (this device only if "remember"), then enter.
+  try{
+    sessionStorage.setItem('814_a','1');
+    if(remember){ localStorage.setItem('814_opkey',pw); localStorage.setItem('814_rem','1'); }
+    else { localStorage.removeItem('814_opkey'); localStorage.removeItem('814_rem'); }
+  }catch(e){}
+  err.textContent='';
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='flex';
+  init();
 }
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}

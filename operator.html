@@ -447,6 +447,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="y" onclick="loadPricing(this)">Programs</button>
       <button class="ht" data-s="mx" onclick="loadMetrics(this)">Metrics</button>
+      <button class="ht" data-s="nu" onclick="loadNewUser(this)">Add User</button>
     </nav>
     <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
   </header>
@@ -534,6 +535,55 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <div id="mx-member"></div>
           <div id="mx-status" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);min-height:16px;margin-top:.5rem"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD USER · MANUAL MEMBER PROVISIONING -->
+  <div class="sc" id="snu">
+    <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+      <div style="max-width:600px;margin:0 auto">
+        <div class="cl" style="margin:0 0 .3rem">Add a Member</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;max-width:560px;line-height:1.6">
+          Manually provision someone into Riley. Creates their account and profile right away &mdash; they sign in with <b style="color:var(--ink2)">Google</b> using the same email. Every add is written to the audit trail.
+        </div>
+
+        <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Full name</label>
+        <input id="nu-name" type="text" placeholder="Jordan Rivera" autocomplete="off"
+          style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.6rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
+
+        <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Email <span style="text-transform:none;letter-spacing:0;color:var(--muted2)">&middot; the Google address they'll sign in with</span></label>
+        <input id="nu-email" type="email" placeholder="jordan@email.com" autocomplete="off" spellcheck="false"
+          style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.6rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
+
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          <div style="flex:1;min-width:180px">
+            <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Membership</label>
+            <select id="nu-tier"
+              style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.6rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
+              <option value="guide">Guide &mdash; free</option>
+              <option value="companion">Companion &mdash; comped</option>
+              <option value="coach">Coach &mdash; comped</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:180px">
+            <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Sobriety date <span style="text-transform:none;letter-spacing:0">&middot; optional</span></label>
+            <input id="nu-sob" type="date"
+              style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
+          </div>
+        </div>
+
+        <label style="display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;margin:.4rem 0 .2rem;padding:.7rem .8rem;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,0.015)">
+          <input type="checkbox" id="nu-email-toggle" style="margin-top:.15rem;accent-color:var(--gold);width:15px;height:15px;flex-shrink:0">
+          <span style="font-size:.8rem;color:var(--ink2);line-height:1.5">Email the member a welcome + sign-in link
+            <span style="display:block;font-size:.72rem;color:var(--muted2);margin-top:.15rem">Sends once Resend is connected. Until then, the member is still created &mdash; no email goes out.</span>
+          </span>
+        </label>
+
+        <div style="margin-top:1.3rem;display:flex;align-items:center;gap:1rem">
+          <button class="bg" id="nu-btn" onclick="createUserSubmit()">Add member</button>
+        </div>
+        <div id="nu-result"></div>
       </div>
     </div>
   </div>
@@ -705,7 +755,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -2518,6 +2568,45 @@ function loadMetrics(btn){
     .then(function(r){ if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json(); })
     .then(function(d){ box.innerHTML=mxRenderMetrics(d); })
     .catch(function(e){ box.innerHTML='<div class="em" style="color:var(--red)">'+(e.message==='bad-key'?'Bad operator key &mdash; click Refresh to re-enter.':'Failed to load metrics.')+'</div>'; });
+}
+
+// ── Add User · manual member provisioning (OPERATOR_KEY protected) ───────────
+function loadNewUser(btn){
+  if(btn!==undefined) gs('nu',btn);
+  var res=document.getElementById('nu-result'); if(res) res.innerHTML='';
+}
+function nuEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function nuMsg(html,tone){
+  var c=tone==='green'?'var(--green)':tone==='red'?'var(--red)':'var(--muted)';
+  return '<div style="margin-top:1.1rem;padding:.75rem .9rem;border:1px solid '+c+';border-radius:6px;color:'+c+';font-size:.82rem;line-height:1.55;background:rgba(255,255,255,0.02)">'+html+'</div>';
+}
+async function createUserSubmit(){
+  var res=document.getElementById('nu-result');
+  var name=(document.getElementById('nu-name').value||'').trim();
+  var email=(document.getElementById('nu-email').value||'').trim();
+  var tier=document.getElementById('nu-tier').value;
+  var sob=(document.getElementById('nu-sob').value||'').trim();
+  var sendEmail=document.getElementById('nu-email-toggle').checked;
+  if(!name){ res.innerHTML=nuMsg('Name is required.','red'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ res.innerHTML=nuMsg('Enter a valid email address.','red'); return; }
+  var k=opKey(); if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(k) sessionStorage.setItem('814_opkey',k); }
+  if(!k){ res.innerHTML=nuMsg('Operator key required.','red'); return; }
+  var btn=document.getElementById('nu-btn'); var lbl=btn.textContent; btn.disabled=true; btn.textContent='Adding…'; res.innerHTML='';
+  try{
+    var r=await fetch(B+'/admin-create-user',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({name:name,email:email,tier:tier,sobriety_date:sob||null,send_email:sendEmail})});
+    if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); }
+    var d={}; try{ d=await r.json(); }catch(e){}
+    if(!r.ok||d.error){ res.innerHTML=nuMsg(nuEsc(d.error||'Could not add the member.'),'red'); btn.disabled=false; btn.textContent=lbl; return; }
+    var tierLabel=tier==='guide'?'Guide (free)':(tier==='coach'?'Coach':'Companion');
+    var emailNote='';
+    if(sendEmail){ emailNote=(d.emailed&&d.emailed.sent)?' &middot; welcome email sent.':' &middot; email will send once Resend is connected.'; }
+    res.innerHTML=nuMsg('&#10003; Added <b>'+nuEsc(name)+'</b> as <b>'+tierLabel+'</b>. They can sign in with Google using <b>'+nuEsc(email)+'</b>.'+emailNote,'green');
+    document.getElementById('nu-name').value=''; document.getElementById('nu-email').value=''; document.getElementById('nu-sob').value=''; document.getElementById('nu-tier').value='guide'; document.getElementById('nu-email-toggle').checked=false;
+    btn.disabled=false; btn.textContent=lbl;
+  }catch(e){
+    res.innerHTML=nuMsg(e.message==='bad-key'?'Bad operator key &mdash; reload and re-enter.':'Could not reach the server. Try again.','red');
+    btn.disabled=false; btn.textContent=lbl;
+  }
 }
 function mxRenderMetrics(d){
   function card(lbl,val,sub){ return '<div class="statc"><div class="lbl">'+x(lbl)+'</div><div class="val">'+(val==null?'&mdash;':x(String(val)))+'</div>'+(sub?'<div class="sub">'+x(sub)+'</div>':'')+'</div>'; }

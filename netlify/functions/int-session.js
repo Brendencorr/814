@@ -215,6 +215,9 @@ exports.handler = async (event) => {
     const next = Math.min(MAX_SESSION, Math.max(enr.current_session || 0, n + 1));
     const patch = { current_session: next, updated_at: new Date().toISOString() };
     if (n >= MAX_SESSION) { patch.state = "maintenance"; patch.graduated_at = new Date().toISOString(); }
+    // Resume-not-restart (doc 05 §5 exit): a new commitment on Staying Free clears an armed lapse —
+    // the member is moving forward again, so nudges resume and the tone flag lifts.
+    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") patch.lapse_state = null;
     await sb.from("int_enrollments").update(patch).eq("id", enr.id);
     return json(200, { ok: true, current_session: next, graduated: n >= MAX_SESSION });
   }

@@ -26,6 +26,7 @@ const {
   LEVEL1_DIRECTIVE,
   DIAGNOSIS_DIRECTIVE,
 } = require("./crisis-detection");
+const { detectSlipDisclosure, lapseRepairDirective } = require("./lapse-detection");
 const { getRemaining, incrementUsage } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
@@ -669,6 +670,30 @@ async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
   } catch (e) { console.warn("logCrisis failed (non-fatal):", e.message); }
 }
 
+// ── Lapse-repair (Staying Free, doc 05 §5) — canon line + state when a slip is disclosed ──────
+// The founder-authored first response (interim until Brenden replaces it in canon_copy). Fetched
+// live so his edit in the operator takes effect immediately; the constant is only the fallback.
+const INTERIM_LAPSE_LINE = `Thank you for telling me. That took more courage than you're giving yourself credit for right now. Nothing you built is erased — every day you had still happened, and I'm still here. Tonight has one job: water, something to eat, sleep. Tomorrow, in daylight, we'll look at what happened together — no shame in this room, not now, not ever.`;
+async function getCanonLapseLine(supabase) {
+  try {
+    if (supabase) {
+      const { data } = await supabase.from("canon_copy").select("body").eq("key", "lapse_first_response").maybeSingle();
+      if (data && data.body) return data.body;
+    }
+  } catch (_) {}
+  return INTERIM_LAPSE_LINE;
+}
+// Arm lapse_active on the member's Staying Free enrollment (a no-op if they aren't enrolled — the canon
+// response + stabilization still fire for any tier). This suspends their program nudges (int-proactive-
+// cron already skips lapse_active) and flags the tone. Stays armed post-graduation per spec. Non-fatal.
+async function markLapseActive(supabase, userId) {
+  try {
+    await supabase.from("int_enrollments")
+      .update({ lapse_state: "lapse_active", updated_at: new Date().toISOString() })
+      .eq("user_id", userId).eq("program_key", "prog_int_staying_free");
+  } catch (e) { console.warn("markLapseActive failed (non-fatal):", e.message); }
+}
+
 // ── Memory Engine — distill durable memories from a conversation ──────────────
 // Bounded for scale: only called at message-count milestones, not every turn.
 // One small Claude call; returns NEW memories only (existing ones passed in to dedupe).
@@ -934,7 +959,20 @@ exports.handler = async function (event) {
   // Levels 1–2 + diagnosis guardrail: prepend hard directives so they win over
   // every standing instruction in the base prompt for THIS reply.
   let safetyDirective = "";
-  if (crisis.level === 2) {
+  // Disclosed slip (already happened) → lapse-repair: founder canon first, Fast Re-entry, no shame,
+  // no sell. Detected separately from crisis Level 2 (relapse RISK) and given priority over the generic
+  // L1/L2 directive, because "put distance from the substance" is the wrong response once it's happened.
+  // Level 3 self-harm already short-circuited above, so it can never be overridden here.
+  const slip = detectSlipDisclosure(latestUserText);
+  if (slip.isSlip) {
+    const canonLine = await getCanonLapseLine(supabase);
+    safetyDirective += lapseRepairDirective(canonLine) + "\n\n";
+    await logCrisis(supabase, user_id, session_id, 2, ["slip-disclosure", ...slip.matches], latestUserText);
+    if (supabase && user_id) {
+      markLapseActive(supabase, user_id);   // arm lapse_state on Staying Free (no-op if not enrolled)
+      sendOperatorAlert(supabase, { userId: user_id, level: 2, matches: ["slip-disclosure", ...slip.matches], excerpt: latestUserText, source: "riley-chat-lapse" }).catch(() => {});
+    }
+  } else if (crisis.level === 2) {
     safetyDirective += LEVEL2_DIRECTIVE + "\n\n";
     await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText);
     // Fire-and-forget — runs during the awaited model call below, so the
@@ -958,7 +996,7 @@ exports.handler = async function (event) {
   const isUncappedTier = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
   // sessionExempt: interactive-program session messages don't count against the Guide cap (they bought
   // the coaching). The enrollment was verified as theirs in loadSessionContext, so it can't be forged.
-  if (crisis.level === 0 && supabase && user_id && !isUncappedTier && !sessionExempt) {
+  if (crisis.level === 0 && supabase && user_id && !isUncappedTier && !sessionExempt && !slip.isSlip) {
     try {
       let freeAccess = false;
       try {

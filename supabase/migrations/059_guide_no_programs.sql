@@ -1,0 +1,13 @@
+-- ============================================================
+-- 059_guide_no_programs.sql — Guide (reset_free) owns NO programs
+--
+-- BUG: reset_free had implies_all_programs=true. Since EVERY user has Guide,
+-- the user_active_products view was granting everyone all 5 programs — silently
+-- bypassing the tier model (Companion → 3 self-guided, Coach → all) and leaving the
+-- "Program Add-ons" section empty for every tier (everyone "owned" everything).
+--
+-- Per the model, Guide owns nothing and buys programs à la carte. Companion (implies
+-- the 3 self-guided) and Coach (implies_all_programs) are the only program grants.
+-- Safe to re-run.
+-- ============================================================
+UPDATE products SET implies_all_programs = false WHERE product_key = 'reset_free';

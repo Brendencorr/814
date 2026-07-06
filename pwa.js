@@ -118,9 +118,11 @@
   var _cov, _cfr;
   function buildChat() {
     _cov = document.createElement('div'); _cov.id = 'riley-chat-overlay';
-    _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:center;justify-content:center;background:rgba(6,9,14,0.7);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);padding:16px';
+    // Docked, NON-blocking widget: no dimming backdrop, clicks pass through to the page
+    // so members can scroll/click the dashboard with Riley open or minimized.
+    _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:flex-end;justify-content:flex-end;padding:16px;pointer-events:none';
     var panel = document.createElement('div');
-    panel.style.cssText = 'position:relative;width:100%;max-width:460px;height:min(84vh,760px);background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,0.55)';
+    panel.style.cssText = 'position:relative;pointer-events:auto;width:min(384px,calc(100vw - 32px));height:min(600px,calc(100vh - 120px));background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,0.45);border:1px solid rgba(0,0,0,0.10)';
     var bar = document.createElement('div'); bar.style.cssText = 'position:absolute;top:0;right:0;z-index:2;display:flex;gap:5px;padding:8px 10px';
     var mini = document.createElement('button'); mini.setAttribute('aria-label', 'Minimize'); mini.innerHTML = '&minus;';
     mini.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:19px;line-height:1;cursor:pointer';
@@ -136,8 +138,10 @@
     document.body.appendChild(_cov);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && _cov.style.display === 'flex') closeChat(); });
   }
-  function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-  function closeChat() { if (_cov) { _cov.style.display = 'none'; document.body.style.overflow = ''; } }
+  function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
+  // Minimize/close = hide the panel + bring back the pill. The iframe stays mounted, so
+  // re-opening resumes the SAME conversation. Never locks the page — dashboard stays usable.
+  function closeChat() { if (_cov) _cov.style.display = 'none'; document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex'; }
   // Once per LOCAL day, on the app home, auto-open the chat so Riley greets with the
   // day-aware daily check-in. Strictly one auto-open per day — non-naggy by design.
   function autoOpenDaily() {

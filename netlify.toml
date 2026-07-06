@@ -64,6 +64,10 @@
 [functions."entitlements"]
   timeout = 10
 
+# Member Content Library surface — resolves tier/personas/focus + runs matchContent server-side.
+[functions."library"]
+  timeout = 26
+
 [functions."site-config"]
   timeout = 10
 

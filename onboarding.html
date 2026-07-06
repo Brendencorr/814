@@ -216,30 +216,44 @@ async function doneBrings(){
   sStart();
 }
 
-// ── Screen 4 · Where we start (single primary focus) ───────────────────────────
+// ── Screen 4 · Where we start (up to 3; the FIRST pick is the starting lane) ────
 function sStart(){
   // Candidate set = the specific things they chose (excluding "not sure"/"something else"),
-  // else the full focus list.
+  // else the full focus list. People carry more than one thing — pick up to 3.
   const chosen=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!=='I am not really sure.'&&w!=='Something else.');
   const usingFocus=chosen.length===0;
-  const cand=usingFocus?FOCUS:chosen;
-  A._startCand=cand;
+  A._startCand=usingFocus?FOCUS:chosen;
+  A.start_picks=A.start_picks||[]; // indices into _startCand, in tap order (first = primary)
   swap(`<div class="section-label">Where we start</div>
     <div class="riley-says">Where should we start?</div>
-    <div class="riley-sub">You don't have to pick one thing to fix — I'll hold all of it. But every rebuild starts somewhere.</div>
-    <div class="opts" id="start-opts">${cand.map((c,i)=>`<button class="opt ${A._startIdx===i?'sel':''}" data-i="${i}" onclick="pickStart(${i})">${esc(c)}</button>`).join('')}</div>
-    <div class="actions"><button class="skip" onclick="sBrings()" style="margin-right:auto">← Back</button><button class="btn" id="b-start" onclick="doneStart()" ${A._startIdx!=null?'':'disabled'}>Continue</button></div>
+    <div class="riley-sub">You carry more than one thing — I'll hold all of it. Pick up to three, and we'll begin with the first one you choose.</div>
+    <div class="opts" id="start-opts">${A._startCand.map((c,i)=>startOpt(c,i)).join('')}</div>
+    <div class="chip-count" id="start-count">${A.start_picks.length}/3 · we'll start with the first</div>
+    <div class="actions"><button class="skip" onclick="sBrings()" style="margin-right:auto">← Back</button><button class="btn" id="b-start" onclick="doneStart()" ${A.start_picks.length?'':'disabled'}>Continue</button></div>
     ${dots(3)}`);
 }
-function pickStart(i){A._startIdx=i;document.querySelectorAll('#start-opts .opt').forEach(o=>o.classList.toggle('sel',+o.dataset.i===i));document.getElementById('b-start').disabled=false;}
+function startOpt(c,i){
+  const pos=A.start_picks.indexOf(i), sel=pos>=0;
+  const badge=pos===0?'starting here':(sel?'#'+(pos+1):'');
+  return `<button class="opt ${sel?'sel':''}" onclick="pickStart(${i})">${esc(c)}${badge?` <span style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace">· ${badge}</span>`:''}</button>`;
+}
+function pickStart(i){
+  const idx=A.start_picks.indexOf(i);
+  if(idx>=0)A.start_picks.splice(idx,1);
+  else{if(A.start_picks.length>=3)return;A.start_picks.push(i);}
+  document.getElementById('start-opts').innerHTML=A._startCand.map((c,k)=>startOpt(c,k)).join('');
+  document.getElementById('start-count').textContent=A.start_picks.length+"/3 · we'll start with the first";
+  document.getElementById('b-start').disabled=A.start_picks.length===0;
+}
 async function doneStart(){
-  if(A._startIdx==null)return;
-  const primary=A._startCand[A._startIdx];
-  A.primary_focus=primary;
-  A.focus_lane=laneFor(primary); // FOCUS-list picks fall to 'other' unless they map
-  A.secondary_focuses=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!==primary&&w!=='Something else.');
+  if(!A.start_picks.length)return;
+  const picks=A.start_picks.map(k=>A._startCand[k]);
+  A.primary_focus=picks[0];
+  A.focus_lane=laneFor(A.primary_focus); // generic-list picks fall to the 'other' lane
+  const extras=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!=='Something else.'&&!picks.includes(w));
+  A.secondary_focuses=[...new Set(picks.slice(1).concat(extras))];
   await save({primary_focus:A.primary_focus,focus_lane:A.focus_lane,secondary_focuses:A.secondary_focuses},3);
-  await saveMemory([{content:`Where we're starting together: ${primary}`,type:'long_term'}]);
+  await saveMemory([{content:`Where we're starting: ${picks.join(', ')} — primary: ${A.primary_focus}`,type:'long_term'}]);
   sTwoWeeks();
 }
 
@@ -360,7 +374,8 @@ function sPreview(){
   const lane=A.focus_lane||'other';
   const pace=(A.readiness!=null&&A.readiness<=4)?'take this gently, one honest check-in at a time':'start moving — one small step a day';
   const timeLabel=TIME_LABEL[A.notification_schedule]||'when it helps';
-  const plan=`Okay, ${esc(FIRST)}. Here's how we start: you're carrying <b>${esc(LANE_LABEL[lane])}</b>, and in two weeks you want <b>${esc((A.motivation||'').replace(/^I'?d\s*/i,'to ')||'to feel a little more like yourself')}</b>. You told me you're at a <b>${A.readiness}</b> on readiness — so we'll <b>${pace}</b>. I'll check in <b>${esc(timeLabel)}</b>.<br><br>First up: your very first check-in — thirty seconds, and I'll give you something back.`;
+  const holding=(A.secondary_focuses&&A.secondary_focuses.length)?" — and I'm holding the rest for when you're ready":"";
+  const plan=`Okay, ${esc(FIRST)}. Here's how we start: you're carrying <b>${esc(LANE_LABEL[lane])}</b>${holding}, and in two weeks you want <b>${esc((A.motivation||'').replace(/^I'?d\s*/i,'to ')||'to feel a little more like yourself')}</b>. You told me you're at a <b>${A.readiness}</b> on readiness — so we'll <b>${pace}</b>. I'll check in <b>${esc(timeLabel)}</b>.<br><br>First up: your very first check-in — thirty seconds, and I'll give you something back.`;
   swap(`<div class="section-label">Here's our start</div>
     <div class="plan-card">${plan}</div>
     <div class="actions" style="flex-direction:column;align-items:stretch;gap:10px;margin-top:18px">

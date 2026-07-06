@@ -173,7 +173,7 @@ function A(id,msg,ok){
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
+function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}try{window.RileyPH&&window.RileyPH.track(type,data||{});}catch(e){}}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
@@ -521,5 +521,6 @@ function markActionDone(el){
 </script>
 <script src="/pwa.js"></script>
 <script src="/track.js"></script>
+<script src="/posthog.js"></script>
 </body>
 </html>

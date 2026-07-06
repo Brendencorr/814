@@ -429,7 +429,7 @@ function applyUpliftMode(){
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 // Engagement tracking — fire-and-forget, never blocks render. Logs event + bumps counters.
-function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}}
+function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}try{window.RileyPH&&window.RileyPH.track(type,data||{});}catch(e){}}
 
 // ── Notifications (client alerts) — new library additions, etc. ───────────────
 let ALERTS=[];
@@ -1504,5 +1504,6 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   },150);
 })();
 </script>
+<script src="/posthog.js"></script>
 </body>
 </html>

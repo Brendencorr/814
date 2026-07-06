@@ -4,10 +4,12 @@
  * Keeps credentials out of static HTML source files.
  *
  * GET /.netlify/functions/site-config
- * Returns: { supabaseUrl, supabaseAnonKey }
+ * Returns: { supabaseUrl, supabaseAnonKey, posthogKey, posthogHost }
  *
  * Note: SUPABASE_ANON_KEY is safe to expose in browser responses —
  * it is the public key and all data access is protected by Supabase RLS.
+ * POSTHOG_PROJECT_KEY (phc_…) is likewise a public, write-only ingest key
+ * designed for client-side use — safe to serve to the browser.
  */
 
 exports.handler = async function (event) {
@@ -32,6 +34,10 @@ exports.handler = async function (event) {
     };
   }
 
+  // PostHog is optional — absent env vars just leave the client analytics as a no-op.
+  const posthogKey  = process.env.POSTHOG_PROJECT_KEY || "";
+  const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
+
   return {
     statusCode: 200,
     headers: {
@@ -39,6 +45,6 @@ exports.handler = async function (event) {
       "Content-Type": "application/json",
       "Cache-Control": "public, max-age=300", // cache for 5 min — values rarely change
     },
-    body: JSON.stringify({ supabaseUrl, supabaseAnonKey }),
+    body: JSON.stringify({ supabaseUrl, supabaseAnonKey, posthogKey, posthogHost }),
   };
 };

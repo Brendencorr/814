@@ -156,6 +156,12 @@
 [functions."crisis-followup-cron"]
   schedule = "0 1,15,21 * * *"
 
+# PostHog attribution pull — mirrors yesterday's funnel counts (by first-touch UTM)
+# into posthog_daily_conversions. Runs 07:10 UTC (after PostHog has ingested the
+# prior UTC day). Gated on POSTHOG_PERSONAL_KEY + POSTHOG_PROJECT_ID — no-op without.
+[functions."posthog-conversion-cron"]
+  schedule = "10 7 * * *"
+
 # ── Dashboard clean URLs (must come BEFORE the riley.meetriley.us catch-all) ──
 # ===== eight14.us (RETIRED old domain) -> meetriley.us — force-forward EVERYTHING so no
 # old eight14 link ever 404s. eight14.us was the pre-launch domain before the rebrand to

@@ -1,4 +1,5 @@
 const { createClient } = require('@supabase/supabase-js');
+const { phCapture } = require('./posthog-server');
 
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
@@ -27,6 +28,12 @@ async function getUserIdFromToken(supabase, token) {
 // metrics (Doc 3). Fail-open + non-blocking: analytics must NEVER break a user action.
 async function emitEvent(supabase, userId, name, props) {
   try { await supabase.from('events').insert({ user_id: userId || null, name, props: props || {} }); } catch (e) {}
+  // Mirror the canonical §9 event into PostHog for business attribution
+  // (utm → signup → reset_completed → upgrade). distinct_id = the Supabase user id,
+  // matching the browser's posthog.identify(), so the server event stitches to the
+  // person that carries the first-touch UTM. Fire-and-forget: never adds latency and
+  // no-ops entirely when POSTHOG_PROJECT_KEY is unset.
+  try { if (userId) phCapture({ distinctId: userId, event: name, properties: props || {} }).catch(() => {}); } catch (e) {}
 }
 
 // Operator-only gate. Returns null when the request carries the correct OPERATOR_KEY header,

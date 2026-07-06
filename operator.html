@@ -442,7 +442,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="hl">8:14</div>
     <nav class="hn">
       <button class="ht active" data-s="o" onclick="loadOverview(this)">Home</button>
-      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
+      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>      <button class="ht" data-s="at" onclick="loadAttribution(this)">Attribution</button>      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
       <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:var(--red);color:#100d0a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
       <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
       <button class="ht" data-s="y" onclick="loadPricing(this)">Programs</button>
@@ -546,6 +546,23 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <div id="eng-stats"><div class="em">Loading engagement…</div></div>
       <div id="eng-attention"></div>
       <div id="eng-table"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ATTRIBUTION SCREEN — PostHog funnel by campaign -->
+<div class="sc" id="sat">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1180px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+        <div class="cl" style="margin:0">Attribution · What Drives Signups</div>
+        <select id="attr-days" onchange="loadAttribution()" style="background:var(--card);color:var(--text);border:1px solid var(--border);font-family:DM Mono,monospace;font-size:.72rem;padding:.35rem .6rem">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+      <div id="attr-body"><div class="em">Loading attribution…</div></div>
     </div>
   </div>
 </div>
@@ -688,7 +705,7 @@ var B='/.netlify/functions',PW='Riley814';
 function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -1079,6 +1096,55 @@ function renderOverview(eng,ps){
     html+='<div style="grid-column:1/-1;background:var(--card);border:1px solid var(--border);border-left:3px solid var(--red);padding:1rem 1.2rem"><div class="cl" style="margin:0 0 .7rem;color:var(--red)">Needs a Check-In ('+na.length+')</div>'+na.slice(0,6).map(function(u){var c=engColor(u.state);return '<div style="display:flex;align-items:center;gap:.7rem;padding:.35rem 0;font-size:.82rem"><span style="color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+engEsc(u.name)+'</span><span style="color:'+c+';font-size:.66rem;font-family:DM Mono,monospace;text-transform:uppercase">'+u.state+'</span><span style="color:var(--muted);font-size:.72rem;width:80px;text-align:right">'+engAgo(u.last_active_at)+'</span></div>';}).join('')+'</div>';
   }
   document.getElementById('ov-cols').innerHTML=html;
+}
+
+/* ── ATTRIBUTION · POSTHOG FUNNEL BY CAMPAIGN ─────────────────────────────── */
+async function loadAttribution(btn){
+  gs('at',btn);
+  var days=(document.getElementById('attr-days')||{}).value||'30';
+  var body=document.getElementById('attr-body');body.innerHTML='<div class="em">Loading attribution…</div>';
+  try{
+    var d=await opGet('/admin-attribution?days='+days);
+    renderAttribution(d);
+  }catch(e){
+    var msg=e.message==='no-key'?'Enter the operator key to view attribution.':e.message==='bad-key'?'That operator key was rejected. Reload and try again.':e.message==='HTTP 503'?'Set <b>OPERATOR_KEY</b> in Netlify env, then reload.':'Could not load attribution: '+engEsc(e.message);
+    body.innerHTML='<div class="em">'+msg+'</div>';
+  }
+}
+function attrRow(label,r,topPv){
+  var bar=topPv>0?Math.round((r.pageview/topPv)*100):0;
+  return '<tr style="border-bottom:1px solid var(--border)">'+
+    '<td style="padding:.55rem .6rem;color:var(--text);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+engEsc(label)+
+      '<div style="height:3px;background:var(--gold);opacity:.35;width:'+bar+'%;margin-top:.35rem"></div></td>'+
+    '<td style="padding:.55rem .6rem;text-align:right;color:var(--muted);font-family:DM Mono,monospace">'+(r.pageview||0)+'</td>'+
+    '<td style="padding:.55rem .6rem;text-align:right;color:var(--gold);font-family:DM Mono,monospace">'+(r.signup_guide||0)+'</td>'+
+    '<td style="padding:.55rem .6rem;text-align:right;color:var(--green);font-family:DM Mono,monospace">'+(r.reset_completed||0)+'</td>'+
+    '<td style="padding:.55rem .6rem;text-align:right;color:var(--blue);font-family:DM Mono,monospace">'+(r.upgrade||0)+'</td>'+
+    '<td style="padding:.55rem .6rem;text-align:right;color:var(--text);font-family:DM Mono,monospace">'+(r.signup_rate||0)+'%</td>'+
+  '</tr>';
+}
+function attrTable(title,rows,keyName){
+  if(!rows||!rows.length)return'<div style="background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;margin-bottom:1rem"><div class="cl" style="margin:0 0 .5rem">'+title+'</div><div class="em">No data in this window.</div></div>';
+  var topPv=rows.reduce(function(m,r){return Math.max(m,r.pageview||0);},0);
+  var head='<tr style="border-bottom:1px solid var(--border)">'+
+    ['<th style="text-align:left;padding:.4rem .6rem;font-family:DM Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)">'+(keyName==='utm_source'?'Source':'Campaign')+'</th>',
+     'Landing','Signups','Reset done','Upgrades','Signup %'].map(function(h,i){return i===0?h:'<th style="text-align:right;padding:.4rem .6rem;font-family:DM Mono,monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)">'+h+'</th>';}).join('')+'</tr>';
+  return '<div style="background:var(--card);border:1px solid var(--border);padding:1rem 1.2rem;margin-bottom:1.2rem">'+
+    '<div class="cl" style="margin:0 0 .7rem">'+title+'</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead>'+head+'</thead><tbody>'+
+    rows.slice(0,25).map(function(r){return attrRow(r[keyName]||'(none)',r,topPv);}).join('')+'</tbody></table></div>';
+}
+function renderAttribution(d){
+  var body=document.getElementById('attr-body');
+  var t=(d&&d.totals)||{};
+  var hint=(d&&d.configured)?'':'<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid var(--gold);padding:.8rem 1.1rem;margin-bottom:1.2rem;font-size:.82rem;color:var(--muted)">No attribution data yet. Once <b>PostHog env vars</b> are set and the nightly pull has run, campaign→signup numbers appear here. (PostHog’s own dashboard shows live events immediately.)</div>';
+  var hero='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.3rem">'+
+    ovStat('Landing views',t.pageview||0,'var(--muted)')+
+    ovStat('Signups',t.signup_guide||0,'var(--gold)')+
+    ovStat('Reset completed',t.reset_completed||0,'var(--green)')+
+    ovStat('Upgrades',t.upgrade||0,'var(--blue)')+
+  '</div>';
+  body.innerHTML=hint+hero+attrTable('By Source (utm_source)',d&&d.by_source,'utm_source')+attrTable('By Campaign (utm_campaign)',d&&d.by_campaign,'utm_campaign');
 }
 
 /* ── ENGAGEMENT · MISSION CONTROL ─────────────────────────────────────────── */

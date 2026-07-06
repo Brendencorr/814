@@ -3,7 +3,11 @@
   # OPERATOR_KEY is an operator-chosen password; we never hardcode it, so scanning
   # the build for its value only false-positives (and fails the build) when the
   # chosen password happens to match a common word in the code.
-  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY"
+  # SUPABASE_ANON_KEY is the PUBLIC publishable key (sb_publishable_…). It is designed
+  # to ship to the browser (RLS protects all data), and several client pages embed it
+  # directly. Marking it here means we don't have to chase every page into OMIT_PATHS
+  # (which is what broke the build when library.html was added without being listed).
+  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY,SUPABASE_ANON_KEY"
 
 [functions]
   directory = "netlify/functions"

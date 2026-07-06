@@ -28,6 +28,15 @@ INSERT INTO products (product_key, display_name, type, price_cents, recurring, s
 ON CONFLICT (product_key) DO UPDATE SET
   display_name=EXCLUDED.display_name, blurb=EXCLUDED.blurb, sort_order=EXCLUDED.sort_order, visible_on_menu=EXCLUDED.visible_on_menu;
 
+-- 2b) RECONCILE: migration 052 seeded two placeholder "Riley-guided" products (prog_move_nourish,
+--     prog_carry_both) at $18.14 / sort 80-81 as rough stand-ins. This spec supersedes them with the
+--     fully-authored interactive programs (prog_int_move_nourish = Move Nourish, prog_int_grief =
+--     Living Forward). Both placeholders are draft with NO purchasers (payments not live) and are
+--     referenced nowhere except the admin grant list, so retire them to kill the duplicate cards and
+--     the sort-order collision. Idempotent; touches only those two keys.
+UPDATE products SET status='retired', visible_on_menu=false
+ WHERE product_key IN ('prog_move_nourish','prog_carry_both');
+
 -- 3) feature_map rows (4 interactive locked-upsell + family_portal coming-soon).
 INSERT INTO feature_map (feature_key, required_any, unentitled_state) VALUES
  ('int_move_nourish',      ARRAY['prog_int_move_nourish','coach'],  'locked_upsell'),

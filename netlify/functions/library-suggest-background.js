@@ -57,11 +57,13 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
   const focusLine = focus && focus.trim()
     ? `Operator focus for this batch: "${focus.trim()}". Bias suggestions toward this, but every item still needs a live link.`
     : `No specific focus — spread suggestions across several content types and topics.`;
+  const allowedTags = [...registry].sort().join(", ");
   const user =
     `Suggest ${n} new resources for the library.\n\n` +
     `${focusLine}\n\n` +
     `Do NOT suggest anything already in the library. Existing items:\n` +
     `${inventory || "(library is currently empty)"}\n\n` +
+    `ALLOWED TAGS — use ONLY tags from this list (lowercase, exact). An item whose tags aren't in this list is DROPPED:\n${allowedTags}\n\n` +
     `Remember: verify every URL is real and live with web search. Drop any item you cannot confirm. Return ONLY the JSON object.`;
 
   // 4. Call Claude with live web search.

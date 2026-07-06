@@ -34,7 +34,7 @@ comment on column public.content_library.link_status  is 'ok | broken — set by
 -- ── 2. tag_registry: the canonical vocabulary (no freeform tags on ingestion) ─
 create table if not exists public.tag_registry (
   tag       text primary key,
-  category  text not null check (category in ('onboarding','pillar','system')),
+  category  text not null check (category in ('onboarding','pillar','system','topic')),
   label     text,
   is_active boolean not null default true
 );
@@ -68,6 +68,15 @@ insert into public.tag_registry (tag, category, label) values
   ('grief_specific','system','Grief-specific'),
   ('movement','system','Movement'),
   ('quick_win','system','Quick win (≤5 min)')
+on conflict (tag) do nothing;
+
+-- Controlled-RICH vocabulary: promote the existing descriptive content tags to a 'topic'
+-- category so Scout + search stay granular (not hamstrung to the 27 canonical tags) while
+-- nothing is truly freeform. Seeded from live data; idempotent (dupes skipped).
+insert into public.tag_registry (tag, category, label)
+select distinct lower(trim(t)), 'topic', initcap(lower(trim(t)))
+from public.content_library, unnest(tags) as t
+where coalesce(trim(t),'') <> ''
 on conflict (tag) do nothing;
 
 -- ── 3. client_tag_events: tag interactions → personalization + upgrade intent ─

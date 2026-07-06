@@ -1,4 +1,4 @@
--- 065_operating_expenses.sql (renumbered from 061 — v5-admin-ui branch reserves 061-064; table already applied live)
+-- 066_operating_expenses.sql (renumbered — 061-065 taken by the INT branch; table already applied live)
 -- Operator finance: editable operating-cost line items for the Riley Overview tab.
 -- Revenue is computed live from `subscriptions` (no table needed); this is the expense side.
 -- Deny-all RLS (operator/service-key only, like admin tables). Seed = the cost tracker spreadsheet.

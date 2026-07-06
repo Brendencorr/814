@@ -94,6 +94,15 @@ async function planForEnrollment(sb, enr, nowMs, todayDate, todayStr) {
   return null;
 }
 
+// A single next-day care check-in after a slip — gentle, no inventory, no agenda.
+function lapseFollowupAlert(enr) {
+  return {
+    audience: "user", user_id: enr.user_id, kind: "program",
+    title: "Good morning", body: "No agenda and no inventory — just checking in. However today feels, Riley's here. Water, something to eat, and we go from there.",
+    url: "/int-program?p=" + encodeURIComponent(enr.program_key), icon: "🤍", ref_table: "int_enrollments", ref_id: enr.id,
+  };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   let dryRun = false;
@@ -104,19 +113,38 @@ exports.handler = async (event) => {
   const nowMs = now.getTime();
   const todayStr = ymd(now);
 
-  const { data: enrolls } = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state").neq("state", "paused");
+  // Resilient select — lapse_at lands with migration 065; fall back gracefully if it isn't applied yet.
+  let enrolls = [];
+  const withLapseAt = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state, lapse_at").neq("state", "paused");
+  if (withLapseAt.error) {
+    const basic = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state").neq("state", "paused");
+    enrolls = basic.data || [];
+  } else {
+    enrolls = withLapseAt.data || [];
+  }
   const { data: todays } = await sb.from("int_nudges").select("enrollment_id").eq("sent_date", todayStr);
   const nudgedToday = new Set((todays || []).map((r) => r.enrollment_id));
 
   const plans = [];
+  const clears = [];   // Staying Free enrollments whose lapse has aged out → auto-clear the suspend (never sticks)
   for (const enr of enrolls || []) {
-    if (nudgedToday.has(enr.id)) continue;                                           // 1/day cap
-    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") continue;  // ladder suspended in lapse
+    // Lapse (Staying Free) takes priority and suspends normal nudges.
+    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") {
+      const lapseMs = enr.lapse_at ? Date.parse(enr.lapse_at) : NaN;
+      const ageDays = isNaN(lapseMs) ? null : (nowMs - lapseMs) / DAY;
+      if (ageDays != null && ageDays >= 3) { clears.push(enr.id); continue; }        // backstop exit
+      if (nudgedToday.has(enr.id)) continue;                                          // 1/day cap
+      if (ageDays != null && ageDays >= 1 && ageDays < 2) {                           // the day after — one gentle care touch
+        plans.push({ enr, alert: lapseFollowupAlert(enr), step: "lapse_followup", dateId: null });
+      }
+      continue;                                                                        // no normal nudges while lapse-active
+    }
+    if (nudgedToday.has(enr.id)) continue;                                            // 1/day cap
     const plan = await planForEnrollment(sb, enr, nowMs, now, todayStr);
     if (plan) plans.push({ enr, ...plan });
   }
 
-  let sent = 0;
+  let sent = 0, cleared = 0;
   if (!dryRun) {
     for (const p of plans) {
       try {
@@ -126,11 +154,15 @@ exports.handler = async (event) => {
         sent++;
       } catch (e) { console.error("nudge send failed (non-fatal):", e.message); }
     }
+    for (const id of clears) {
+      try { await sb.from("int_enrollments").update({ lapse_state: null, lapse_at: null, updated_at: new Date().toISOString() }).eq("id", id); cleared++; } catch (_) {}
+    }
   }
 
   return json(200, {
     ok: true, dry_run: dryRun, date: todayStr,
     enrollments_scanned: (enrolls || []).length, planned: plans.length, sent: dryRun ? 0 : sent,
+    lapse_auto_cleared: dryRun ? clears.length : cleared,
     preview: plans.slice(0, 25).map((p) => ({ program: p.enr.program_key, step: p.step, title: p.alert.title })),
   });
 };

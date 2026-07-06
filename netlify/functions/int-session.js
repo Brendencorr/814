@@ -103,9 +103,13 @@ exports.handler = async (event) => {
     if (!cid || !CONFIRM_STATES.includes(st)) return json(400, { error: "commitment_id + confirmed_state(done|partly|not_yet) required" });
     const { data: c } = await sb.from("int_commitments").select("id, enrollment_id").eq("id", cid).maybeSingle();
     if (!c) return json(404, { error: "no-commitment" });
-    const { data: enr } = await sb.from("int_enrollments").select("id, user_id").eq("id", c.enrollment_id).maybeSingle();
+    const { data: enr } = await sb.from("int_enrollments").select("id, user_id, program_key, lapse_state").eq("id", c.enrollment_id).maybeSingle();
     if (!enr || enr.user_id !== userId) return json(403, { error: "not-owned" });
     await sb.from("int_commitments").update({ confirmed_state: st, confirmed_at: new Date().toISOString(), note: (body.note || "").slice(0, 2000) || null }).eq("id", cid);
+    // Resume-not-restart: confirming a commitment on Staying Free is re-engagement → clear an armed lapse.
+    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") {
+      await sb.from("int_enrollments").update({ lapse_state: null, updated_at: new Date().toISOString() }).eq("id", enr.id);
+    }
     return json(200, { ok: true });
   }
 

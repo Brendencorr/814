@@ -691,7 +691,15 @@ async function markLapseActive(supabase, userId) {
     await supabase.from("int_enrollments")
       .update({ lapse_state: "lapse_active", updated_at: new Date().toISOString() })
       .eq("user_id", userId).eq("program_key", "prog_int_staying_free");
-  } catch (e) { console.warn("markLapseActive failed (non-fatal):", e.message); }
+  } catch (e) { console.warn("markLapseActive (state) failed (non-fatal):", e.message); }
+  // lapse_at (migration 065) — stamped in a SEPARATE write so a missing column can't block arming
+  // lapse_state. Re-stamped fresh on every arming (anchors the next-day follow-up + auto-clear window);
+  // the clear paths only null lapse_state, so a fresh stamp here keeps the two in sync.
+  try {
+    await supabase.from("int_enrollments")
+      .update({ lapse_at: new Date().toISOString() })
+      .eq("user_id", userId).eq("program_key", "prog_int_staying_free").eq("lapse_state", "lapse_active");
+  } catch (_) { /* column lands with migration 065 */ }
 }
 
 // ── Memory Engine — distill durable memories from a conversation ──────────────

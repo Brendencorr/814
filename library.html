@@ -225,7 +225,7 @@ function renderLocked(tier,locked){
 }
 async function libInit(){
   try{
-    const r=await fetch('/.netlify/functions/library?mode=curated&tod='+TOD,{headers:{Authorization:'Bearer '+(await libTok())}});
+    const r=await fetch('/.netlify/functions/library?mode=curated&tod='+TOD+'&preview_tier='+encodeURIComponent(sessionStorage.getItem('admin_preview_tier')||''),{headers:{Authorization:'Bearer '+(await libTok())}});
     const d=await r.json();
     LIB_TAGS=d.tags||{}; renderChips();
     document.getElementById('lib-label').textContent='Curated for you';
@@ -237,7 +237,7 @@ async function libQuery(params){
   document.getElementById('lib-label').textContent=params.tag?('Tagged: '+params.tag):'Search results';
   document.getElementById('lib-locked').innerHTML='';
   try{
-    const r=await fetch('/.netlify/functions/library',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:(await libTok()),mode:'search',query:params.query||'',tag:params.tag||null,tod:TOD})});
+    const r=await fetch('/.netlify/functions/library',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:(await libTok()),mode:'search',query:params.query||'',tag:params.tag||null,tod:TOD,preview_tier:sessionStorage.getItem('admin_preview_tier')||null})});
     const d=await r.json(); renderItems(d.results);
   }catch(e){ box.innerHTML='<div class="empty">Search failed. Try again.</div>'; }
 }

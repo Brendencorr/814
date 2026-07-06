@@ -30,7 +30,7 @@ const lc = (s) => String(s == null ? "" : s).trim().toLowerCase();
 const LIB_COLS = "id,title,creator,content_type,content_url,description,duration_minutes,tags,personas,pillars,tone,tier_access,guide_starter,time_of_day,link_status,emotional_intensity,approval_status,is_active";
 
 // Resolve the member's tier + personas + onboarding focus tags (all server-side).
-async function memberContext(db, userId) {
+async function memberContext(db, userId, previewTier) {
   let rank = 1, tier = "guide";
   try {
     const { data } = await db.from("subscriptions").select("plan_id, expires_at").eq("user_id", userId).eq("status", "active");
@@ -47,16 +47,25 @@ async function memberContext(db, userId) {
     if (en && Array.isArray(en.persona_keys)) personas = en.persona_keys;
   } catch (_) {}
 
-  let onboarding_tags = [];
+  let onboarding_tags = [], isAdmin = false;
   try {
-    const { data: prof } = await db.from("user_profiles").select("primary_focus, secondary_focuses").eq("id", userId).maybeSingle();
+    const { data: prof } = await db.from("user_profiles").select("primary_focus, secondary_focuses, is_admin").eq("id", userId).maybeSingle();
     if (prof) {
+      isAdmin = prof.is_admin === true;
       const t = [];
       if (prof.primary_focus) t.push(lc(prof.primary_focus));
       if (Array.isArray(prof.secondary_focuses)) prof.secondary_focuses.forEach((x) => t.push(lc(x)));
       onboarding_tags = [...new Set(t.filter(Boolean))];
     }
   } catch (_) {}
+
+  // Admin: honor the tier-preview toggle so operator testing is faithful; with no preview an
+  // admin sees the whole library (coach-level) and is NEVER shown the upgrade/locked card.
+  // preview_tier is client-supplied but only ever applied here for a VERIFIED admin.
+  if (isAdmin) {
+    if (previewTier && TIER_RANK[previewTier]) tier = previewTier;
+    else if (TIER_RANK[tier] < TIER_RANK.coach) tier = "coach";
+  }
 
   return { tier, personas, onboarding_tags };
 }
@@ -106,7 +115,7 @@ exports.handler = async function (event) {
     const userId = await verify(db, tok);
     if (!userId) return json(200, { tier: "guide", curated: [], locked: [], results: [], tags: {} }); // logged-out → empty, never error
 
-    const ctx = await memberContext(db, userId);
+    const ctx = await memberContext(db, userId, params.preview_tier || null);
     const items = await liveItems(db);
     const mode = params.mode === "search" ? "search" : "curated";
     const common = { requiredTag: params.tag || null, pillarOfDay: params.pillar || null, timeOfDay: params.tod || null };

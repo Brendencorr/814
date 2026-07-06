@@ -764,6 +764,57 @@ function buildConversationHistory(message, messages) {
   return message ? [{ role: "user", content: message }] : [];
 }
 
+// ── Interactive program session context (additive) ────────────────────────────
+// When a message carries context.enrollment_id (the member is inside a Riley-led session on
+// int-program.html), verify the enrollment is THEIRS + active, load the session spec, and return a
+// directive that makes Riley deliver the session conversationally + a flag that exempts the message
+// from the Guide chat cap (they bought the coaching — metering it would break the promise). Returns
+// null for a normal chat message (no context / forged / not owned) → default behavior is unchanged.
+function sessionDirective(programName, s, prior, enr) {
+  if (!s) {
+    return `ACTIVE RILEY-LED SESSION: the member is in their ${programName || "program"}, but this session isn't authored yet — stay warm and present, ask what they'd like to work on, and don't invent structured content.\n\n----\n\n`;
+  }
+  const ws = s.work_spec || {}, opts = Array.isArray(s.commit_options) ? s.commit_options : [];
+  const lines = [];
+  lines.push(`ACTIVE RILEY-LED COACHING SESSION — the member is IN a session they're paying you to lead. Deliver it conversationally, one beat at a time, in your normal short voice. NEVER dump the whole session at once. Move OPEN → LEARN → WORK → COMMIT only as they're ready, and let them talk. This is the coaching they bought — take your time, stay with them.`);
+  lines.push(`\nProgram: ${programName || enr.program_key} · Session ${s.session_number}: ${s.title}${s.phase ? " (" + s.phase + ")" : ""}`);
+  if (prior && prior.text) {
+    const cs = prior.confirmed_state;
+    lines.push(`OPEN from memory: last time they committed to "${prior.text}" — ${cs === "done" ? "they did it (celebrate the specific thing)" : cs === "partly" ? "they did it partly (that counts — honor it)" : cs === "not_yet" ? "not yet (curiosity, never disappointment)" : "still open (ask gently how it went)"}.`);
+  }
+  if (s.open_template) lines.push(`OPEN: ${s.open_template}`);
+  if (s.learn_body) lines.push(`LEARN (teach this in your voice, then ask how it lands for them): ${s.learn_body}`);
+  if (ws.intro || (ws.prompts && ws.prompts.length)) {
+    lines.push(`WORK — guide them to produce "${ws.artifact || "their work"}"${ws.intro ? ": " + ws.intro : ""} ${(ws.prompts || []).join(" / ")} They can save it on the program screen; encourage that.`);
+  }
+  if (opts.length) lines.push(`COMMIT — help them choose ONE (implementation-intention form, "after X, I will Y"), from: ${opts.join(" | ")} — or their own words. It gets scheduled and you follow up.`);
+  lines.push(`\nSafety still overrides everything: at any crisis or slip signal, drop the session and follow the crisis rules.`);
+  return lines.join("\n") + "\n\n----\n\n";
+}
+
+async function loadSessionContext(supabase, userId, ctx) {
+  if (!supabase || !userId || !ctx || !ctx.enrollment_id) return null;
+  try {
+    const { data: enr } = await supabase.from("int_enrollments")
+      .select("id, user_id, program_key, current_session, lapse_state")
+      .eq("id", ctx.enrollment_id).maybeSingle();
+    if (!enr || enr.user_id !== userId) return null;   // forged / another user's enrollment → no exemption, no injection
+    const n = Number.isInteger(ctx.session_number) ? ctx.session_number : (enr.current_session || 0);
+    const [{ data: s }, { data: prod }] = await Promise.all([
+      supabase.from("int_sessions").select("session_number, phase, title, open_template, learn_body, work_spec, commit_options")
+        .eq("program_key", enr.program_key).eq("session_number", n).eq("is_active", true).maybeSingle(),
+      supabase.from("products").select("display_name").eq("product_key", enr.program_key).maybeSingle(),
+    ]);
+    let prior = null;
+    if (n > 0) {
+      const { data: pc } = await supabase.from("int_commitments").select("text, confirmed_state")
+        .eq("enrollment_id", enr.id).lt("session_number", n).order("session_number", { ascending: false }).limit(1).maybeSingle();
+      prior = pc || null;
+    }
+    return { exempt: true, directive: sessionDirective(prod && prod.display_name, s, prior, enr) };
+  } catch (e) { console.warn("loadSessionContext failed (non-fatal):", e.message); return null; }
+}
+
 // ── Handler — standard Lambda format (no streaming wrapper needed) ────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -833,6 +884,15 @@ exports.handler = async function (event) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
 
+  // Interactive Riley-led session context — additive, only when the client sends context.enrollment_id.
+  // Injects the session spec so Riley delivers the loop conversationally, and exempts the message from
+  // the Guide cap. Crisis/safety directives are prepended LATER, so they still win over this.
+  let sessionExempt = false;
+  try {
+    const sctx = await loadSessionContext(supabase, user_id, body.context);
+    if (sctx) { systemPrompt = sctx.directive + systemPrompt; sessionExempt = true; }
+  } catch (_) {}
+
   const conversationHistory = buildConversationHistory(message, messages);
 
   // ── CRISIS OVERRIDE — deterministic, runs BEFORE any LLM call, top priority ──
@@ -896,7 +956,9 @@ exports.handler = async function (event) {
   // must never hit a usage wall. See 06_entitlements_and_webhooks_spec.md §4.
   let usageInfo = null;
   const isUncappedTier = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
-  if (crisis.level === 0 && supabase && user_id && !isUncappedTier) {
+  // sessionExempt: interactive-program session messages don't count against the Guide cap (they bought
+  // the coaching). The enrollment was verified as theirs in loadSessionContext, so it can't be forged.
+  if (crisis.level === 0 && supabase && user_id && !isUncappedTier && !sessionExempt) {
     try {
       let freeAccess = false;
       try {

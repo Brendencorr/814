@@ -134,7 +134,7 @@ async function approveSuggestion(supabase, id) {
   if (!id) return json(400, { error: "id required" });
 
   const { data: item, error: getErr } = await supabase
-    .from("content_library").select(SELECT_COLS).eq("id", id).maybeSingle();
+    .from("content_library").select(SELECT_COLS + ",tier_access").eq("id", id).maybeSingle();
   if (getErr)  return json(500, { error: getErr.message });
   if (!item)   return json(404, { error: "suggestion not found" });
 
@@ -158,6 +158,9 @@ async function approveSuggestion(supabase, id) {
     ref_table: "content_library",
     ref_id: item.id,
     is_active: true,
+    // Tier-aware (eligible-only): only members at/above the item's tier see this alert.
+    // Guide teaser alerts are intentionally NOT sent here (shipped flagged-off).
+    min_tier: item.tier_access || "guide",
   };
   // Alert is best-effort: approval must still succeed even if the alert insert fails.
   let alerted = false;

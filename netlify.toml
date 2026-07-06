@@ -162,6 +162,12 @@
 [functions."posthog-conversion-cron"]
   schedule = "10 7 * * *"
 
+# Nightly content-library link health — 09:00 UTC (3am MT). Runs as a background
+# scheduled fn. Flags only definitively dead links (404/410/ENOTFOUND) as broken so
+# they drop from client surfacing; recovered links flip back to ok.
+[functions."link-health-check"]
+  schedule = "0 9 * * *"
+
 # ── Dashboard clean URLs (must come BEFORE the riley.meetriley.us catch-all) ──
 # ===== eight14.us (RETIRED old domain) -> meetriley.us — force-forward EVERYTHING so no
 # old eight14 link ever 404s. eight14.us was the pre-launch domain before the rebrand to

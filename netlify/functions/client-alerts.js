@@ -20,18 +20,36 @@ const CORS = {
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
 const isUuid = (v) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const LIMIT = 40;
+const TIER_RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
 
-// Alerts visible to this user: broadcasts + rows addressed to them, newest first.
+// Member's tier rank — mirrors entitlements.js: everyone ≥ guide; the highest active
+// (non-expired) subscription plan wins. Used to gate tier-scoped library alerts.
+async function memberTierRank(db, userId) {
+  let rank = TIER_RANK.guide;
+  try {
+    const { data } = await db.from("subscriptions").select("plan_id, expires_at").eq("user_id", userId).eq("status", "active");
+    const now = Date.now();
+    (data || []).forEach((s) => {
+      const live = !s.expires_at || new Date(s.expires_at).getTime() > now;
+      if (live && TIER_RANK[s.plan_id]) rank = Math.max(rank, TIER_RANK[s.plan_id]);
+    });
+  } catch (_) {}
+  return rank;
+}
+
+// Alerts visible to this user: broadcasts + rows addressed to them, newest first,
+// with tier-scoped rows (min_tier) hidden from members below that tier.
 async function visibleAlerts(db, userId) {
+  const rank = await memberTierRank(db, userId);
   const { data, error } = await db
     .from("client_alerts")
-    .select("id,kind,title,body,url,icon,created_at")
+    .select("id,kind,title,body,url,icon,created_at,min_tier")
     .eq("is_active", true)
     .or(`audience.eq.all,user_id.eq.${userId}`)
     .order("created_at", { ascending: false })
     .limit(LIMIT);
   if (error) throw error;
-  return data || [];
+  return (data || []).filter((a) => rank >= (TIER_RANK[a.min_tier] || TIER_RANK.guide));
 }
 
 async function listAlerts(db, userId) {

@@ -217,6 +217,7 @@ async function deleteGoal(id){try{await SB.from('user_goals').update({is_active:
     ]}
   };
   const RESOURCES = [
+    {href:'/library', icon:'📚', label:'Library'},
     {href:'/programs', icon:'🗂️', label:'Journeys'},
     {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
   ];

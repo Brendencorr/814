@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Conversations — Riley</title>
+<title>Sleep — Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -98,6 +98,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 .sb-tier-items .sni.locked{opacity:0.45;cursor:pointer}
 .sb-badge-soon{margin-left:auto;font-size:7px;font-family:'DM Mono',monospace;color:var(--gold);background:var(--gold-dim);padding:2px 5px;border-radius:8px;letter-spacing:0.06em;text-transform:uppercase}
 .sb-logo-mark{display:inline-flex !important;align-items:center;font-size:26px !important;color:#fff !important;line-height:1}.sb-logo-sun{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 12px rgba(201,168,76,0.5);animation:sbSunBreathe 5s ease-in-out infinite;flex-shrink:0;margin-right:9px}@keyframes sbSunBreathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+/* ── Content Library ── */
+.lib-chip{padding:7px 13px;background:var(--ink3);border:1px solid rgba(255,255,255,0.1);border-radius:20px;font-size:12px;color:var(--smoke);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.lib-chip:hover{border-color:var(--gold);color:var(--parchment)}
+.lib-list{display:flex;flex-direction:column;gap:10px}
+.lib-item{display:flex;gap:13px;align-items:flex-start;padding:15px 16px;background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:6px;text-decoration:none;transition:border-color .15s,transform .15s}
+.lib-item:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-1px)}
+.lib-ic{font-size:22px;line-height:1.2;flex-shrink:0}
+.lib-body{flex:1;min-width:0}
+.lib-t{font-family:'DM Serif Display',serif;font-size:16px;color:var(--parchment);line-height:1.35;margin-bottom:3px}
+.lib-m{font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.03em;text-transform:lowercase}
+.lib-d{font-size:13px;color:var(--smoke);line-height:1.55;margin-top:6px}
 </style>
 </head>
 <body>
@@ -111,20 +122,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </aside>
 <main class="main">
 <div class="topbar">
-  <div><div class="tb-title" id="tb-greeting">Conversations</div><div class="tb-sub" id="tb-date"></div></div>
-  <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Home</a><a href="/chat" class="btn btn-gold">+ New Chat</a></div>
+  <div><div class="tb-title" id="tb-greeting">Sleep</div><div class="tb-sub" id="tb-date"></div></div>
+  <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Home</a><a href="/chat" class="btn btn-gold">Ask Riley</a></div>
 </div>
 <div class="content">
 
-<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 120px)">
-  <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow-y:auto">
-    <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:600;color:var(--parchment)">Riley Sessions</div>
-    <div id="cv-list"></div>
+<!-- Riley intro -->
+<div id="lib-intro" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.65;padding:0 2px;margin-bottom:18px;min-height:26px">Things worth your time — chosen for where you are.</div>
+
+<!-- Search + tags -->
+<div class="card">
+  <div style="display:flex;gap:10px;align-items:center">
+    <input type="text" id="lib-q" placeholder="Search meditations, podcasts, workouts, books…" autocomplete="off" style="flex:1;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:6px;padding:11px 13px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none" onkeydown="if(event.key==='Enter'){libSearch();}">
+    <button class="btn btn-gold" onclick="libSearch()">Search</button>
   </div>
-  <div id="cv-thread" style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:22px;overflow-y:auto">
-    <div class="empty" style="padding:40px 0"><div style="font-size:32px;margin-bottom:12px">💬</div>Select a conversation</div>
-  </div>
+  <div id="lib-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px"></div>
 </div>
+
+<!-- Section label + results -->
+<div id="lib-label" style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin:20px 0 10px">Curated for you</div>
+<div id="lib-results"><div class="empty">Finding things for you…</div></div>
+<div id="lib-locked" style="margin-top:8px"></div>
 
 </div>
 </main>
@@ -169,37 +187,62 @@ async function boot(cb){
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 
 
-let _sess={};
-(async()=>{ await boot(async()=>{
-  const {data:msgs}=await SB.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',UID).order('created_at',{ascending:false}).limit(400);
-  const el=document.getElementById('cv-list');
-  if(!msgs||!msgs.length){el.innerHTML='<div class="empty">No conversations yet.<br><a href="/chat">Start one →</a></div>';return;}
-  const sessions={};
-  for(const m of msgs){if(!sessions[m.session_id]){sessions[m.session_id]={id:m.session_id,msgs:[],created_at:m.created_at,title:m.title,tags:m.tags||[]};}sessions[m.session_id].msgs.push(m);}
-  _sess=sessions;
-  const list=Object.values(sessions).sort((a,b)=>b.created_at.localeCompare(a.created_at));
-  const byMonth={};for(const s of list){const mo=new Date(s.created_at).toLocaleDateString('en-US',{month:'long',year:'numeric'});if(!byMonth[mo])byMonth[mo]=[];byMonth[mo].push(s);}
-  let html='';
-  for(const [mo,ss] of Object.entries(byMonth)){
-    html+=`<div style="padding:6px 16px 3px;font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;border-bottom:1px solid rgba(255,255,255,0.04)">${mo}</div>`;
-    for(const s of ss){const first=s.msgs.find(m=>m.role==='user');const preview=s.title||first?.content?.slice(0,50)||'Riley Session';
-      html+=`<div onclick="openSess('${s.id}')" id="si-${s.id}" style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'"><div style="font-size:12px;font-weight:500;color:var(--parchment);margin-bottom:2px">${esc(preview)}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`;}
-  }
-  el.innerHTML=html;
-  if(list.length)openSess(list[0].id);
-}); })();
-function openSess(sid){
-  document.querySelectorAll('[id^="si-"]').forEach(e=>e.style.background='transparent');
-  const el=document.getElementById('si-'+sid);if(el)el.style.background='rgba(255,255,255,0.03)';
-  const s=_sess[sid];if(!s)return;
-  const msgs=[...s.msgs].sort((a,b)=>a.created_at.localeCompare(b.created_at));
-  document.getElementById('cv-thread').innerHTML=
-    `<div style="font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:4px">${esc(s.title||'Riley Session')}</div>`+
-    `<div style="font-size:10px;color:var(--smoke2);font-family:'DM Mono',monospace;margin-bottom:20px;letter-spacing:0.04em">${new Date(s.created_at).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>`+
-    `<div style="display:flex;flex-direction:column;gap:10px">`+
-    msgs.map(m=>{const u=m.role==='user';return`<div style="display:flex;${u?'justify-content:flex-end':'justify-content:flex-start'}"><div style="max-width:75%;padding:10px 14px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;background:${u?'var(--gold)':'var(--ink3)'};color:${u?'var(--ink)':'var(--parchment)'};border:${u?'none':'1px solid rgba(255,255,255,0.07)'};border-bottom-${u?'right':'left'}-radius:3px">${esc(m.content)}</div></div>`;}).join('')+
-    '</div>';
+(async()=>{ await boot(async()=>{ await libInit(); }); })();
+
+const TOD=(function(){const h=new Date().getHours();return h<11?'morning':h<17?'midday':'evening';})();
+const ICON={book:'📖',podcast:'🎧',video:'🎬',music:'🎵',meditation:'🧘',breathwork:'🫁',workout:'🏃',recipe:'🥗',article:'📝',journal_prompt:'✍️',community_prompt:'💬',quote:'✨'};
+let LIB_TAGS=null;
+async function libTok(){ return (await SB.auth.getSession()).data.session?.access_token||null; }
+async function logTap(context,tag,contentId){ try{ await SB.from('client_tag_events').insert({client_id:UID,tag:tag||null,context:context,content_id:contentId||null}); }catch(e){} }
+
+function libCard(it){
+  const dur=it.duration?(it.duration+' min · '):'';
+  const meta=esc((it.creator||'')+((it.creator&&it.type)?' · ':'')+(it.type||''));
+  const d=it.description?('<div class="lib-d">'+esc(String(it.description).slice(0,140))+'</div>'):'';
+  return '<a class="lib-item" href="'+esc(it.url||'#')+'" target="_blank" rel="noopener" onclick="logTap(\'asset_click\',null,\''+esc(it.id)+'\')">'+
+    '<div class="lib-ic">'+(ICON[it.type]||'✨')+'</div>'+
+    '<div class="lib-body"><div class="lib-t">'+esc(it.title)+'</div><div class="lib-m">'+dur+meta+'</div>'+d+'</div></a>';
 }
+function renderItems(items){
+  const box=document.getElementById('lib-results');
+  if(!items||!items.length){box.innerHTML='<div class="empty">Nothing here yet — try a different search.</div>';return;}
+  box.innerHTML='<div class="lib-list">'+items.map(libCard).join('')+'</div>';
+}
+function renderChips(){
+  const box=document.getElementById('lib-chips'); if(!box||!LIB_TAGS)return;
+  const chips=[].concat(LIB_TAGS.onboarding||[],LIB_TAGS.pillar||[],LIB_TAGS.topic||[]).slice(0,18);
+  box.innerHTML=chips.map(function(t){return '<button class="lib-chip" data-tag="'+esc(t.tag)+'">'+esc(t.label||t.tag)+'</button>';}).join('');
+  box.querySelectorAll('.lib-chip').forEach(function(b){ b.addEventListener('click',function(){ libTag(b.getAttribute('data-tag')); }); });
+}
+function renderLocked(tier,locked){
+  const box=document.getElementById('lib-locked'); if(!box)return;
+  if(tier!=='guide'||!locked||!locked.length){box.innerHTML='';return;}
+  box.innerHTML='<div class="card" style="border-color:rgba(201,168,76,0.3);background:linear-gradient(180deg,rgba(201,168,76,0.08),rgba(20,18,16,0.5))">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">🔒</span><div class="card-title" style="margin:0">The full library</div></div>'+
+    '<div class="card-sub">More meditations, podcasts, and practices are part of Companion. A peek:</div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px;margin:10px 0 14px">'+locked.map(function(l){return '<div style="display:flex;align-items:center;gap:8px;color:var(--smoke);font-size:13px"><span>'+(ICON[l.type]||'✨')+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.title)+'</span><span style="font-size:11px;color:var(--smoke2)">🔒</span></div>';}).join('')+'</div>'+
+    '<a href="/programs?unlock=library" class="btn btn-gold" onclick="logTap(\'locked_tap\',null,null)">See what Companion unlocks →</a></div>';
+}
+async function libInit(){
+  try{
+    const r=await fetch('/.netlify/functions/library?mode=curated&tod='+TOD,{headers:{Authorization:'Bearer '+(await libTok())}});
+    const d=await r.json();
+    LIB_TAGS=d.tags||{}; renderChips();
+    document.getElementById('lib-label').textContent='Curated for you';
+    renderItems(d.curated); renderLocked(d.tier,d.locked);
+  }catch(e){ document.getElementById('lib-results').innerHTML='<div class="empty">Couldn\'t load the library. Try again.</div>'; }
+}
+async function libQuery(params){
+  const box=document.getElementById('lib-results'); box.innerHTML='<div class="empty">Searching…</div>';
+  document.getElementById('lib-label').textContent=params.tag?('Tagged: '+params.tag):'Search results';
+  document.getElementById('lib-locked').innerHTML='';
+  try{
+    const r=await fetch('/.netlify/functions/library',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:(await libTok()),mode:'search',query:params.query||'',tag:params.tag||null,tod:TOD})});
+    const d=await r.json(); renderItems(d.results);
+  }catch(e){ box.innerHTML='<div class="empty">Search failed. Try again.</div>'; }
+}
+async function libSearch(){ const q=(document.getElementById('lib-q').value||'').trim(); logTap('search_open',null,null); await libQuery({query:q}); }
+async function libTag(tag){ document.getElementById('lib-q').value=''; logTap('library_tap',tag,null); await libQuery({tag:tag}); }
 
 </script>
 
@@ -230,7 +273,7 @@ function openSess(sid){
     {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
   ];
   const TIER_ORDER = ['guide','companion','coach'];
-  const PAGE_FEATURE = null;
+  const PAGE_FEATURE = null;   // the library is open to every tier (Guide sees starter + locked preview)
 
   async function loadEnt(uid){
     const k='ent_'+uid, c=sessionStorage.getItem(k);

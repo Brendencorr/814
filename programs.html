@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Journeys — Riley</title>
+<title>Program Add-ons — Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -111,14 +111,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </aside>
 <main class="main">
 <div class="topbar">
-  <div><div class="tb-title" id="tb-greeting">Journeys</div><div class="tb-sub" id="tb-date"></div></div>
+  <div><div class="tb-title" id="tb-greeting">Program Add-ons</div><div class="tb-sub" id="tb-date"></div></div>
   <div class="tb-actions"><a href="/dashboard" class="btn btn-ghost">← Home</a><a href="/chat" class="btn btn-gold">Ask Riley</a></div>
 </div>
 <div class="content">
 
-<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Active Programs</div>
-<div id="pg-active" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px"></div>
-<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Available Programs</div>
+<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Included with your plan</div>
+<div id="pg-included" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px"></div>
+<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Program Add-ons</div>
 <div id="pg-avail" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
 <div class="alert" id="pg-alert" style="max-width:400px;margin-top:12px"></div>
 
@@ -244,6 +244,48 @@ async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {err
 
 </script>
 
+
+<script>
+/* ── Program Add-ons rendering (supersedes the legacy journey loader above) ──
+   Reads program-list.js: what the member's plan INCLUDES (opens the reader) vs
+   ADD-ONS they can buy. The old loadPrograms/enroll/logDay above are superseded
+   by this later declaration and no longer run. */
+async function loadPrograms(){
+  const incEl=document.getElementById('pg-included'), avEl=document.getElementById('pg-avail');
+  let data={tier:'guide',included:[],available:[]};
+  try{
+    const tok=(await SB.auth.getSession()).data.session && (await SB.auth.getSession()).data.session.access_token;
+    const r=await fetch('/.netlify/functions/program-list',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok})});
+    data=await r.json();
+  }catch(e){}
+  const inc=data.included||[];
+  if(incEl) incEl.innerHTML = inc.length ? inc.map(function(p){return programCard(p,true);}).join('')
+    : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet — Companion includes the 3 self-guided programs, Coach includes all of them.</div>';
+  const av=data.available||[];
+  if(avEl) avEl.innerHTML = av.length ? av.map(function(p){return programCard(p,false);}).join('')
+    : '<div style="font-size:13px;color:var(--smoke);grid-column:1/-1">You have every program. 🎉</div>';
+}
+function pgPrice(c){ return '$'+(Number(c||0)/100).toFixed(2); }
+function pgKind(k){ return k==='guided'?'Riley-guided':k==='bundle'?'Bundle · all 3':'Self-guided'; }
+function pgIcon(k){ return k==='guided'?'🧭':k==='bundle'?'🎁':'📘'; }
+function programCard(p,owned){
+  var head='<div style="font-size:34px;margin-bottom:10px">'+pgIcon(p.kind)+'</div>'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;margin-bottom:4px">'+esc(p.name)+'</div>'
+    +'<div style="font-size:12px;color:var(--smoke);margin-bottom:10px;line-height:1.5">'+esc(p.blurb||'')+'</div>'
+    +'<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--smoke2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px">'+pgKind(p.kind)+'</div>';
+  if(owned){
+    if(p.status && p.status!=='live')
+      return '<div class="card">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">In your plan · coming soon</div></div>';
+    return '<div class="card">'+head+'<a href="/program?p='+encodeURIComponent(p.key)+'" class="btn btn-gold" style="width:100%;text-align:center;display:block;text-decoration:none">Open →</a></div>';
+  }
+  if(p.status==='draft')
+    return '<div class="card" style="opacity:.9">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';
+  return '<div class="card">'+head+'<button class="btn btn-gold" style="width:100%;text-align:center" onclick="buyProgram(\''+p.key+'\')">Get it · '+pgPrice(p.price_cents)+'</button></div>';
+}
+function buyProgram(key){
+  A('pg-alert','Purchasing opens soon — checkout is being wired up. You\'ll be able to buy this in a moment.',true);
+}
+</script>
 
 <script>
 /* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */

@@ -71,7 +71,7 @@ exports.handler = async (event) => {
       if (ownedSelfGuided < 3) available.push({ key: p.product_key, name: p.display_name, blurb: p.blurb, price_cents: p.price_cents, status: p.status, kind });
       continue;
     }
-    if (owned.has(p.product_key)) included.push({ key: p.product_key, name: p.display_name, blurb: p.blurb, kind });
+    if (owned.has(p.product_key)) included.push({ key: p.product_key, name: p.display_name, blurb: p.blurb, kind, status: p.status });
     else available.push({ key: p.product_key, name: p.display_name, blurb: p.blurb, price_cents: p.price_cents, status: p.status, kind });
   }
 

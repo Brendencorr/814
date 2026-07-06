@@ -59,10 +59,12 @@ async function getEnrollment(sb, userId, programKey) {
 
 // The full client-side state: enrollment, per-session completion, artifacts, the latest open commitment.
 async function buildState(sb, enr) {
-  const [{ data: prog }, { data: arts }, { data: commits }] = await Promise.all([
+  const [{ data: prog }, { data: arts }, { data: commits }, { data: cat }] = await Promise.all([
     sb.from("int_session_progress").select("session_number, completed_at").eq("enrollment_id", enr.id),
     sb.from("int_artifacts").select("id, session_number, name, body, version, pinned, updated_at").eq("enrollment_id", enr.id).order("updated_at", { ascending: false }),
     sb.from("int_commitments").select("id, session_number, text, due_at, confirmed_state, confirmed_at, note").eq("enrollment_id", enr.id).order("session_number", { ascending: false }),
+    // The session catalog (titles/phases only — safe for owners) so the client can render the 14-node map in one call.
+    sb.from("int_sessions").select("session_number, phase, title, is_milestone").eq("program_key", enr.program_key).eq("is_active", true).order("session_number", { ascending: true }),
   ]);
   const done = (prog || []).map((p) => p.session_number);
   const openCommit = (commits || []).find((c) => !c.confirmed_state) || null;   // newest unconfirmed
@@ -77,6 +79,7 @@ async function buildState(sb, enr) {
     artifacts: arts || [],
     commitments: commits || [],
     open_commitment: openCommit,
+    sessions: cat || [],
   };
 }
 

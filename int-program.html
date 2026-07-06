@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program — Riley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080706;--ink2:#100e0c;--ink3:#1a1714;--ink4:#252019;
+  --parchment:#f5f0e8;--warm:#faf8f4;
+  --gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);
+  --sage:#4a7c59;--smoke:#8a8578;--smoke2:#544f4a;--rust:#c0604a;
+}
+*{box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);margin:0;min-height:100vh;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 70% -10%,rgba(201,168,76,0.06),transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:26px 20px 100px}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--smoke);text-decoration:none;font-size:13px;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.back:hover{color:var(--parchment)}
+.phead{margin:22px 0 4px;font-family:'DM Serif Display',serif;font-size:32px;line-height:1.08}
+.pblurb{color:var(--smoke);font-size:14px;max-width:560px}
+.pmeta{display:flex;align-items:center;gap:14px;margin:16px 0 4px;flex-wrap:wrap}
+.pbar{flex:1;min-width:160px;height:7px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden}
+.pbar>div{height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));width:0;transition:width .3s}
+.pcount{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;white-space:nowrap}
+.tier-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);border:1px solid rgba(255,255,255,0.12);border-radius:99px;padding:3px 9px}
+/* Confirm card (the open commitment) */
+.confirm{background:linear-gradient(180deg,rgba(74,124,89,0.12),rgba(16,14,12,0.4));border:1px solid rgba(74,124,89,0.32);border-radius:14px;padding:16px 18px;margin:22px 0}
+.confirm .cl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:0 0 6px}
+.confirm .ctext{font-size:15px;color:var(--warm);margin:0 0 12px}
+.confirm .ctext em{color:var(--gold2);font-style:normal}
+.crow{display:flex;gap:8px;flex-wrap:wrap}
+.cbtn{flex:1;min-width:90px;background:rgba(8,7,6,0.4);border:1px solid rgba(255,255,255,0.14);color:var(--parchment);border-radius:10px;padding:10px 12px;font-size:13.5px;cursor:pointer;font-family:inherit}
+.cbtn:hover{border-color:var(--sage);background:rgba(74,124,89,0.1)}
+.cbtn.done:hover{border-color:var(--sage)} .cbtn.partly:hover{border-color:var(--gold)} .cbtn.not:hover{border-color:var(--rust)}
+/* Program map */
+.phase{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--smoke);margin:30px 0 10px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.06)}
+.node{display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,rgba(26,23,20,0.5),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.07);border-radius:13px;padding:14px 16px;margin:9px 0;cursor:pointer;transition:border-color .15s,transform .1s;text-align:left;width:100%;font-family:inherit;color:inherit}
+.node:hover{border-color:rgba(201,168,76,0.4);transform:translateX(2px)}
+.node.locked{opacity:.5;cursor:not-allowed}
+.node.locked:hover{border-color:rgba(255,255,255,0.07);transform:none}
+.node.done{border-color:rgba(74,124,89,0.35)}
+.node.current{border-color:rgba(201,168,76,0.5);box-shadow:0 0 0 1px rgba(201,168,76,0.15)}
+.ndot{width:30px;height:30px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:12px;border:1.5px solid var(--smoke2);color:var(--smoke)}
+.node.done .ndot{background:var(--sage);border-color:var(--sage);color:var(--ink)}
+.node.current .ndot{border-color:var(--gold);color:var(--gold)}
+.ninfo{flex:1;min-width:0}
+.ntitle{font-size:15px;color:var(--warm);font-weight:600;line-height:1.2}
+.nsub{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke);margin-top:3px}
+.nsub .ms{color:var(--gold)}
+.nstate{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--smoke);white-space:nowrap}
+.node.done .nstate{color:var(--sage)} .node.current .nstate{color:var(--gold)}
+/* Artifacts shelf */
+.tools{background:linear-gradient(180deg,rgba(201,168,76,0.08),rgba(16,14,12,0.4));border:1px solid rgba(201,168,76,0.22);border-radius:14px;padding:16px 18px;margin:26px 0}
+.tools h3{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.tool-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(8,7,6,0.5);border:1px solid rgba(201,168,76,0.3);color:var(--gold2);border-radius:99px;padding:7px 13px;margin:0 7px 7px 0;font-size:12.5px;cursor:pointer;font-family:inherit}
+.tool-chip:hover{border-color:var(--gold);background:rgba(201,168,76,0.1)}
+/* Session view */
+.sphase{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:18px 0 2px}
+.stitle{font-family:'DM Serif Display',serif;font-size:28px;line-height:1.1;margin:0 0 6px}
+.stitle .ms{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--ink);background:var(--gold);border-radius:4px;padding:2px 6px;vertical-align:middle;margin-left:8px;text-transform:uppercase}
+.seg{background:linear-gradient(180deg,rgba(26,23,20,0.55),rgba(16,14,12,0.55));border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px 22px;margin:16px 0}
+.seg .lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin:0 0 8px;display:block}
+.lbl.open{color:var(--sage)} .lbl.learn{color:var(--gold2)} .lbl.work{color:var(--sage)} .lbl.commit{color:var(--gold)}
+.seg .body p{margin:0 0 10px} .seg .body strong{color:var(--warm)}
+.seg.open{border-color:rgba(74,124,89,0.3);border-left:2px solid var(--sage)}
+.wprompts{margin:8px 0 4px;padding-left:20px}
+.wprompts li{margin:6px 0;color:var(--parchment)}
+.artname{font-family:'DM Serif Display',serif;font-size:17px;color:var(--gold2);margin:4px 0 2px}
+textarea,input[type=text],input[type=datetime-local]{width:100%;background:rgba(8,7,6,0.5);border:1px solid rgba(255,255,255,0.14);color:var(--parchment);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14px;margin-top:6px}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+.opt{display:block;width:100%;text-align:left;background:rgba(8,7,6,0.4);border:1px solid rgba(255,255,255,0.14);color:var(--parchment);border-radius:10px;padding:12px 14px;margin:8px 0;cursor:pointer;font-family:inherit;font-size:14px;line-height:1.4}
+.opt:hover{border-color:var(--gold)}
+.opt.sel{border-color:var(--gold);background:rgba(201,168,76,0.12);color:var(--warm)}
+.dtl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--smoke);margin:14px 0 2px;display:block}
+.btn{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--ink);border:none;border-radius:11px;padding:13px 20px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;margin-top:16px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none;border:1px solid rgba(201,168,76,0.4);color:var(--gold2);font-weight:600}
+.saved{font-size:12px;color:var(--sage);margin-top:6px;height:14px}
+.intro-cta{background:linear-gradient(180deg,rgba(26,23,20,0.55),rgba(16,14,12,0.55));border:1px solid rgba(201,168,76,0.25);border-radius:16px;padding:24px;margin:22px 0;text-align:center}
+.state{text-align:center;padding:60px 20px;color:var(--smoke)}
+.state a{color:var(--gold2)}
+.spin{width:26px;height:26px;border:2px solid rgba(201,168,76,0.25);border-top-color:var(--gold);border-radius:50%;animation:sp 0.8s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button class="back" id="backbtn" onclick="goMap()">← Back to dashboard</button>
+  <div id="content"><div class="state"><div class="spin"></div></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
+  'https://tglljvjixlolaguycvbb.supabase.co',
+  'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+);
+const $=id=>document.getElementById(id);
+const PKEY=new URLSearchParams(location.search).get('p')||'';
+let TOKEN=null, STATE=null, VIEW='map';
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function mdLite(raw){
+  if(!raw) return '';
+  const lines=String(raw).split('\n'); let html='',list=null;
+  const inline=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  const closeList=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
+  for(let ln of lines){ const t=ln.trim();
+    if(!t){ closeList(); continue; }
+    const ol=t.match(/^(\d+)\.\s+(.*)$/), ul=t.match(/^[-•]\s+(.*)$/);
+    if(ol){ if(list!=='ol'){closeList();list='ol';html+='<ol>';} html+='<li>'+inline(ol[2])+'</li>'; }
+    else if(ul){ if(list!=='ul'){closeList();list='ul';html+='<ul>';} html+='<li>'+inline(ul[1])+'</li>'; }
+    else { closeList(); html+='<p>'+inline(t)+'</p>'; }
+  }
+  closeList(); return html;
+}
+async function api(action,extra){
+  const tok=(await SB.auth.getSession()).data.session?.access_token || TOKEN;
+  const r=await fetch('/.netlify/functions/int-session',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({action,token:tok,program_key:PKEY},extra||{}))});
+  let d={}; try{ d=await r.json(); }catch(e){}
+  return {status:r.status, d};
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  if(!PKEY){ $('content').innerHTML='<div class="state">No program selected. <a href="/dashboard">Back to dashboard</a></div>'; return; }
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){ location.href='https://riley.meetriley.us'; return; }
+  TOKEN=session.access_token;
+  const {status,d}=await api('state');
+  if(status===403){ $('content').innerHTML='<div class="state">You don\'t have this program yet.<br><br><a href="/programs">See Programs →</a></div>'; return; }
+  if(status===401){ location.href='https://riley.meetriley.us'; return; }
+  STATE=d;
+  if(!d.enrolled){ renderIntro(); return; }
+  goMap();
+}
+
+/* ---------- intro (owned, not yet enrolled) ---------- */
+function renderIntro(){
+  VIEW='intro';
+  const nm=(STATE&&STATE.program_name)||'This program';
+  $('backbtn').style.display='none';
+  $('content').innerHTML=
+    '<h1 class="phead">Ready when you are</h1>'
+    +'<div class="intro-cta"><p style="font-size:15px;color:var(--warm);margin:0 0 4px">This is a Riley-led program — Session Zero + 14 sessions, at your pace.</p>'
+    +'<p class="pblurb" style="margin:0 auto 18px">Riley builds it around your real life, holds the plan, and follows up on every commitment by name. Suggested twice a week; never locked, never expiring.</p>'
+    +'<button class="btn" id="beginbtn" onclick="doEnroll()">Begin Session Zero →</button></div>';
+}
+async function doEnroll(){
+  const b=$('beginbtn'); if(b){ b.disabled=true; b.textContent='Starting…'; }
+  const {status,d}=await api('enroll');
+  if(status!==200){ if(b){ b.disabled=false; b.textContent='Begin Session Zero →'; } return; }
+  STATE=d; openSession(0);
+}
+
+/* ---------- map view ---------- */
+function goMap(){
+  if(VIEW==='session' && STATE){ /* refresh state on return */ }
+  VIEW='map';
+  window.scrollTo(0,0);
+  $('backbtn').style.display='';
+  $('backbtn').textContent='← Back to dashboard';
+  $('backbtn').onclick=()=>{ location.href='/dashboard'; };
+  refreshAndRenderMap();
+}
+async function refreshAndRenderMap(){
+  const {d}=await api('state');
+  if(d&&d.enrolled){ STATE=d; renderMap(); }
+  else if(STATE){ renderMap(); }
+}
+function renderMap(){
+  const s=STATE, sessions=s.sessions||[], done=new Set(s.completed||[]);
+  const cur=s.enrollment?s.enrollment.current_session:0;
+  const total=sessions.length||15;
+  let html='';
+  html+='<h1 class="phead">'+esc(programTitle())+'</h1>';
+  html+='<div class="pmeta"><div class="pbar"><div style="width:'+Math.round(done.size/total*100)+'%"></div></div>'
+      +'<span class="pcount">'+done.size+' of '+total+' done</span>'
+      +'<span class="tier-badge">Riley-led</span></div>';
+
+  // Open commitment → confirm card
+  const oc=s.open_commitment;
+  if(oc){
+    html+='<div class="confirm"><p class="cl">Last time, you committed to</p>'
+       +'<p class="ctext"><em>'+esc(oc.text)+'</em></p>'
+       +'<p class="cl" style="color:var(--smoke)">Did it happen? Even partly counts.</p>'
+       +'<div class="crow">'
+       +'<button class="cbtn done" onclick="confirmCommit(\''+oc.id+'\',\'done\')">Done ✓</button>'
+       +'<button class="cbtn partly" onclick="confirmCommit(\''+oc.id+'\',\'partly\')">Partly</button>'
+       +'<button class="cbtn not" onclick="confirmCommit(\''+oc.id+'\',\'not_yet\')">Not yet</button>'
+       +'</div></div>';
+  }
+
+  // Map nodes grouped by phase
+  let lastPhase=null;
+  sessions.forEach(se=>{
+    if(se.phase!==lastPhase){ lastPhase=se.phase; html+='<div class="phase">'+esc(se.phase||'')+'</div>'; }
+    const isDone=done.has(se.session_number);
+    const isCurrent=!isDone && se.session_number===cur;
+    const locked=se.session_number>cur;
+    const cls='node'+(isDone?' done':'')+(isCurrent?' current':'')+(locked?' locked':'');
+    const label=se.session_number===0?'0':se.session_number;
+    const st=isDone?'Done':isCurrent?'Continue':locked?'Locked':'Review';
+    html+='<button class="'+cls+'" '+(locked?'disabled':'onclick="openSession('+se.session_number+')"')+'>'
+        +'<span class="ndot">'+(isDone?'✓':label)+'</span>'
+        +'<span class="ninfo"><span class="ntitle">'+(se.session_number===0?'Session Zero':'Session '+se.session_number)+'</span>'
+        +'<span class="nsub">'+esc(se.title)+(se.is_milestone?' · <span class="ms">Milestone</span>':'')+'</span></span>'
+        +'<span class="nstate">'+st+'</span></button>';
+  });
+
+  // Artifacts shelf
+  const arts=s.artifacts||[];
+  if(arts.length){
+    html+='<div class="tools"><h3>🔑 My Tools — everything you\'ve built</h3>';
+    arts.forEach(a=>{ html+='<button class="tool-chip" onclick="viewArtifact(\''+a.id+'\')">'+esc(a.name)+'</button>'; });
+    html+='</div>';
+  }
+  $('content').innerHTML=html;
+}
+function programTitle(){ return STATE&&STATE.program_name?STATE.program_name:'Your program'; }
+
+async function confirmCommit(id,st){
+  await api('confirm',{commitment_id:id,confirmed_state:st});
+  refreshAndRenderMap();
+}
+function viewArtifact(id){
+  const a=(STATE.artifacts||[]).find(x=>x.id===id); if(!a)return;
+  window.scrollTo(0,0); VIEW='artifact';
+  $('backbtn').textContent='← Back'; $('backbtn').onclick=goMap;
+  $('content').innerHTML='<div class="sphase">My Tools</div><h1 class="stitle">'+esc(a.name)+'</h1>'
+    +'<div class="seg"><div class="body">'+mdLite(a.body||'(empty)')+'</div></div>';
+}
+
+/* ---------- session view ---------- */
+let CUR_SESSION=null, SEL_OPTION=null;
+async function openSession(n){
+  window.scrollTo(0,0); VIEW='session';
+  $('backbtn').style.display=''; $('backbtn').textContent='← Program map'; $('backbtn').onclick=goMap;
+  $('content').innerHTML='<div class="state"><div class="spin"></div></div>';
+  const {status,d}=await api('session',{session_number:n});
+  if(status===423){ goMap(); return; }
+  if(status!==200||!d.session){ $('content').innerHTML='<div class="state">This session isn\'t ready yet. <button class="back" onclick="goMap()">Back</button></div>'; return; }
+  CUR_SESSION=d; SEL_OPTION=null;
+  renderSession(d);
+}
+function renderSession(d){
+  const s=d.session, n=s.session_number, ws=s.work_spec||{}, opts=s.commit_options||[];
+  let html='';
+  html+='<div class="sphase">'+esc(s.phase||'')+' · Session '+(n===0?'Zero':n)+'</div>';
+  html+='<h1 class="stitle">'+esc(s.title)+(s.is_milestone?'<span class="ms">Milestone</span>':'')+'</h1>';
+
+  // OPEN — Riley opens from memory (prior commitment + its confirm state)
+  if(s.open_template){
+    html+='<div class="seg open"><span class="lbl open">Riley opens</span><div class="body">'+mdLite(s.open_template)+'</div>';
+    if(d.prior_commitment){
+      const pc=d.prior_commitment, cs=pc.confirmed_state;
+      const line = cs==='done'?'You said this one landed — nice.':cs==='partly'?'You said it happened partly — that counts.':cs==='not_yet'?'You said not yet — no audit, we just pick it back up.':'Still open from last time.';
+      html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:var(--smoke)"><em style="color:var(--gold2);font-style:normal">"'+esc(pc.text)+'"</em> — '+esc(line)+'</div>';
+    }
+    html+='</div>';
+  }
+
+  // LEARN
+  if(s.learn_body){
+    html+='<div class="seg"><span class="lbl learn">Learn</span><div class="body">'+mdLite(s.learn_body)+'</div></div>';
+  }
+
+  // WORK — capture the artifact
+  html+='<div class="seg"><span class="lbl work">Work</span>';
+  if(ws.artifact) html+='<div class="artname">'+esc(ws.artifact)+'</div>';
+  if(ws.intro) html+='<div class="body"><p>'+esc(ws.intro)+'</p></div>';
+  if(ws.prompts&&ws.prompts.length){ html+='<ul class="wprompts">'; ws.prompts.forEach(p=>html+='<li>'+esc(p)+'</li>'); html+='</ul>'; }
+  html+='<textarea id="artbody" placeholder="Capture your work here — Riley keeps it in My Tools.">'+esc(artifactBody(ws.artifact))+'</textarea>';
+  html+='<button class="btn ghost" id="savebtn" onclick="saveArtifact('+n+',\''+esc(ws.artifact||'Session '+n+' notes').replace(/'/g,"\\'")+'\')">Save to My Tools</button>';
+  html+='<div class="saved" id="savedmsg"></div></div>';
+
+  // COMMIT
+  html+='<div class="seg"><span class="lbl commit">Commit</span>';
+  html+='<div class="body"><p>One specific commitment — pick one Riley drafted, or write your own.</p></div>';
+  opts.forEach((o,i)=>{ html+='<button class="opt" data-i="'+i+'" onclick="selOption('+i+',this)">'+esc(o)+'</button>'; });
+  html+='<input type="text" id="customcommit" placeholder="…or write your own commitment" oninput="clearOpt()">';
+  html+='<span class="dtl">When? (optional — Riley follows up after)</span>';
+  html+='<input type="datetime-local" id="commitwhen">';
+  html+='<button class="btn" id="commitbtn" onclick="doCommit('+n+')">'+(n>=14?'Finish the program →':'Commit & close this session →')+'</button>';
+  html+='<div class="saved" id="commitmsg"></div></div>';
+
+  $('content').innerHTML=html;
+}
+function artifactBody(name){
+  if(!name||!STATE) return '';
+  const a=(STATE.artifacts||[]).find(x=>x.name===name); return a?a.body||'':'';
+}
+function selOption(i,el){
+  SEL_OPTION=i;
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  const ci=$('customcommit'); if(ci)ci.value='';
+}
+function clearOpt(){ SEL_OPTION=null; document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel')); }
+async function saveArtifact(n,name){
+  const body=$('artbody').value;
+  const b=$('savebtn'); if(b){ b.disabled=true; }
+  const {status}=await api('save_artifact',{session_number:n,name,body});
+  $('savedmsg').textContent = status===200?'Saved ✓':'Couldn\'t save — try again';
+  if(b) b.disabled=false;
+  // refresh cached artifacts so re-open shows saved text
+  const {d}=await api('state'); if(d&&d.enrolled)STATE=d;
+}
+async function doCommit(n){
+  const opts=(CUR_SESSION.session.commit_options)||[];
+  let text = SEL_OPTION!=null ? opts[SEL_OPTION] : ($('customcommit').value||'').trim();
+  if(!text){ $('commitmsg').textContent='Pick an option or write your own first.'; return; }
+  const when=$('commitwhen').value;
+  const b=$('commitbtn'); if(b){ b.disabled=true; b.textContent='Saving…'; }
+  const extra={session_number:n,text}; if(when) extra.due_at=new Date(when).toISOString();
+  const {status,d}=await api('commit',extra);
+  if(status!==200){ $('commitmsg').textContent='Couldn\'t save — try again'; if(b){ b.disabled=false; b.textContent='Commit & close this session →'; } return; }
+  // refresh + return to map (celebrate graduation)
+  const {d:st}=await api('state'); if(st&&st.enrolled)STATE=st;
+  if(d.graduated){ renderGraduation(); } else { goMap(); }
+}
+function renderGraduation(){
+  VIEW='grad'; window.scrollTo(0,0);
+  $('backbtn').textContent='← Program map'; $('backbtn').onclick=goMap;
+  $('content').innerHTML='<div class="intro-cta"><h1 class="phead" style="margin-top:0">You finished.</h1>'
+    +'<p class="pblurb" style="margin:0 auto 8px">Every tool you built is yours to keep, and I\'m still here — I\'ll reference the plan in normal chat whenever it fits. This was never about a finish line. It was the becoming.</p>'
+    +'<button class="btn" onclick="goMap()">See everything you built →</button></div>';
+}
+
+boot();
+</script>
+<script src="/pwa.js"></script>
+</body>
+</html>

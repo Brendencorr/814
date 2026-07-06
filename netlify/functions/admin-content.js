@@ -15,6 +15,7 @@
  * POST { action: "retire" | "activate", id }
  * POST { action: "approve_suggestion", id }        // suggestion → live + client alert
  * POST { action: "reject_suggestion", id }         // suggestion → dismissed
+ * POST { action: "bulk_suggest", items: [...] }    // import a sourcing-pass batch → pending queue
  */
 
 const { getSupabaseClient } = require("./supabase-client");
@@ -26,9 +27,8 @@ const CORS = {
 };
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
 
-const CONTENT_TYPES = ["book","podcast","video","music","meditation","breathwork","workout","recipe","article","journal_prompt","community_prompt","quote"];
-const arr = (v) => Array.isArray(v) ? v : (typeof v === "string" && v.trim() ? v.split(",").map(s => s.trim()).filter(Boolean) : []);
-const num = (v) => (v === "" || v == null || isNaN(+v)) ? null : +v;
+// Curation vocabulary + shared validator (pure, tested) — one definition, reused by Scout too.
+const { CONTENT_TYPES, arr, num, normalizeItem, validateItem } = require("./content-curation");
 
 // Friendly nouns + icons for client-facing alert copy ("New 5-minute meditation added").
 const TYPE_LABEL = {
@@ -98,6 +98,15 @@ async function upsertContent(supabase, item) {
     approval_status: ["draft","pending","approved","retired"].includes(item.approval_status) ? item.approval_status : "approved",
     updated_at: new Date().toISOString(),
   };
+
+  // Curation fields — only override when explicitly provided, so a partial edit
+  // never clobbers persona/pillar/tone/tier the operator didn't touch.
+  if (item.personas    !== undefined) row.personas    = arr(item.personas).map((s) => String(s).trim().toLowerCase());
+  if (item.pillars     !== undefined) row.pillars     = arr(item.pillars).map((s) => String(s).trim().toLowerCase());
+  if (item.time_of_day !== undefined) row.time_of_day = arr(item.time_of_day).map((s) => String(s).trim().toLowerCase());
+  if (item.tone        !== undefined) row.tone        = String(item.tone).trim().toLowerCase();
+  if (item.tier_access !== undefined) row.tier_access = String(item.tier_access).trim().toLowerCase();
+  if (item.guide_starter !== undefined) row.guide_starter = !!item.guide_starter;
 
   if (item.id) {
     const { data, error } = await supabase.from("content_library").update(row).eq("id", item.id).select().maybeSingle();
@@ -171,6 +180,47 @@ async function rejectSuggestion(supabase, id) {
   return json(200, { ok: true });
 }
 
+// ── bulk_suggest — import a sourcing-pass batch through the shared validator ──
+// The vocabulary + normalizeItem/validateItem live in ./content-curation (pure, tested).
+async function getActiveTags(supabase) {
+  const { data } = await supabase.from("tag_registry").select("tag").eq("is_active", true);
+  return new Set((data || []).map((r) => r.tag));
+}
+async function getLibraryTitleSet(supabase) {
+  const { data } = await supabase.from("content_library").select("title").limit(2000);
+  return new Set((data || []).map((r) => String(r.title || "").trim().toLowerCase()));
+}
+// bulk_suggest: import a JSON batch from a Claude sourcing pass. Same validation as
+// Scout; everything lands pending + inactive — operator approval stays the only gate.
+// Note: URL *shape* is validated here; true liveness is the nightly link-health job
+// (which handles HEAD→GET + redirects, and won't false-reject bot-blocking hosts).
+async function bulkSuggest(supabase, items) {
+  const list = Array.isArray(items) ? items.slice(0, 30) : [];
+  if (!list.length) return json(400, { error: "items array required (max 30 per batch)" });
+  const [registry, existing] = await Promise.all([getActiveTags(supabase), getLibraryTitleSet(supabase)]);
+  const batch = new Set();
+  const results = { inserted: 0, dropped: [] };
+  for (const raw of list) {
+    const item = normalizeItem(raw || {});
+    const problems = validateItem(item, { registry, existing, batch });
+    if (problems.length) { results.dropped.push({ title: (raw && raw.title) || "(untitled)", problems }); continue; }
+    const { error } = await supabase.from("content_library").insert({
+      ...item,
+      source: "agent",
+      approval_status: "pending",
+      is_active: false,
+      suggestion_reason: item.suggestion_reason || "Claude sourcing pass (bulk import)",
+      suggested_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    if (error) { results.dropped.push({ title: item.title, problems: ["insert failed: " + error.message] }); continue; }
+    const key = item.title.toLowerCase();
+    existing.add(key); batch.add(key);
+    results.inserted++;
+  }
+  return json(200, results);
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "POST")    return json(405, { error: "Method not allowed" });
@@ -192,6 +242,7 @@ exports.handler = async function (event) {
       case "activate":           return await setActive(supabase, body.id, true);
       case "approve_suggestion": return await approveSuggestion(supabase, body.id);
       case "reject_suggestion":  return await rejectSuggestion(supabase, body.id);
+      case "bulk_suggest":       return await bulkSuggest(supabase, body.items);
       default:                   return json(400, { error: "Unknown action" });
     }
   } catch (err) {

@@ -54,8 +54,8 @@ var _sb = window.supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-// Origin-aware so sign-in works on any domain (eight14 during migration, meetriley after):
-// login.<base> → the app at riley.<base>/dashboard. Falls back to eight14 if the host is unexpected.
+// Origin-aware so sign-in works on whatever domain serves this page:
+// login.<base> → the app at riley.<base>/dashboard. Falls back to riley.meetriley.us if the host is unexpected.
 var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/dashboard' : 'https://riley.meetriley.us/dashboard'; })();
 
 // If already logged in, go straight to dashboard

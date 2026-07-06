@@ -165,7 +165,38 @@ async function boot(cb){
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 
 
-(async()=>{ await boot(async()=>{await loadPrograms();}); })();
+(async()=>{ await boot(async()=>{ await loadPrograms(); rileyUnlockWaitlist(); }); })();
+// Waitlist takeover — every in-app "Unlock with Coach/Companion" CTA lands here as ?unlock=<feat>.
+// Coach & Companion are waitlist-only for now (Brenden grants access manually); Guide stays open.
+// Matches the marketing-site waitlist copy. The member is logged in, so joining is one tap (we have their email).
+function rileyUnlockWaitlist(){
+  const feat=new URLSearchParams(location.search).get('unlock'); if(!feat) return;
+  const COACH=['knowledge_graph','adaptive_nutrition','adaptive_workouts','adaptive_plans','proactive_checkins','trend_analysis','story'];
+  const plan=COACH.includes(feat)?'coach':'companion';
+  const label=plan==='coach'?'Riley Coach':'Riley Companion';
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,0.85);backdrop-filter:blur(5px);padding:20px';
+  ov.innerHTML=`<div style="background:#141210;border:1px solid rgba(201,168,76,0.24);border-radius:14px;max-width:420px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6)">
+    <div style="width:54px;height:54px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 34px rgba(201,168,76,0.45)"></div>
+    <div style="font-family:'DM Serif Display',serif;font-size:23px;color:#f5f0e8;margin-bottom:10px">${label} is opening soon</div>
+    <div id="rw-body" style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Join the waitlist and you'll be notified the moment it's live. In the meantime, keep getting to know Riley on Guide — every topic is already open to you.</div>
+    <button id="rw-join" style="width:100%;padding:13px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px">Notify me when it opens</button>
+    <button id="rw-close" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:6px">Keep exploring Guide</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const close=()=>{ ov.remove(); try{history.replaceState(null,'',location.pathname);}catch(e){} };
+  ov.addEventListener('click',e=>{ if(e.target===ov) close(); });
+  document.getElementById('rw-close').onclick=close;
+  document.getElementById('rw-join').onclick=async function(){
+    const btn=this; btn.disabled=true; btn.textContent='Adding you…';
+    try{
+      await fetch('/.netlify/functions/waitlist-join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:(USER&&USER.email)||'',plan:plan})});
+      document.getElementById('rw-body').innerHTML=`<b style="color:#f5f0e8">You're on the waitlist.</b><br>You'll be notified once it's live. In the meantime, continue with Guide and begin getting to know Riley.`;
+      btn.style.display='none';
+      document.getElementById('rw-close').textContent='Back to Guide';
+    }catch(e){ btn.disabled=false; btn.textContent='Notify me when it opens'; }
+  };
+}
 async function loadPrograms(){
   const [eR,aR]=await Promise.allSettled([
     SB.from('user_program_progress').select('*,programs(id,slug,title,description,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}),

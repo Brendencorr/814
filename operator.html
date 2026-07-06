@@ -718,11 +718,30 @@ async function loadOverview(btn){
   try{
     var d=await opGet('/admin-home');
     if(d.error)throw new Error(d.error);
-    renderHome(d);
+    renderHome(d); renderSignupAlert(d);
   }catch(e){
     if(body)body.innerHTML='<div class="em" style="color:var(--red)">Could not load analytics: '+x(e.message)+'</div>';
   }
 }
+
+// New-member alert on the operator Home. Highlights signups since your last visit; "Mark seen" stamps
+// the newest so the badge clears. Names/emails are operator-only (this dashboard is OPERATOR_KEY-gated).
+function renderSignupAlert(d){
+  var body=document.getElementById('home-body'); if(!body) return;
+  var sg=(d&&d.recent_signups)||[]; if(!sg.length) return;
+  var lastSeen=localStorage.getItem('814_last_signup_seen')||'';
+  var fresh=sg.filter(function(s){ return s.created_at && (!lastSeen || s.created_at>lastSeen); });
+  window.__newestSignup=sg[0]&&sg[0].created_at;
+  var rows=sg.slice(0,8).map(function(s){
+    var when=s.created_at?new Date(s.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    var isNew=s.created_at&&(!lastSeen||s.created_at>lastSeen);
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink2)">'+(isNew?'<span style="color:var(--gold)">&#9679; </span>':'')+x(s.name||'Member')+'</span><span style="color:var(--muted);font-size:.72rem">'+when+'</span></div>';
+  }).join('');
+  var banner='<div style="background:var(--surface);border:1px solid rgba(201,168,76,0.30);border-radius:10px;padding:16px 18px;margin-bottom:18px">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-weight:600;color:var(--ink)">New members'+(fresh.length?' <span style="color:var(--gold)">'+fresh.length+' new</span>':'')+'</div><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.7rem;cursor:pointer;padding:3px 9px">Mark seen</button></div>'+rows+'</div>';
+  body.innerHTML=banner+body.innerHTML;
+}
+function markSignupsSeen(){ if(window.__newestSignup) localStorage.setItem('814_last_signup_seen', window.__newestSignup); loadHome(); }
 
 // Tiny dependency-free SVG bar chart. series=[{label,n}]
 function svgBars(series,color,clickKind){

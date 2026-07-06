@@ -89,7 +89,17 @@ exports.handler = async function (event) {
     if (error) throw error;
     result.scanned = (users || []).length;
 
+    // Honor the email-notifications preference (migration 047). Resilient: if the column doesn't
+    // exist yet, this query returns no rows → nobody is filtered → everyone still gets their brief.
+    const emailOff = new Set();
+    const _ids = (users || []).map((u) => u.id);
+    if (_ids.length) {
+      const { data: offs } = await supabase.from("user_profiles").select("id").eq("email_notifications", false).in("id", _ids);
+      (offs || []).forEach((o) => emailOff.add(o.id));
+    }
+
     for (const u of users || []) {
+      if (emailOff.has(u.id)) continue;              // opted out of email updates
       const target = SCHEDULE_HOUR[u.notification_schedule || "morning"];
       if (target == null) continue;
       const hr = localHour(u.timezone);

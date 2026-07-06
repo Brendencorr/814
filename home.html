@@ -425,7 +425,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
     var a=e.target.closest?e.target.closest('a[href]'):null;
     if(!a) return;
     var href=a.getAttribute('href')||'';
-    if(/\/talk(\?|#|$)/.test(href)||/riley\.eight14\.us\/talk/.test(href)){ e.preventDefault(); show(); }
+    if(/\/talk(\?|#|$)/.test(href)){ e.preventDefault(); show(); }
   });
   window.addEventListener('message',function(e){
     if(e.origin!==location.origin) return;

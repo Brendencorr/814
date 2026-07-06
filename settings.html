@@ -68,6 +68,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
   <div class="card">
+    <h2>Notifications</h2>
+    <div class="cdesc">Choose how Riley reaches you. Safety messages always come through.</div>
+    <div class="row"><div class="lbl">Email updates<div class="val">Your daily brief, gentle nudges, milestones</div></div><button class="linkbtn" id="tg-email">…</button></div>
+    <div class="row"><div class="lbl">Push notifications<div class="val">Reminders on this device</div></div><button class="linkbtn" id="tg-push">…</button></div>
+    <div class="status" id="notif-status"></div>
+  </div>
+
+  <div class="card" id="admin-card" style="display:none">
+    <h2>Operator</h2>
+    <div class="cdesc">Admin tools — visible to you only.</div>
+    <div class="row"><div class="lbl">Operator Dashboard<div class="val">Members, content engine, pipeline, safety</div></div><a class="linkbtn" id="admin-link" href="https://meetriley.us/operator" target="_blank" rel="noopener">Open &#8599;</a></div>
+  </div>
+
+  <div class="card">
     <h2>The Riley app</h2>
     <div class="cdesc">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>
     <div class="row"><div class="lbl">Install Riley<div class="val">Works on your phone and desktop</div></div><button class="linkbtn" id="install-app">Install app</button></div>
@@ -90,9 +104,37 @@ async function load(){
   USER=session.user; UID=USER.id;
   $('acct-email').textContent=USER.email||'';
   try{
-    const {data:prof}=await SB.from('user_profiles').select('sobriety_date').eq('id',UID).maybeSingle();
+    const {data:prof}=await SB.from('user_profiles').select('sobriety_date,email_notifications,push_notifications,is_admin').eq('id',UID).maybeSingle();
     if(prof&&prof.sobriety_date) $('f-date').value=prof.sobriety_date;
-  }catch(e){}
+    setEmailToggle(!prof || prof.email_notifications !== false);   // default ON
+    setPushToggle(!prof || prof.push_notifications !== false);
+    if(prof && prof.is_admin){ const ac=$('admin-card'); if(ac) ac.style.display=''; }
+  }catch(e){ setEmailToggle(true); setPushToggle(true); }
+}
+
+// ── Notifications ──────────────────────────────────────────────────────────
+let _emailOn=true, _pushOn=true;
+function setEmailToggle(on){ _emailOn=on; const b=$('tg-email'); if(b) b.textContent=on?'On':'Off'; }
+function setPushToggle(on){ _pushOn=on; const b=$('tg-push'); if(b) b.textContent=on?'On':'Off'; }
+function nstatus(m,err){ const s=$('notif-status'); if(s){ s.textContent=m||''; s.className='status'+(err?' err':''); } }
+function urlB64ToU8(b){ const p='='.repeat((4-b.length%4)%4); const s=(b+p).replace(/-/g,'+').replace(/_/g,'/'); const raw=atob(s); return Uint8Array.from([...raw].map(c=>c.charCodeAt(0))); }
+
+async function saveNotif(field,val){ try{ await SB.from('user_profiles').upsert({id:UID,email:USER.email,[field]:val}); return true; }catch(e){ return false; } }
+
+async function enablePush(){
+  try{
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    const perm=await Notification.requestPermission(); if(perm!=='granted') return false;
+    const reg=await navigator.serviceWorker.ready;
+    const {publicKey}=await(await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})})).json();
+    if(!publicKey) return false;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(publicKey)});
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
+    await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',token:tok,subscription:sub,tz})});
+    return true;
+  }catch(e){ return false; }
 }
 
 $('save-date').addEventListener('click', async ()=>{
@@ -116,6 +158,26 @@ $('del-account').addEventListener('click', ()=> RileyDeleteAccount.open({ supaba
 // Install lives here for returning members (pwa.js only auto-offers on first login).
 $('install-app').addEventListener('click', ()=>{
   if (typeof window.rileyTriggerInstall === 'function') window.rileyTriggerInstall();
+});
+
+$('tg-email').addEventListener('click', async ()=>{
+  const next=!_emailOn; setEmailToggle(next);
+  const ok=await saveNotif('email_notifications', next);
+  if(ok) nstatus(next?'Email updates on.':'Email updates off — safety messages still reach you.');
+  else { setEmailToggle(!next); nstatus('Could not save — try again.',true); }
+});
+$('tg-push').addEventListener('click', async ()=>{
+  if(!_pushOn){
+    nstatus('Enabling…');
+    const ok=await enablePush();
+    if(ok){ setPushToggle(true); await saveNotif('push_notifications', true); nstatus('Push on.'); }
+    else nstatus("Couldn't enable push — check this browser's notification permission.",true);
+  } else {
+    setPushToggle(false);
+    await saveNotif('push_notifications', false);
+    try{ const tok=(await SB.auth.getSession()).data.session?.access_token; fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'decline',token:tok})}); }catch(e){}
+    nstatus('Push off.');
+  }
 });
 
 load();

@@ -1,7 +1,7 @@
 {
-  "name": "eight14-backend",
+  "name": "meetriley-backend",
   "version": "1.0.0",
-  "description": "Netlify serverless backend for The 8:14 Project (meetriley.us)",
+  "description": "Netlify serverless backend for Riley (meetriley.us)",
   "engines": {
     "node": ">=18"
   },

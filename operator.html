@@ -637,6 +637,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 <div class="sc" id="sy">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1000px;margin:0 auto">
+      <div id="pm-editor" style="margin-bottom:1.6rem"></div>
       <div id="pricing-body"><div class="em">Loading…</div></div>
     </div>
   </div>
@@ -1620,6 +1621,7 @@ var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach',4:'Mentor'};
 var STATUS_COLOR={draft:'var(--muted2)',locked:'var(--gold)',live:'var(--green)',retired:'var(--red)'};
 async function loadPricing(btn){
   gs('y',btn);
+  try{pmInit();}catch(e){}
   var el=document.getElementById('pricing-body');el.innerHTML='<div class="em">Loading…</div>';
   try{var d=await pricingApi('list');renderPricing(d.products||[],d.usage_limits||[],d.free_access_mode);}
   catch(e){
@@ -2329,7 +2331,59 @@ async function membershipApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)']];
+// ── Program content editor (self-guided modules) — edit Read/Do/Keep/Riley copy without SQL ──
+async function pmApi(action,extra){
+  var r=await fetch(B+'/admin-program-modules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:action},extra||{}))});
+  if(r.status===401||r.status===403) throw new Error('bad-key');
+  return r.json();
+}
+function pmV(id){var el=document.getElementById(id);return el?el.value:'';}
+async function pmInit(){
+  var box=document.getElementById('pm-editor'); if(!box) return;
+  box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Program content</div><div class="em" style="font-size:.72rem">Loading…</div>';
+  try{
+    var d=await pmApi('list'); var progs=d.programs||[];
+    if(!progs.length){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Program content</div><div class="em" style="font-size:.72rem">No editable program content yet (run the seed migrations first).</div>'; return; }
+    var btns=progs.map(function(p){return '<button class="bo" onclick="pmOpen(\''+p.program_key+'\')">'+engEsc(p.name)+' · '+p.modules+' modules</button>';}).join(' ');
+    box.innerHTML='<div class="cl" style="margin:0 0 .3rem">Program content</div>'
+      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.7rem">Edit module copy (Read / Do / Keep / Riley) — saves per module. Catalog price &amp; status are below.</div>'
+      +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">'+btns+'</div><div id="pm-list"></div>';
+  }catch(e){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Program content</div><div class="em" style="font-size:.72rem;color:var(--red)">'+(e.message==='bad-key'?'Operator key incorrect.':'Could not load: '+engEsc(e.message))+'</div>'; }
+}
+async function pmOpen(key){
+  var list=document.getElementById('pm-list'); if(!list) return;
+  list.innerHTML='<div class="em" style="font-size:.72rem">Loading modules…</div>';
+  try{ var d=await pmApi('get',{program_key:key}); list.innerHTML=(d.modules||[]).map(function(m){return pmRow(key,m);}).join(''); }
+  catch(e){ list.innerHTML='<div class="em" style="font-size:.72rem;color:var(--red)">'+engEsc(e.message)+'</div>'; }
+}
+function pmField(label,id,val,rows){
+  return '<label style="font-family:DM Mono,monospace;font-size:8px;color:var(--muted2);letter-spacing:.14em;text-transform:uppercase;display:block;margin:.5rem 0 .2rem">'+label+'</label>'
+    +'<textarea id="'+id+'" rows="'+(rows||3)+'" style="width:100%;background:var(--surface2,#151312);border:1px solid var(--border);border-radius:4px;color:var(--ink,#e8e4de);font-family:DM Sans,sans-serif;font-size:12.5px;padding:8px 10px;line-height:1.5;resize:vertical">'+engEsc(val||'')+'</textarea>';
+}
+function pmRow(key,m){
+  var id=key+'-'+m.module_number;
+  return '<details style="border:1px solid var(--border);border-radius:6px;margin-bottom:.5rem;background:var(--surface)">'
+    +'<summary style="cursor:pointer;padding:.6rem .8rem;font-size:.8rem;color:var(--ink)"><b>M'+m.module_number+'</b> · '+engEsc(m.title)+(m.keep_body!=null?' <span style="color:var(--gold);font-size:.66rem">KEEP</span>':'')+'</summary>'
+    +'<div style="padding:.2rem .8rem .8rem">'
+    +pmField('Title','ti-'+id,m.title,1)+pmField('Read (lesson)','rd-'+id,m.read_body,5)+pmField('Do (action)','do-'+id,m.do_body,2)
+    +(m.keep_body!=null?pmField('Keep tool','kp-'+id,m.keep_body,5):'')
+    +(m.riley_layer!=null?pmField('Riley layer (Companion/Coach only)','rl-'+id,m.riley_layer,2):'')
+    +'<button class="spb" style="margin-top:.7rem" onclick="pmSave(\''+key+'\','+m.module_number+',\''+id+'\',this)">Save module '+m.module_number+'</button>'
+    +' <span id="st-'+id+'" style="font-size:.72rem;margin-left:.5rem"></span></div></details>';
+}
+async function pmSave(key,n,id,btn){
+  var st=document.getElementById('st-'+id);
+  var patch={title:pmV('ti-'+id),read_body:pmV('rd-'+id),do_body:pmV('do-'+id)};
+  var kp=document.getElementById('kp-'+id); if(kp) patch.keep_body=kp.value;
+  var rl=document.getElementById('rl-'+id); if(rl) patch.riley_layer=rl.value;
+  btn.disabled=true; if(st){st.textContent='Saving…';st.style.color='var(--muted2)';}
+  try{ var d=await pmApi('save',{program_key:key,module_number:n,patch:patch});
+    if(d&&d.ok){ if(st){st.textContent='Saved ✓';st.style.color='var(--green)';} } else throw new Error((d&&d.error)||'save failed');
+  }catch(e){ if(st){st.textContent='Failed: '+engEsc(e.message);st.style.color='var(--red)';} }
+  finally{ btn.disabled=false; }
+}
+
+var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)'],['prog_move_nourish','Move & Nourish ($18.14)'],['prog_carry_both','Carry Both ($18.14)']];
 async function loadMembershipPanel(userId){
   var el=document.getElementById('ud-membership');if(!el)return;
   try{

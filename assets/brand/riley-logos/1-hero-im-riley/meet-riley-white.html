@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Meet Riley — Hero Logo (white-background alternate)</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;box-sizing:border-box}
+  body{background:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+
+  /* WHITE-BACKGROUND ALTERNATE — same composition/scale as the original hero, inverted for light:
+     white card ground, Ink wordmark, Gold-Deep period. Same gold outline + breathe. */
+  .herologo{
+    width:var(--size,460px); height:var(--size,460px);
+    container-type:size;
+    border-radius:calc(var(--size,460px)*0.0435);
+    background:radial-gradient(circle at 38% 32%,rgba(201,168,76,0.12),#ffffff 64%);
+    border:1px solid rgba(201,168,76,0.16);              /* the gold outline */
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden; margin:0 auto;
+  }
+  .herologo .orb{
+    width:32.6cqw; height:32.6cqw; border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);
+    box-shadow:0 0 17.4cqw rgba(201,168,76,0.4);
+    animation:breathe 5s ease-in-out infinite;
+  }
+  .herologo .tag{
+    position:absolute; bottom:5.2cqh; left:50%; transform:translateX(-50%);
+    font-family:'DM Serif Display',serif; color:#0a0908; line-height:1; font-size:7.4cqw; white-space:nowrap;
+  }
+  .herologo .tag span{ color:#a8842f; }        /* Gold-Deep — legible on light */
+  @keyframes breathe{ 0%,100%{ transform:scale(1); opacity:0.92 } 50%{ transform:scale(1.06); opacity:1 } }
+</style></head><body>
+  <div class="herologo" style="--size:min(460px,86vw)">
+    <div class="orb"></div>
+    <div class="tag">I&rsquo;m Riley<span>.</span></div>
+  </div>
+</body></html>

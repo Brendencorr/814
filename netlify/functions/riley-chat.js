@@ -28,6 +28,7 @@ const {
 } = require("./crisis-detection");
 const { getRemaining, incrementUsage } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
+const { currentTier } = require("./tier-utils"); // single shared tier resolver
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -570,11 +571,7 @@ async function getClientData(supabase, userId) {
     // real and persistent — everyone who's holding ANY entitlement row, or
     // reset_free specifically, is "guide" at minimum). "alacarte" = content
     // only, no relationship at all — the one case with NO Guide caps either.
-    const tier = ownedProducts.includes("mentor") ? "mentor"
-               : (ownedProducts.includes("coach") || ownedProducts.includes("concierge")) ? "coach"
-               : ownedProducts.includes("companion") ? "companion"
-               : ownedProducts.includes("reset_free") ? "guide"
-               : ownedProducts.length ? "alacarte" : "guide";
+    const tier = currentTier(ownedProducts) || "guide"; // shared resolver (tier-utils.js) — single source
 
     // Merge personal + shared sensitive dates for today
     const personalDates = importantRes.value?.data || [];

@@ -171,6 +171,22 @@ exports.handler = async function (event) {
       }
     }
 
+    // Clear lingering crisis flags. user_daily_state.crisis_flag is a per-day MIRROR of an
+    // active crisis; once a member has no unresolved crisis_log, that flag must not stay
+    // stuck true (it would keep Riley's tone/plan in "crisis mode" forever). For each member
+    // we touched, if they have no open crises left, clear any remaining flags.
+    const touched = [...new Set(rows.map((r) => r.user_id))];
+    for (const uid of touched) {
+      try {
+        const { data: open } = await supabase.from("crisis_log")
+          .select("id").eq("user_id", uid).eq("resolved", false).limit(1);
+        if (!open || !open.length) {
+          await supabase.from("user_daily_state")
+            .update({ crisis_flag: false }).eq("user_id", uid).eq("crisis_flag", true);
+        }
+      } catch (e) { console.warn("crisis-flag clear failed for", uid, e.message); }
+    }
+
     console.log("crisis-followup-cron:", JSON.stringify(result));
     return { statusCode: 200, body: JSON.stringify(result) };
   } catch (e) {

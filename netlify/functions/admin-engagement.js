@@ -22,6 +22,7 @@
  */
 
 const { getSupabaseClient } = require("./supabase-client");
+const { currentTier } = require("./tier-utils"); // single shared tier resolver
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -98,13 +99,6 @@ exports.handler = async function (event) {
     prodDefs.forEach(p => { prodByKey[p.product_key] = p; });
     const ownedByUser = {};
     entRows.forEach(r => { (ownedByUser[r.user_id] ||= []).push(r.product_key); });
-    function tierFor(owned) {
-      if (owned.includes("mentor"))    return "mentor";
-      if (owned.includes("coach") || owned.includes("concierge")) return "coach";
-      if (owned.includes("companion")) return "companion";
-      if (owned.includes("reset_free")) return "guide";
-      return owned.length ? "alacarte" : null;
-    }
     // First active curriculum enrollment per user (rows already newest-first).
     const activeProgramByUser = {};
     progRows.forEach(r => {
@@ -166,7 +160,7 @@ exports.handler = async function (event) {
         reengaged: !!u.reengagement_sent_at,             // currently lapsed + emailed
         reengaged_at: u.reengagement_sent_at || null,
         won_back: !!(lastEmailAt[u.id] && lastOpenAt[u.id] && lastOpenAt[u.id] > lastEmailAt[u.id]),
-        tier: tierFor(owned),
+        tier: currentTier(owned),
         // Exclude reset_free (implied for everyone, not worth listing) and
         // retired products (Coach/Companion's implies_all_programs expansion
         // technically includes them, but they're dead SKUs — noisy to show).

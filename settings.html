@@ -141,8 +141,14 @@ $('save-date').addEventListener('click', async ()=>{
   const btn=$('save-date'); btn.disabled=true; dstatus('Saving…');
   try{
     const v=$('f-date').value||null;
-    const {error}=await SB.from('user_profiles').upsert({id:UID,email:USER.email,sobriety_date:v});
-    if(error) throw error;
+    // Sobriety date lives in the CANONICAL sobriety_tracker (migration 055); a DB trigger
+    // mirrors it onto user_profiles.sobriety_date, so the dashboard, Riley and the operator
+    // report all stay in sync. Deactivate any prior row, then set the current one.
+    await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
+    if(v){
+      const {error}=await SB.from('sobriety_tracker').insert({user_id:UID,start_date:v,is_active:true,milestone_days:[]});
+      if(error) throw error;
+    }
     dstatus('Saved.');
   }catch(err){ dstatus('Save failed: '+(err.message||err),true); }
   finally{ btn.disabled=false; }

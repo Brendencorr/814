@@ -30,20 +30,13 @@
 
 const { getSupabaseClient } = require('./supabase-client');
 const { getRemaining } = require('./usage-limits');
+const { currentTier } = require('./tier-utils'); // single shared tier resolver
 
 const CORS = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
-
-function currentTier(owned) {
-  if (owned.has('mentor'))    return 'mentor';
-  if (owned.has('coach'))     return 'coach';
-  if (owned.has('companion')) return 'companion';
-  if (owned.has('reset_free')) return 'guide';
-  return null;
-}
 
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') {

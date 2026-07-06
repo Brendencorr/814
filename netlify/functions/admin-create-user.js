@@ -86,15 +86,27 @@ exports.handler = async (event) => {
       email,
       full_name: name,
       preferred_name: first,
-      subscription_tier: tier,        // kept in sync with the comp below (some surfaces read this col)
       onboarding_completed: false,    // they still see Riley's onboarding on first sign-in
     };
-    if (sobriety_date) profile.sobriety_date = sobriety_date;
+    // Tier is NOT stored on the profile — it's derived from the subscriptions/entitlements
+    // resolution (tier-utils.currentTier). The dead subscription_tier column was dropped in
+    // migration 055. The comp row below is the actual entitlement.
     try {
       await sb.from("user_profiles").upsert(profile, { onConflict: "id" });
     } catch (e) {
       console.error("admin-create-user profile:", e.message);
       // Profile is important but the auth user exists; surface a soft warning, don't 500.
+    }
+
+    // Sobriety date → the CANONICAL sobriety_tracker (migration 055). A DB trigger mirrors
+    // it onto user_profiles.sobriety_date, so admin/operator reads stay correct automatically.
+    if (sobriety_date) {
+      try {
+        await sb.from("sobriety_tracker").update({ is_active: false }).eq("user_id", uid);
+        await sb.from("sobriety_tracker").insert({ user_id: uid, start_date: sobriety_date, is_active: true, milestone_days: [] });
+      } catch (e) {
+        console.error("admin-create-user sobriety:", e.message);
+      }
     }
 
     // 4. Comp the tier for paid plans — a subscriptions row IS the entitlement (single source).

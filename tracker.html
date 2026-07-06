@@ -381,7 +381,7 @@ function pickMood(n,btn){
 async function saveCheckin(){
   setBtn('ci-btn',true,'Save Check-In');
   try{
-    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:MOOD||null,water_oz:parseInt(document.getElementById('ci-water').value)||null,sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||null,screen_time_min:parseInt(document.getElementById('ci-screen').value)||null,notes:document.getElementById('ci-notes').value.trim()||null},{onConflict:'user_id,checkin_date'});
+    const {error}=await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:MOOD||null,water_oz:parseInt(document.getElementById('ci-water').value)||null,sleep_hours:parseFloat(document.getElementById('ci-sleep').value)||null,screen_time_min:parseInt(document.getElementById('ci-screen').value)||null,notes:document.getElementById('ci-notes').value.trim()||null,...(MOOD?{checkin_completed:true}:{})},{onConflict:'user_id,checkin_date'});
     if(error)throw error;A('ci-alert','✓ Check-in saved! Riley will use this in your brief.',true);
   }catch(e){A('ci-alert','Error: '+e.message,false);}finally{setBtn('ci-btn',false,'Save Check-In');}
 }

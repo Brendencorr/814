@@ -21,6 +21,7 @@
  */
 
 const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { currentTier } = require("./tier-utils");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -94,7 +95,7 @@ exports.handler = async (event) => {
       profileR, checkinsR, soberR, programsR, memoryR,
       lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR, lastVisitR, activeProductsR,
     ] = await Promise.allSettled([
-      supabase.from("user_profiles").select("full_name,preferred_name,subscription_tier,do_not_recommend,risk_flags,communication_style,current_focus,one_year_vision,human_os,last_engagement_note,notification_schedule").eq("id", user_id).maybeSingle(),
+      supabase.from("user_profiles").select("full_name,preferred_name,do_not_recommend,risk_flags,communication_style,current_focus,one_year_vision,human_os,last_engagement_note,notification_schedule").eq("id", user_id).maybeSingle(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours").eq("user_id", user_id).gte("checkin_date", fourteenAgo).order("checkin_date", { ascending: false }),
       supabase.from("sobriety_tracker").select("start_date").eq("user_id", user_id).eq("is_active", true).maybeSingle(),
       supabase.from("user_program_progress").select("*,programs(title,emoji,duration_days)").eq("user_id", user_id).eq("status", "active").limit(3),
@@ -174,10 +175,8 @@ exports.handler = async (event) => {
     // currentTier(). The dead `subscription_tier` column was never written, so this used to treat EVERY
     // paying member as free — hiding their paid modules AND upselling them a tier they already own.
     const _owned = new Set(((activeProductsR.status === "fulfilled" && activeProductsR.value?.data) || []).map(r => r.product_key));
-    const tier = _owned.has("mentor") ? "mentor"
-               : (_owned.has("coach") || _owned.has("concierge")) ? "coach"
-               : _owned.has("companion") ? "companion"
-               : "guide";
+    const tier = currentTier(_owned) || "guide"; // shared resolver (tier-utils.js) — single source
+
     const entitled = (m) => {
       if (!m.entitlement_required) return true;
       // companion / coach / mentor unlock adaptive features; guide sees free modules.

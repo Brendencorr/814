@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>8:14 Operator</title>
+<title>Riley — Operator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* fonts loaded via <link> in <head> — DM Serif Display / DM Sans / DM Mono */
@@ -63,7 +63,30 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 .gerr{color:var(--red);font-size:.78rem;margin-top:.5rem;min-height:1.1em}
 
 /* ── APP SHELL ── */
-#app{display:none;flex-direction:column;height:100dvh;overflow:hidden}
+#app{display:none;flex-direction:row;height:100dvh;overflow:hidden}
+/* ── Left sidebar (client-portal style) ── */
+.opsb{width:216px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:0 0 12px}
+.opsb-logo{display:flex;align-items:center;font-family:'DM Serif Display',serif;font-size:22px;color:#fff;padding:18px 18px 16px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.op-sun{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 12px rgba(201,168,76,0.5);margin-right:9px;flex-shrink:0;animation:opSun 5s ease-in-out infinite}
+@keyframes opSun{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+.op-dot{color:var(--gold)}
+.opnav{display:flex;flex-direction:column;gap:1px}
+.sni{display:flex;align-items:center;gap:10px;padding:9px 18px;background:none;border:none;border-left:2px solid transparent;color:var(--muted);font-size:.84rem;font-weight:500;font-family:'DM Sans',sans-serif;text-align:left;cursor:pointer;transition:all .15s;white-space:nowrap}
+.sni:hover{color:var(--ink);background:rgba(255,255,255,0.03);border-left-color:rgba(201,168,76,0.4)}
+.sni.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.sni-ic{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sni-sub{padding-left:40px;font-size:.8rem}
+.sni-sub .sni-ic{font-size:12px}
+.opsb-gear{margin:8px 12px 0;background:none;border:1px solid var(--border);color:var(--muted);font-size:.8rem;cursor:pointer;padding:8px 12px;border-radius:7px;transition:all .15s;font-family:'DM Sans',sans-serif;text-align:left}
+.opsb-gear:hover{color:var(--ink);border-color:var(--gold)}
+.opmain{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+@media(max-width:720px){#app{flex-direction:column}.opsb{width:100%;flex-direction:row;overflow-x:auto;padding:0}.opsb-logo{display:none}.opnav{flex-direction:row}.sni-sub{padding-left:18px}.opsb-gear{margin:0}}
+/* Add-User modal (folded out of its own tab) */
+.op-modal{position:fixed;inset:0;z-index:600;display:none;align-items:center;justify-content:center;background:rgba(6,9,14,0.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);padding:20px}
+.op-modal.show{display:flex}
+.op-modal-card{position:relative;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.9rem 1.9rem 2rem;box-shadow:0 24px 70px rgba(0,0,0,0.5)}
+.op-modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);font-size:1.5rem;line-height:1;cursor:pointer;padding:4px}
+.op-modal-x:hover{color:var(--ink)}
 header{background:var(--surface);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 1.5rem;gap:1.5rem;flex-shrink:0;z-index:100;box-shadow:0 1px 0 var(--border)}
 .hl{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);letter-spacing:-.5px;font-weight:600}
 .hn{display:flex;gap:2px;flex:1;min-width:0;padding-left:.5rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -432,7 +455,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </head>
 <body>
 <div id="gate"><div class="gb">
-  <div class="gl">8:14</div>
+  <div class="gl" style="color:#fff">Riley<span style="color:var(--gold)">.</span></div>
   <div class="gs">Operator Dashboard</div>
   <input type="password" class="gi" id="pw" placeholder="Password" autocomplete="current-password">
   <label style="display:flex;align-items:center;gap:8px;margin:0 2px 12px;font-size:.82rem;color:#8a8578;cursor:pointer;user-select:none"><input type="checkbox" id="rmb" style="width:15px;height:15px;accent-color:#c9a84c;cursor:pointer"> Remember this device</label>
@@ -440,19 +463,21 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   <div class="gerr" id="pw-err"></div>
 </div></div>
 <div id="app">
-  <header>
-    <div class="hl">8:14</div>
-    <nav class="hn">
-      <button class="ht active" data-s="o" onclick="loadOverview(this)">Home</button>
-      <button class="ht" data-s="ce" onclick="loadCE(this)">Social Media</button>      <button class="ht" data-s="at" onclick="loadAttribution(this)">Attribution</button>      <button class="ht" data-s="e" onclick="loadEngagement(this)">Engagement</button>
-      <button class="ht" data-s="s" onclick="loadSafety(this)" style="position:relative">Safety<span id="safety-badge" style="display:none;position:absolute;top:-5px;right:-9px;background:var(--red);color:#100d0a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
-      <button class="ht" data-s="m" onclick="loadContent(this)">Content Library</button>
-      <button class="ht" data-s="y" onclick="loadPricing(this)">Programs</button>
-      <button class="ht" data-s="mx" onclick="loadMetrics(this)">Metrics</button>
-      <button class="ht" data-s="nu" onclick="loadNewUser(this)">Add User</button>
+  <aside class="opsb">
+    <div class="opsb-logo"><span class="op-sun"></span>Riley<span class="op-dot">.</span></div>
+    <nav class="opnav">
+      <button class="sni active" data-s="o" onclick="loadOverview(this)"><span class="sni-ic">🏠</span>Home</button>
+      <button class="sni" data-s="ce" onclick="loadCE(this)"><span class="sni-ic">📣</span>Social Media</button>
+      <button class="sni sni-sub" data-s="at" onclick="loadAttribution(this)"><span class="sni-ic">📈</span>PostHog Analytics</button>
+      <button class="sni" data-s="e" onclick="loadEngagement(this)" style="position:relative"><span class="sni-ic">👥</span>Client Overview<span id="safety-badge" style="display:none;position:absolute;top:7px;right:14px;background:var(--red);color:#100d0a;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:DM Mono,monospace"></span></button>
+      <button class="sni" data-s="m" onclick="loadContent(this)"><span class="sni-ic">📚</span>Content Library</button>
+      <button class="sni" data-s="y" onclick="loadPricing(this)"><span class="sni-ic">🗂️</span>Programs</button>
+      <button class="sni" data-s="mx" onclick="loadMetrics(this)"><span class="sni-ic">📊</span>Riley Overview</button>
     </nav>
-    <button class="hg" onclick="tgs()" title="Settings">&#9881;</button>
-  </header>
+    <div style="flex:1"></div>
+    <button class="opsb-gear" onclick="tgs()" title="Settings">⚙&nbsp; Settings</button>
+  </aside>
+  <main class="opmain">
   <!-- HOME · COMBINED OVERVIEW -->
   <div class="sc active" id="so">
     <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
@@ -466,9 +491,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
               <button class="rtog-btn on" data-r="30" onclick="setHomeRange(30)">30D</button>
               <button class="rtog-btn" data-r="90" onclick="setHomeRange(90)">90D</button>
             </div>
+            <button class="bo" onclick="openAddUser()">+ Add User</button>
             <button class="edit-layout-btn" id="home-edit-btn" onclick="toggleHomeEdit()">✎ Edit Layout</button>
           </div>
         </div>
+        <div id="home-finance"></div>
         <div id="home-body"><div class="em">Loading engagement data…</div></div>
       </div>
     </div>
@@ -515,12 +542,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
       <div style="max-width:1100px;margin:0 auto">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.3rem">
-          <div class="cl" style="margin:0">Metrics &amp; Operator Actions</div>
+          <div class="cl" style="margin:0">Riley Overview</div>
           <button class="bo" onclick="loadMetrics()">&#8635; Refresh</button>
         </div>
-        <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.2rem;max-width:680px;line-height:1.6">
-          The growth funnel and north-star metrics, computed from the events table only. Operator overrides below. Entitlement state only &mdash; this view never shows conversation content.
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;max-width:680px;line-height:1.6">
+          Revenue &amp; expenses, the growth funnel, and north-star metrics. Entitlement state only &mdash; this view never shows conversation content.
         </div>
+        <div id="ro-finance" style="margin-bottom:1.8rem"><div class="em">Loading revenue &amp; expenses…</div></div>
+        <div class="cl" style="margin:1.8rem 0 .8rem;font-size:.9rem">Growth &amp; Metrics</div>
         <div id="mx-metrics"><div class="em">Loading metrics&#8230;</div></div>
 
         <!-- Operator actions -->
@@ -542,9 +571,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   </div>
 
   <!-- ADD USER · MANUAL MEMBER PROVISIONING -->
-  <div class="sc" id="snu">
-    <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
-      <div style="max-width:600px;margin:0 auto">
+  <div id="snu" class="op-modal" onclick="if(event.target===this)closeAddUser()">
+    <div class="op-modal-card">
+      <button class="op-modal-x" onclick="closeAddUser()" aria-label="Close">&times;</button>
         <div class="cl" style="margin:0 0 .3rem">Add a Member</div>
         <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;max-width:560px;line-height:1.6">
           Manually provision someone into Riley. Creates their account and profile right away &mdash; they sign in with <b style="color:var(--ink2)">Google</b> using the same email. Every add is written to the audit trail.
@@ -586,7 +615,29 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <button class="bg" id="nu-btn" onclick="createUserSubmit()">Add member</button>
         </div>
         <div id="nu-result"></div>
+    </div>
+  </div>
+
+  <!-- EXPENSE EDIT MODAL -->
+  <div id="finmodal" class="op-modal" onclick="if(event.target===this)closeFinModal()">
+    <div class="op-modal-card">
+      <button class="op-modal-x" onclick="closeFinModal()" aria-label="Close">&times;</button>
+      <div class="cl" id="fx-title" style="margin:0 0 1.2rem">Add expense</div>
+      <input type="hidden" id="fx-id">
+      <label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">Service</label>
+      <input id="fx-service" placeholder="e.g. Notion" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.9rem">
+      <div style="display:flex;gap:.7rem">
+        <div style="flex:1"><label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">Category</label><input id="fx-category" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.9rem"></div>
+        <div style="width:120px"><label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">$ / month</label><input id="fx-amount" type="number" step="0.01" min="0" placeholder="0" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.9rem"></div>
       </div>
+      <div style="display:flex;gap:.7rem">
+        <div style="flex:1"><label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">Billing</label><select id="fx-billing" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.9rem"><option value="monthly">monthly</option><option value="annual">annual</option><option value="usage">usage</option><option value="per-transaction">per-transaction</option></select></div>
+        <div style="flex:1"><label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">Status</label><select id="fx-status" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.9rem"><option value="active">active</option><option value="upcoming">upcoming</option><option value="optional">optional</option><option value="retired">retired</option></select></div>
+      </div>
+      <label style="display:block;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.12em;margin:0 0 .3rem">Notes</label>
+      <input id="fx-notes" style="width:100%;background:var(--bg);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.55rem .7rem;font-size:.85rem;font-family:'DM Sans',sans-serif;margin-bottom:.4rem">
+      <div id="fx-err" style="color:var(--red);font-size:.75rem;min-height:1.1rem;margin:.3rem 0"></div>
+      <div style="display:flex;gap:.6rem"><button class="bg" id="fx-save" onclick="finSave()">Save</button><button class="bo" onclick="closeFinModal()">Cancel</button></div>
     </div>
   </div>
 
@@ -594,10 +645,16 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 <div class="sc" id="se">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1180px;margin:0 auto">
-      <div class="cl" style="margin-bottom:1.1rem">Engagement · Mission Control</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+        <div class="cl" style="margin:0">Client Overview</div>
+        <button class="bo" onclick="openAddUser()">+ Add User</button>
+      </div>
       <div id="eng-stats"><div class="em">Loading engagement…</div></div>
       <div id="eng-attention"></div>
       <div id="eng-table"></div>
+      <div style="margin-top:2rem;border-top:1px solid var(--border);padding-top:1.6rem">
+        <div id="safety-body-eng"><div class="em">Loading safety…</div></div>
+      </div>
     </div>
   </div>
 </div>
@@ -644,6 +701,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </div>
 
 <!-- (Clients merged into Engagement; retired duplicate engagement screen) -->
+  </main>
 </div>
 
 <!-- USER DETAIL PANEL -->
@@ -793,7 +851,7 @@ async function unlock(){
 }
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});var _p=document.getElementById('s'+n);if(_p)_p.classList.add('active');document.querySelectorAll('.sni').forEach(function(b){b.classList.remove('active');});if(btn&&btn.classList.contains('sni'))btn.classList.add('active');else{var t=document.querySelector('.sni[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -819,6 +877,7 @@ document.addEventListener('click',function(e){
 async function loadOverview(btn){
   if(btn)gs('o',btn);
   var dt=document.getElementById('ov-date'); if(dt)dt.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+  renderFinanceHome();                              // revenue/expense snapshot on Home
   var body=document.getElementById('home-body');
   try{
     var d=await opGet('/admin-home');
@@ -1261,6 +1320,11 @@ async function loadEngagement(btn){
     var d=await opGet('/admin-engagement');
     renderEngagement(d);
   }catch(e){st.innerHTML='<div class="em">Could not load engagement: '+engEsc(e.message)+'</div>';}
+  // Safety queue — merged into Client Overview (no separate tab).
+  try{
+    var sd=await safetyApi('list');
+    renderSafety(sd,'safety-body-eng');updateSafetyBadge(sd.open_count);markSafetySeen(sd);
+  }catch(se){var sb=document.getElementById('safety-body-eng');if(sb)sb.innerHTML='<div class="em">Safety queue unavailable — '+engEsc(se.message)+'</div>';}
 }
 var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],mentor:['Mentor','var(--gold)'],alacarte:['À la carte','var(--sage)']};
 function engTierBadge(tier){
@@ -1370,7 +1434,7 @@ async function loadSafety(btn){
     el.innerHTML='<div class="em">'+msg+'</div>';
   }
 }
-function renderSafety(d){
+function renderSafety(d,target){
   var flags=(d&&d.flags)||[];
   var open=flags.filter(function(f){return !f.handled;});
   var done=flags.filter(function(f){return f.handled;});
@@ -1392,7 +1456,7 @@ function renderSafety(d){
     if(open.length)h+='<div class="sh" style="color:var(--red);margin-bottom:.6rem">Open · needs follow-up ('+open.length+')</div>'+open.map(safetyCard).join('');
     if(done.length)h+='<div class="sh" style="margin:1.4rem 0 .6rem;color:var(--muted2)">Handled ('+done.length+')</div>'+done.map(safetyCard).join('');
   }
-  document.getElementById('safety-body').innerHTML=h;
+  var _t=document.getElementById(target||'safety-body');if(_t)_t.innerHTML=h;
 }
 function safetyCard(f){
   var col=f.level>=3?'var(--red)':'var(--gold)';
@@ -2664,6 +2728,7 @@ async function openDrill(kind,val,title){
 // ── METRICS + OPERATOR ACTIONS (Pricing V5, Doc 3) — reuses opKey()/x()/B/gs() ──
 function loadMetrics(btn){
   if(btn!==undefined) gs('mx',btn);                 // from nav (has btn); Refresh calls with none
+  renderFinanceOverview();                          // Riley Overview = Revenue & Expenses + metrics
   var box=document.getElementById('mx-metrics');
   var k=opKey(); if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(k) sessionStorage.setItem('814_opkey',k); }
   if(!k){ box.innerHTML='<div class="em">Operator key required.</div>'; return; }
@@ -2675,9 +2740,90 @@ function loadMetrics(btn){
 }
 
 // ── Add User · manual member provisioning (OPERATOR_KEY protected) ───────────
-function loadNewUser(btn){
-  if(btn!==undefined) gs('nu',btn);
-  var res=document.getElementById('nu-result'); if(res) res.innerHTML='';
+// Add User is now a modal (opened from Home + Client Overview), not a nav tab.
+function openAddUser(){ var m=document.getElementById('snu'); if(!m)return; m.classList.add('show'); var res=document.getElementById('nu-result'); if(res) res.innerHTML=''; var n=document.getElementById('nu-name'); if(n) setTimeout(function(){n.focus();},60); }
+function closeAddUser(){ var m=document.getElementById('snu'); if(m) m.classList.remove('show'); }
+function loadNewUser(){ openAddUser(); }   // back-compat alias
+
+/* ── Revenue & Expenses (Riley Overview + Home snapshot) ─────────────────── */
+var _finData=null;
+async function finSummary(){
+  var k=opKey(); if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(k) sessionStorage.setItem('814_opkey',k); }
+  if(!k) throw new Error('no-key');
+  var r=await fetch(B+'/admin-finance',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'summary'})});
+  if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); }
+  var d=await r.json(); if(!r.ok||d.error) throw new Error(d.error||'load failed'); return d;
+}
+function finMoney(n){ n=Number(n||0); return '$'+n.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
+function finCard(label,value,sub,color){ return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.95rem 1.1rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);text-transform:uppercase;letter-spacing:.14em;margin-bottom:.4rem">'+label+'</div><div style="font-family:DM Serif Display,serif;font-size:1.6rem;color:'+(color||'var(--ink)')+';line-height:1">'+value+'</div>'+(sub?'<div style="font-size:.7rem;color:var(--muted2);margin-top:.35rem">'+engEsc(sub)+'</div>':'')+'</div>'; }
+async function renderFinanceHome(){
+  var el=document.getElementById('home-finance'); if(!el)return;
+  try{
+    var d=await finSummary();
+    var paid=d.revenue.breakdown.companion+d.revenue.breakdown.coach+d.revenue.breakdown.mentor;
+    var nc=d.net>=0?'var(--green2)':'var(--red)';
+    el.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1.4rem">'+
+      finCard('Revenue · MRR',finMoney(d.revenue.mrr),paid+' paid subs','var(--green)')+
+      finCard('Expenses / mo',finMoney(d.expenses.monthly),'operating burn','var(--gold)')+
+      finCard('Net / mo',finMoney(d.net),d.net>=0?'in the black':'net burn',nc)+
+    '</div>';
+  }catch(e){ el.innerHTML=''; }
+}
+async function renderFinanceOverview(){
+  var el=document.getElementById('ro-finance'); if(!el)return;
+  el.innerHTML='<div class="em">Loading revenue & expenses…</div>';
+  try{
+    var d=await finSummary(); _finData=d; var b=d.revenue.breakdown;
+    var nc=d.net>=0?'var(--green2)':'var(--red)';
+    var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.3rem">'+
+      finCard('Revenue · MRR',finMoney(d.revenue.mrr),'recurring/mo','var(--green)')+
+      finCard('Paid subscriptions',String(b.companion+b.coach+b.mentor),b.companion+' Companion · '+b.coach+' Coach')+
+      finCard('Program purchases',finMoney(d.revenue.programs.total),d.revenue.programs.count+' one-time')+
+      finCard('Net / month',finMoney(d.net),d.net>=0?'in the black':'net burn',nc)+
+    '</div>';
+    h+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:1.4rem 0 .7rem"><div class="cl" style="margin:0">Operating Expenses</div><button class="bg" onclick="finEdit()">+ Add expense</button></div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:.8rem"><thead><tr style="text-align:left;color:var(--muted2);font-size:.64rem;text-transform:uppercase;letter-spacing:.1em"><th style="padding:.4rem .5rem">Service</th><th>Category</th><th style="text-align:right">$/mo</th><th>Billing</th><th>Status</th><th></th></tr></thead><tbody>';
+    (d.expenses.list||[]).forEach(function(e){
+      var sc=e.status==='active'?'var(--green)':e.status==='retired'?'var(--red)':'var(--muted2)';
+      h+='<tr style="border-top:1px solid var(--border)"><td style="padding:.5rem .5rem;color:var(--ink)">'+engEsc(e.service)+'</td><td style="color:var(--muted)">'+engEsc(e.category||'')+'</td><td style="text-align:right;color:var(--ink)">'+finMoney(e.amount_monthly)+'</td><td style="color:var(--muted)">'+engEsc(e.billing||'')+'</td><td style="color:'+sc+'">'+engEsc(e.status)+'</td><td style="text-align:right;white-space:nowrap"><button class="bo" style="padding:.18rem .5rem;font-size:.7rem" onclick="finEdit(\''+e.id+'\')">Edit</button> <button class="bo" style="padding:.18rem .5rem;font-size:.7rem;border-color:var(--red);color:var(--red)" onclick="finDelete(\''+e.id+'\')">&times;</button></td></tr>';
+    });
+    h+='</tbody><tfoot><tr style="border-top:2px solid var(--border)"><td colspan="2" style="padding:.6rem .5rem;font-weight:600;color:var(--ink)">Active monthly total</td><td style="text-align:right;font-weight:600;color:var(--gold)">'+finMoney(d.expenses.monthly)+'</td><td colspan="3"></td></tr></tfoot></table>';
+    el.innerHTML=h;
+  }catch(e){ el.innerHTML='<div class="em">'+(e.message==='bad-key'?'Bad operator key — click Refresh.':e.message==='no-key'?'Operator key required.':'Could not load finances: '+engEsc(e.message))+'</div>'; }
+}
+function finEdit(id){
+  var e=(id&&_finData)?((_finData.expenses.list||[]).filter(function(x){return x.id===id;})[0]||{}):{};
+  document.getElementById('fx-id').value=e.id||'';
+  document.getElementById('fx-service').value=e.service||'';
+  document.getElementById('fx-category').value=e.category||'';
+  document.getElementById('fx-amount').value=(e.amount_monthly!=null?e.amount_monthly:'');
+  document.getElementById('fx-billing').value=e.billing||'monthly';
+  document.getElementById('fx-status').value=e.status||'active';
+  document.getElementById('fx-notes').value=e.notes||'';
+  document.getElementById('fx-title').textContent=id?'Edit expense':'Add expense';
+  document.getElementById('fx-err').textContent='';
+  document.getElementById('finmodal').classList.add('show');
+}
+function closeFinModal(){ var m=document.getElementById('finmodal'); if(m)m.classList.remove('show'); }
+async function finSave(){
+  var k=opKey(); if(!k)return;
+  var service=document.getElementById('fx-service').value.trim();
+  if(!service){ document.getElementById('fx-err').textContent='Service is required'; return; }
+  var body={action:'expense_upsert',id:document.getElementById('fx-id').value||undefined,service:service,
+    category:document.getElementById('fx-category').value.trim(),amount_monthly:document.getElementById('fx-amount').value,
+    billing:document.getElementById('fx-billing').value,status:document.getElementById('fx-status').value,notes:document.getElementById('fx-notes').value.trim()};
+  var btn=document.getElementById('fx-save'); btn.disabled=true; btn.textContent='Saving…';
+  try{
+    var r=await fetch(B+'/admin-finance',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(body)});
+    var d=await r.json(); if(!r.ok||d.error) throw new Error(d.error||'save failed');
+    closeFinModal(); renderFinanceOverview();
+  }catch(e){ document.getElementById('fx-err').textContent=e.message; }
+  finally{ btn.disabled=false; btn.textContent='Save'; }
+}
+async function finDelete(id){
+  if(!id||!confirm('Remove this expense line?'))return;
+  var k=opKey(); if(!k)return;
+  try{ await fetch(B+'/admin-finance',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'expense_delete',id:id})}); renderFinanceOverview(); }catch(e){}
 }
 function nuEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function nuMsg(html,tone){

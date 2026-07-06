@@ -19,9 +19,8 @@
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
-
-// Must match admin-content.js CONTENT_TYPES (the DB has no enum on this column).
-const CONTENT_TYPES = ["book","podcast","video","music","meditation","breathwork","workout","recipe","article","journal_prompt","community_prompt","quote"];
+// Shared, tested curation validator (same rules as bulk_suggest) — single source of truth.
+const { normalizeItem, validateItem } = require("./content-curation");
 
 const clampInt = (v, lo, hi, dflt) => {
   const n = parseInt(v, 10);
@@ -29,10 +28,7 @@ const clampInt = (v, lo, hi, dflt) => {
   return Math.max(lo, Math.min(hi, n));
 };
 const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
-const toTags = (v) => {
-  const a = Array.isArray(v) ? v : (typeof v === "string" ? v.split(",") : []);
-  return a.map((t) => String(t).trim().toLowerCase()).filter(Boolean).slice(0, 10);
-};
+// Content-type validation + tag normalization now come from the shared ./content-curation validator.
 
 async function runSuggest({ count = 6, focus = "" } = {}) {
   const db = contentDb();
@@ -43,11 +39,15 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
     .select("title, content_type")
     .limit(500);
   if (exErr) throw new Error(`read library failed: ${exErr.message}`);
-  const seen = new Set((existing || []).map((r) => norm(r.title)));
+  const existingKeys = new Set((existing || []).map((r) => String(r.title || "").trim().toLowerCase()));
   const inventory = (existing || [])
     .slice(0, 200)
     .map((r) => `- ${r.title} (${r.content_type})`)
     .join("\n");
+
+  // 1b. The canonical tag vocabulary — Scout's tags must be a subset (no freeform).
+  const { data: _reg } = await db.from("tag_registry").select("tag").eq("is_active", true);
+  const registry = new Set((_reg || []).map((r) => r.tag));
 
   // 2. Load the versioned agent prompt (never hardcoded).
   const system = await loadPrompt("library_scout");
@@ -69,39 +69,27 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
   const parsed = extractJson(text);
   const rawItems = (parsed && Array.isArray(parsed.items)) ? parsed.items : (Array.isArray(parsed) ? parsed : []);
 
-  // 5. Validate + de-dupe. Only rows with a real http(s) URL survive.
+  // 5. Validate + de-dupe with the SHARED curation validator (identical rules to bulk import):
+  //    live http(s) URL, valid type, tags ⊆ registry, valid persona/tone/tier, no dupe,
+  //    and the guardrail — manifestation content never targets griever/drinker personas.
   const rows = [];
   const dropped = [];
-  const batchSeen = new Set();
+  const batch = new Set();
   for (const it of rawItems) {
-    const title = (it && it.title || "").toString().trim();
-    let type = norm(it && it.content_type).replace(/s$/, ""); // tolerate "videos" -> "video"
-    if (type === "meditations") type = "meditation";
-    const url = (it && it.content_url || "").toString().trim();
-
-    if (!title) { dropped.push({ title: it && it.title, why: "no title" }); continue; }
-    if (!CONTENT_TYPES.includes(type)) { dropped.push({ title, why: `bad type '${it && it.content_type}'` }); continue; }
-    if (!/^https?:\/\/.+\..+/i.test(url)) { dropped.push({ title, why: "no live URL" }); continue; }
-    const key = norm(title);
-    if (seen.has(key) || batchSeen.has(key)) { dropped.push({ title, why: "duplicate" }); continue; }
-    batchSeen.add(key);
-
-    rows.push({
-      title: title.slice(0, 300),
-      creator: it.creator ? String(it.creator).slice(0, 200) : null,
-      content_type: type,
-      topic: it.topic ? String(it.topic).slice(0, 100) : null,
-      duration_minutes: (it.duration_minutes == null || isNaN(+it.duration_minutes)) ? null : Math.round(+it.duration_minutes),
-      content_url: url.slice(0, 1000),
-      description: it.description ? String(it.description).slice(0, 2000) : null,
-      emotional_intensity: (it.emotional_intensity == null || isNaN(+it.emotional_intensity)) ? null : Math.max(1, Math.min(5, Math.round(+it.emotional_intensity))),
-      tags: toTags(it.tags),
-      suggestion_reason: it.reason ? String(it.reason).slice(0, 500) : null,
+    const raw = Object.assign({}, it);
+    if (raw.content_type) raw.content_type = norm(raw.content_type).replace(/s$/, ""); // tolerate "videos" → "video"
+    if (raw.reason && !raw.suggestion_reason) raw.suggestion_reason = raw.reason;       // Scout used `reason`
+    const item = normalizeItem(raw);
+    const problems = validateItem(item, { registry, existing: existingKeys, batch });
+    if (problems.length) { dropped.push({ title: (it && it.title) || "(untitled)", why: problems.join("; ") }); continue; }
+    batch.add(item.title.toLowerCase());
+    rows.push(Object.assign({}, item, {
       source: "agent",
       approval_status: "pending",
       is_active: false,
       suggested_at: new Date().toISOString(),
-    });
+      updated_at: new Date().toISOString(),
+    }));
   }
 
   // 6. Insert the survivors as pending suggestions.

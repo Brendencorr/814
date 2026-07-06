@@ -20,6 +20,8 @@ const TONE_BLOCKED  = new Set(["griever","drinker"]); // personas we never PUSH 
 const lc  = (v) => String(v == null ? "" : v).trim().toLowerCase();
 const arr = (v) => Array.isArray(v) ? v : (typeof v === "string" && v.trim() ? v.split(",").map((s) => s.trim()).filter(Boolean) : []);
 const num = (v) => (v === "" || v == null || isNaN(+v)) ? null : +v;
+const rint = (v) => { const n = num(v); return n == null ? null : Math.round(n); };            // integer or null
+const eint = (v) => { const n = num(v); return n == null ? null : Math.max(1, Math.min(5, Math.round(n))); }; // 1..5 or null
 function isHttpUrl(u) {
   if (!u || typeof u !== "string") return false;
   try { const p = new URL(u.trim()); return p.protocol === "http:" || p.protocol === "https:"; } catch { return false; }
@@ -41,10 +43,10 @@ function normalizeItem(raw) {
     tone:             raw.tone ? lc(raw.tone) : "grounded",
     time_of_day:      arr(raw.time_of_day).map(lc).filter(Boolean),
     tier_access:      raw.tier_access ? lc(raw.tier_access) : "companion",
-    duration_minutes: num(raw.duration_minutes),
+    duration_minutes: rint(raw.duration_minutes),                 // integer minutes or null
     content_url:      raw.content_url ? String(raw.content_url).trim().slice(0, 1000) : null,
     description:      raw.description ? String(raw.description).slice(0, 2000) : null,
-    emotional_intensity: num(raw.emotional_intensity),
+    emotional_intensity: eint(raw.emotional_intensity),           // clamped 1..5 smallint or null
     suggestion_reason:   raw.suggestion_reason ? String(raw.suggestion_reason).slice(0, 500) : null,
   };
 }

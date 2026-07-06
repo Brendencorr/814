@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Program — Riley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#080706;--ink2:#100e0c;--ink3:#1a1714;--ink4:#252019;
+  --parchment:#f5f0e8;--warm:#faf8f4;
+  --gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);
+  --sage:#4a7c59;--smoke:#8a8578;--smoke2:#544f4a;--rust:#c0604a;
+}
+*{box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);margin:0;min-height:100vh;line-height:1.6}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 70% -10%,rgba(201,168,76,0.06),transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:26px 20px 100px}
+.back{display:inline-flex;align-items:center;gap:7px;color:var(--smoke);text-decoration:none;font-size:13px}
+.back:hover{color:var(--parchment)}
+.phead{margin:22px 0 4px;font-family:'DM Serif Display',serif;font-size:32px;line-height:1.08}
+.pblurb{color:var(--smoke);font-size:14px;max-width:560px}
+.pmeta{display:flex;align-items:center;gap:14px;margin:16px 0 4px;flex-wrap:wrap}
+.pbar{flex:1;min-width:160px;height:7px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden}
+.pbar>div{height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));width:0;transition:width .3s}
+.pcount{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;white-space:nowrap}
+.tier-badge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--smoke);border:1px solid rgba(255,255,255,0.12);border-radius:99px;padding:3px 9px}
+/* My Tools shelf */
+.tools{background:linear-gradient(180deg,rgba(201,168,76,0.08),rgba(16,14,12,0.4));border:1px solid rgba(201,168,76,0.22);border-radius:14px;padding:16px 18px;margin:22px 0}
+.tools h3{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 10px}
+.tool-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(8,7,6,0.5);border:1px solid rgba(201,168,76,0.3);color:var(--gold2);border-radius:99px;padding:7px 13px;margin:0 7px 7px 0;font-size:12.5px;cursor:pointer;text-decoration:none}
+.tool-chip:hover{border-color:var(--gold);background:rgba(201,168,76,0.1)}
+/* Part header */
+.part{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--smoke);margin:34px 0 2px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.06)}
+.part .pn{color:var(--gold)}
+/* Module card */
+.mod{background:linear-gradient(180deg,rgba(26,23,20,0.55),rgba(16,14,12,0.55));border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:22px 22px 18px;margin:16px 0;scroll-margin-top:16px}
+.mod.keep{border-color:rgba(201,168,76,0.32)}
+.mod.done{border-color:rgba(74,124,89,0.4)}
+.mnum{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--gold);text-transform:uppercase}
+.mtitle{font-family:'DM Serif Display',serif;font-size:22px;line-height:1.15;margin:3px 0 14px}
+.mtitle .kbadge{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;color:var(--ink);background:var(--gold);border-radius:4px;padding:2px 6px;vertical-align:middle;margin-left:8px;text-transform:uppercase}
+.lbl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--smoke);margin:16px 0 5px;display:block}
+.lbl.read{color:var(--gold2)}
+.lbl.do{color:var(--sage)}
+.body p{margin:0 0 10px}
+.body ol,.body ul{margin:6px 0 10px;padding-left:22px}
+.body li{margin:4px 0}
+.body strong{color:var(--warm)}
+.keepbox{background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.22);border-radius:12px;padding:14px 16px;margin:14px 0 4px}
+.keepbox .khead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.keepbox .ktitle{font-family:'DM Serif Display',serif;font-size:16px;color:var(--gold2)}
+.printbtn{background:none;border:1px solid rgba(201,168,76,0.4);color:var(--gold2);font-size:11px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.printbtn:hover{background:rgba(201,168,76,0.12)}
+.riley{background:linear-gradient(180deg,rgba(74,124,89,0.1),rgba(16,14,12,0.3));border-left:2px solid var(--sage);border-radius:0 10px 10px 0;padding:12px 15px;margin:14px 0 4px;font-size:13.5px;color:var(--parchment)}
+.riley .rl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--sage);display:block;margin-bottom:4px}
+.donerow{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)}
+.donebtn{display:inline-flex;align-items:center;gap:8px;background:none;border:1px solid rgba(255,255,255,0.16);color:var(--smoke);border-radius:9px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.donebtn.on{border-color:rgba(74,124,89,0.5);color:var(--sage);background:rgba(74,124,89,0.08)}
+.foot{margin-top:34px;padding:16px 18px;border:1px solid rgba(255,255,255,0.06);border-radius:12px;font-size:12px;color:var(--smoke);line-height:1.6}
+.state{text-align:center;padding:60px 20px;color:var(--smoke)}
+.state a{color:var(--gold2)}
+.spin{width:26px;height:26px;border:2px solid rgba(201,168,76,0.25);border-top-color:var(--gold);border-radius:50%;animation:sp 0.8s linear infinite;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media print{
+  body::before,.back,.donerow,.tools,.pmeta,.printbtn{display:none!important}
+  body{background:#fff;color:#111}
+  .mod,.keepbox,.riley{border-color:#ccc;background:#fff}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/dashboard">← Back to dashboard</a>
+  <div id="content"><div class="state"><div class="spin"></div></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
+  'https://tglljvjixlolaguycvbb.supabase.co',
+  'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
+);
+const $=id=>document.getElementById(id);
+const PKEY=new URLSearchParams(location.search).get('p')||'';
+let TOKEN=null, DONE=new Set(), TOTAL=0;
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// Light markdown → HTML: **bold**, numbered/bulleted lists, paragraphs.
+function mdLite(raw){
+  if(!raw) return '';
+  const lines=String(raw).split('\n');
+  let html='', list=null;
+  const inline=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  const closeList=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
+  for(let ln of lines){
+    const t=ln.trim();
+    if(!t){ closeList(); continue; }
+    const ol=t.match(/^(\d+)\.\s+(.*)$/);
+    const ul=t.match(/^[-•]\s+(.*)$/);
+    if(ol){ if(list!=='ol'){closeList();list='ol';html+='<ol>';} html+='<li>'+inline(ol[2])+'</li>'; }
+    else if(ul){ if(list!=='ul'){closeList();list='ul';html+='<ul>';} html+='<li>'+inline(ul[1])+'</li>'; }
+    else { closeList(); html+='<p>'+inline(t)+'</p>'; }
+  }
+  closeList();
+  return html;
+}
+
+async function toggleDone(n,btn){
+  const want=!DONE.has(n);
+  if(want)DONE.add(n);else DONE.delete(n);
+  btn.classList.toggle('on',want);
+  btn.querySelector('span').textContent=want?'Done ✓':'Mark done';
+  btn.closest('.mod').classList.toggle('done',want);
+  updateProgress();
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    await fetch('/.netlify/functions/program-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',token:tok,program_key:PKEY,module_number:n,done:want})});
+  }catch(e){}
+}
+function updateProgress(){
+  const bar=$('pbarfill'), cnt=$('pcount');
+  if(bar)bar.style.width=(TOTAL?Math.round(DONE.size/TOTAL*100):0)+'%';
+  if(cnt)cnt.textContent=DONE.size+' of '+TOTAL+' done';
+}
+function printTool(n){
+  // Print just this KEEP tool (open a minimal window).
+  const mod=document.querySelector('.mod[data-n="'+n+'"]');
+  const kb=mod&&mod.querySelector('.keepbox');
+  if(!kb)return;
+  const w=window.open('','_blank');
+  w.document.write('<html><head><title>Riley — tool</title><style>body{font-family:Georgia,serif;max-width:600px;margin:40px auto;padding:0 20px;line-height:1.6;color:#111}h2{font-size:20px}ol,ul{padding-left:22px}li{margin:6px 0}</style></head><body>'+kb.innerHTML.replace(/<button[\s\S]*?<\/button>/g,'')+'<p style="margin-top:30px;font-size:12px;color:#888">from Riley — meetriley.us</p></body></html>');
+  w.document.close(); w.focus(); setTimeout(()=>w.print(),200);
+}
+
+function render(d){
+  const modules=d.modules||[];
+  TOTAL=modules.length; DONE=new Set(d.progress||[]);
+  const keeps=modules.filter(m=>m.keep);
+  let html='';
+  // header
+  html+='<h1 class="phead">'+esc(d.program.name)+'</h1>';
+  if(d.program.blurb)html+='<div class="pblurb">'+esc(d.program.blurb)+'</div>';
+  html+='<div class="pmeta"><div class="pbar"><div id="pbarfill"></div></div><span class="pcount" id="pcount"></span>'
+      +'<span class="tier-badge">'+(d.tier==='guide'?'Self-guided':esc(d.tier)+' · Riley alongside')+'</span></div>';
+  // My Tools shelf
+  if(keeps.length){
+    html+='<div class="tools"><h3>🔑 My Tools — keep these forever</h3>';
+    keeps.forEach(m=>{ html+='<a class="tool-chip" href="#m'+m.n+'">'+esc(m.keep_title||m.title)+'</a>'; });
+    html+='</div>';
+  }
+  // modules grouped by part
+  let lastPart=null;
+  modules.forEach(m=>{
+    if(m.part!==lastPart){ lastPart=m.part; html+='<div class="part"><span class="pn">Part '+(m.part||'')+'</span> — '+esc(m.part_title||'')+'</div>'; }
+    const done=DONE.has(m.n);
+    html+='<div class="mod'+(m.keep?' keep':'')+(done?' done':'')+'" id="m'+m.n+'" data-n="'+m.n+'">';
+    html+='<div class="mnum">Module '+m.n+'</div>';
+    html+='<div class="mtitle">'+esc(m.title)+(m.keep?'<span class="kbadge">Keep</span>':'')+'</div>';
+    if(m.read){ html+='<span class="lbl read">Read</span><div class="body">'+mdLite(m.read)+'</div>'; }
+    if(m.keep){
+      html+='<div class="keepbox"><div class="khead"><span class="ktitle">'+esc(m.keep_title||m.title)+'</span>'
+          +'<button class="printbtn" onclick="printTool('+m.n+')">Print / save</button></div>'
+          +'<div class="body">'+mdLite(m.keep)+'</div></div>';
+    }
+    if(m.do){ html+='<span class="lbl do">Do</span><div class="body">'+mdLite(m.do)+'</div>'; }
+    if(m.riley){ html+='<div class="riley"><span class="rl">Riley</span>'+mdLite(m.riley)+'</div>'; }
+    html+='<div class="donerow"><button class="donebtn'+(done?' on':'')+'" onclick="toggleDone('+m.n+',this)"><span>'+(done?'Done ✓':'Mark done')+'</span></button></div>';
+    html+='</div>';
+  });
+  if(d.footer)html+='<div class="foot">'+esc(d.footer)+'</div>';
+  $('content').innerHTML=html;
+  updateProgress();
+}
+
+async function load(){
+  if(!PKEY){ $('content').innerHTML='<div class="state">No program selected. <a href="/dashboard">Back to dashboard</a></div>'; return; }
+  const {data:{session}}=await SB.auth.getSession();
+  if(!session){ location.href='https://riley.meetriley.us'; return; }
+  TOKEN=session.access_token;
+  try{
+    const r=await fetch('/.netlify/functions/program-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',token:TOKEN,program_key:PKEY})});
+    if(r.status===403){ $('content').innerHTML='<div class="state">You don\'t have this program yet.<br><br><a href="/programs">See Program Add-ons →</a></div>'; return; }
+    if(r.status===404){ $('content').innerHTML='<div class="state">This program is coming soon.<br><br><a href="/programs">Browse programs →</a></div>'; return; }
+    const d=await r.json();
+    if(d.error) throw new Error(d.error);
+    render(d);
+  }catch(e){ $('content').innerHTML='<div class="state">Couldn\'t load the program. <a href="/dashboard">Back</a></div>'; }
+}
+load();
+</script>
+<script src="/pwa.js"></script>
+</body>
+</html>

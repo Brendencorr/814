@@ -37,14 +37,21 @@ ON CONFLICT (product_key) DO UPDATE SET
 UPDATE products SET status='retired', visible_on_menu=false
  WHERE product_key IN ('prog_move_nourish','prog_carry_both');
 
--- 3) feature_map rows (4 interactive locked-upsell + family_portal coming-soon).
-INSERT INTO feature_map (feature_key, required_any, unentitled_state) VALUES
- ('int_move_nourish',      ARRAY['prog_int_move_nourish','coach'],  'locked_upsell'),
- ('int_living_forward',    ARRAY['prog_int_grief','coach'],         'locked_upsell'),
- ('int_building_happiness',ARRAY['prog_int_happiness','coach'],     'locked_upsell'),
- ('int_staying_free',      ARRAY['prog_int_staying_free','coach'],  'locked_upsell'),
- ('family_portal',         ARRAY['coach'],                          'coming_soon')
-ON CONFLICT (feature_key) DO UPDATE SET required_any=EXCLUDED.required_any, unentitled_state=EXCLUDED.unentitled_state;
+-- 3) feature_map rows — full 6-column pattern (matches migration 033). The 4 interactive programs
+--    gate as 'locked_upsell' for non-owners (Guide/Companion see the $18.14 unlock; Coach + owners are
+--    entitled). family_portal is seeded 'hidden' — the "draft pattern, like Mentor" the addendum calls
+--    for (every Mentor row is hidden/hidden). unentitled_state is CHECK-constrained to
+--    ('hidden','locked_upsell','capped'), so the handoff's 'coming_soon' is NOT valid here; the real
+--    coming-soon tile + its render (Coach-only) are built in Phase 5, where a state value gets earned.
+INSERT INTO feature_map (feature_key, required_any, gate_mode, unentitled_state, display_name, sort_order) VALUES
+ ('int_move_nourish',      ARRAY['prog_int_move_nourish','coach'], 'locked_upsell','locked_upsell','Move Nourish',       40),
+ ('int_living_forward',    ARRAY['prog_int_grief','coach'],        'locked_upsell','locked_upsell','Living Forward',     41),
+ ('int_building_happiness',ARRAY['prog_int_happiness','coach'],    'locked_upsell','locked_upsell','Building Happiness', 42),
+ ('int_staying_free',      ARRAY['prog_int_staying_free','coach'], 'locked_upsell','locked_upsell','Staying Free',       43),
+ ('family_portal',         ARRAY['coach'],                         'hidden',       'hidden',       'Family Portal',      44)
+ON CONFLICT (feature_key) DO UPDATE SET
+  required_any=EXCLUDED.required_any, gate_mode=EXCLUDED.gate_mode,
+  unentitled_state=EXCLUDED.unentitled_state, display_name=EXCLUDED.display_name, sort_order=EXCLUDED.sort_order;
 
 -- 4) Entitlement view: implies_all_programs now covers program_interactive too, so COACH includes all
 --    interactive programs. Guide/Companion use implies[] (specific self-guided) and NEVER gain interactive

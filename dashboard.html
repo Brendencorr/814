@@ -1313,7 +1313,7 @@ async function doDeleteData(){
   }catch(e){console.warn('delete',e.message);const bb=document.getElementById('del-confirm-btn');if(bb){bb.disabled=false;bb.textContent='Try again';}}
 }
 
-async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
+async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){if(k.indexOf('ent_')===0)sessionStorage.removeItem(k);});sessionStorage.removeItem('admin_preview_tier');}catch(e){}await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 </script>
 <script>
 /* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */
@@ -1498,8 +1498,11 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   }
   var tries=0, iv=setInterval(function(){
     tries++;
-    var k=Object.keys(sessionStorage).find(function(x){return x.indexOf('ent_')===0;});
-    if(k){ try{ render(JSON.parse(sessionStorage.getItem(k))); }catch(e){} clearInterval(iv); }
+    // Read ONLY the CURRENT signed-in user's entitlements — never any stale ent_* left by a
+    // prior login on this browser (that leak showed the admin-only toggle to regular clients).
+    var uid=null; try{ uid=UID; }catch(e){}
+    var raw=uid?sessionStorage.getItem('ent_'+uid):null;
+    if(raw){ try{ render(JSON.parse(raw)); }catch(e){} clearInterval(iv); }
     else if(tries>40){ clearInterval(iv); }
   },150);
 })();

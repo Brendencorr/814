@@ -434,6 +434,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   <div class="gl">8:14</div>
   <div class="gs">Operator Dashboard</div>
   <input type="password" class="gi" id="pw" placeholder="Password" autocomplete="current-password">
+  <label style="display:flex;align-items:center;gap:8px;margin:0 2px 12px;font-size:.82rem;color:#8a8578;cursor:pointer;user-select:none"><input type="checkbox" id="rmb" style="width:15px;height:15px;accent-color:#c9a84c;cursor:pointer"> Remember this device</label>
   <button class="gbtn" onclick="unlock()">Enter</button>
   <div class="gerr" id="pw-err"></div>
 </div></div>
@@ -699,8 +700,12 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <div class="spr"><span class="sprl"><span class="sdot on"></span>Supabase</span><span class="sprv" style="color:var(--green)">Connected</span></div>
   </div>
   <div class="sps">
+    <div class="spsl">New-member alerts</div>
+    <div id="op-push-setting"></div>
+  </div>
+  <div class="sps">
     <div class="spsl">Account</div>
-    <button class="spb o" onclick="if(confirm('Sign out?')){sessionStorage.clear();location.reload()}">Sign Out</button>
+    <button class="spb o" onclick="if(confirm('Sign out?')){sessionStorage.clear();opForget();location.reload()}">Sign Out</button>
   </div>
 </div>
 <div class="mo" id="nm" style="display:none" onclick="if(event.target===this)cnm()">
@@ -733,6 +738,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </div>
 <script>
 var B='/.netlify/functions',PW='Riley814';
+// One operator key, optionally remembered on THIS device. opForget() clears it everywhere.
+function opForget(){try{['814_opkey','814_a','814_rem'].forEach(function(k){sessionStorage.removeItem(k);localStorage.removeItem(k);});}catch(e){}}
+// Rehydrate a remembered key into the session so every existing session-based read keeps working.
+try{ if(localStorage.getItem('814_rem')==='1'&&localStorage.getItem('814_opkey')){ sessionStorage.setItem('814_opkey',localStorage.getItem('814_opkey')); sessionStorage.setItem('814_a','1'); } }catch(e){}
 // ── Operator-key injector ──────────────────────────────────────────────────
 // The pipeline / content-engine + admin endpoints are OPERATOR_KEY-gated server-side; this makes
 // EVERY dashboard call to our functions carry x-operator-key (prompting once). Only touches
@@ -752,7 +761,25 @@ var B='/.netlify/functions',PW='Riley814';
     return _origFetch(url, opts);
   };
 })();
-function unlock(){if(document.getElementById('pw').value===PW){sessionStorage.setItem('814_a','1');document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw').value='';document.getElementById('pw').focus();}}
+function unlock(){
+  var pw=document.getElementById('pw').value;
+  if(pw===PW){
+    // ONE password: the gate value IS the operator key for server calls — seed it so the
+    // injector never prompts a second time. Persist to this device only if "remember" is checked.
+    var remember=!!(document.getElementById('rmb')&&document.getElementById('rmb').checked);
+    try{
+      sessionStorage.setItem('814_opkey',pw); sessionStorage.setItem('814_a','1');
+      if(remember){ localStorage.setItem('814_opkey',pw); localStorage.setItem('814_rem','1'); }
+      else { localStorage.removeItem('814_opkey'); localStorage.removeItem('814_rem'); }
+    }catch(e){}
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='flex';
+    init();
+  }else{
+    document.getElementById('pw-err').textContent='Incorrect password.';
+    document.getElementById('pw').value=''; document.getElementById('pw').focus();
+  }
+}
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
 function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});document.getElementById('s'+n).classList.add('active');document.querySelectorAll('.ht').forEach(function(b){b.classList.remove('active');});if(btn)btn.classList.add('active');else{var t=document.querySelector('[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
@@ -811,29 +838,42 @@ function renderSignupAlert(d){
 function markSignupsSeen(){ if(window.__newestSignup) localStorage.setItem('814_last_signup_seen', window.__newestSignup); loadOverview(); }
 
 // ── Operator new-member push alerts (this device) ────────────────────────────
-// Registers THIS device (via /operator-push, OPERATOR_KEY-gated) to receive a web
-// push whenever a member signs up. Separate from member subscriptions. Any admin with
-// dashboard access can enable it on their own device(s). iOS note: the site must be
-// added to the home screen first — Apple restricts web push to installed PWAs.
+// Registers THIS device (via /operator-push, OPERATOR_KEY-gated) to receive a web push
+// whenever a member signs up. Separate from member subscriptions. Any admin with dashboard
+// access can enable it on their device(s). iOS note: add the site to the home screen first
+// (Apple restricts web push to installed PWAs). Once enabled, the Home nudge disappears and
+// the on/off + test control lives in Settings (⚙).
 function opU8(b){var p='='.repeat((4-b.length%4)%4);var s=(b+p).replace(/-/g,'+').replace(/_/g,'/');var raw=atob(s);var out=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
-function opPushStatus(m,err){var s=document.getElementById('op-push-status');if(s){s.textContent=m||'';s.style.color=err?'var(--red)':'var(--muted)';}}
+function opPushOn(){return localStorage.getItem('814_op_push')==='1'&&(window.Notification&&Notification.permission==='granted');}
+function opPushStatus(m,err){var els=document.querySelectorAll('.op-push-status');for(var i=0;i<els.length;i++){els[i].textContent=m||'';els[i].style.color=err?'var(--red)':'var(--muted)';}}
+// Home nudge — shown ONLY until the admin enables alerts, then it disappears (managed in Settings).
 function renderOperatorPushControl(){
   var body=document.getElementById('home-body'); if(!body) return;
   var old=document.getElementById('op-push-card'); if(old) old.remove();
-  var on=(localStorage.getItem('814_op_push')==='1')&&(window.Notification&&Notification.permission==='granted');
-  var btnSec='background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.72rem;cursor:pointer;padding:6px 12px';
+  if(opPushOn()) return;   // enabled → no Home box; manage it in Settings ⚙
   var btnPri='background:var(--gold);border:none;border-radius:6px;color:#1a1200;font-weight:600;font-size:.75rem;cursor:pointer;padding:7px 14px';
-  var inner;
-  if(on){
-    inner='<span style="color:var(--ink2);font-size:.86rem"><span style="color:var(--green)">&#9679;</span> New-member alerts are <b>on</b> for this device.</span>'+
-      '<span style="display:flex;gap:8px"><button style="'+btnSec+'" onclick="testOperatorPush()">Send test</button><button style="'+btnSec+'" onclick="disableOperatorPush()">Turn off</button></span>';
-  }else{
-    inner='<span style="color:var(--ink2);font-size:.86rem">&#128276; Get a push on this device when a new member signs up.</span>'+
-      '<button style="'+btnPri+'" onclick="enableOperatorPush()">Enable on this device</button>';
-  }
-  var card='<div id="op-push-card" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px">'+inner+'<div id="op-push-status" style="flex-basis:100%;font-size:.72rem;color:var(--muted);min-height:14px"></div></div>';
+  var card='<div id="op-push-card" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px">'+
+    '<span style="color:var(--ink2);font-size:.86rem">&#128276; Get a push on this device when a new member signs up.</span>'+
+    '<button style="'+btnPri+'" onclick="enableOperatorPush()">Enable on this device</button>'+
+    '<div class="op-push-status" style="flex-basis:100%;font-size:.72rem;color:var(--muted);min-height:14px"></div></div>';
   body.innerHTML=card+body.innerHTML;
 }
+// Settings control — the permanent place to manage alerts on this device.
+function renderOperatorPushSetting(){
+  var box=document.getElementById('op-push-setting'); if(!box) return;
+  var btnSec='background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.72rem;cursor:pointer;padding:6px 12px;margin-right:6px';
+  var btnPri='background:var(--gold);border:none;border-radius:6px;color:#1a1200;font-weight:600;font-size:.74rem;cursor:pointer;padding:7px 14px';
+  if(opPushOn()){
+    box.innerHTML='<div class="spr"><span class="sprl"><span class="sdot on"></span>This device</span><span class="sprv" style="color:var(--green)">On</span></div>'+
+      '<div style="margin-top:.5rem"><button style="'+btnSec+'" onclick="testOperatorPush()">Send test</button><button style="'+btnSec+'" onclick="disableOperatorPush()">Turn off</button></div>'+
+      '<div class="op-push-status" style="font-size:.72rem;color:var(--muted);min-height:14px;margin-top:.4rem"></div>';
+  }else{
+    box.innerHTML='<div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">Get a push on this device when a new member signs up.</div>'+
+      '<button style="'+btnPri+'" onclick="enableOperatorPush()">Enable on this device</button>'+
+      '<div class="op-push-status" style="font-size:.72rem;color:var(--muted);min-height:14px;margin-top:.4rem"></div>';
+  }
+}
+function renderOpPush(){ renderOperatorPushControl(); renderOperatorPushSetting(); }
 async function enableOperatorPush(){
   try{
     if(!('serviceWorker' in navigator)||!('PushManager' in window)){opPushStatus('This browser can\'t receive push notifications.',true);return;}
@@ -850,8 +890,8 @@ async function enableOperatorPush(){
     var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
     var rr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:(sub.toJSON?sub.toJSON():sub),label:label,tz:tz})});
     if(!rr.ok){var ej=await rr.json().catch(function(){return{};});opPushStatus('Could not register: '+(ej.error||('HTTP '+rr.status)),true);return;}
-    localStorage.setItem('814_op_push','1'); renderOperatorPushControl();
-    opPushStatus('Done — this device will now get a push for every new member.');
+    localStorage.setItem('814_op_push','1'); renderOpPush();
+    opPushStatus('Done — this device will get a push for every new member. Manage it in Settings ⚙.');
   }catch(e){opPushStatus('Something went wrong: '+((e&&e.message)||e),true);}
 }
 async function testOperatorPush(){
@@ -869,7 +909,7 @@ async function disableOperatorPush(){
     var sub=reg&&(await reg.pushManager.getSubscription());
     if(sub&&sub.endpoint) await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'unsubscribe',endpoint:sub.endpoint})});
   }catch(e){}
-  localStorage.removeItem('814_op_push'); renderOperatorPushControl();
+  localStorage.removeItem('814_op_push'); renderOpPush();
   opPushStatus('New-member alerts turned off for this device.');
 }
 
@@ -1282,7 +1322,7 @@ function renderEngagement(d){
     '</div>'+
     '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="eng-rows">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
 }
-function tgs(){document.getElementById('stpn').classList.toggle('open');}
+function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();}
 
 // ── Safety queue (crisis flags) — OPERATOR_KEY protected ─────────────────────
 function opKey(){return sessionStorage.getItem('814_opkey')||'';}
@@ -1291,7 +1331,7 @@ async function opGet(path){
   var k=opKey();
   if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(!k) throw new Error('no-key'); sessionStorage.setItem('814_opkey',k); }
   var r=await fetch(B+path,{headers:{'x-operator-key':k}});
-  if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); }
+  if(r.status===401||r.status===403){ opForget(); throw new Error('bad-key'); }
   if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
@@ -1299,7 +1339,7 @@ async function safetyApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key (for the Safety queue):')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
   var r=await fetch(B+'/admin-safety',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
-  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===401){opForget();throw new Error('bad-key');}
   if(r.status===503)throw new Error('not-configured');
   if(!r.ok)throw new Error('HTTP '+r.status);
   return await r.json();
@@ -1384,7 +1424,7 @@ async function contentApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
   var r=await fetch(B+'/admin-content',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
-  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===401){opForget();throw new Error('bad-key');}
   if(r.status===503)throw new Error('not-configured');
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
@@ -1561,7 +1601,7 @@ async function pricingApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
   var r=await fetch(B+'/admin-pricing',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
-  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===401){opForget();throw new Error('bad-key');}
   if(r.status===503)throw new Error('not-configured');
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
@@ -2274,7 +2314,7 @@ async function membershipApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
   var r=await fetch(B+'/admin-membership',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action},extra||{}))});
-  if(r.status===401){sessionStorage.removeItem('814_opkey');throw new Error('bad-key');}
+  if(r.status===401){opForget();throw new Error('bad-key');}
   if(r.status===503)throw new Error('not-configured');
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
@@ -2565,7 +2605,7 @@ function loadMetrics(btn){
   if(!k){ box.innerHTML='<div class="em">Operator key required.</div>'; return; }
   box.innerHTML='<div class="em">Loading metrics&#8230;</div>';
   fetch(B+'/admin-metrics',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({})})
-    .then(function(r){ if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json(); })
+    .then(function(r){ if(r.status===401||r.status===403){ opForget(); throw new Error('bad-key'); } return r.json(); })
     .then(function(d){ box.innerHTML=mxRenderMetrics(d); })
     .catch(function(e){ box.innerHTML='<div class="em" style="color:var(--red)">'+(e.message==='bad-key'?'Bad operator key &mdash; click Refresh to re-enter.':'Failed to load metrics.')+'</div>'; });
 }
@@ -2631,7 +2671,7 @@ function mxPost(action,extra){
   var k=opKey(); if(!k){ mxStatus('Operator key required.','var(--red)'); return; }
   mxStatus('Working&#8230;');
   fetch(B+'/admin-comp',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action,user_id:mxCurrent.id},extra||{}))})
-    .then(function(r){ if(r.status===401){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(r){ if(r.status===401){ opForget(); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
     .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Done — "'+action+'" applied. Refreshing…','var(--green)'); mxLookup(mxCurrent.id); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
 }
@@ -2639,7 +2679,7 @@ function mxRegenLetter(){
   if(!mxCurrent)return; var k=opKey(); if(!k){ mxStatus('Operator key required.','var(--red)'); return; }
   mxStatus('Regenerating letter…');
   fetch(B+'/week-one-letter',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'regenerate',user_id:mxCurrent.id})})
-    .then(function(r){ if(r.status===401){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
+    .then(function(r){ if(r.status===401){ opForget(); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
     .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Letter regenerated'+(res.d&&res.d.is_fallback?' (fallback — sparse data)':'')+'.','var(--green)'); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
 }
@@ -2686,7 +2726,7 @@ function mxLookup(preset){
   if(!q){ mxStatus('Enter an email or user id.','var(--red)'); return; }
   mxStatus('Looking up&#8230;');
   fetch(B+'/admin-comp',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'lookup',email:q})})
-    .then(function(r){ if(r.status===401){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); } return r.json().then(function(d){ return {status:r.status,ok:r.ok,d:d}; }); })
+    .then(function(r){ if(r.status===401){ opForget(); throw new Error('bad-key'); } return r.json().then(function(d){ return {status:r.status,ok:r.ok,d:d}; }); })
     .then(function(res){ if(res.status===404){ mxStatus('No member found for that email or id.','var(--red)'); document.getElementById('mx-member').innerHTML=''; mxCurrent=null; return; } if(!res.ok){ mxStatus((res.d&&res.d.error)||'Lookup failed.','var(--red)'); return; } mxRenderMember(res.d.user); mxStatus(''); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Lookup failed.','var(--red)'); });
 }

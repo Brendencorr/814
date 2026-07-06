@@ -18,7 +18,11 @@ const CORS = {
 const json = (code, obj) => ({ statusCode: code, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(obj) });
 
 const SELF_GUIDED = ["prog_sobriety", "prog_grief", "prog_body"];
-function kindOf(p) { return p.type === "bundle" ? "bundle" : (SELF_GUIDED.includes(p.product_key) ? "self_guided" : "guided"); }
+function kindOf(p) {
+  if (p.type === "bundle") return "bundle";
+  if (p.type === "program_interactive") return "interactive";   // Riley-led — routes to /int-program
+  return SELF_GUIDED.includes(p.product_key) ? "self_guided" : "guided";
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
@@ -34,7 +38,7 @@ exports.handler = async (event) => {
   // Full catalog (one source of truth) + real ownership.
   const { data: allProds } = await sb.from("products")
     .select("product_key, display_name, blurb, type, price_cents, status, implies, implies_all_programs, visible_on_menu, sort_order")
-    .in("type", ["program", "bundle", "subscription", "free"]);
+    .in("type", ["program", "program_interactive", "bundle", "subscription", "free"]);
   const byKey = {}; (allProds || []).forEach((p) => { byKey[p.product_key] = p; });
 
   const owned = new Set();
@@ -58,7 +62,7 @@ exports.handler = async (event) => {
 
   // Expand any owned subscription/bundle to its implied programs (mirrors the entitlement view, but also
   // covers comp-via-subscriptions, so "included" is correct however access was granted).
-  const programKeys = (allProds || []).filter((p) => p.type === "program").map((p) => p.product_key);
+  const programKeys = (allProds || []).filter((p) => p.type === "program" || p.type === "program_interactive").map((p) => p.product_key);
   [...owned].forEach((k) => {
     const p = byKey[k];
     if (!p) return;
@@ -69,7 +73,7 @@ exports.handler = async (event) => {
   const tier = (owned.has("coach") || owned.has("mentor")) ? "coach" : owned.has("companion") ? "companion" : "guide";
 
   const catalog = (allProds || [])
-    .filter((p) => (p.type === "program" || p.type === "bundle") && p.visible_on_menu !== false && p.status !== "retired")
+    .filter((p) => (p.type === "program" || p.type === "program_interactive" || p.type === "bundle") && p.visible_on_menu !== false && p.status !== "retired")
     .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
   const included = [], available = [];

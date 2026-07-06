@@ -84,6 +84,18 @@ textarea{min-height:110px;resize:vertical;line-height:1.5}
 .state a{color:var(--gold2)}
 .spin{width:26px;height:26px;border:2px solid rgba(201,168,76,0.25);border-top-color:var(--gold);border-radius:50%;animation:sp 0.8s linear infinite;margin:0 auto}
 @keyframes sp{to{transform:rotate(360deg)}}
+/* Talk-with-Riley (in-session) */
+.chat{margin:20px 0 0;background:linear-gradient(180deg,rgba(74,124,89,0.08),rgba(16,14,12,0.4));border:1px solid rgba(74,124,89,0.28);border-radius:16px;padding:16px 18px}
+.chat h4{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--sage);margin:0 0 4px}
+.chat .chint{font-size:12px;color:var(--smoke);margin:0 0 12px}
+.chatlog{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:360px;overflow-y:auto}
+.cmsg{max-width:86%;padding:10px 13px;border-radius:13px;font-size:14px;line-height:1.5;white-space:pre-wrap}
+.cmsg.u{align-self:flex-end;background:rgba(201,168,76,0.14);border:1px solid rgba(201,168,76,0.3);color:var(--warm);border-bottom-right-radius:4px}
+.cmsg.r{align-self:flex-start;background:rgba(74,124,89,0.12);border:1px solid rgba(74,124,89,0.3);color:var(--parchment);border-bottom-left-radius:4px}
+.chatform{display:flex;gap:8px}
+.chatform input{flex:1;min-width:0;background:rgba(8,7,6,0.5);border:1px solid rgba(255,255,255,0.14);color:var(--parchment);border-radius:10px;padding:11px 13px;font-family:inherit;font-size:14px}
+.chatform button{background:var(--sage);color:var(--warm);border:none;border-radius:10px;padding:0 18px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.chatform button:disabled{opacity:.5;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -288,7 +300,45 @@ function renderSession(d){
   html+='<button class="btn" id="commitbtn" onclick="doCommit('+n+')">'+(n>=14?'Finish the program →':'Commit & close this session →')+'</button>';
   html+='<div class="saved" id="commitmsg"></div></div>';
 
+  // Talk this through with Riley — the session, conversationally. Cap-exempt (context carries enrollment_id).
+  CHAT_MSGS=[];
+  html+='<div class="chat"><h4>🌿 Talk this through with Riley</h4>'
+    +'<p class="chint">Riley\'s leading this session — say anything, and it won\'t count against your Guide chat limit.</p>'
+    +'<div class="chatlog" id="chatlog"></div>'
+    +'<form class="chatform" id="chatform" onsubmit="return sendSessionChat(event)">'
+    +'<input id="chatin" placeholder="Type to Riley…" autocomplete="off">'
+    +'<button type="submit" id="chatsend">Send</button></form></div>';
+
   $('content').innerHTML=html;
+}
+let CHAT_MSGS=[];
+function chatBubble(role,text){
+  const log=$('chatlog'); if(!log) return null;
+  const div=document.createElement('div'); div.className='cmsg '+(role==='user'?'u':'r');
+  div.textContent=text; log.appendChild(div); log.scrollTop=log.scrollHeight; return div;
+}
+async function sendSessionChat(ev){
+  if(ev&&ev.preventDefault) ev.preventDefault();
+  const inp=$('chatin'), btn=$('chatsend'); if(!inp) return false;
+  const text=(inp.value||'').trim(); if(!text) return false;
+  inp.value=''; chatBubble('user',text); CHAT_MSGS.push({role:'user',content:text});
+  if(btn) btn.disabled=true;
+  const bubble=chatBubble('riley','…'); let full='';
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token || TOKEN;
+    const ctx={ enrollment_id:(CUR_SESSION&&CUR_SESSION.enrollment_id)||null,
+                session_number:(CUR_SESSION&&CUR_SESSION.session)?CUR_SESSION.session.session_number:undefined,
+                program_key:PKEY };
+    const res=await fetch('/.netlify/functions/riley-chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ messages:CHAT_MSGS.slice(-20), token:tok, context:ctx })});
+    if(bubble) bubble.textContent='';
+    const reader=res.body.getReader(); const dec=new TextDecoder();
+    while(true){ const {done,value}=await reader.read(); if(done) break; full+=dec.decode(value,{stream:true}); if(bubble){bubble.textContent=full;} const lg=$('chatlog'); if(lg) lg.scrollTop=lg.scrollHeight; }
+    if(!full && bubble) bubble.textContent='(no reply — try again)';
+    CHAT_MSGS.push({role:'assistant',content:full});
+  }catch(e){ if(bubble) bubble.textContent="I'm having trouble connecting — try again in a moment."; }
+  finally{ if(btn) btn.disabled=false; if(inp) inp.focus(); }
+  return false;
 }
 function artifactBody(name){
   if(!name||!STATE) return '';

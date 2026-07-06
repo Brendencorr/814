@@ -66,8 +66,9 @@ html,body{height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans
 #app{display:none;flex-direction:column;height:100dvh;overflow:hidden}
 header{background:var(--surface);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 1.5rem;gap:1.5rem;flex-shrink:0;z-index:100;box-shadow:0 1px 0 var(--border)}
 .hl{font-family:'DM Serif Display',serif;font-size:20px;color:var(--gold);letter-spacing:-.5px;font-weight:600}
-.hn{display:flex;gap:2px;flex:1;padding-left:.5rem}
-.ht{padding:.4rem .85rem;background:transparent;border:none;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;border-radius:6px;transition:all .15s;letter-spacing:.01em;font-family:'DM Sans',sans-serif}
+.hn{display:flex;gap:2px;flex:1;min-width:0;padding-left:.5rem;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.hn::-webkit-scrollbar{display:none}
+.ht{padding:.4rem .85rem;background:transparent;border:none;font-size:.8rem;font-weight:500;color:var(--muted);cursor:pointer;border-radius:6px;transition:all .15s;letter-spacing:.01em;font-family:'DM Sans',sans-serif;flex-shrink:0;white-space:nowrap}
 .ht:hover{color:var(--ink);background:var(--surface2)}
 .ht.active{color:var(--gold);background:var(--gold-soft);font-weight:600}
 .hg{margin-left:auto;background:transparent;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:.4rem;border-radius:6px;transition:all .15s}

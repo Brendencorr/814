@@ -17,7 +17,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember } = require("./supabase-client");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -349,7 +349,7 @@ function buildUserContext(profile, clientData) {
   }
   if (profile.email)     lines.push(`Email: ${profile.email}`);
   if (profile.sobriety_date) {
-    const days = Math.floor((Date.now() - new Date(profile.sobriety_date)) / 86400000);
+    const days = soberDaysForMember(profile.sobriety_date);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
   }
   lines.push(
@@ -363,7 +363,7 @@ function buildUserContext(profile, clientData) {
     // Sobriety tracker
     if (clientData.sobriety) {
       const s = clientData.sobriety;
-      const days = s.start_date ? Math.floor((Date.now() - new Date(s.start_date)) / 86400000) : 0;
+      const days = s.start_date ? soberDaysForMember(s.start_date) : 0;
       lines.push(`\nSOBRIETY TRACKER: ${days} days sober (start date: ${s.start_date || "not set"})`);
     }
 

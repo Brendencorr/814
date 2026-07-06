@@ -276,3 +276,25 @@
   if (document.readyState !== 'loading') init();
   else document.addEventListener('DOMContentLoaded', init);
 })();
+
+/* ── Canonical member-day — ONE source of truth for "what day is it" ────────────────
+ * A member's day rolls at 4am LOCAL (a 1am check-in still counts as yesterday). Every
+ * check-in date-key, streak, and the sober-day count must go through these so no two
+ * screens ever disagree about the day. See DATA_CONTRACT.md. */
+window.RileyDay = (function () {
+  function ymd(d) { return d.toLocaleDateString('en-CA'); }                 // 'YYYY-MM-DD' in local tz
+  function appDay(ref) {                                                     // today's key, 4am rollover
+    var t = ref ? new Date(ref) : new Date();
+    return ymd(new Date(t.getTime() - 4 * 3600 * 1000));
+  }
+  // Elapsed calendar days from a 'YYYY-MM-DD' start to the member's current app-day.
+  // Both parsed as UTC-midnight date strings ⇒ exact calendar-day difference, no
+  // time-of-day / timezone drift. Start date = day 0 (today shows the elapsed count).
+  function soberDays(startYmd) {
+    if (!startYmd) return null;
+    var start = String(startYmd).slice(0, 10);
+    var diff = Math.floor((Date.parse(appDay()) - Date.parse(start)) / 86400000);
+    return isNaN(diff) ? null : Math.max(0, diff);
+  }
+  return { ymd: ymd, appDay: appDay, soberDays: soberDays };
+})();

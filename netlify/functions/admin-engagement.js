@@ -21,7 +21,7 @@
  * current curriculum enrollment + days completed from user_program_progress.
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
 
 const CORS = {
@@ -143,7 +143,7 @@ exports.handler = async function (event) {
         else if (ct >= new Date(fourteenAgoTs)) newSignupsPrev++;
       }
       totalBriefOpens += u.brief_open_count || 0;
-      const soberDays = u.sobriety_date ? Math.max(0, Math.floor((now - new Date(u.sobriety_date)) / 86400000)) : null;
+      const soberDays = u.sobriety_date ? soberDaysForMember(u.sobriety_date) : null;
       const owned = ownedByUser[u.id] || [];
       return {
         id: u.id,

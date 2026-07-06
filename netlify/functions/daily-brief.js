@@ -13,7 +13,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, soberDaysForMember } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -115,7 +115,7 @@ exports.handler = async (event) => {
     const firstName = (profile?.preferred_name || profile?.full_name || "").split(" ")[0] || "there";
     const prevCheckin = checkins.find(c => c.checkin_date === yesterday) || checkins[0];
     const soberDays   = sober?.start_date
-      ? Math.max(0, Math.floor((Date.now() - new Date(sober.start_date)) / 86400000))
+      ? soberDaysForMember(sober.start_date)
       : null;
     const moodLabels = ["", "Hard", "Low", "Okay", "Good", "Great"];
     const sleptHours = checkins.filter(c => c.sleep_hours);

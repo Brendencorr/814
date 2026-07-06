@@ -245,7 +245,7 @@ async function loadClarityScore(){
   })();
   const recovScore=(()=>{
     if(!sober?.start_date)return 50;
-    const days=Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000));
+    const days=window.RileyDay.soberDays(sober.start_date);
     return days===0?30:days<7?60:days<30?80:100;
   })();
   const connectionScore=checkins.filter(c=>c.checkin_date>=dAgo(3)).length>0?65:40;

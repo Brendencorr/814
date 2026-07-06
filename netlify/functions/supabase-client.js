@@ -36,6 +36,24 @@ async function emitEvent(supabase, userId, name, props) {
   try { if (userId) phCapture({ distinctId: userId, event: name, properties: props || {} }).catch(() => {}); } catch (e) {}
 }
 
+// ── Canonical member-day (server) — mirror of pwa.js window.RileyDay ─────────────────
+// A member's day rolls at 4am in THEIR timezone. Server "today" must be computed this
+// way (not UTC) so it matches the date-key the client wrote and the count the member sees.
+// Pass the member's user_profiles.timezone; falls back to Mountain if unknown.
+function memberDay(timezone, ref) {
+  const base = ref ? new Date(ref) : new Date();
+  const shifted = new Date(base.getTime() - 4 * 3600 * 1000);            // 4am rollover
+  try { return shifted.toLocaleDateString('en-CA', { timeZone: timezone || 'America/Denver' }); }
+  catch (e) { return shifted.toISOString().slice(0, 10); }               // bad tz string → safe fallback
+}
+// Elapsed calendar days from a 'YYYY-MM-DD' start to the member's current app-day.
+// Date-string subtraction ⇒ exact calendar days (no time-of-day drift). Start = day 0.
+function soberDaysForMember(startYmd, timezone) {
+  if (!startYmd) return null;
+  const diff = Math.floor((Date.parse(memberDay(timezone)) - Date.parse(String(startYmd).slice(0, 10))) / 86400000);
+  return Number.isNaN(diff) ? null : Math.max(0, diff);
+}
+
 // Operator-only gate. Returns null when the request carries the correct OPERATOR_KEY header,
 // or a fail-closed 401/503 response object otherwise. For operator/pipeline endpoints that must
 // NOT be reachable unauthenticated at their public Netlify URL (cost-drain / tamper / publish
@@ -70,4 +88,4 @@ function requireScheduledOrOperator(event) {
   return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Forbidden' }) };
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator };
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator, memberDay, soberDaysForMember };

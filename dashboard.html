@@ -562,7 +562,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       if(insightEl&&insightTx){insightTx.textContent="I've noticed this has been a difficult couple of weeks. Thank you for continuing to show up. Would you like me to help build a lighter week together?";insightEl.style.display='flex';}
     }
 
-    SOBER_DAYS=sobriety?Math.max(0,Math.floor((Date.now()-new Date(sobriety.start_date))/86400000)):0;
+    SOBER_DAYS=sobriety?window.RileyDay.soberDays(sobriety.start_date):0;
     const dateStreak=(()=>{const s=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));let n=0,exp=TODAY;for(const d of s){if(d.checkin_date===exp){n++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else break;}return n;})();
     const sleepLast=checkins.find(c=>c.sleep_hours)?.sleep_hours||null;
     const moodToday=todayCI?.mood||null;

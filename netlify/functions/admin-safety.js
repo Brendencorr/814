@@ -15,7 +15,7 @@
  * POST { action: "resolve", id, note } → { success: true }   (marks operator_handled_at)
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -46,7 +46,7 @@ async function listFlags(supabase) {
   const now = Date.now();
   const flags = (logs || []).map(l => {
     const p = profMap.get(l.user_id) || {};
-    const soberDays = p.sobriety_date ? Math.max(0, Math.floor((now - new Date(p.sobriety_date)) / 86400000)) : null;
+    const soberDays = p.sobriety_date ? soberDaysForMember(p.sobriety_date) : null;
     return {
       id: l.id,
       user_id: l.user_id,

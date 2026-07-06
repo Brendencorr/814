@@ -2158,7 +2158,7 @@ function renderUserList(users){
 
     var sobDays='—';
     if(u.sobriety_date){
-      var days=Math.floor((Date.now()-new Date(u.sobriety_date))/86400000);
+      var days=Math.max(0,Math.floor((Date.parse(new Date(Date.now()-14400000).toLocaleDateString("en-CA"))-Date.parse(String(u.sobriety_date).slice(0,10)))/86400000));
       sobDays=days+'d';
     }
 
@@ -2227,7 +2227,7 @@ function renderUserDetail(d){
   var sobDays='Not set';
   var sobLabel='';
   if(profile.sobriety_date){
-    var days=Math.floor((Date.now()-new Date(profile.sobriety_date))/86400000);
+    var days=Math.max(0,Math.floor((Date.parse(new Date(Date.now()-14400000).toLocaleDateString("en-CA"))-Date.parse(String(profile.sobriety_date).slice(0,10)))/86400000));
     var months=Math.floor(days/30);
     sobDays=days+'';
     sobLabel=months>=2?months+' months':'';

@@ -285,7 +285,7 @@ let MOOD=null;
 async function loadSobriety(){
   const {data}=await SB.from('sobriety_tracker').select('*').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();
   if(!data){document.getElementById('sob-display').style.display='none';document.getElementById('sob-form').style.display='block';return;}
-  const days=Math.max(0,Math.floor((Date.now()-new Date(data.start_date))/86400000));
+  const days=window.RileyDay.soberDays(data.start_date);
   document.getElementById('sob-num').textContent=days;
   const yrs=Math.floor(days/365),mos=Math.floor((days%365)/30);
   document.getElementById('sob-label').textContent=yrs>0?(yrs+'yr '+(mos>0?mos+'mo ':'')+' sober'):'days sober';
@@ -323,7 +323,7 @@ async function loadTimeline(){
 
   const events=[];
   if(sober?.start_date){
-    const soberDays=Math.max(0,Math.floor((Date.now()-new Date(sober.start_date))/86400000));
+    const soberDays=window.RileyDay.soberDays(sober.start_date);
     events.push({date:sober.start_date,icon:'🌅',title:'Journey began',color:'var(--gold)'});
     const ms=[{d:7,l:'1 week',i:'🌱'},{d:30,l:'1 month',i:'⭐'},{d:60,l:'2 months',i:'🔥'},{d:90,l:'90 days',i:'💫'},{d:180,l:'6 months',i:'🏆'},{d:365,l:'1 year',i:'🎯'},{d:730,l:'2 years',i:'🌟'},{d:1095,l:'3 years',i:'💎'},{d:1825,l:'5 years',i:'✨'},{d:2190,l:'6 years',i:'🌺'},{d:2555,l:'7 years',i:'💎'}];
     ms.filter(m=>soberDays>=m.d).forEach(m=>{

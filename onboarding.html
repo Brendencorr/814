@@ -14,6 +14,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid #c9a84c;outline-offset:2px}  /* a11y: keyboard focus (WCAG 2.4.7) */
 :root{--ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);--green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;--rust:#c0604a;}
 body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh;overflow-x:hidden}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(201,168,76,0.07) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 50% 110%,rgba(74,122,176,0.04) 0%,transparent 55%);pointer-events:none;z-index:0}
@@ -112,7 +113,7 @@ function dots(n){return `<div class="progress-dots">${[1,2,3,4,5,6,7,8,9].map(i=
 async function save(patch,step){try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_version:2,...patch,...(step!=null?{onboarding_step:step}:{})},{onConflict:'id'});}catch(e){console.warn('save',e.message);}}
 async function saveMemory(rows){try{await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true})));}catch(e){console.warn('mem',e.message);}}
 function ruler(id,lo,hi,cur){
-  const nums=[...Array(11).keys()].map(n=>`<button class="rnum ${cur===n?'sel':''}" data-r="${n}" onclick="pickRuler('${id}',${n})">${n}</button>`).join('');
+  const nums=[...Array(11).keys()].map(n=>`<button class="rnum ${cur===n?'sel':''}" data-track="ruler" data-r="${n}" onclick="pickRuler('${id}',${n})">${n}</button>`).join('');
   return `<div class="ruler" id="${id}">${nums}</div><div class="ranchor"><span>${lo}</span><span>${hi}</span></div>`;
 }
 function pickRuler(id,n){A['_'+id]=n;document.querySelectorAll('#'+id+' .rnum').forEach(b=>b.classList.toggle('sel',+b.dataset.r===n));const b=document.getElementById(id+'-btn');if(b)b.disabled=false;}
@@ -128,13 +129,14 @@ async function crisisScan(text){
   }catch(e){return 0;}
 }
 function crisisInterrupt(resumeFn){
+  try{window.trackEvent&&window.trackEvent('crisis_support_shown',{where:'onboarding'});}catch(e){}
   el().innerHTML=`<div class="crisis-card">
     <div style="font-size:28px;margin-bottom:10px">🐦</div>
     <div class="riley-says" style="font-size:22px;margin-bottom:6px">I'm really glad you told me.</div>
     <div class="riley-sub" style="margin-bottom:6px">You don't have to carry this alone right now, and you don't have to keep going with any of this. Talking to a real person can help — right now, any time.</div>
-    <a class="line" href="tel:988">📞 Call 988 — Suicide &amp; Crisis Lifeline</a>
-    <a class="line" href="sms:988">💬 Text 988</a>
-    <a class="line" href="https://988lifeline.org/chat/" target="_blank" rel="noopener">🌐 Chat online at 988lifeline.org</a>
+    <a class="line" data-track="crisis_call" href="tel:988">📞 Call 988 — Suicide &amp; Crisis Lifeline</a>
+    <a class="line" data-track="crisis_text" href="sms:988">💬 Text 988</a>
+    <a class="line" data-track="crisis_chat" href="https://988lifeline.org/chat/" target="_blank" rel="noopener">🌐 Chat online at 988lifeline.org</a>
     <div style="margin-top:18px;display:flex;gap:14px;align-items:center">
       <button class="btn" onclick="(${resumeFn.name})()">I'm okay — let's keep going</button>
     </div>
@@ -152,6 +154,7 @@ async function boot(){
   if(p&&p.onboarding_completed){window.location.href='https://riley.meetriley.us/dashboard';return;}
   if(p&&p.preferred_name){FIRST=p.preferred_name.split(' ')[0];A.preferred_name=p.preferred_name;}
   if(!p||!p.onboarding_started_at)await save({onboarding_started_at:new Date().toISOString()},0);
+  try{window.trackEvent&&window.trackEvent('onboarding_started',{version:2});}catch(e){}
   renderWelcome(); // resume is answer-preserving within a session; a fresh load restarts at welcome (short flow)
 }
 
@@ -191,7 +194,7 @@ function sBrings(){
   swap(`<div class="section-label">What brings you here</div>
     <div class="riley-says">What brings you here?</div>
     <div class="riley-sub">Choose anything that fits — you can pick more than one. There's no wrong answer.</div>
-    <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt ${A.why_set.includes(i)?'sel':''}" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
+    <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt ${A.why_set.includes(i)?'sel':''}" data-track="why_opt" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
     <div id="why-else" style="display:${elseOpen?'block':'none'};margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want.">${esc(A.why_here_detail||'')}</textarea></div>
     <div class="actions"><button class="skip" onclick="sName()" style="margin-right:auto">← Back</button><button class="btn" id="b-brings" onclick="doneBrings()" ${A.why_set.length?'':'disabled'}>Continue</button></div>
     ${dots(2)}`);
@@ -235,7 +238,7 @@ function sStart(){
 function startOpt(c,i){
   const pos=A.start_picks.indexOf(i), sel=pos>=0;
   const badge=pos===0?'starting here':(sel?'#'+(pos+1):'');
-  return `<button class="opt ${sel?'sel':''}" onclick="pickStart(${i})">${esc(c)}${badge?` <span style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace">· ${badge}</span>`:''}</button>`;
+  return `<button class="opt ${sel?'sel':''}" data-track="focus_opt" onclick="pickStart(${i})">${esc(c)}${badge?` <span style="font-size:11px;color:var(--gold);font-family:'DM Mono',monospace">· ${badge}</span>`:''}</button>`;
 }
 function pickStart(i){
   const idx=A.start_picks.indexOf(i);
@@ -264,8 +267,8 @@ function sTwoWeeks(){
   swap(`<div class="section-label">Two weeks from now</div>
     <div class="riley-says">If the next two weeks went well, what would feel different?</div>
     <div class="riley-sub">Not the finish line — just the next honest step.</div>
-    <div class="opts" id="mv-opts">${opts.map((o,i)=>`<button class="opt ${A._motivIdx===i?'sel':''}" data-i="${i}" onclick="pickMotiv(${i})">${esc(o)}</button>`).join('')}
-      <button class="opt ${elseOpen?'sel':''}" data-i="else" onclick="pickMotiv('else')">Something else…</button></div>
+    <div class="opts" id="mv-opts">${opts.map((o,i)=>`<button class="opt ${A._motivIdx===i?'sel':''}" data-track="motiv_opt" data-i="${i}" onclick="pickMotiv(${i})">${esc(o)}</button>`).join('')}
+      <button class="opt ${elseOpen?'sel':''}" data-track="motiv_opt" data-i="else" onclick="pickMotiv('else')">Something else…</button></div>
     <div id="mv-else" style="display:${elseOpen?'block':'none'};margin-top:6px"><textarea id="mv-text" placeholder="In your words.">${esc(A._motivText||'')}</textarea></div>
     <div class="actions"><button class="skip" onclick="sStart()" style="margin-right:auto">← Back</button><button class="btn" id="b-mv" onclick="doneTwoWeeks()" ${(A._motivIdx!=null||elseOpen)?'':'disabled'}>Continue</button></div>
     ${dots(4)}`);
@@ -372,6 +375,7 @@ async function acceptPrivacy(){
 // ── Screen 10 · Plan preview — the aha moment ──────────────────────────────────
 function sPreview(){
   const lane=A.focus_lane||'other';
+  try{window.trackEvent&&window.trackEvent('plan_preview_shown',{lane:lane,readiness_band:A.readiness==null?'na':(A.readiness<=4?'low':A.readiness<=7?'mid':'high'),has_secondary:!!(A.secondary_focuses&&A.secondary_focuses.length)});}catch(e){}
   const pace=(A.readiness!=null&&A.readiness<=4)?'take this gently, one honest check-in at a time':'start moving — one small step a day';
   const timeLabel=TIME_LABEL[A.notification_schedule]||'when it helps';
   const holding=(A.secondary_focuses&&A.secondary_focuses.length)?" — and I'm holding the rest for when you're ready":"";
@@ -386,6 +390,7 @@ function sPreview(){
 async function finish(nowCheckin){
   const note=A.motivation?`In two weeks they want: ${A.motivation}`:`They just began their journey.`;
   try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_completed:true,onboarding_step:9,onboarding_version:2,onboarding_completed_at:new Date().toISOString(),last_engagement_note:note},{onConflict:'id'});}catch(e){console.warn('finish',e.message);}
+  try{if(window.trackEvent){window.trackEvent('onboarding_completed',{lane:A.focus_lane||'other',secondary_count:(A.secondary_focuses||[]).length,readiness_band:A.readiness==null?'na':(A.readiness<=4?'low':A.readiness<=7?'mid':'high'),confidence_band:A.confidence==null?'na':(A.confidence<=4?'low':A.confidence<=7?'mid':'high'),note_consent:!!A.note_storage_consent,started_checkin:!!nowCheckin});window.trackFlush&&window.trackFlush();}}catch(e){}
   el().innerHTML=`<div class="build-stage"><div class="cardinal" style="font-size:44px">🐦</div><div class="build-msg" style="opacity:1;animation:rise .8s">Welcome home, ${esc(FIRST)}.</div></div>`;
   setTimeout(()=>{window.location.href='https://riley.meetriley.us/dashboard'+(nowCheckin?'?checkin=1':'');},1400);
 }

@@ -14,6 +14,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid #c9a84c;outline-offset:2px}  /* a11y: keyboard focus (WCAG 2.4.7) */
 :root{
   --ink:#080706;--ink2:#100e0c;--ink3:#1a1714;--ink4:#252019;
   --parchment:#f5f0e8;--warm:#faf8f4;
@@ -1121,19 +1122,20 @@ async function loadDailyCheckin(force){
 }
 function dcShow(i){
   if(i>=DAILY_Q.length)return dcFinish();
+  if(i===0){try{window.trackEvent&&window.trackEvent('checkin_started',{lane:CI_LANE});}catch(e){}}
   const q=DAILY_Q[i];
   let input='';
   if(q.type==='mood'){
-    input=`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">${[[1,'😔'],[2,'😐'],[3,'🙂'],[4,'😊'],[5,'🔥']].map(m=>`<button onclick="dcAns(${i},${m[0]})" style="flex:1;padding:14px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:24px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${m[1]}</button>`).join('')}</div>`;
+    input=`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">${[[1,'😔'],[2,'😐'],[3,'🙂'],[4,'😊'],[5,'🔥']].map(m=>`<button data-track="mood_chip" onclick="dcAns(${i},${m[0]})" style="flex:1;padding:14px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:24px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${m[1]}</button>`).join('')}</div>`;
   }else if(q.type==='choice'){
-    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${q.opts.map(o=>`<button onclick="dcAns(${i},'${o[0]}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${o[1]}</button>`).join('')}</div>`;
+    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${q.opts.map(o=>`<button data-track="ci_choice" onclick="dcAns(${i},'${o[0]}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${o[1]}</button>`).join('')}</div>`;
   }else if(q.type==='yn'){
-    input=`<div style="display:flex;gap:10px;margin-bottom:18px"><button onclick="dcAns(${i},true)" style="flex:1;padding:12px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:4px;font-size:14px;color:var(--gold2);cursor:pointer">Yes</button><button onclick="dcAns(${i},false)" style="flex:1;padding:12px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:14px;color:var(--parchment);cursor:pointer">Not yet</button></div>`;
+    input=`<div style="display:flex;gap:10px;margin-bottom:18px"><button data-track="ci_yn" onclick="dcAns(${i},true)" style="flex:1;padding:12px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:4px;font-size:14px;color:var(--gold2);cursor:pointer">Yes</button><button data-track="ci_yn" onclick="dcAns(${i},false)" style="flex:1;padding:12px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:14px;color:var(--parchment);cursor:pointer">Not yet</button></div>`;
   }else if(q.type==='text'){
     input=`<input type="text" id="dc-in" placeholder="${q.ph||''}" autofocus style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:12px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">`;
   }else if(q.type==='tags'){
     DC[q.key]=DC[q.key]||[]; window._dcTags=q.tags; window._dcKey=q.key;
-    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="dc-tags">${q.tags.map((t,ti)=>`<button data-ti="${ti}" onclick="dcTag(${ti})" style="padding:9px 14px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:20px;font-size:13px;color:var(--parchment);cursor:pointer">${t}</button>`).join('')}</div>`;
+    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="dc-tags">${q.tags.map((t,ti)=>`<button data-track="influence_tag" data-ti="${ti}" onclick="dcTag(${ti})" style="padding:9px 14px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:20px;font-size:13px;color:var(--parchment);cursor:pointer">${t}</button>`).join('')}</div>`;
   }
   const skipBtn=q.optional?`<button onclick="dcAns(${i},null)" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Skip</button>`:'';
   const nextBtn=(q.type==='text'||q.type==='tags')?`<button onclick="${q.type==='tags'?'dcTagsDone('+i+')':'dcAnsText('+i+')'}" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Continue</button>`:'';
@@ -1179,6 +1181,9 @@ async function dcFinish(){
   CI_ESC=(crisisLevel>=2)?null:ciEscalation();
   const card=(crisisLevel>=2)?null:resolveCard();
   row.recommendation=card?card.id:(crisisLevel>=3?'crisis':'support');
+  // Analytics: funnel booleans/counts/tiers ONLY — never note text, goal specifics,
+  // mood, or influence tag values. The rich per-day data lives in daily_checkins (RLS).
+  try{if(window.trackEvent){window.trackEvent('checkin_completed',{lane:CI_LANE,note_present:!!DC.note,influence_count:(DC.influences||[]).length,escalation:CI_ESC||'none'});if(CI_ESC)window.trackEvent('escalation_shown',{tier:CI_ESC,lane:CI_LANE});if(crisisLevel>=2)window.trackEvent('crisis_support_shown',{where:'checkin'});}}catch(e){}
   try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
   track('daily_checkin',{});
   if(DC.mood)fireState('mood_checked_in',{mood:DC.mood});
@@ -1189,6 +1194,7 @@ async function dcFinish(){
 }
 // Step 6+7 — Riley gives one thing back, then closes. Pattern note = high-confidence only.
 function dcRewardCard(card){
+  try{window.trackEvent&&window.trackEvent('give_one_thing_shown',{});}catch(e){}
   const cta=card.cta?`<a href="${card.cta.href}" class="tbtn tbtn-gold" style="text-decoration:none;display:inline-block;margin-top:14px">${esc(card.cta.label)}</a>`:'';
   const note=(CI_CONF!=null&&CI_CONF>=5&&!CI_ESC)?dcStreakNote():''; // low-confidence + watch/concern: never streaks
   p2Modal(`<div style="padding:6px 2px">

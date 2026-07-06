@@ -61,6 +61,18 @@
   }
   setInterval(function () { flush(); }, 10000); // periodic flush
 
+  // ── explicit app milestone events (privacy-safe) ─────────────────────────────
+  // window.trackEvent(name, meta): emit a named product event through the same
+  // batched, token-verified pipe. Sent as event_type "feature_use" (server
+  // whitelist) with the milestone name in `target`.
+  // HARD RULE: pass ONLY booleans / categories / counts in meta — never free-text
+  // content or sensitive tag values (no notes, no reason/influence labels).
+  window.trackEvent = function (name, meta) {
+    try { enqueue("feature_use", String(name || "").slice(0, 60), (meta && typeof meta === "object") ? meta : {}); } catch (e) {}
+  };
+  // Force a flush now (call right before a navigation so queued milestones aren't lost).
+  window.trackFlush = function () { try { flush(true); } catch (e) {} };
+
   // ── login (once per session) ────────────────────────────────────────────────
   try {
     if (uid() && !sessionStorage.getItem("814_logged")) {

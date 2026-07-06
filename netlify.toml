@@ -54,6 +54,9 @@
 [functions."admin-programs"]
   timeout = 10
 
+[functions."admin-int-sessions"]
+  timeout = 10
+
 [functions."admin-pricing"]
   timeout = 10
 

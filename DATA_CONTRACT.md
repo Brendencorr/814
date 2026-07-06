@@ -39,6 +39,23 @@ that true. Read it before adding a field or a write path.
 - **Sobriety edits go to `sobriety_tracker`**, never `user_profiles.sobriety_date` (that's the mirror).
 - **Adding a derived value used in 2+ files?** Put the function in a shared util and import it.
 - **After any schema/write change**, run: `select * from data_integrity_report;` — expect 0 rows.
+- **Anything date/day-related uses the ONE member-day helper** (below) — never `Date.now()` math or
+  `toISOString().slice(0,10)` (UTC) for a member's day.
+
+## The member day — ONE definition (never recompute it inline)
+
+A member's day = their **local calendar day with a 4am rollover** (a 1–3am action still counts as
+yesterday). This is the single anchor for check-in date-keys, "checked in today?", streaks, and the
+sober-day count. Do NOT hand-roll it — every place that had its own `Date.now()`/UTC math is why the
+sober-day count read a stale/off number.
+
+- **Client:** `window.RileyDay.appDay()` (today's key), `window.RileyDay.soberDays(startYmd)` — in `pwa.js`.
+  For a top-level `TODAY` const (parses before pwa.js loads), use the identical inline form
+  `new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA')`.
+- **Server:** `memberDay(timezone)` / `soberDaysForMember(startYmd, timezone)` — in `supabase-client.js`.
+  Always pass the member's `user_profiles.timezone` (falls back to Mountain). Never key a member's day off UTC.
+- **Counts** use date-string subtraction (`Date.parse(dayA) - Date.parse(dayB)`) so they're exact
+  calendar days with no time-of-day/timezone drift. Sobriety start = day 0 (today shows elapsed days).
 
 ## Resolved (verified correct or standardized)
 

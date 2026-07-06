@@ -18,6 +18,7 @@
  * Export: sendOperatorAlert(supabase, { userId, level, matches, excerpt, source })
  */
 
+const { soberDaysForMember } = require("./supabase-client");
 const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const LEVEL_LABEL = { 2: "Relapse risk (Level 2)", 3: "ACTIVE CRISIS / self-harm risk (Level 3)" };
 
@@ -49,7 +50,7 @@ async function sendOperatorAlert(supabase, opts) {
 
     const p = (profRes.status === "fulfilled" && profRes.value.data) || {};
     const name = p.preferred_name || p.full_name || "Member";
-    const soberDays = p.sobriety_date ? Math.max(0, Math.floor((Date.now() - new Date(p.sobriety_date)) / 86400000)) : null;
+    const soberDays = p.sobriety_date ? soberDaysForMember(p.sobriety_date) : null;
     const convo = ((convRes.status === "fulfilled" && convRes.value.data) || []).slice().reverse();
 
     const label = LEVEL_LABEL[level] || `Level ${level}`;

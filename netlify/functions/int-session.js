@@ -59,10 +59,12 @@ async function getEnrollment(sb, userId, programKey) {
 
 // The full client-side state: enrollment, per-session completion, artifacts, the latest open commitment.
 async function buildState(sb, enr) {
-  const [{ data: prog }, { data: arts }, { data: commits }] = await Promise.all([
+  const [{ data: prog }, { data: arts }, { data: commits }, { data: cat }] = await Promise.all([
     sb.from("int_session_progress").select("session_number, completed_at").eq("enrollment_id", enr.id),
     sb.from("int_artifacts").select("id, session_number, name, body, version, pinned, updated_at").eq("enrollment_id", enr.id).order("updated_at", { ascending: false }),
     sb.from("int_commitments").select("id, session_number, text, due_at, confirmed_state, confirmed_at, note").eq("enrollment_id", enr.id).order("session_number", { ascending: false }),
+    // The session catalog (titles/phases only — safe for owners) so the client can render the 14-node map in one call.
+    sb.from("int_sessions").select("session_number, phase, title, is_milestone").eq("program_key", enr.program_key).eq("is_active", true).order("session_number", { ascending: true }),
   ]);
   const done = (prog || []).map((p) => p.session_number);
   const openCommit = (commits || []).find((c) => !c.confirmed_state) || null;   // newest unconfirmed
@@ -77,6 +79,7 @@ async function buildState(sb, enr) {
     artifacts: arts || [],
     commitments: commits || [],
     open_commitment: openCommit,
+    sessions: cat || [],
   };
 }
 
@@ -100,9 +103,13 @@ exports.handler = async (event) => {
     if (!cid || !CONFIRM_STATES.includes(st)) return json(400, { error: "commitment_id + confirmed_state(done|partly|not_yet) required" });
     const { data: c } = await sb.from("int_commitments").select("id, enrollment_id").eq("id", cid).maybeSingle();
     if (!c) return json(404, { error: "no-commitment" });
-    const { data: enr } = await sb.from("int_enrollments").select("id, user_id").eq("id", c.enrollment_id).maybeSingle();
+    const { data: enr } = await sb.from("int_enrollments").select("id, user_id, program_key, lapse_state").eq("id", c.enrollment_id).maybeSingle();
     if (!enr || enr.user_id !== userId) return json(403, { error: "not-owned" });
     await sb.from("int_commitments").update({ confirmed_state: st, confirmed_at: new Date().toISOString(), note: (body.note || "").slice(0, 2000) || null }).eq("id", cid);
+    // Resume-not-restart: confirming a commitment on Staying Free is re-engagement → clear an armed lapse.
+    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") {
+      await sb.from("int_enrollments").update({ lapse_state: null, updated_at: new Date().toISOString() }).eq("id", enr.id);
+    }
     return json(200, { ok: true });
   }
 
@@ -123,12 +130,17 @@ exports.handler = async (event) => {
   const access = await resolveAccess(sb, userId, programKey);
   if (!access.owns) return json(403, { error: "not-owned" });
 
+  // Program display name for the client header/intro (single fetch, reused by every response below).
+  let programName = programKey;
+  try { const { data: pr } = await sb.from("products").select("display_name").eq("product_key", programKey).maybeSingle(); if (pr && pr.display_name) programName = pr.display_name; } catch (_) {}
+
   if (action === "enroll") {
     let enr = await getEnrollment(sb, userId, programKey);
     if (!enr) {
+      const defaultCadence = programKey === "prog_int_grief" ? "weekly" : "twice_weekly";   // grief pacing (doc 02 §Session Zero)
       const insert = {
         user_id: userId, program_key: programKey,
-        cadence_pref: ["twice_weekly", "weekly"].includes(body.cadence_pref) ? body.cadence_pref : "twice_weekly",
+        cadence_pref: ["twice_weekly", "weekly"].includes(body.cadence_pref) ? body.cadence_pref : defaultCadence,
         nudge_channels: Array.isArray(body.nudge_channels) ? body.nudge_channels.filter((c) => ["popup", "push", "email"].includes(c)) : [],
         state: "active", current_session: 0,
       };
@@ -143,7 +155,7 @@ exports.handler = async (event) => {
       if (Object.keys(patch).length) { patch.updated_at = new Date().toISOString(); await sb.from("int_enrollments").update(patch).eq("id", enr.id); Object.assign(enr, patch); }
     }
     const state = await buildState(sb, enr);
-    return json(200, { ...state, tier: access.tier });
+    return json(200, { ...state, tier: access.tier, program_name: programName });
   }
 
   if (action === "session") {
@@ -169,7 +181,7 @@ exports.handler = async (event) => {
 
     return json(200, {
       session: s, enrollment_id: enr.id, prior_commitment: priorCommit,
-      completed_at: doneRow ? doneRow.completed_at : null, tier: access.tier,
+      completed_at: doneRow ? doneRow.completed_at : null, tier: access.tier, program_name: programName,
     });
   }
 
@@ -207,13 +219,16 @@ exports.handler = async (event) => {
     const next = Math.min(MAX_SESSION, Math.max(enr.current_session || 0, n + 1));
     const patch = { current_session: next, updated_at: new Date().toISOString() };
     if (n >= MAX_SESSION) { patch.state = "maintenance"; patch.graduated_at = new Date().toISOString(); }
+    // Resume-not-restart (doc 05 §5 exit): a new commitment on Staying Free clears an armed lapse —
+    // the member is moving forward again, so nudges resume and the tone flag lifts.
+    if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") patch.lapse_state = null;
     await sb.from("int_enrollments").update(patch).eq("id", enr.id);
     return json(200, { ok: true, current_session: next, graduated: n >= MAX_SESSION });
   }
 
   // Default: state (also used to check ownership + resume).
   const enr = await getEnrollment(sb, userId, programKey);
-  if (!enr) return json(200, { enrolled: false, owns: true, tier: access.tier });
+  if (!enr) return json(200, { enrolled: false, owns: true, tier: access.tier, program_name: programName });
   const state = await buildState(sb, enr);
-  return json(200, { ...state, tier: access.tier });
+  return json(200, { ...state, tier: access.tier, program_name: programName });
 };

@@ -17,7 +17,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember } = require("./supabase-client");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -26,6 +26,7 @@ const {
   LEVEL1_DIRECTIVE,
   DIAGNOSIS_DIRECTIVE,
 } = require("./crisis-detection");
+const { detectSlipDisclosure, lapseRepairDirective } = require("./lapse-detection");
 const { getRemaining, incrementUsage } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
@@ -349,7 +350,7 @@ function buildUserContext(profile, clientData) {
   }
   if (profile.email)     lines.push(`Email: ${profile.email}`);
   if (profile.sobriety_date) {
-    const days = Math.floor((Date.now() - new Date(profile.sobriety_date)) / 86400000);
+    const days = soberDaysForMember(profile.sobriety_date);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
   }
   lines.push(
@@ -363,7 +364,7 @@ function buildUserContext(profile, clientData) {
     // Sobriety tracker
     if (clientData.sobriety) {
       const s = clientData.sobriety;
-      const days = s.start_date ? Math.floor((Date.now() - new Date(s.start_date)) / 86400000) : 0;
+      const days = s.start_date ? soberDaysForMember(s.start_date) : 0;
       lines.push(`\nSOBRIETY TRACKER: ${days} days sober (start date: ${s.start_date || "not set"})`);
     }
 
@@ -512,6 +513,22 @@ function buildUserContext(profile, clientData) {
     lines.push("- NEVER pitch a membership or program they already own. Reference what they have by name.");
   }
 
+  // ── COACHED PROGRAMS (four-lane routing) — recommend the matching Riley-led program only when it fits ──
+  if (clientData && Array.isArray(clientData.interactivePrograms)) {
+    const notOwned = clientData.interactivePrograms.filter((p) => !p.owned);
+    if (notOwned.length) {
+      const LANE = {
+        prog_int_move_nourish: "rebuilding their body and energy — movement, eating, sleep, feeling strong again",
+        prog_int_grief: "carrying grief or a major loss — the death of someone, a life chapter ending",
+        prog_int_happiness: "past the crisis and stable but flat — 'fine' and wanting more, building a life worth living",
+        prog_int_staying_free: "staying free from a pattern — drinking, using, or anything they keep returning to",
+      };
+      lines.push("\nCOACHED PROGRAMS AVAILABLE (Riley-led, $18.14, deeper than chat — a real session series with follow-through):");
+      notOwned.forEach((p) => lines.push(`  - ${p.name} → for someone ${LANE[p.key] || ""}`));
+      lines.push("  ROUTING: read what the person is ACTUALLY carrying right now and recommend the ONE program that matches — never a list, only when it genuinely fits, the way a friend would ('there's something built for exactly this'). NEVER recommend one during a crisis, a disclosed slip, or acute distress — support comes first, marketing never. Never pitch a program they own.");
+    }
+  }
+
   lines.push("");
   lines.push("Use their name naturally (not every message). Reference their data when relevant to what they say.");
   return lines.join("\n");
@@ -578,6 +595,14 @@ async function getClientData(supabase, userId) {
     const sharedDates = calRes.value?.data || [];
     const sensitiveDates = [...personalDates.filter(d => d.is_sensitive !== false), ...sharedDates];
 
+    // Live coached (interactive) programs — for Riley's four-lane routing/recommendation. Only 'live'
+    // ones surface (drafts are never recommended); owned/Coach are flagged so Riley never sells them.
+    let interactivePrograms = [];
+    try {
+      const { data: ip } = await supabase.from("products").select("product_key, display_name").eq("type", "program_interactive").eq("status", "live").order("sort_order");
+      interactivePrograms = (ip || []).map((p) => ({ key: p.product_key, name: p.display_name, owned: ownedProducts.includes(p.product_key) || tier === "coach" || tier === "mentor" }));
+    } catch (_) {}
+
     return {
       sobriety: soberRes.value?.data?.[0] || null,
       todayCheckin: checkinRes.value?.data?.[0] || null,
@@ -592,6 +617,7 @@ async function getClientData(supabase, userId) {
       wellness: wellnessRes.value?.data || null,
       wellnessPlans: plansRes.value?.data || [],
       lifeMap: lifeMapRes.value?.data || [],
+      interactivePrograms,
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);
@@ -667,6 +693,38 @@ async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
       .update({ last_crisis_at: new Date().toISOString(), last_crisis_level: level })
       .eq("id", userId).then(() => {}, () => {});
   } catch (e) { console.warn("logCrisis failed (non-fatal):", e.message); }
+}
+
+// ── Lapse-repair (Staying Free, doc 05 §5) — canon line + state when a slip is disclosed ──────
+// The founder-authored first response (interim until Brenden replaces it in canon_copy). Fetched
+// live so his edit in the operator takes effect immediately; the constant is only the fallback.
+const INTERIM_LAPSE_LINE = `Thank you for telling me. That took more courage than you're giving yourself credit for right now. Nothing you built is erased — every day you had still happened, and I'm still here. Tonight has one job: water, something to eat, sleep. Tomorrow, in daylight, we'll look at what happened together — no shame in this room, not now, not ever.`;
+async function getCanonLapseLine(supabase) {
+  try {
+    if (supabase) {
+      const { data } = await supabase.from("canon_copy").select("body").eq("key", "lapse_first_response").maybeSingle();
+      if (data && data.body) return data.body;
+    }
+  } catch (_) {}
+  return INTERIM_LAPSE_LINE;
+}
+// Arm lapse_active on the member's Staying Free enrollment (a no-op if they aren't enrolled — the canon
+// response + stabilization still fire for any tier). This suspends their program nudges (int-proactive-
+// cron already skips lapse_active) and flags the tone. Stays armed post-graduation per spec. Non-fatal.
+async function markLapseActive(supabase, userId) {
+  try {
+    await supabase.from("int_enrollments")
+      .update({ lapse_state: "lapse_active", updated_at: new Date().toISOString() })
+      .eq("user_id", userId).eq("program_key", "prog_int_staying_free");
+  } catch (e) { console.warn("markLapseActive (state) failed (non-fatal):", e.message); }
+  // lapse_at (migration 065) — stamped in a SEPARATE write so a missing column can't block arming
+  // lapse_state. Re-stamped fresh on every arming (anchors the next-day follow-up + auto-clear window);
+  // the clear paths only null lapse_state, so a fresh stamp here keeps the two in sync.
+  try {
+    await supabase.from("int_enrollments")
+      .update({ lapse_at: new Date().toISOString() })
+      .eq("user_id", userId).eq("program_key", "prog_int_staying_free").eq("lapse_state", "lapse_active");
+  } catch (_) { /* column lands with migration 065 */ }
 }
 
 // ── Memory Engine — distill durable memories from a conversation ──────────────
@@ -764,6 +822,57 @@ function buildConversationHistory(message, messages) {
   return message ? [{ role: "user", content: message }] : [];
 }
 
+// ── Interactive program session context (additive) ────────────────────────────
+// When a message carries context.enrollment_id (the member is inside a Riley-led session on
+// int-program.html), verify the enrollment is THEIRS + active, load the session spec, and return a
+// directive that makes Riley deliver the session conversationally + a flag that exempts the message
+// from the Guide chat cap (they bought the coaching — metering it would break the promise). Returns
+// null for a normal chat message (no context / forged / not owned) → default behavior is unchanged.
+function sessionDirective(programName, s, prior, enr) {
+  if (!s) {
+    return `ACTIVE RILEY-LED SESSION: the member is in their ${programName || "program"}, but this session isn't authored yet — stay warm and present, ask what they'd like to work on, and don't invent structured content.\n\n----\n\n`;
+  }
+  const ws = s.work_spec || {}, opts = Array.isArray(s.commit_options) ? s.commit_options : [];
+  const lines = [];
+  lines.push(`ACTIVE RILEY-LED COACHING SESSION — the member is IN a session they're paying you to lead. Deliver it conversationally, one beat at a time, in your normal short voice. NEVER dump the whole session at once. Move OPEN → LEARN → WORK → COMMIT only as they're ready, and let them talk. This is the coaching they bought — take your time, stay with them.`);
+  lines.push(`\nProgram: ${programName || enr.program_key} · Session ${s.session_number}: ${s.title}${s.phase ? " (" + s.phase + ")" : ""}`);
+  if (prior && prior.text) {
+    const cs = prior.confirmed_state;
+    lines.push(`OPEN from memory: last time they committed to "${prior.text}" — ${cs === "done" ? "they did it (celebrate the specific thing)" : cs === "partly" ? "they did it partly (that counts — honor it)" : cs === "not_yet" ? "not yet (curiosity, never disappointment)" : "still open (ask gently how it went)"}.`);
+  }
+  if (s.open_template) lines.push(`OPEN: ${s.open_template}`);
+  if (s.learn_body) lines.push(`LEARN (teach this in your voice, then ask how it lands for them): ${s.learn_body}`);
+  if (ws.intro || (ws.prompts && ws.prompts.length)) {
+    lines.push(`WORK — guide them to produce "${ws.artifact || "their work"}"${ws.intro ? ": " + ws.intro : ""} ${(ws.prompts || []).join(" / ")} They can save it on the program screen; encourage that.`);
+  }
+  if (opts.length) lines.push(`COMMIT — help them choose ONE (implementation-intention form, "after X, I will Y"), from: ${opts.join(" | ")} — or their own words. It gets scheduled and you follow up.`);
+  lines.push(`\nSafety still overrides everything: at any crisis or slip signal, drop the session and follow the crisis rules.`);
+  return lines.join("\n") + "\n\n----\n\n";
+}
+
+async function loadSessionContext(supabase, userId, ctx) {
+  if (!supabase || !userId || !ctx || !ctx.enrollment_id) return null;
+  try {
+    const { data: enr } = await supabase.from("int_enrollments")
+      .select("id, user_id, program_key, current_session, lapse_state")
+      .eq("id", ctx.enrollment_id).maybeSingle();
+    if (!enr || enr.user_id !== userId) return null;   // forged / another user's enrollment → no exemption, no injection
+    const n = Number.isInteger(ctx.session_number) ? ctx.session_number : (enr.current_session || 0);
+    const [{ data: s }, { data: prod }] = await Promise.all([
+      supabase.from("int_sessions").select("session_number, phase, title, open_template, learn_body, work_spec, commit_options")
+        .eq("program_key", enr.program_key).eq("session_number", n).eq("is_active", true).maybeSingle(),
+      supabase.from("products").select("display_name").eq("product_key", enr.program_key).maybeSingle(),
+    ]);
+    let prior = null;
+    if (n > 0) {
+      const { data: pc } = await supabase.from("int_commitments").select("text, confirmed_state")
+        .eq("enrollment_id", enr.id).lt("session_number", n).order("session_number", { ascending: false }).limit(1).maybeSingle();
+      prior = pc || null;
+    }
+    return { exempt: true, directive: sessionDirective(prod && prod.display_name, s, prior, enr) };
+  } catch (e) { console.warn("loadSessionContext failed (non-fatal):", e.message); return null; }
+}
+
 // ── Handler — standard Lambda format (no streaming wrapper needed) ────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") {
@@ -833,6 +942,15 @@ exports.handler = async function (event) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
 
+  // Interactive Riley-led session context — additive, only when the client sends context.enrollment_id.
+  // Injects the session spec so Riley delivers the loop conversationally, and exempts the message from
+  // the Guide cap. Crisis/safety directives are prepended LATER, so they still win over this.
+  let sessionExempt = false;
+  try {
+    const sctx = await loadSessionContext(supabase, user_id, body.context);
+    if (sctx) { systemPrompt = sctx.directive + systemPrompt; sessionExempt = true; }
+  } catch (_) {}
+
   const conversationHistory = buildConversationHistory(message, messages);
 
   // ── CRISIS OVERRIDE — deterministic, runs BEFORE any LLM call, top priority ──
@@ -874,7 +992,20 @@ exports.handler = async function (event) {
   // Levels 1–2 + diagnosis guardrail: prepend hard directives so they win over
   // every standing instruction in the base prompt for THIS reply.
   let safetyDirective = "";
-  if (crisis.level === 2) {
+  // Disclosed slip (already happened) → lapse-repair: founder canon first, Fast Re-entry, no shame,
+  // no sell. Detected separately from crisis Level 2 (relapse RISK) and given priority over the generic
+  // L1/L2 directive, because "put distance from the substance" is the wrong response once it's happened.
+  // Level 3 self-harm already short-circuited above, so it can never be overridden here.
+  const slip = detectSlipDisclosure(latestUserText);
+  if (slip.isSlip) {
+    const canonLine = await getCanonLapseLine(supabase);
+    safetyDirective += lapseRepairDirective(canonLine) + "\n\n";
+    await logCrisis(supabase, user_id, session_id, 2, ["slip-disclosure", ...slip.matches], latestUserText);
+    if (supabase && user_id) {
+      markLapseActive(supabase, user_id);   // arm lapse_state on Staying Free (no-op if not enrolled)
+      sendOperatorAlert(supabase, { userId: user_id, level: 2, matches: ["slip-disclosure", ...slip.matches], excerpt: latestUserText, source: "riley-chat-lapse" }).catch(() => {});
+    }
+  } else if (crisis.level === 2) {
     safetyDirective += LEVEL2_DIRECTIVE + "\n\n";
     await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText);
     // Fire-and-forget — runs during the awaited model call below, so the
@@ -896,7 +1027,9 @@ exports.handler = async function (event) {
   // must never hit a usage wall. See 06_entitlements_and_webhooks_spec.md §4.
   let usageInfo = null;
   const isUncappedTier = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
-  if (crisis.level === 0 && supabase && user_id && !isUncappedTier) {
+  // sessionExempt: interactive-program session messages don't count against the Guide cap (they bought
+  // the coaching). The enrollment was verified as theirs in loadSessionContext, so it can't be forged.
+  if (crisis.level === 0 && supabase && user_id && !isUncappedTier && !sessionExempt && !slip.isSlip) {
     try {
       let freeAccess = false;
       try {

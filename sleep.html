@@ -155,7 +155,7 @@ const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA');
+let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
@@ -200,7 +200,13 @@ async function loadSleep(){
   const avg=ws.length?Math.round(ws.reduce((s,l)=>s+l.sleep_hours,0)/ws.length*10)/10:null;
   document.getElementById('sl-avg').textContent=avg?avg+'h':'—';
   if(ws.length)document.getElementById('sl-last').textContent=ws[0].sleep_hours+'h';
-  let streak=0;for(const l of ws){if(l.sleep_hours>=goalHrs)streak++;else break;}
+  // Consecutive CALENDAR days meeting the goal (a missing night breaks the streak),
+  // ending today or yesterday. Safe local date math — never UTC-parse a 'YYYY-MM-DD'.
+  const _byD={};ws.forEach(l=>{_byD[l.checkin_date]=l.sleep_hours;});
+  const _prev=y=>{const p=y.split('-');const d=new Date(+p[0],+p[1]-1,+p[2]);d.setDate(d.getDate()-1);return d.toLocaleDateString('en-CA');};
+  let streak=0,exp=window.RileyDay?window.RileyDay.appDay():new Date().toLocaleDateString('en-CA');
+  if(_byD[exp]===undefined)exp=_prev(exp);                 // no log today yet → start from yesterday
+  while(_byD[exp]!==undefined&&_byD[exp]>=goalHrs){streak++;exp=_prev(exp);}
   document.getElementById('sl-str').textContent=streak||'—';
 
   // Narrative story line

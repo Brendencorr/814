@@ -14,7 +14,7 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -46,7 +46,7 @@ async function gatherContext(sb, userId) {
     profile: val(profRes) || null,
     state: val(stateRes) || null,
     checkin: (val(ciRes) || [])[0] || null,
-    soberDays: sober && sober.start_date ? Math.max(0, Math.floor((Date.now() - new Date(sober.start_date)) / 86400000)) : null,
+    soberDays: sober && sober.start_date ? soberDaysForMember(sober.start_date) : null,
     lastWeekly: (val(weeklyRes) || [])[0] || null,
   };
 }

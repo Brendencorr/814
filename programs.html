@@ -132,7 +132,7 @@ const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-let USER=null,UID=null,TODAY=new Date().toLocaleDateString('en-CA');
+let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');
 
 function A(id,msg,ok){
   const el=document.getElementById(id);if(!el){console.log(ok?'OK':'ERR',msg);return;}
@@ -266,8 +266,8 @@ async function loadPrograms(){
     : '<div style="font-size:13px;color:var(--smoke);grid-column:1/-1">You have every program. 🎉</div>';
 }
 function pgPrice(c){ return '$'+(Number(c||0)/100).toFixed(2); }
-function pgKind(k){ return k==='guided'?'Riley-guided':k==='bundle'?'Bundle · all 3':'Self-guided'; }
-function pgIcon(k){ return k==='guided'?'🧭':k==='bundle'?'🎁':'📘'; }
+function pgKind(k){ return k==='guided'?'Riley-guided':k==='interactive'?'Riley-led':k==='bundle'?'Bundle · all 3':'Self-guided'; }
+function pgIcon(k){ return k==='guided'?'🧭':k==='interactive'?'🤝':k==='bundle'?'🎁':'📘'; }
 function programCard(p,owned){
   var head='<div style="font-size:34px;margin-bottom:10px">'+pgIcon(p.kind)+'</div>'
     +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;margin-bottom:4px">'+esc(p.name)+'</div>'
@@ -276,7 +276,8 @@ function programCard(p,owned){
   if(owned){
     if(p.status && p.status!=='live')
       return '<div class="card">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">In your plan · coming soon</div></div>';
-    return '<div class="card">'+head+'<a href="/program?p='+encodeURIComponent(p.key)+'" class="btn btn-gold" style="width:100%;text-align:center;display:block;text-decoration:none">Open →</a></div>';
+    var readerPath=p.kind==='interactive'?'/int-program':'/program';
+    return '<div class="card">'+head+'<a href="'+readerPath+'?p='+encodeURIComponent(p.key)+'" class="btn btn-gold" style="width:100%;text-align:center;display:block;text-decoration:none">Open →</a></div>';
   }
   if(p.status==='draft')
     return '<div class="card" style="opacity:.9">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';

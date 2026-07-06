@@ -164,9 +164,9 @@ Respond warmly and without panic. Do this:
 1. Acknowledge the pull directly and without shame. Reaching out right now is strength, not failure.
 2. Gently encourage them to put physical distance between themselves and the substance or access to it, right now.
 3. Encourage them to contact a real person immediately — a sponsor, their coach, a trusted friend, or a meeting.
-4. Offer a 10-minute urge-surfing exercise: an urge is a wave — it rises, peaks, and passes. They can ride it without acting on it.
+4. Offer a concrete tool right now, free to anyone regardless of tier: the Emergency Craving Protocol or the 8-Minute Reset (a movement interrupt). An urge is a wave — it rises, peaks, and passes in minutes; they can ride it without acting. Walk them into the first step live, don't just name it.
 5. Make sure they know they can call or text 988 any time if it gets heavier.
-Stay with them. Do NOT return to normal coaching. Do NOT sell anything. One caring next step — not a list.`;
+Stay with them. Do NOT return to normal coaching. Do NOT sell anything — this support is always free. One caring next step — not a list.`;
 
 // ── Level 1 directive — elevated stress ──────────────────────────────────────
 const LEVEL1_DIRECTIVE =

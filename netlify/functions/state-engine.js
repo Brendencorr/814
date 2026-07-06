@@ -21,7 +21,7 @@
  * Response (JSON): { tier, recompute, crisis, suspended, state, clarity_delta, explainer }
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 const { detectCrisis } = require("./crisis-detection");
 const { sendOperatorAlert } = require("./safety-alert");
 const { isTier1, computeDimensions, computeClarity, explainChange } = require("./clarity");
@@ -79,7 +79,7 @@ async function gatherSignals(supabase, userId) {
   const habitRate = habitList.length ? Math.min(100, (comps.length / (habitList.length * 7)) * 100) : null;
 
   const soberRow = (sober.status === "fulfilled" && sober.value.data && sober.value.data[0]) || null;
-  const soberDays = soberRow && soberRow.start_date ? Math.max(0, Math.floor((Date.now() - new Date(soberRow.start_date)) / 86400000)) : null;
+  const soberDays = soberRow && soberRow.start_date ? soberDaysForMember(soberRow.start_date) : null;
 
   const progRow = (prog.status === "fulfilled" && prog.value.data && prog.value.data[0]) || null;
   const activeJourney = progRow ? ((progRow.programs && progRow.programs.title) || progRow.program_name || null) : null;

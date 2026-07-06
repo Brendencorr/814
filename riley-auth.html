@@ -792,7 +792,7 @@ function hideSavePrompt() {
 function renderSobrietyInfo() {
   if (!userProfile) return;
   if (userProfile.sobriety_date) {
-    const days = Math.floor((Date.now() - new Date(userProfile.sobriety_date)) / 86400000);
+    const days = window.RileyDay.soberDays(userProfile.sobriety_date);
     const months = Math.floor(days / 30);
     document.getElementById('sobriety-display').textContent =
       months >= 2 ? `${months} months sober` : `${days} day${days !== 1 ? 's' : ''} sober`;

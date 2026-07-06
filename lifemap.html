@@ -268,7 +268,7 @@ async function loadLifeScore(){
   const checkinDays=new Set(ci.filter(c=>c.checkin_date>=wkISO).map(c=>c.checkin_date)).size;
   const reflWk=ci.filter(c=>c.checkin_date>=wkISO&&c.notes&&String(c.notes).trim()).length;
   const habitRate=habits.length?comps.length/(habits.length*7)*100:null;
-  const soberDays=sober?Math.max(0,Math.floor((Date.now()-new Date(sober))/86400000)):null;
+  const soberDays=sober?window.RileyDay.soberDays(sober):null;
   const cnt=f=>facets.filter(x=>x===f).length;
   const avgMood=moods.length?moods.reduce((a,b)=>a+b,0)/moods.length:null;
   const raw=[

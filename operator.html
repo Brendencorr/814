@@ -694,10 +694,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 <div class="sc" id="sy">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1000px;margin:0 auto">
-      <div id="pm-editor" style="margin-bottom:1.6rem"></div>
       <div id="ise-metrics" style="margin-bottom:1.6rem"></div>
-      <div id="ise-editor" style="margin-bottom:1.6rem"></div>
       <div id="pricing-body"><div class="em">Loading…</div></div>
+      <div id="ise-canon" style="margin-top:1.6rem"></div>
     </div>
   </div>
 </div>
@@ -1687,9 +1686,8 @@ var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach',4:'Mentor'};
 var STATUS_COLOR={draft:'var(--muted2)',locked:'var(--gold)',live:'var(--green)',retired:'var(--red)'};
 async function loadPricing(btn){
   gs('y',btn);
-  try{pmInit();}catch(e){}
-  try{iseInit();}catch(e){}
   try{iseMetrics();}catch(e){}
+  try{iseCanon();}catch(e){}
   var el=document.getElementById('pricing-body');el.innerHTML='<div class="em">Loading…</div>';
   try{var d=await pricingApi('list');renderPricing(d.products||[],d.usage_limits||[],d.free_access_mode);}
   catch(e){
@@ -1716,9 +1714,11 @@ function pricingRow(p){
     '<select onchange="setProductStatus(\''+p.product_key+'\',this.value)" style="background:var(--bg);border:1px solid '+col+';color:'+col+';border-radius:4px;padding:.3rem .5rem;font-size:.72rem;font-family:DM Mono,monospace;text-transform:uppercase">'+
       ['draft','locked','live','retired'].map(function(s){return '<option value="'+s+'"'+(s===p.status?' selected':'')+'>'+s+'</option>';}).join('')+
     '</select>'+
+    pricingContentBtn(p)+
     '<button class="bo" onclick="editProductPrice(\''+p.product_key+'\','+p.price_cents+')">Edit price</button>'+
     '</div>'+
     '<div id="pmembers-'+p.product_key+'" style="display:none;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)"></div>'+
+    '<div id="pcontent-'+p.product_key+'" style="display:none;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--border)"></div>'+
   '</div>';
 }
 var _openProductMembers=null;
@@ -1734,6 +1734,33 @@ async function toggleProductMembers(key){
       return '<div onclick="openUserPanel(\''+m.id+'\')" style="display:flex;align-items:center;gap:.6rem;padding:.35rem .5rem;cursor:pointer;border-radius:4px;font-size:.78rem" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'"><span style="flex:1;color:var(--text)">'+engEsc(m.full_name||m.email||m.id)+'</span><span style="color:var(--muted2);font-size:.66rem">'+engEsc(m.source||'')+' · '+fd(m.granted_at)+'</span></div>';
     }).join(''):'<div class="em">No active members.</div>';
   }catch(e){el.innerHTML='<div class="em" style="color:var(--red)">'+engEsc(e.message)+'</div>';}
+}
+// A catalog row expands in-place to its content editor: interactive programs → the session editor
+// (Session Zero + 14), self-guided programs → the module editor (Read/Do/Keep/Riley). One list, click to edit.
+function pricingEditKind(p){
+  if(/^prog_int_/.test(p.product_key)) return 'session';
+  if(['prog_sobriety','prog_grief','prog_body'].indexOf(p.product_key)>=0) return 'module';
+  return null;
+}
+function pricingContentBtn(p){
+  var ek=pricingEditKind(p); if(!ek) return '';
+  return '<button class="bo" onclick="event.stopPropagation();togglePricingContent(\''+p.product_key+'\',\''+ek+'\')">'+(ek==='session'?'Sessions ▾':'Content ▾')+'</button>';
+}
+var _openPContent=null;
+async function togglePricingContent(key,kind){
+  var el=document.getElementById('pcontent-'+key); if(!el) return;
+  if(_openPContent===key){ el.style.display='none'; _openPContent=null; return; }
+  if(_openPContent){ var prev=document.getElementById('pcontent-'+_openPContent); if(prev) prev.style.display='none'; }
+  _openPContent=key; el.style.display='block'; el.innerHTML='<div class="em" style="font-size:.72rem">Loading…</div>';
+  try{
+    if(kind==='session'){
+      var ds=await iseApi('get',{program_key:key});
+      el.innerHTML=(ds.sessions&&ds.sessions.length)?ds.sessions.map(function(s){return iseRow(key,s);}).join(''):'<div class="em" style="font-size:.72rem">No sessions yet.</div>';
+    } else {
+      var dm=await pmApi('get',{program_key:key});
+      el.innerHTML=(dm.modules&&dm.modules.length)?dm.modules.map(function(m){return pmRow(key,m);}).join(''):'<div class="em" style="font-size:.72rem">No modules yet.</div>';
+    }
+  }catch(e){ el.innerHTML='<div class="em" style="font-size:.72rem;color:var(--red)">'+(e.message==='bad-key'?'Operator key incorrect.':engEsc(e.message))+'</div>'; }
 }
 // Explicit display order within a group — falls back to sort_order for
 // anything not listed (e.g. a brand-new product added later).

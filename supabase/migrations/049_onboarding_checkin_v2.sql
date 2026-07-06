@@ -1,8 +1,9 @@
--- 048_onboarding_checkin_v2.sql
+-- 049_onboarding_checkin_v2.sql
 -- Schema for Onboarding & Daily Check-In v2 (July 2026 spec).
 -- Additive + idempotent — safe to run alongside v1 (v1 ignores these columns).
 -- NOTE: already applied to the live DB during the v2 build (idempotent — safe to re-run).
--- Renamed from 047 → 048 to avoid a number clash with 047_notification_prefs.sql.
+-- Renumbered 047 → 049 to clear number clashes with 047_notification_prefs.sql
+-- and 048_operator_push.sql that merged onto main during this build.
 
 -- ── user_profiles: v2 onboarding fields ──────────────────────────────────────
 alter table public.user_profiles

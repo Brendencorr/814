@@ -7,7 +7,7 @@
   # to ship to the browser (RLS protects all data), and several client pages embed it
   # directly. Marking it here means we don't have to chase every page into OMIT_PATHS
   # (which is what broke the build when library.html was added without being listed).
-  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY,SUPABASE_ANON_KEY"
+  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY,SUPABASE_ANON_KEY,SUPABASE_URL"
 
 [functions]
   directory = "netlify/functions"

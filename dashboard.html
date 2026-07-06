@@ -1058,7 +1058,21 @@ const CI_INFL={
   other:['Focus','Motivation','Time','Energy','Mood','Sleep']
 };
 const CI_INFL_GENERIC=['Work','Family','Money','Weather','Screen time','Something else'];
-let CI_LANE='other', CI_READY=null, CI_CONF=null, CI_NOTE_OK=false;
+let CI_LANE='other', CI_READY=null, CI_CONF=null, CI_NOTE_OK=false, CI_ESC=null;
+// Watch/Concern escalation — trend-based, SEPARATE from the acute crisis detector
+// (crisis-detection.js handles explicit self-harm language → 988 + structured log).
+// Hard rule: a good mood never CLEARS safety; this only softens the plan, never gates it.
+function ciEscalation(){
+  try{
+    var moods=[]; if(DC.mood)moods.push(DC.mood);                          // today first
+    if(Array.isArray(CHECKINS))CHECKINS.forEach(function(c){if(c.mood!=null)moods.push(c.mood);});
+    if(moods.slice(0,5).filter(function(m){return m<=1;}).length>=2)return 'concern'; // repeated hopelessness
+    var run=0; for(var i=0;i<moods.length;i++){if(moods[i]<=2)run++;else break;}
+    if(run>=3)return 'watch';                                             // 3 consecutive very-low moods
+    if(DC.heavy==='crushing'&&DC.mood&&DC.mood<=2)return 'watch';         // crushing heaviness + low mood
+    return null;
+  }catch(e){return null;}
+}
 function ciSecondary(tod){
   if(tod==='morning')return {key:'sleep',type:'choice',q:"How did you sleep?",opts:SLEEP_OPTS};
   if(tod==='midday') return {key:'heavy',type:'choice',q:"How heavy does today feel so far?",opts:HEAVY_OPTS};
@@ -1077,6 +1091,9 @@ function buildSteps(tod,lane){
 // The one card Riley gives back. Inputs: lane, mood, goal, readiness. AUTHORED COPY.
 function resolveCard(){
   const lane=CI_LANE, mood=DC.mood||0, goal=DC.goal, low=(CI_READY!=null&&CI_READY<=4);
+  // Escalation takes priority — interrupt the normal card, surface support, no celebration.
+  if(CI_ESC==='concern') return {id:'concern', title:"I've noticed it's been heavy for a while.", body:"You don't have to hold this by yourself. Talking with someone you trust — or a professional — can really help, and I'll stay right here with you too. Would reaching out to one person today feel possible?", cta:{label:'Talk it through with me',href:'/chat'}, celebratory:false};
+  if(CI_ESC==='watch')   return {id:'watch', title:"It seems like things may be feeling heavier lately.", body:"Let's take the pressure off for a bit — no streaks, no big steps. Just showing up counts right now. Want me to keep things lighter for a few days?", cta:{label:'Yes, keep it light',href:'/chat'}, celebratory:false};
   if(lane==='sobriety'&&goal==='slip')  return {id:'slip',   title:'A slip is a moment, not the story.', body:"You showed up here tonight and told me the truth — that counts more than the slip does. Tomorrow we just make it a little smaller, together. Nothing to fix right now.", cta:{label:'Talk it through with me',href:'/chat'}, celebratory:false};
   if(low)                                return {id:'reflect',title:'Just this, for now.', body:"No task tonight. Take one slow breath with me, and notice one thing that was true today. That's enough.", celebratory:false};
   const rough = mood>0 && mood<=2;
@@ -1159,6 +1176,7 @@ async function dcFinish(){
       const j=await r.json();crisisLevel=j.level||0;crisisResp=j.response||'';
     }catch(e){console.warn('checkin scan',e.message);}
   }
+  CI_ESC=(crisisLevel>=2)?null:ciEscalation();
   const card=(crisisLevel>=2)?null:resolveCard();
   row.recommendation=card?card.id:(crisisLevel>=3?'crisis':'support');
   try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
@@ -1172,7 +1190,7 @@ async function dcFinish(){
 // Step 6+7 — Riley gives one thing back, then closes. Pattern note = high-confidence only.
 function dcRewardCard(card){
   const cta=card.cta?`<a href="${card.cta.href}" class="tbtn tbtn-gold" style="text-decoration:none;display:inline-block;margin-top:14px">${esc(card.cta.label)}</a>`:'';
-  const note=(CI_CONF!=null&&CI_CONF>=5)?dcStreakNote():''; // low-confidence users never see streaks
+  const note=(CI_CONF!=null&&CI_CONF>=5&&!CI_ESC)?dcStreakNote():''; // low-confidence + watch/concern: never streaks
   p2Modal(`<div style="padding:6px 2px">
     <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:26px">🐦</span>
       <div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.35;margin-bottom:8px">${esc(card.title)}</div>

@@ -115,6 +115,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 const RESET_URL='/.netlify/functions/reset-day';
 let USER=null,UID=null,TOK=null,DAY=1,DATA=null,PROG={};
+// "The Heart of It" deep reflections — re-homed from onboarding v2 to the Reset
+// evenings, one per night, Days 2-6 (D6 absorbs the one-year vision). Saved to
+// riley_memory so Riley references them later. This overrides only the DISPLAYED
+// evening prompt; the reset_days DB content stays intact (fully reversible).
+const DEEP_Q={
+  2:"What gives you energy? The people, places, or moments that fill you up.",
+  3:"And what drains you? No judgment — just honesty.",
+  4:"What are you most proud of? It can be big or quiet — both count.",
+  5:"What's one thing you'd like to change? The thing you think about when it's quiet.",
+  6:"What's one dream you've never given up on? The one that's still there, underneath everything."
+};
+const DEEP_LABEL={2:'What gives them energy',3:'What drains them',4:'What they are most proud of',5:'What they want to change',6:'A dream they have never given up on'};
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 async function boot(){
@@ -201,7 +213,7 @@ function render(){
 
   // ── EVENING ──
   html += `<div class="rcard" style="${morningDone?'':'opacity:.7'}"><div class="rlabel" style="color:var(--smoke)">🌙 Evening — the close &nbsp;·&nbsp; ~2 min</div>`;
-  html += `<div class="rq" style="font-size:14px">${esc(day.evening_reflection)}</div>`;
+  html += `<div class="rq" style="font-size:14px">${esc(DEEP_Q[DAY]||day.evening_reflection)}</div>`;
   html += `<textarea class="rin" id="evening" placeholder="One line to Riley." ${eveningDone?'disabled':''}>${eveningDone?'(closed)':''}</textarea>`;
   if(day.fuel_setup) html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)"><div class="rlabel" style="color:var(--smoke2)">🍃 Fuel — set up tomorrow</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(day.fuel_setup)}</div></div>`;
   html += `<div style="margin-top:16px" id="e-area">`;
@@ -253,10 +265,34 @@ async function markEvening(){
   try{
     await fetch(RESET_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'complete',day:DAY,touch:'evening',token:TOK})});
     if(ev){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),notes:ev},{onConflict:'user_id,checkin_date'});}catch(e){}}   // 4am-local "app day"
+    if(ev && DEEP_Q[DAY]){try{await SB.from('riley_memory').insert({user_id:UID,memory_type:'long_term',content:DEEP_LABEL[DAY]+': '+ev,source:'reset_reflection',confidence:1.0,is_active:true});}catch(e){}}   // re-homed deep question → permanent memory
+    if(DAY===1||DAY===3){setTimeout(maybeOfferWho5,600);}   // WHO-5 baseline (Day 1; re-offered Day 3 if skipped)
+    else if(DAY===4){setTimeout(offerSupportPref,600);}     // support preference after the Day-4 close
     PROG[DAY]=Object.assign(PROG[DAY]||{day_number:DAY},{evening_done_at:new Date().toISOString()});
     render();
   }catch(e){btn.disabled=false;btn.textContent='Close the day →';}
 }
+
+// ── Measurement v2: WHO-5 wellbeing baseline + support preference ─────────────
+// WHO-5 (standard 5-item, raw 0-25) offered Day-1 evening, re-offered Day 3 if
+// skipped, repeats every 14 days — its recall window. Support-pref on Day 4.
+function ovl(inner){let o=document.getElementById('rovl');if(!o){o=document.createElement('div');o.id='rovl';o.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,3,2,0.82);backdrop-filter:blur(4px);font-family:\'DM Sans\',sans-serif';document.body.appendChild(o);}o.innerHTML=`<div style="max-width:440px;width:100%;background:#141210;border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:26px 24px;color:#f5f0e8">${inner}</div>`;}
+function ovlClose(){const o=document.getElementById('rovl');if(o)o.remove();}
+const WHO5_ITEMS=["I have felt cheerful and in good spirits","I have felt calm and relaxed","I have felt active and vigorous","I woke up feeling fresh and rested","My daily life has been filled with things that interest me"];
+const WHO5_SCALE=[[5,'All of the time'],[4,'Most of the time'],[3,'More than half the time'],[2,'Less than half the time'],[1,'Some of the time'],[0,'At no time']];
+let WHO5_A=[];
+async function maybeOfferWho5(){
+  try{const {data:last}=await SB.from('who5_scores').select('taken_at').eq('user_id',UID).order('taken_at',{ascending:false}).limit(1);
+    if(last&&last.length&&(Date.now()-new Date(last[0].taken_at))<14*86400000)return;}catch(e){}
+  WHO5_A=[]; who5Intro();
+}
+function who5Intro(){ovl(`<div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.35;margin-bottom:8px">A quick starting point?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:18px">Five quick taps about the last two weeks — so in two weeks, you can see what's changed. No right answers, and you can skip it.</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button onclick="who5Q(0)" style="background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:11px 22px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer">Sure — 30 seconds</button><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Maybe later</button></div>`);}
+function who5Q(i){if(i>=WHO5_ITEMS.length)return who5Save();ovl(`<div style="font-size:10px;font-family:'DM Mono',monospace;color:#c9a84c;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px">Baseline · ${i+1} of 5</div><div style="font-size:12px;color:#8a8578;margin-bottom:6px">Over the last two weeks…</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.35;margin-bottom:16px">${esc(WHO5_ITEMS[i])}</div><div style="display:flex;flex-direction:column;gap:7px">${WHO5_SCALE.map(s=>`<button onclick="who5Ans(${i},${s[0]})" style="text-align:left;padding:12px 14px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${s[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:14px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip the rest</button></div>`);}
+function who5Ans(i,v){WHO5_A[i]=v;who5Q(i+1);}
+async function who5Save(){const score=WHO5_A.reduce((a,b)=>a+(b||0),0);const domains={cheerful:WHO5_A[0],calm:WHO5_A[1],active:WHO5_A[2],rested:WHO5_A[3],interested:WHO5_A[4]};try{await SB.from('who5_scores').insert({user_id:UID,score:score,domains:domains});}catch(e){}ovl(`<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:10px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4">Got it — thank you.</div><div style="font-size:14px;color:#8a8578;margin-top:8px;line-height:1.6">That's our starting line. In two weeks we'll look again and see how far you've come.</div><div style="margin-top:16px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Close</button></div></div>`);}
+const SUPPORT_OPTS=[['self',"Mostly self-guided — I've got it"],['reminders','Gentle reminders help'],['weekly','A weekly reflection with you'],['outside','I may want outside support']];
+async function offerSupportPref(){try{const {data:p}=await SB.from('user_profiles').select('support_preference').eq('id',UID).maybeSingle();if(p&&p.support_preference)return;}catch(e){}ovl(`<div style="font-family:'DM Serif Display',serif;font-size:21px;line-height:1.35;margin-bottom:8px">How do you want support from here?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:16px">No wrong answer — and you can change it anytime.</div><div style="display:flex;flex-direction:column;gap:8px">${SUPPORT_OPTS.map(o=>`<button onclick="saveSupportPref('${o[0]}')" style="text-align:left;padding:13px 15px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${o[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:12px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip</button></div>`);}
+async function saveSupportPref(v){try{await SB.from('user_profiles').update({support_preference:v}).eq('id',UID);}catch(e){}if(v==='outside'){ovl(`<div style="padding:6px 0"><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4;margin-bottom:8px">That takes courage to name.</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:14px">Wanting outside support is a strength, not a step back. Whenever you're ready, here are places to start — at your pace.</div><a href="/resources" style="display:block;text-align:center;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px;border-radius:8px;text-decoration:none;font-weight:600">See support resources</a><div style="text-align:center;margin-top:10px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Not now</button></div></div>`);}else ovlClose();}
 
 // ── Week One Letter takeover (Doc 4 §8) ──────────────────────────────
 const WOL_URL='/.netlify/functions/week-one-letter';

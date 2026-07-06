@@ -11,6 +11,7 @@ alter table public.user_profiles
   add column if not exists readiness          smallint,  -- 0-10 ruler (branch: <=4 reflection-first)
   add column if not exists confidence         smallint,  -- 0-10 ruler (branch: <=4 suppress streaks)
   add column if not exists note_storage_consent boolean default false, -- opt-in for storing free-text reflections
+  add column if not exists support_preference  text,      -- self | reminders | weekly | outside (Reset Day 4)
   add column if not exists onboarding_version smallint default 1;
 
 -- ── daily_checkins: v2 fields (mood/notes/daily_log already exist) ────────────

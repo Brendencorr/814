@@ -64,6 +64,21 @@ async function getSession(supabase, body) {
       await supabase.from("entitlements")
         .upsert({ user_id: user.id, product_key: "reset_free", status: "active", source: "implied" }, { onConflict: "user_id,product_key" });
     } catch (e) { console.warn("grantGuideOnSignup failed (non-fatal):", e.message); }
+    // Operator alert: web-push every registered admin device that a new member joined.
+    // Awaited (so the Lambda stays alive to actually send) but fully fault-tolerant —
+    // sendToAllOperators never throws, so this can't delay or break signup. Identity
+    // metadata only (name + email); never conversation content.
+    try {
+      // Lazy require so a module-load hiccup here can NEVER break the critical auth path.
+      const { sendToAllOperators } = require("./operator-notify");
+      const who = newProfile.full_name || (user.email || "").split("@")[0] || "New member";
+      await sendToAllOperators(supabase, {
+        title: "New member 🎉",
+        body: who + (user.email ? "\n" + user.email : ""),
+        url: "/operator",
+        tag: "new-signup",
+      });
+    } catch (_) {}
     return json(200, { user: { id: user.id, email: user.email, ...newProfile }, messages: [] });
   }
 

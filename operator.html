@@ -718,7 +718,7 @@ async function loadOverview(btn){
   try{
     var d=await opGet('/admin-home');
     if(d.error)throw new Error(d.error);
-    renderHome(d); renderSignupAlert(d);
+    renderHome(d); renderSignupAlert(d); renderOperatorPushControl();
   }catch(e){
     if(body)body.innerHTML='<div class="em" style="color:var(--red)">Could not load analytics: '+x(e.message)+'</div>';
   }
@@ -741,7 +741,70 @@ function renderSignupAlert(d){
     '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="font-weight:600;color:var(--ink)">New members'+(fresh.length?' <span style="color:var(--gold)">'+fresh.length+' new</span>':'')+'</div><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.7rem;cursor:pointer;padding:3px 9px">Mark seen</button></div>'+rows+'</div>';
   body.innerHTML=banner+body.innerHTML;
 }
-function markSignupsSeen(){ if(window.__newestSignup) localStorage.setItem('814_last_signup_seen', window.__newestSignup); loadHome(); }
+function markSignupsSeen(){ if(window.__newestSignup) localStorage.setItem('814_last_signup_seen', window.__newestSignup); loadOverview(); }
+
+// ── Operator new-member push alerts (this device) ────────────────────────────
+// Registers THIS device (via /operator-push, OPERATOR_KEY-gated) to receive a web
+// push whenever a member signs up. Separate from member subscriptions. Any admin with
+// dashboard access can enable it on their own device(s). iOS note: the site must be
+// added to the home screen first — Apple restricts web push to installed PWAs.
+function opU8(b){var p='='.repeat((4-b.length%4)%4);var s=(b+p).replace(/-/g,'+').replace(/_/g,'/');var raw=atob(s);var out=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+function opPushStatus(m,err){var s=document.getElementById('op-push-status');if(s){s.textContent=m||'';s.style.color=err?'var(--red)':'var(--muted)';}}
+function renderOperatorPushControl(){
+  var body=document.getElementById('home-body'); if(!body) return;
+  var old=document.getElementById('op-push-card'); if(old) old.remove();
+  var on=(localStorage.getItem('814_op_push')==='1')&&(window.Notification&&Notification.permission==='granted');
+  var btnSec='background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.72rem;cursor:pointer;padding:6px 12px';
+  var btnPri='background:var(--gold);border:none;border-radius:6px;color:#1a1200;font-weight:600;font-size:.75rem;cursor:pointer;padding:7px 14px';
+  var inner;
+  if(on){
+    inner='<span style="color:var(--ink2);font-size:.86rem"><span style="color:var(--green)">&#9679;</span> New-member alerts are <b>on</b> for this device.</span>'+
+      '<span style="display:flex;gap:8px"><button style="'+btnSec+'" onclick="testOperatorPush()">Send test</button><button style="'+btnSec+'" onclick="disableOperatorPush()">Turn off</button></span>';
+  }else{
+    inner='<span style="color:var(--ink2);font-size:.86rem">&#128276; Get a push on this device when a new member signs up.</span>'+
+      '<button style="'+btnPri+'" onclick="enableOperatorPush()">Enable on this device</button>';
+  }
+  var card='<div id="op-push-card" style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px">'+inner+'<div id="op-push-status" style="flex-basis:100%;font-size:.72rem;color:var(--muted);min-height:14px"></div></div>';
+  body.innerHTML=card+body.innerHTML;
+}
+async function enableOperatorPush(){
+  try{
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){opPushStatus('This browser can\'t receive push notifications.',true);return;}
+    opPushStatus('Requesting permission…');
+    var perm=await Notification.requestPermission();
+    if(perm!=='granted'){opPushStatus('Notifications are blocked for this site — enable them in your browser settings, then try again.',true);return;}
+    var reg=await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
+    var kr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})});
+    var kj=await kr.json().catch(function(){return{};});
+    if(!kj.publicKey){opPushStatus('Push isn\'t configured on the server (VAPID keys missing).',true);return;}
+    var sub=await reg.pushManager.getSubscription();
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:opU8(kj.publicKey)});
+    var label=(window.prompt('Name this device (optional) — e.g. "Brenden iPhone":','')||'').trim();
+    var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
+    var rr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:(sub.toJSON?sub.toJSON():sub),label:label,tz:tz})});
+    if(!rr.ok){var ej=await rr.json().catch(function(){return{};});opPushStatus('Could not register: '+(ej.error||('HTTP '+rr.status)),true);return;}
+    localStorage.setItem('814_op_push','1'); renderOperatorPushControl();
+    opPushStatus('Done — this device will now get a push for every new member.');
+  }catch(e){opPushStatus('Something went wrong: '+((e&&e.message)||e),true);}
+}
+async function testOperatorPush(){
+  opPushStatus('Sending test…');
+  try{
+    var r=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'test'})});
+    var j=await r.json().catch(function(){return{};});
+    if(r.ok&&j.ok!==false) opPushStatus('Test sent to '+(j.sent||0)+' device(s). Check your notifications.');
+    else opPushStatus('Test failed: '+(j.error||j.reason||('HTTP '+r.status)),true);
+  }catch(e){opPushStatus('Test failed: '+((e&&e.message)||e),true);}
+}
+async function disableOperatorPush(){
+  try{
+    var reg=await navigator.serviceWorker.getRegistration();
+    var sub=reg&&(await reg.pushManager.getSubscription());
+    if(sub&&sub.endpoint) await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'unsubscribe',endpoint:sub.endpoint})});
+  }catch(e){}
+  localStorage.removeItem('814_op_push'); renderOperatorPushControl();
+  opPushStatus('New-member alerts turned off for this device.');
+}
 
 // Tiny dependency-free SVG bar chart. series=[{label,n}]
 function svgBars(series,color,clickKind){

@@ -1752,7 +1752,9 @@ function pricingGroup(title,sub,items){
   return '<div class="sh" style="margin:1.2rem 0 .6rem">'+title+(sub?' <span style="color:var(--muted2);font-weight:400;font-size:.7rem">'+sub+'</span>':'')+'</div>'+items.map(pricingRow).join('');
 }
 function renderPricing(products,limits,freeAccess){
-  var fa='<div style="background:'+(freeAccess?'rgba(74,124,89,0.12)':'var(--card)')+';border:1px solid '+(freeAccess?'var(--green)':'var(--border)')+';border-radius:6px;padding:1rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem"><div><div style="color:var(--text);font-size:.9rem;font-weight:600">Free-access mode '+(freeAccess?'· ON':'· OFF')+'</div><div style="font-size:.72rem;color:var(--muted2);margin-top:.2rem">'+(freeAccess?'Everyone sees every membership free (friends &amp; family testing) — usage caps do not apply either.':'Members only get what they\'ve purchased or been granted.')+'</div></div><button class="bg" onclick="togglePricingFreeAccess('+(!freeAccess)+')">Turn '+(freeAccess?'OFF':'ON')+'</button></div>';
+  // Free-access toggle removed (2026-07-06): free_access_mode is OFF for good — tiers/caps/entitlements
+  // are enforced; comp members via the operator grant flow. The DB flag still exists if it's ever needed.
+  var fa='';
 
   // Three groups, by status + tier_level — no new fields needed:
   //  · Live Programs — the membership ladder (tier_level > 0), Mentor included
@@ -1801,7 +1803,7 @@ async function setUsageLimit(id,amount,period){
   var patch={};if(amount!=null)patch.limit_amount=amount;if(period!=null)patch.limit_period=period;
   try{await pricingApi('update_usage_limit',{id:id,patch:patch});loadPricing();}catch(e){window.alert(e.message);}
 }
-async function togglePricingFreeAccess(on){if(!window.confirm(on?'Turn ON free access — every member sees every membership free, uncapped?':'Turn OFF free access — enforce real purchases and Guide caps?'))return;try{await pricingApi('set_free_access',{value:on});loadPricing();}catch(e){window.alert(e.message);}}
+/* togglePricingFreeAccess removed 2026-07-06 — free-access is off for good; comp members via the grant flow. */
 
 function init(){
   try{

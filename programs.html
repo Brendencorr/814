@@ -165,7 +165,7 @@ async function boot(cb){
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}
 
 
-(async()=>{ await boot(async()=>{ await loadPrograms(); rileyUnlockWaitlist(); }); })();
+(async()=>{ await boot(async()=>{ setTimeout(function(){ loadPrograms(); rileyUnlockWaitlist(); }, 0); }); })();
 // Waitlist takeover — every in-app "Unlock with Coach/Companion" CTA lands here as ?unlock=<feat>.
 // Coach & Companion are waitlist-only for now (Brenden grants access manually); Guide stays open.
 // Matches the marketing-site waitlist copy. The member is logged in, so joining is one tap (we have their email).
@@ -197,7 +197,7 @@ function rileyUnlockWaitlist(){
     }catch(e){ btn.disabled=false; btn.textContent='Notify me when it opens'; }
   };
 }
-async function loadPrograms(){
+async function loadPrograms_LEGACY_UNUSED(){ /* superseded by the program-list loader below; never called */
   const [eR,aR]=await Promise.allSettled([
     SB.from('user_program_progress').select('*,programs(id,slug,title,description,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}),
     SB.from('programs').select('*').eq('is_active',true).order('sort_order')

@@ -513,6 +513,22 @@ function buildUserContext(profile, clientData) {
     lines.push("- NEVER pitch a membership or program they already own. Reference what they have by name.");
   }
 
+  // ── COACHED PROGRAMS (four-lane routing) — recommend the matching Riley-led program only when it fits ──
+  if (clientData && Array.isArray(clientData.interactivePrograms)) {
+    const notOwned = clientData.interactivePrograms.filter((p) => !p.owned);
+    if (notOwned.length) {
+      const LANE = {
+        prog_int_move_nourish: "rebuilding their body and energy — movement, eating, sleep, feeling strong again",
+        prog_int_grief: "carrying grief or a major loss — the death of someone, a life chapter ending",
+        prog_int_happiness: "past the crisis and stable but flat — 'fine' and wanting more, building a life worth living",
+        prog_int_staying_free: "staying free from a pattern — drinking, using, or anything they keep returning to",
+      };
+      lines.push("\nCOACHED PROGRAMS AVAILABLE (Riley-led, $18.14, deeper than chat — a real session series with follow-through):");
+      notOwned.forEach((p) => lines.push(`  - ${p.name} → for someone ${LANE[p.key] || ""}`));
+      lines.push("  ROUTING: read what the person is ACTUALLY carrying right now and recommend the ONE program that matches — never a list, only when it genuinely fits, the way a friend would ('there's something built for exactly this'). NEVER recommend one during a crisis, a disclosed slip, or acute distress — support comes first, marketing never. Never pitch a program they own.");
+    }
+  }
+
   lines.push("");
   lines.push("Use their name naturally (not every message). Reference their data when relevant to what they say.");
   return lines.join("\n");
@@ -579,6 +595,14 @@ async function getClientData(supabase, userId) {
     const sharedDates = calRes.value?.data || [];
     const sensitiveDates = [...personalDates.filter(d => d.is_sensitive !== false), ...sharedDates];
 
+    // Live coached (interactive) programs — for Riley's four-lane routing/recommendation. Only 'live'
+    // ones surface (drafts are never recommended); owned/Coach are flagged so Riley never sells them.
+    let interactivePrograms = [];
+    try {
+      const { data: ip } = await supabase.from("products").select("product_key, display_name").eq("type", "program_interactive").eq("status", "live").order("sort_order");
+      interactivePrograms = (ip || []).map((p) => ({ key: p.product_key, name: p.display_name, owned: ownedProducts.includes(p.product_key) || tier === "coach" || tier === "mentor" }));
+    } catch (_) {}
+
     return {
       sobriety: soberRes.value?.data?.[0] || null,
       todayCheckin: checkinRes.value?.data?.[0] || null,
@@ -593,6 +617,7 @@ async function getClientData(supabase, userId) {
       wellness: wellnessRes.value?.data || null,
       wellnessPlans: plansRes.value?.data || [],
       lifeMap: lifeMapRes.value?.data || [],
+      interactivePrograms,
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);

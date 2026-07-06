@@ -638,6 +638,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1000px;margin:0 auto">
       <div id="pm-editor" style="margin-bottom:1.6rem"></div>
+      <div id="ise-metrics" style="margin-bottom:1.6rem"></div>
       <div id="ise-editor" style="margin-bottom:1.6rem"></div>
       <div id="pricing-body"><div class="em">Loading…</div></div>
     </div>
@@ -1624,6 +1625,7 @@ async function loadPricing(btn){
   gs('y',btn);
   try{pmInit();}catch(e){}
   try{iseInit();}catch(e){}
+  try{iseMetrics();}catch(e){}
   var el=document.getElementById('pricing-body');el.innerHTML='<div class="em">Loading…</div>';
   try{var d=await pricingApi('list');renderPricing(d.products||[],d.usage_limits||[],d.free_access_mode);}
   catch(e){
@@ -2390,6 +2392,27 @@ async function iseApi(action,extra){
   var r=await fetch(B+'/admin-int-sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:action},extra||{}))});
   if(r.status===401||r.status===403) throw new Error('bad-key');
   return r.json();
+}
+async function iseMetrics(){
+  var box=document.getElementById('ise-metrics'); if(!box) return;
+  try{
+    var r=await fetch(B+'/admin-int-metrics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get'})});
+    if(r.status===401||r.status===403){ box.innerHTML=''; return; }
+    var d=await r.json(); var progs=d.programs||[], t=d.totals||{};
+    if(!progs.length){ box.innerHTML=''; return; }
+    var cell=function(v){ return '<td style="padding:.4rem .6rem;text-align:right;font-family:DM Mono,monospace;font-size:.78rem;color:var(--ink)">'+(v==null?'—':v)+'</td>'; };
+    var th=function(h,l){ return '<th style="text-align:'+(l?'left':'right')+';padding:.4rem .6rem;font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)">'+h+'</th>'; };
+    var rowFor=function(name,status,b,gold){
+      return '<tr'+(gold?' style="border-top:1px solid var(--border)"':'')+'><td style="padding:.4rem .6rem;font-size:.78rem;color:'+(gold?'var(--gold)':'var(--ink)')+'">'+engEsc(name)+(status?' <span style="color:var(--muted2);font-size:.62rem;text-transform:uppercase">'+engEsc(status)+'</span>':'')+'</td>'
+        +cell(b.enrolled)+cell(b.session_zero)+cell(b.session_four)+cell(b.graduated)+cell(b.confirm_rate==null?'—':b.confirm_rate+'%')+cell(b.artifacts)+cell(b.lapse_active)+'</tr>';
+    };
+    var head='<tr style="border-bottom:1px solid var(--border)">'+th('Program',true)+['Enrolled','S0','S4','Grad','Confirm','Artifacts','In lapse'].map(function(h){return th(h);}).join('')+'</tr>';
+    box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive program metrics</div>'
+      +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">'+head
+      +progs.map(function(p){return rowFor(p.name,p.status,p);}).join('')
+      +rowFor('All programs','',t,true)+'</table></div>'
+      +'<div style="font-size:.66rem;color:var(--muted2);margin-top:.4rem">S0 = Session Zero done · S4 = reached Session 4 · Confirm = commitments confirmed · In lapse = Staying Free lapse-active now</div>';
+  }catch(e){ box.innerHTML=''; }
 }
 async function iseInit(){
   var box=document.getElementById('ise-editor'); if(!box) return;

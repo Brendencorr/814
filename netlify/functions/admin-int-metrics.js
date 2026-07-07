@@ -26,51 +26,36 @@ exports.handler = async (event) => {
 
   const sb = getSupabaseClient();
 
-  const [prodsR, enrR, progR, commR, artR] = await Promise.all([
+  // Aggregation happens in Postgres (int_program_metrics, migration 068) — one GROUP BY instead of
+  // pulling every int_* row into the Lambda. Products query supplies names/status + zero-fills programs
+  // with no enrollments yet. (If 068 isn't applied, the rpc errors → the metrics panel just hides.)
+  const [prodsR, mR] = await Promise.all([
     sb.from("products").select("product_key, display_name, status, sort_order").eq("type", "program_interactive").order("sort_order"),
-    sb.from("int_enrollments").select("id, program_key, current_session, state, lapse_state, graduated_at"),
-    sb.from("int_session_progress").select("enrollment_id, session_number"),
-    sb.from("int_commitments").select("enrollment_id, confirmed_state"),
-    sb.from("int_artifacts").select("enrollment_id"),
+    sb.rpc("int_program_metrics"),
   ]);
+  if (mR.error) return json(500, { error: "metrics-fn", detail: mR.error.message });
 
   const products = prodsR.data || [];
-  const enrollments = enrR.data || [];
-  const progress = progR.data || [];
-  const commitments = commR.data || [];
-  const artifacts = artR.data || [];
+  const rows = mR.data || [];
+  const num = (v) => Number(v || 0);
+  const metric = {}; rows.forEach((m) => { metric[m.program_key] = m; });
 
-  // enrollment_id → program_key, and per-enrollment reached-session sets.
-  const enrProgram = {};
-  const reached = {};   // enrollment_id → Set(session_number completed)
-  enrollments.forEach((e) => { enrProgram[e.id] = e.program_key; reached[e.id] = new Set(); });
-  progress.forEach((p) => { if (reached[p.enrollment_id]) reached[p.enrollment_id].add(p.session_number); });
+  const nameBy = {}, statusBy = {}, orderBy = {};
+  products.forEach((p) => { nameBy[p.product_key] = p.display_name; statusBy[p.product_key] = p.status; orderBy[p.product_key] = p.sort_order || 0; });
+  const keys = new Set(products.map((p) => p.product_key)); rows.forEach((m) => keys.add(m.program_key));  // include stragglers
 
-  // Blank per-program bucket (every interactive product shows, even at zero).
   const blank = () => ({ enrolled: 0, session_zero: 0, session_four: 0, graduated: 0, commitments: 0, confirmed: 0, artifacts: 0, lapse_active: 0 });
-  const byProg = {};
-  products.forEach((p) => { byProg[p.product_key] = { key: p.product_key, name: p.display_name, status: p.status, ...blank() }; });
-  const bucket = (k) => (byProg[k] = byProg[k] || { key: k, name: k, status: "?", ...blank() });
-
-  enrollments.forEach((e) => {
-    const b = bucket(e.program_key);
-    b.enrolled++;
-    const done = reached[e.id] || new Set();
-    if (done.has(0)) b.session_zero++;
-    if ((e.current_session || 0) >= 4 || done.has(4)) b.session_four++;
-    if (e.graduated_at) b.graduated++;
-    if (e.lapse_state === "lapse_active") b.lapse_active++;
+  const list = [...keys].sort((a, b) => (orderBy[a] || 0) - (orderBy[b] || 0)).map((k) => {
+    const m = metric[k] || {};
+    const b = {
+      key: k, name: nameBy[k] || k, status: statusBy[k] || "?",
+      enrolled: num(m.enrolled), session_zero: num(m.session_zero), session_four: num(m.session_four),
+      graduated: num(m.graduated), commitments: num(m.commitments), confirmed: num(m.confirmed),
+      artifacts: num(m.artifacts), lapse_active: num(m.lapse_active),
+    };
+    b.confirm_rate = b.commitments ? Math.round((b.confirmed / b.commitments) * 100) : null;
+    return b;
   });
-  commitments.forEach((c) => {
-    const k = enrProgram[c.enrollment_id]; if (!k) return;
-    const b = bucket(k); b.commitments++; if (c.confirmed_state) b.confirmed++;
-  });
-  artifacts.forEach((a) => {
-    const k = enrProgram[a.enrollment_id]; if (!k) return;
-    bucket(k).artifacts++;
-  });
-
-  const list = Object.values(byProg).map((b) => ({ ...b, confirm_rate: b.commitments ? Math.round((b.confirmed / b.commitments) * 100) : null }));
   const totals = list.reduce((t, b) => {
     ["enrolled", "session_zero", "session_four", "graduated", "commitments", "confirmed", "artifacts", "lapse_active"].forEach((k) => { t[k] += b[k]; });
     return t;

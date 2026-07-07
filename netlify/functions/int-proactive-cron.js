@@ -78,19 +78,16 @@ function commitmentAlert(enr) {
   };
 }
 
-// Decide the single nudge (if any) for one enrollment. Dates first (time-sensitive), then a past-due commitment.
-async function planForEnrollment(sb, enr, nowMs, todayDate, todayStr) {
-  const { data: dates } = await sb.from("int_dates").select("id, label, date, date_type, recurrence, last_touch").eq("enrollment_id", enr.id);
-  for (const dt of dates || []) {
+// Decide the single nudge (if any) for one enrollment, from PRE-FETCHED data (no per-enrollment queries
+// — the reads are batched once in the handler). Dates first (time-sensitive), then a past-due commitment.
+function planForEnrollment(enr, datesByEnr, pastDueCommit, todayDate, todayStr) {
+  const dates = datesByEnr.get(enr.id) || [];
+  for (const dt of dates) {
     if (dt.last_touch === todayStr) continue;
     const touch = touchFor(occurrenceOffset(dt.date, dt.recurrence, todayDate));
     if (touch) return { alert: dateAlert(enr, dt, touch), step: "date_" + touch, dateId: dt.id };
   }
-  const { data: commits } = await sb.from("int_commitments")
-    .select("id, due_at, confirmed_state").eq("enrollment_id", enr.id)
-    .is("confirmed_state", null).not("due_at", "is", null).lte("due_at", new Date(nowMs).toISOString())
-    .order("due_at", { ascending: false }).limit(1);
-  if (commits && commits[0]) return { alert: commitmentAlert(enr), step: "commit_popup", dateId: null };
+  if (pastDueCommit.has(enr.id)) return { alert: commitmentAlert(enr), step: "commit_popup", dateId: null };
   return null;
 }
 
@@ -125,6 +122,21 @@ exports.handler = async (event) => {
   const { data: todays } = await sb.from("int_nudges").select("enrollment_id").eq("sent_date", todayStr);
   const nudgedToday = new Set((todays || []).map((r) => r.enrollment_id));
 
+  // Batch the per-enrollment reads ONCE (was an N+1 of 2 queries per enrollment). Both are naturally
+  // bounded — int_dates is small, and past-due unconfirmed commitments ride the partial index
+  // idx_int_commit_due. Group in memory so the loop below does zero queries.
+  const datesByEnr = new Map();
+  {
+    const { data: allDates } = await sb.from("int_dates").select("id, label, date, date_type, recurrence, last_touch, enrollment_id");
+    (allDates || []).forEach((d) => { if (!datesByEnr.has(d.enrollment_id)) datesByEnr.set(d.enrollment_id, []); datesByEnr.get(d.enrollment_id).push(d); });
+  }
+  const pastDueCommit = new Set();
+  {
+    const { data: commits } = await sb.from("int_commitments").select("enrollment_id")
+      .is("confirmed_state", null).not("due_at", "is", null).lte("due_at", now.toISOString());
+    (commits || []).forEach((c) => pastDueCommit.add(c.enrollment_id));
+  }
+
   const plans = [];
   const clears = [];   // Staying Free enrollments whose lapse has aged out → auto-clear the suspend (never sticks)
   for (const enr of enrolls || []) {
@@ -140,7 +152,7 @@ exports.handler = async (event) => {
       continue;                                                                        // no normal nudges while lapse-active
     }
     if (nudgedToday.has(enr.id)) continue;                                            // 1/day cap
-    const plan = await planForEnrollment(sb, enr, nowMs, now, todayStr);
+    const plan = planForEnrollment(enr, datesByEnr, pastDueCommit, now, todayStr);
     if (plan) plans.push({ enr, ...plan });
   }
 

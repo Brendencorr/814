@@ -386,7 +386,6 @@ header {
         oninput="this.style.height='42px';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
       <button class="send-btn" id="send-btn" onclick="send()">&#9658;</button>
     </div>
-    <div style="text-align:center;margin-top:8px;font-size:11px;color:#8a8578;font-family:'DM Mono',monospace">Riley is an AI companion — always honest about that. <a href="https://meetriley.us/safety" style="color:#c9a84c;text-decoration:none">How she works &amp; keeps you safe &rarr;</a></div>
   </div>
 </div>
 
@@ -851,6 +850,19 @@ function addMsg(role, text) {
   return div;
 }
 
+// Small, one-time grey note after the first exchange — points to the site footer for
+// Riley / privacy / safety info (per founder: no in-dialog disclosure, just this pointer).
+var _aiNoteShown = false;
+function showAiNote() {
+  if (_aiNoteShown) return; _aiNoteShown = true;
+  const thread = document.getElementById('messages'); if (!thread) return;
+  const n = document.createElement('div');
+  n.style.cssText = "align-self:center;max-width:82%;text-align:center;font-size:11px;color:#5a5450;font-family:'DM Mono',monospace;margin:8px 0 2px;line-height:1.55;opacity:0.8";
+  n.innerHTML = 'Information about Riley, Privacy &amp; Safety guidelines can be found at the <a href="https://meetriley.us/safety" target="_blank" style="color:#8a8578;text-decoration:underline">bottom of our website</a>.';
+  thread.appendChild(n);
+  thread.scrollTop = thread.scrollHeight;
+}
+
 function starter(btn) {
   document.getElementById('msg-input').value = btn.textContent;
   send();
@@ -933,6 +945,7 @@ async function send() {
     chatHistory.push(userMsg);
     chatHistory.push({ role: 'assistant', content: fullText });
     if (chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
+    if (userMsgCount === 1) showAiNote();   // one-time footer pointer after first exchange
 
   } catch (e) {
     bubble.textContent = 'Something went wrong — ' + e.message;

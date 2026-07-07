@@ -258,7 +258,7 @@ body.embed .topbar-actions a.topbar-btn{display:none}
         <button id="send-btn" onclick="send()"
           style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
       </div>
-      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley is an AI companion — always honest about that. <a href="https://meetriley.us/safety" style="color:var(--gold);text-decoration:none">How she works &amp; keeps you safe &rarr;</a></div>
+      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley knows your sobriety streak, goals, habits, and programs</div>
       <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:'DM Sans',sans-serif">Want conversations that don’t end? <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Companion is $19/month</a>.</div>
     </div>
   </main>
@@ -731,6 +731,18 @@ function appendMsg(role, text) {
   return bubble;
 }
 
+// One-time grey note after the first exchange — points to the site footer for Riley /
+// privacy / safety info (per founder: no in-dialog disclosure, just this gentle pointer).
+var _aiNoteShown = false;
+function showAiNote(){
+  if(_aiNoteShown) return; _aiNoteShown = true;
+  var box = document.getElementById('messages'); if(!box) return;
+  var n = document.createElement('div');
+  n.style.cssText = "align-self:center;max-width:82%;text-align:center;font-size:11px;color:var(--smoke2);font-family:'DM Mono',monospace;margin:6px 0 2px;line-height:1.55;opacity:0.8";
+  n.innerHTML = 'Information about Riley, Privacy &amp; Safety guidelines can be found at the <a href="https://meetriley.us/safety" target="_blank" style="color:var(--smoke);text-decoration:underline">bottom of our website</a>.';
+  box.appendChild(n); box.scrollTop = 999999;
+}
+
 async function send() {
   const input = document.getElementById('msg-input');
   const btn   = document.getElementById('send-btn');
@@ -796,6 +808,7 @@ async function send() {
 
   _history.push({ role: 'assistant', content: reply });
   if (_history.length > 40) _history = _history.slice(-40);
+  showAiNote();   // one-time footer pointer after first exchange
   saveLiveChat();
   btn.disabled = false; btn.style.opacity = '1';
   // Doc 2 §3: at the Guide daily cap, disable the composer + show the once/day caption.

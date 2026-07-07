@@ -25,7 +25,7 @@ const APP = "https://riley.meetriley.us";
 const DAY = 86400000;
 
 function firstName(profile) {
-  const n = (profile && (profile.full_name || profile.name)) || "";
+  const n = (profile && (profile.preferred_name || profile.full_name)) || "";
   return (n.split(" ")[0] || "there");
 }
 function prefUrl(uid) { return APP + "/preferences?u=" + encodeURIComponent(uid); }
@@ -80,15 +80,23 @@ exports.handler = async () => {
 
   // ── Load source data (batched, not N+1) ──
   const [profR, stateR, sendsR, subsR, convR, ciR] = await Promise.allSettled([
-    sb.from("user_profiles").select("id,email,full_name,name,created_at,onboarding_completed"),
+    sb.from("user_profiles").select("id,email,full_name,preferred_name,created_at,onboarding_completed"),
     sb.from("user_comms_state").select("*"),
     sb.from("email_sends").select("user_id,template_key,flow,sent_at,suppressed"),
     sb.from("subscriptions").select("user_id,plan_id,status").eq("status", "active"),
     sb.from("riley_conversations").select("user_id,created_at").order("created_at", { ascending: false }),
     sb.from("daily_checkins").select("user_id,checkin_date").order("checkin_date", { ascending: false }),
   ]);
-  const g = (r) => (r.status === "fulfilled" ? r.value.data : null) || [];
-  const profiles = g(profR), states = g(stateR), sends = g(sendsR), subs = g(subsR), convs = g(convR), cis = g(ciR);
+  // Surface query failures instead of masking them as "no users": a bad column name makes
+  // PostgREST reject the whole query (fulfilled promise, but value.error set) — record it.
+  const loadErrors = {};
+  const g = (r, label) => {
+    if (r.status !== "fulfilled") { loadErrors[label] = String(r.reason).slice(0, 200); return []; }
+    if (r.value && r.value.error) { loadErrors[label] = (r.value.error.message || String(r.value.error)).slice(0, 200); return []; }
+    return (r.value && r.value.data) || [];
+  };
+  const profiles = g(profR, "user_profiles"), states = g(stateR, "user_comms_state"), sends = g(sendsR, "email_sends"), subs = g(subsR, "subscriptions"), convs = g(convR, "riley_conversations"), cis = g(ciR, "daily_checkins");
+  if (Object.keys(loadErrors).length) out.load_errors = loadErrors;
   if (!profiles.length) return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...out, note: "no users" }) };
 
   const stateByUser = {}; states.forEach((s) => (stateByUser[s.user_id] = s));

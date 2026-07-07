@@ -27,6 +27,7 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { shell, p, btn, esc } = require("./comms-templates");
 
 const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -65,15 +66,21 @@ function buildFollowup(stage, u) {
     `(If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.)`,
   ].join("\n");
 
-  const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
-    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:24px">Meet Riley</p>
-    <p>Hi ${name},</p>
-    <p>${m.body}</p>
-    <p>Whenever you want, I'm right here.</p>
-    <p style="margin:28px 0"><a href="${APP_URL}" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Talk with Riley →</a></p>
-    <p style="color:#555">— Riley</p>
-    <p style="color:#999;font-size:12px;margin-top:28px">If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.</p>
-  </div>`;
+  // Unified house shell: Ink header + Riley. wordmark, serif body, signed "— Riley". Crisis emails
+  // are sensitive (§1.4) — a custom footer (reply-to-opt-out + 988), NOT the marketing unsubscribe.
+  const bodyHtml =
+    p("Hi " + esc(name) + ",") +
+    p(esc(m.body)) +
+    p("Whenever you want, I'm right here.") +
+    btn("Talk with Riley →", APP_URL) +
+    '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>';
+  const crisisFooter =
+    '<tr><td style="padding:22px 32px 28px;border-top:1px solid #e5ded0">' +
+    '<div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#8a8578">' +
+    "If you'd rather I didn't check in like this, just reply and say so — I'll always respect that." +
+    "<br>In crisis? Call or text 988, anytime." +
+    "</div></td></tr>";
+  const html = shell(bodyHtml, { preview: String(m.body).slice(0, 90), footerHtml: crisisFooter });
 
   return { subject: m.subject, text, html };
 }

@@ -71,10 +71,11 @@ function shell(bodyHtml, opts) {
     '<tr><td style="background:#0F0E0D;padding:18px 32px">' +
     '<span style="font-family:Georgia,\'Times New Roman\',serif;font-size:22px;color:#ffffff">Riley<span style="color:#C9A84C">.</span></span>' +
     "</td></tr>" +
-    '<tr><td style="padding:30px 32px 8px;font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.62;color:#2b2824">' +
+    // Body: serif (Georgia), matching Riley's warm letter voice — the unified house style.
+    '<tr><td style="padding:30px 32px 8px;font-family:Georgia,\'Times New Roman\',serif;font-size:16px;line-height:1.66;color:#211e1a">' +
     bodyHtml +
     "</td></tr>" +
-    footerHtml(unsub, pref) +
+    (opts.footerHtml != null ? opts.footerHtml : footerHtml(unsub, pref)) +
     "</table></td></tr></table></body></html>"
   );
 }
@@ -446,4 +447,4 @@ function render(key, vars, urls, override) {
   };
 }
 
-module.exports = { TEMPLATES, TRIGGERS, render, shell, sub, SENDERS, REPLY_TO };
+module.exports = { TEMPLATES, TRIGGERS, render, shell, p, btn, em, esc, sub, SENDERS, REPLY_TO };

@@ -12,6 +12,17 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Unified email shell (hybrid) — rolling every sender onto ONE house style
+- Operator chose the house shell: **Shell A's Ink header + Riley. wordmark + footer**, with **Shell B's
+  serif font/voice**, always signed **"— Riley"**. Implemented in the shared `shell()` (comms-templates.js):
+  body font is now Georgia serif; `shell(body,{footerHtml})` accepts a custom footer (so sensitive/crisis
+  mail can carry a reply-to-opt-out + 988 footer instead of the marketing unsubscribe). Exported
+  `shell/p/btn/em/esc` for reuse.
+- **Retrofit #1 — crisis-followup-cron** now renders through the shared shell (was a bare serif div with
+  a "MEET RILEY" eyebrow). Same copy, unified frame, crisis-appropriate footer (no marketing unsubscribe).
+- 🔜 **Remaining senders to roll onto the shell** (next increment): brief-delivery-cron, int-proactive-cron,
+  reengagement-cron, email-welcome. Files so far: comms-templates.js, crisis-followup-cron.js.
+
 ### Operator "Client Onboarding Communication" tab — view/edit the whole lifecycle email sequence
 - New operator tab (sidebar **Onboarding Comms**) surfaces all 17 lifecycle emails grouped into the
   4 flows (Guide · Gone Quiet · Paid Member · Add-on), in send order, each with a **live rendered

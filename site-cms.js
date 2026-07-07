@@ -2,18 +2,25 @@
  *
  * TWO MODES:
  *  1) Apply (always): fetch /.netlify/functions/site-content?page=<page> and apply
- *     any overrides on top of the page's hardcoded defaults — text, images, and
- *     section state (hidden / order / colors).
- *  2) Edit (?cms=edit, only meaningful inside the operator "Customize Website" iframe):
- *     click text to edit it, click a logo to swap it, and use each section's toolbar
- *     (hide · move up/down · colors). The editor NEVER writes to Supabase — it posts
- *     each change to window.parent (the operator, which holds the OPERATOR_KEY and saves).
+ *     any overrides on top of the page's hardcoded defaults — text, images, section
+ *     state (hidden / order / colors), AND per-element LAYOUT css (spacing, width,
+ *     height, alignment, position nudge).
+ *  2) Edit (?cms=edit, only inside the operator "Customize Website" iframe): click text
+ *     to edit it, click a logo to swap it, use each section's toolbar (hide · reorder ·
+ *     colors), and use the "⛶ Layout" handle on ANY element to move/size/space it. The
+ *     editor NEVER writes to Supabase — it posts each change to window.parent (the
+ *     operator, which holds the OPERATOR_KEY and saves).
  *
  * Instrument a page with:
  *   <body data-cms-page="home">
  *   <h1 data-cms-text="hero_title">…</h1>
  *   <img data-cms-img="hero_logo" …>
  *   <section data-cms-section="hero" data-cms-label="Hero">…</section>
+ *
+ * Override props by kind (all may also carry a `css` map of CSS prop→value):
+ *   text    → {text, css}
+ *   image   → {src, alt, hidden, css}
+ *   section → {hidden, sort, bg, color, accent, css}
  */
 (function () {
   "use strict";
@@ -25,15 +32,38 @@
   var EDIT = /[?&]cms=edit\b/.test(location.search);
   var OVERRIDES = {};
   var SECTION_STATE = {}; // key -> {hidden, sort, bg, color, accent}
+  var STYLE_STATE = {};   // key -> css map (layout overrides), for every element kind
+
+  // CSS properties the layout editor manages (so "reset layout" knows what to clear).
+  var LAYOUT_PROPS = ["margin-top", "margin-bottom", "margin-left", "margin-right", "max-width", "min-height", "padding", "font-size", "text-align"];
 
   function q(sel, ctx) { return (ctx || document).querySelector(sel); }
   function qa(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
   function attrEsc(s) { return String(s).replace(/["\\]/g, "\\$&"); }
+  function elFor(key) {
+    return q('[data-cms-text="' + attrEsc(key) + '"]') ||
+           q('[data-cms-img="' + attrEsc(key) + '"]') ||
+           q('[data-cms-section="' + attrEsc(key) + '"]');
+  }
+  function styleOf(key) { return STYLE_STATE[key] || (STYLE_STATE[key] = {}); }
+  function applyStyle(el, css) {
+    if (!el || !css) return;
+    Object.keys(css).forEach(function (k) {
+      var v = css[k];
+      if (v === "" || v == null) el.style.removeProperty(k);
+      else el.style.setProperty(k, v);
+    });
+  }
 
   // ─────────────────────────────── APPLY ───────────────────────────────
+  function stashCss(key, props, el) {
+    if (props && props.css) { STYLE_STATE[key] = Object.assign({}, props.css); applyStyle(el, props.css); }
+  }
   function applyText(key, props) {
     var el = q('[data-cms-text="' + attrEsc(key) + '"]');
-    if (el && props && typeof props.text === "string") el.textContent = props.text;
+    if (!el || !props) return;
+    if (typeof props.text === "string") el.textContent = props.text;
+    stashCss(key, props, el);
   }
   function applyImage(key, props) {
     var el = q('[data-cms-img="' + attrEsc(key) + '"]');
@@ -41,6 +71,7 @@
     if (props.src) el.src = props.src;
     if (typeof props.alt === "string") el.alt = props.alt;
     el.style.display = props.hidden ? "none" : "";
+    stashCss(key, props, el);
   }
   function applySectionStyle(key, props) {
     var el = q('[data-cms-section="' + attrEsc(key) + '"]');
@@ -49,10 +80,11 @@
     el.style.backgroundColor = props.bg || "";
     if (props.color) el.style.color = props.color; else el.style.color = "";
     if (props.accent) el.style.setProperty("--cms-accent", props.accent);
+    stashCss(key, props, el);
   }
   function applyOrder() {
-    // Reorder sections within each shared parent by their `sort`, but only where at
-    // least one sibling has an explicit sort override (otherwise leave the DOM as-is).
+    // Reorder sections within each shared parent by `sort`, only where at least one
+    // sibling has an explicit sort override (otherwise leave the DOM as-is).
     var groups = new Map();
     qa("[data-cms-section]").forEach(function (s) {
       var k = s.getAttribute("data-cms-section");
@@ -97,6 +129,18 @@
   }
   function sectionOf(key) { return SECTION_STATE[key] || (SECTION_STATE[key] = {}); }
   function labelOf(el, key) { return (el && el.getAttribute("data-cms-label")) || key; }
+  function kindOf(el) { return el.hasAttribute("data-cms-text") ? "text" : el.hasAttribute("data-cms-img") ? "image" : "section"; }
+  function keyOf(el) { return el.getAttribute("data-cms-text") || el.getAttribute("data-cms-img") || el.getAttribute("data-cms-section"); }
+
+  // Unified "persist this element's current state" — includes text/img/section props + css.
+  function pushElement(key) {
+    var el = elFor(key); if (!el) return;
+    var kind = kindOf(el), css = STYLE_STATE[key] || {}, props;
+    if (kind === "text") props = { text: el.textContent, css: css };
+    else if (kind === "image") props = { src: el.getAttribute("src") || "", alt: el.alt || "", hidden: el.style.display === "none", css: css };
+    else { var s = SECTION_STATE[key] || {}; props = { hidden: !!s.hidden, sort: s.sort, bg: s.bg || "", color: s.color || "", accent: s.accent || "", css: css }; }
+    postChange(key, kind, props, labelOf(el, key));
+  }
 
   function injectEditorStyles() {
     var css = [
@@ -111,11 +155,49 @@
       '.cms-tools button:hover{background:rgba(201,168,76,.35)}',
       '.cms-tools input[type=color]{width:22px;height:22px;padding:0;border:1px solid rgba(255,255,255,.25);border-radius:4px;background:none;cursor:pointer}',
       '.cms-tools .cms-lbl{color:#c9a84c;font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-right:2px}',
-      '.cms-hiddenmark{outline:2px dashed rgba(201,168,76,.6) !important;opacity:.45}'
+      '.cms-hiddenmark{outline:2px dashed rgba(201,168,76,.6) !important;opacity:.45}',
+      // Layout handle (floating, follows the hovered element)
+      '.cms-lh{position:fixed;z-index:2147483600;display:none;width:24px;height:24px;border:none;border-radius:6px;background:#c9a84c;color:#0a0908;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.45);font-family:system-ui,sans-serif}',
+      // Layout panel
+      '.cms-lpanel{position:fixed;z-index:2147483601;width:212px;background:rgba(12,11,9,.98);border:1px solid rgba(201,168,76,.5);border-radius:10px;padding:11px;font-family:system-ui,sans-serif;box-shadow:0 12px 44px rgba(0,0,0,.6);color:#f5f0e8}',
+      '.cms-lpanel .lp-h{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#c9a84c;margin-bottom:9px}',
+      '.cms-lpanel button{background:rgba(255,255,255,.08);border:none;color:#f5f0e8;border-radius:5px;cursor:pointer;font-size:12px;line-height:1;padding:6px 8px}',
+      '.cms-lpanel button:hover{background:rgba(201,168,76,.35)}',
+      '.cms-lpanel .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:112px;margin:0 auto 10px}',
+      '.cms-lpanel .pad button{padding:7px 0}',
+      '.cms-lpanel .pad .sp{visibility:hidden}',
+      '.cms-lpanel .row{display:flex;align-items:center;gap:5px;margin:6px 0;font-size:11px}',
+      '.cms-lpanel .row label{width:52px;color:#8a8578}',
+      '.cms-lpanel .row .val{min-width:40px;text-align:center;font-family:ui-monospace,monospace;color:#e8d5a3}',
+      '.cms-lpanel .row.al button{flex:1}',
+      '.cms-lpanel .lp-foot{display:flex;justify-content:space-between;margin-top:9px;border-top:1px solid rgba(255,255,255,.08);padding-top:9px}',
+      '.cms-lpanel .lp-foot button.reset{color:#c0a05a}'
     ].join("");
     var st = document.createElement("style"); st.id = "cms-editor-css"; st.textContent = css;
     document.head.appendChild(st);
   }
+
+  // ── Floating layout handle (shared across text/image/section) ──
+  var _lh = null, _lhKey = null, _lhHideT = null;
+  function ensureHandle() {
+    if (_lh) return _lh;
+    _lh = document.createElement("button");
+    _lh.className = "cms-lh"; _lh.textContent = "⛶"; _lh.title = "Layout & spacing";
+    _lh.addEventListener("mouseenter", function () { clearTimeout(_lhHideT); });
+    _lh.addEventListener("mouseleave", scheduleHideHandle);
+    _lh.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); if (_lhKey) openLayout(_lhKey); });
+    document.body.appendChild(_lh);
+    return _lh;
+  }
+  function showHandleFor(el, key) {
+    ensureHandle(); _lhKey = key;
+    var r = el.getBoundingClientRect();
+    _lh.style.left = Math.min(window.innerWidth - 28, Math.max(4, r.right - 26)) + "px";
+    _lh.style.top = Math.max(4, r.top + 4) + "px";
+    _lh.style.display = "block";
+    clearTimeout(_lhHideT);
+  }
+  function scheduleHideHandle() { clearTimeout(_lhHideT); _lhHideT = setTimeout(function () { if (_lh) _lh.style.display = "none"; }, 350); }
 
   function initEditor() {
     if (document.documentElement.classList.contains("cmsEdit")) return;
@@ -125,23 +207,23 @@
     // Block navigation while editing so CTAs/links don't take the operator away.
     document.addEventListener("click", function (e) {
       var a = e.target.closest && e.target.closest("a");
-      if (a) { e.preventDefault(); }
+      if (a) e.preventDefault();
     }, true);
 
-    // TEXT slots → click to edit inline.
+    // TEXT slots → click to edit inline; hover → layout handle.
     qa("[data-cms-text]").forEach(function (el) {
+      el.addEventListener("mouseenter", function () { showHandleFor(el, el.getAttribute("data-cms-text")); });
+      el.addEventListener("mouseleave", scheduleHideHandle);
       el.addEventListener("click", function (e) {
         e.preventDefault(); e.stopPropagation();
         if (el.getAttribute("contenteditable") === "true") return;
         var before = el.textContent;
         el.setAttribute("contenteditable", "true");
         el.focus();
-        // place caret at click
         var onBlur = function () {
           el.removeAttribute("contenteditable");
           el.removeEventListener("blur", onBlur);
-          var now = el.textContent;
-          if (now !== before) postChange(el.getAttribute("data-cms-text"), "text", { text: now }, labelOf(el, el.getAttribute("data-cms-text")));
+          if (el.textContent !== before) pushElement(el.getAttribute("data-cms-text"));
         };
         el.addEventListener("blur", onBlur);
         el.addEventListener("keydown", function (k) {
@@ -151,29 +233,31 @@
       });
     });
 
-    // IMAGE slots → ask the operator for a new image.
+    // IMAGE slots → click to swap; hover → layout handle.
     qa("[data-cms-img]").forEach(function (el) {
+      el.addEventListener("mouseenter", function () { showHandleFor(el, el.getAttribute("data-cms-img")); });
+      el.addEventListener("mouseleave", scheduleHideHandle);
       el.addEventListener("click", function (e) {
         e.preventDefault(); e.stopPropagation();
         post("cms-pick-image", { key: el.getAttribute("data-cms-img"), label: labelOf(el, el.getAttribute("data-cms-img")) });
       });
     });
 
-    // SECTION toolbars.
+    // SECTION toolbars (+ a layout button).
     qa("[data-cms-section]").forEach(function (sec) {
       var key = sec.getAttribute("data-cms-section");
       var state = sectionOf(key);
       var bar = document.createElement("div");
       bar.className = "cms-tools";
       bar.innerHTML =
-        '<span class="cms-lbl">' + (labelOf(sec, key)) + '</span>' +
+        '<span class="cms-lbl">' + labelOf(sec, key) + '</span>' +
         '<button data-a="hide" title="Show / hide">' + (state.hidden ? "🚫" : "👁") + '</button>' +
         '<button data-a="up" title="Move up">↑</button>' +
         '<button data-a="down" title="Move down">↓</button>' +
         '<span class="cms-lbl">bg</span><input type="color" data-a="bg" value="' + toHex(state.bg, "#0a0908") + '">' +
         '<span class="cms-lbl">txt</span><input type="color" data-a="color" value="' + toHex(state.color, "#e8e4de") + '">' +
+        '<button data-a="layout" title="Layout &amp; spacing">⛶</button>' +
         '<button data-a="reset" title="Reset section">↺</button>';
-      // keep toolbar out of contenteditable / navigation
       bar.addEventListener("click", function (e) { e.stopPropagation(); });
       sec.appendChild(bar);
       if (state.hidden) sec.classList.add("cms-hiddenmark");
@@ -182,25 +266,103 @@
         state.hidden = !state.hidden;
         sec.classList.toggle("cms-hiddenmark", !!state.hidden);
         this.textContent = state.hidden ? "🚫" : "👁";
-        pushSection(key, sec);
+        pushElement(key);
       });
       bar.querySelector('[data-a="up"]').addEventListener("click", function () { moveSection(sec, -1); });
       bar.querySelector('[data-a="down"]').addEventListener("click", function () { moveSection(sec, 1); });
-      bar.querySelector('[data-a="bg"]').addEventListener("input", function () { state.bg = this.value; sec.style.backgroundColor = this.value; pushSection(key, sec); });
-      bar.querySelector('[data-a="color"]').addEventListener("input", function () { state.color = this.value; sec.style.color = this.value; pushSection(key, sec); });
+      bar.querySelector('[data-a="bg"]').addEventListener("input", function () { state.bg = this.value; sec.style.backgroundColor = this.value; pushElement(key); });
+      bar.querySelector('[data-a="color"]').addEventListener("input", function () { state.color = this.value; sec.style.color = this.value; pushElement(key); });
+      bar.querySelector('[data-a="layout"]').addEventListener("click", function () { openLayout(key); });
       bar.querySelector('[data-a="reset"]').addEventListener("click", function () {
-        SECTION_STATE[key] = {};
+        SECTION_STATE[key] = {}; STYLE_STATE[key] = {};
         sec.style.backgroundColor = ""; sec.style.color = ""; sec.style.display = ""; sec.classList.remove("cms-hiddenmark");
+        LAYOUT_PROPS.forEach(function (p) { sec.style.removeProperty(p); });
         post("cms-reset", { key: key, kind: "section", label: labelOf(sec, key) });
       });
     });
 
+    document.addEventListener("scroll", function () { if (_lh) _lh.style.display = "none"; }, true);
     post("cms-ready", { page: PAGE });
   }
 
-  function pushSection(key, sec) {
-    var st = sectionOf(key);
-    postChange(key, "section", { hidden: !!st.hidden, sort: st.sort, bg: st.bg || "", color: st.color || "", accent: st.accent || "" }, labelOf(sec, key));
+  // ── Layout panel: move / size / space any element ──
+  function pxOf(css, k, fallback) { var v = css[k]; if (v == null || v === "") return fallback; var n = parseFloat(v); return isNaN(n) ? fallback : n; }
+  function computedPx(el, prop, fb) { try { var n = parseFloat(getComputedStyle(el)[prop]); return isNaN(n) ? fb : Math.round(n); } catch (e) { return fb; } }
+
+  function openLayout(key) {
+    var el = elFor(key); if (!el) return;
+    var kind = kindOf(el), css = styleOf(key);
+    var old = document.getElementById("cms-lpanel"); if (old) old.remove();
+    if (_lh) _lh.style.display = "none";
+
+    var p = document.createElement("div"); p.className = "cms-lpanel"; p.id = "cms-lpanel";
+    p.innerHTML =
+      '<div class="lp-h"><span>Layout · ' + labelOf(el, key) + '</span><button data-a="close" style="padding:2px 7px">×</button></div>' +
+      '<div class="pad">' +
+        '<span class="sp"></span><button data-a="nudge" data-d="up" title="Move up">↑</button><span class="sp"></span>' +
+        '<button data-a="nudge" data-d="left" title="Move left">←</button><button data-a="center" title="Nudge to center">◎</button><button data-a="nudge" data-d="right" title="Move right">→</button>' +
+        '<span class="sp"></span><button data-a="nudge" data-d="down" title="Move down">↓</button><span class="sp"></span>' +
+      '</div>' +
+      '<div class="row"><label>Width</label><button data-a="w-">−</button><span class="val" id="lp-w">auto</span><button data-a="w+">+</button><button data-a="w0" title="Auto">auto</button></div>' +
+      '<div class="row"><label>Height</label><button data-a="h-">−</button><span class="val" id="lp-h">auto</span><button data-a="h+">+</button></div>' +
+      '<div class="row"><label>Padding</label><button data-a="p-">−</button><span class="val" id="lp-p">0</span><button data-a="p+">+</button></div>' +
+      (kind === "text" ? '<div class="row"><label>Text</label><button data-a="t-">−</button><span class="val" id="lp-t">—</span><button data-a="t+">+</button></div>' : '') +
+      '<div class="row al"><label>Align</label><button data-a="al" data-v="left">L</button><button data-a="al" data-v="center">C</button><button data-a="al" data-v="right">R</button></div>' +
+      '<div class="lp-foot"><button data-a="reset" class="reset">Reset layout</button><button data-a="close">Done</button></div>';
+    document.body.appendChild(p);
+
+    var r = el.getBoundingClientRect();
+    p.style.left = Math.min(window.innerWidth - 224, Math.max(8, r.left)) + "px";
+    p.style.top = Math.min(window.innerHeight - 280, Math.max(8, r.top)) + "px";
+
+    function refresh() {
+      var w = p.querySelector("#lp-w"); if (w) w.textContent = css["max-width"] ? pxOf(css, "max-width", 0) : "auto";
+      var h = p.querySelector("#lp-h"); if (h) h.textContent = css["min-height"] ? pxOf(css, "min-height", 0) : "auto";
+      var pd = p.querySelector("#lp-p"); if (pd) pd.textContent = ("padding" in css && css["padding"] !== "") ? pxOf(css, "padding", 0) : computedPx(el, "paddingTop", 0);
+      var t = p.querySelector("#lp-t"); if (t) t.textContent = css["font-size"] ? pxOf(css, "font-size", 0) : computedPx(el, "fontSize", 16);
+    }
+    function commit() { applyStyle(el, css); pushElement(key); refresh(); }
+    refresh();
+
+    p.addEventListener("click", function (e) {
+      var b = e.target.closest("button"); if (!b) return;
+      e.stopPropagation();
+      var a = b.getAttribute("data-a");
+      if (a === "close") { p.remove(); return; }
+      if (a === "nudge") {
+        var d = b.getAttribute("data-d"), step = 8;
+        if (d === "up") css["margin-top"] = (pxOf(css, "margin-top", 0) - step) + "px";
+        else if (d === "down") css["margin-top"] = (pxOf(css, "margin-top", 0) + step) + "px";
+        else if (d === "left") css["margin-left"] = (pxOf(css, "margin-left", 0) - step) + "px";
+        else if (d === "right") css["margin-left"] = (pxOf(css, "margin-left", 0) + step) + "px";
+        commit(); return;
+      }
+      if (a === "center") { css["margin-left"] = "auto"; css["margin-right"] = "auto"; if (!css["max-width"]) css["max-width"] = Math.round(el.offsetWidth) + "px"; commit(); return; }
+      if (a === "w-") { css["max-width"] = Math.max(80, pxOf(css, "max-width", Math.round(el.offsetWidth)) - 40) + "px"; commit(); return; }
+      if (a === "w+") { css["max-width"] = (pxOf(css, "max-width", Math.round(el.offsetWidth)) + 40) + "px"; commit(); return; }
+      if (a === "w0") { css["max-width"] = ""; commit(); return; }
+      if (a === "h-") { css["min-height"] = Math.max(0, pxOf(css, "min-height", 0) - 8) + "px"; commit(); return; }
+      if (a === "h+") { css["min-height"] = (pxOf(css, "min-height", 0) + 8) + "px"; commit(); return; }
+      if (a === "p-") { css["padding"] = Math.max(0, pxOf(css, "padding", computedPx(el, "paddingTop", 0)) - 4) + "px"; commit(); return; }
+      if (a === "p+") { css["padding"] = (pxOf(css, "padding", computedPx(el, "paddingTop", 0)) + 4) + "px"; commit(); return; }
+      if (a === "t-") { css["font-size"] = Math.max(8, pxOf(css, "font-size", computedPx(el, "fontSize", 16)) - 1) + "px"; commit(); return; }
+      if (a === "t+") { css["font-size"] = (pxOf(css, "font-size", computedPx(el, "fontSize", 16)) + 1) + "px"; commit(); return; }
+      if (a === "al") { css["text-align"] = b.getAttribute("data-v"); commit(); return; }
+      if (a === "reset") {
+        LAYOUT_PROPS.forEach(function (k) { el.style.removeProperty(k); });
+        STYLE_STATE[key] = {}; css = STYLE_STATE[key];
+        pushElement(key); refresh(); return;
+      }
+    });
+
+    // Close on outside click.
+    setTimeout(function () {
+      var onDoc = function (ev) {
+        if (p.contains(ev.target) || (_lh && _lh.contains(ev.target))) return;
+        p.remove(); document.removeEventListener("mousedown", onDoc, true);
+      };
+      document.addEventListener("mousedown", onDoc, true);
+    }, 0);
   }
 
   // Move a section among its data-cms-section siblings and renumber all of them.
@@ -211,11 +373,9 @@
     if (j < 0 || j >= sibs.length) return;
     if (dir < 0) par.insertBefore(sec, sibs[j]);
     else par.insertBefore(sibs[j], sec);
-    // renumber every section in this parent and push each
     qa("[data-cms-section]", par).filter(function (s) { return s.parentNode === par; }).forEach(function (s, idx) {
-      var k = s.getAttribute("data-cms-section");
-      sectionOf(k).sort = idx;
-      pushSection(k, s);
+      sectionOf(s.getAttribute("data-cms-section")).sort = idx;
+      pushElement(s.getAttribute("data-cms-section"));
     });
   }
 
@@ -232,14 +392,12 @@
     if (d.type === "cms-set-image" && d.key) {
       var img = q('[data-cms-img="' + attrEsc(d.key) + '"]');
       if (img) {
-        if (d.remove) {
-          img.style.display = "none";
-          postChange(d.key, "image", { src: img.getAttribute("src") || "", alt: img.alt, hidden: true }, d.label || d.key);
-        } else {
+        if (d.remove) { img.style.display = "none"; pushElement(d.key); }
+        else {
           if (d.url) img.src = d.url;
           if (typeof d.alt === "string") img.alt = d.alt;
           img.style.display = "";
-          postChange(d.key, "image", { src: d.url || img.src, alt: (typeof d.alt === "string" ? d.alt : img.alt), hidden: false }, d.label || d.key);
+          pushElement(d.key);
         }
       }
     } else if (d.type === "cms-reload") {

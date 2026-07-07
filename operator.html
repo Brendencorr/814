@@ -3253,7 +3253,8 @@ function cwKey(c){ return c.page+'::'+c.key; }
 function cwOnChange(c){ if(!c||!c.page||!c.key) return; CW_PENDING[cwKey(c)] = c; cwRenderTray(); }
 function cwOnReset(page,key,kind,label){ if(!page||!key) return; CW_PENDING[page+'::'+key] = {page:page,key:key,kind:kind,label:label,__reset:true}; cwRenderTray(); }
 function cwDrop(k){ delete CW_PENDING[k]; cwRenderTray(); }
-function cwSectionSummary(p){ p=p||{}; var a=[]; if(p.hidden)a.push('hidden'); if(typeof p.sort==='number')a.push('reordered'); if(p.bg)a.push('bg color'); if(p.color)a.push('text color'); return a.join(', ')||'updated'; }
+function cwHasCss(p){ return !!(p&&p.css&&Object.keys(p.css).some(function(k){return p.css[k]!=='';})); }
+function cwSectionSummary(p){ p=p||{}; var a=[]; if(p.hidden)a.push('hidden'); if(typeof p.sort==='number')a.push('reordered'); if(p.bg)a.push('bg color'); if(p.color)a.push('text color'); if(cwHasCss(p))a.push('layout'); return a.join(', ')||'updated'; }
 function cwRenderTray(){
   var tray=document.getElementById('cw-tray'), count=document.getElementById('cw-count'), save=document.getElementById('cw-save');
   if(!tray) return;
@@ -3264,8 +3265,8 @@ function cwRenderTray(){
   tray.innerHTML = keys.map(function(k){
     var c=CW_PENDING[k];
     var desc = c.__reset ? 'reset to default'
-      : c.kind==='text'  ? '“'+cwEsc(String((c.props&&c.props.text)||'').slice(0,44))+'”'
-      : c.kind==='image' ? ((c.props&&c.props.hidden)?'image removed':'image updated')
+      : c.kind==='text'  ? ('“'+cwEsc(String((c.props&&c.props.text)||'').slice(0,40))+'”'+(cwHasCss(c.props)?' · layout':''))
+      : c.kind==='image' ? (((c.props&&c.props.hidden)?'image removed':'image updated')+(cwHasCss(c.props)?' · layout':''))
       :                    cwSectionSummary(c.props);
     return '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-top:1px solid rgba(255,255,255,.08)">'
       +'<div style="min-width:0"><div style="color:#f5f0e8;font-size:12.5px">'+cwEsc(c.label||c.key)+'</div>'

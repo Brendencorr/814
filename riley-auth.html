@@ -696,6 +696,8 @@ async function runOnboarding(session, consentAt) {
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────
 async function signInWithGoogle() {
+  // Activation funnel: an anonymous /talk visitor who has chatted is now saving their account.
+  try { if (window.RileyPH && userMsgCount > 0) window.RileyPH.track('account_saved', {}); } catch (e) {}
   // If we're inside an iframe, Google will block the OAuth flow.
   // Instead, save the conversation and open riley.meetriley.us in the top-level window.
   if (window.self !== window.top) {
@@ -855,6 +857,7 @@ function addMsg(role, text) {
 var _aiNoteShown = false;
 function showAiNote() {
   if (_aiNoteShown) return; _aiNoteShown = true;
+  try { if (window.RileyPH) window.RileyPH.track('first_riley_message', {}); } catch (e) {}
   const thread = document.getElementById('messages'); if (!thread) return;
   const n = document.createElement('div');
   n.style.cssText = "align-self:center;max-width:82%;text-align:center;font-size:11px;color:#5a5450;font-family:'DM Mono',monospace;margin:8px 0 2px;line-height:1.55;opacity:0.8";

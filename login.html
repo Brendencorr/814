@@ -83,6 +83,16 @@ _sb.auth.getSession().then(function(r) {
 // Listen for OAuth return
 _sb.auth.onAuthStateChange(function(event, session) {
   if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
+    // Activation funnel: on a true SIGNED_IN, distinguish a brand-new account (created in the last
+    // ~2 min) → signup_completed, from a returning sign-in → signin.
+    try {
+      if (event === 'SIGNED_IN' && window.RileyPH && session.user) {
+        var _isNew = (Date.now() - new Date(session.user.created_at).getTime()) < 120000;
+        window.RileyPH.track(_isNew ? 'signup_completed' : 'signin', {
+          method: (session.user.app_metadata && session.user.app_metadata.provider) || 'email'
+        });
+      }
+    } catch (_e) {}
     setStatus('Signed in — welcome. Taking you home…', 'ok');
     setTimeout(function(){ window.location.href = DEST; }, 500);
   }
@@ -91,6 +101,7 @@ _sb.auth.onAuthStateChange(function(event, session) {
 function doSignIn() {
   var btn = document.getElementById('btn');
   btn.disabled = true;
+  try { if (window.RileyPH) window.RileyPH.track('signup_started', { method: 'google' }); } catch (_e) {}
   setStatus('Opening Google sign-in…', '');
   _sb.auth.signInWithOAuth({
     provider: 'google',
@@ -118,6 +129,7 @@ function sendMagic(e) {
   var em = (document.getElementById('ml-email').value || '').trim();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { setStatus('Please enter a valid email.', 'err'); return false; }
   var b = document.getElementById('ml-btn');
+  try { if (window.RileyPH) window.RileyPH.track('signup_started', { method: 'magic_link' }); } catch (_e) {}
   b.disabled = true; b.textContent = 'Sending…';
   _sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: DEST } })
     .then(function(r) {

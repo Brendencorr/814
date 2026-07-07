@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Riley">
+<title>Privacy Policy — Meet Riley</title>
+<meta name="description" content="How The 814 Project, LLC collects, uses, and protects your information at Meet Riley.">
+<meta name="robots" content="index,follow">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--warm:#faf8f4;
+  --gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);
+  --green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 65% 45% at 50% -5%,rgba(201,168,76,0.07),transparent 60%),radial-gradient(ellipse 45% 40% at 10% 28%,rgba(201,168,76,0.035),transparent 55%),radial-gradient(ellipse 45% 45% at 92% 72%,rgba(74,122,176,0.035),transparent 55%)}
+.eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:var(--gold)}
+.serif{font-family:'DM Serif Display',serif;font-weight:400}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:0.92}50%{transform:scale(1.06);opacity:1}}
+/* NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,9,8,0.72);backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.05)}
+.nav-inner{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:inline-flex;align-items:center;font-family:'DM Serif Display',serif;font-size:32px;color:#fff;line-height:1}
+.logo span{color:var(--gold)}
+.logo-sun{width:27px;height:27px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 15px rgba(201,168,76,0.5);animation:breathe 5s ease-in-out infinite;flex-shrink:0;margin-right:11px}
+.nav-links{display:flex;align-items:center;gap:30px}
+.nav-links a.nl{font-size:13px;color:var(--smoke);transition:color .15s}
+.nav-links a.nl:hover{color:var(--parchment)}
+.btn{display:inline-block;font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;border:none;border-radius:3px;transition:all .2s;text-align:center;letter-spacing:0.02em}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);box-shadow:0 4px 24px rgba(201,168,76,0.22)}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(201,168,76,0.32)}
+.btn-sm{padding:9px 18px;font-size:13px}
+@media(max-width:720px){.nav-links a.nl{display:none}}
+/* LEGAL DOC */
+.doc{max-width:820px;margin:0 auto;padding:150px 0 90px}
+.doc .eyebrow{display:block;margin-bottom:14px}
+.doc h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(38px,6vw,60px);line-height:1.05;letter-spacing:-0.02em;color:var(--parchment);margin-bottom:16px}
+.doc .meta{font-family:'DM Mono',monospace;font-size:12px;color:var(--smoke2);letter-spacing:0.04em;margin-bottom:10px}
+.doc .lede{font-size:17px;color:var(--smoke);line-height:1.8;margin:22px 0 8px;max-width:680px}
+.doc h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:clamp(22px,3vw,28px);color:var(--parchment);margin:44px 0 14px;letter-spacing:-0.01em}
+.doc h3{font-family:'DM Sans',sans-serif;font-weight:600;font-size:16px;color:var(--gold2);margin:24px 0 8px}
+.doc p{font-size:15.5px;color:var(--smoke);line-height:1.85;margin-bottom:14px}
+.doc p strong,.doc li strong{color:var(--parchment);font-weight:600}
+.doc ul{margin:0 0 16px 0;padding-left:22px}
+.doc li{font-size:15.5px;color:var(--smoke);line-height:1.8;margin-bottom:9px}
+.doc a.inl{color:var(--gold2);border-bottom:1px solid rgba(201,168,76,0.3)}
+.doc a.inl:hover{color:var(--gold)}
+.callout{background:linear-gradient(165deg,var(--ink2),var(--ink));border:1px solid rgba(201,168,76,0.22);border-left:3px solid var(--gold);border-radius:10px;padding:20px 24px;margin:24px 0}
+.callout p{margin-bottom:8px;color:var(--parchment)}
+.callout p:last-child{margin-bottom:0}
+.toc{background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:20px 24px;margin:28px 0 8px}
+.toc-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+.toc ol{margin:0;padding-left:20px}
+.toc li{font-size:14px;color:var(--smoke);margin-bottom:6px}
+.toc a:hover{color:var(--gold2)}
+/* FOOTER */
+footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
+.foot{display:flex;justify-content:space-between;align-items:flex-start;gap:30px;flex-wrap:wrap}
+.foot-links{display:flex;gap:26px;flex-wrap:wrap}
+.foot-links a{font-size:13px;color:var(--smoke);transition:color .15s}
+.foot-links a:hover{color:var(--gold)}
+.foot-note{margin-top:34px;font-family:'DM Mono',monospace;font-size:11px;color:var(--smoke2);letter-spacing:0.04em;line-height:1.9}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="/home" class="logo"><span class="logo-sun"></span>Riley<span>.</span></a>
+    <div class="nav-links">
+      <a href="/home" class="nl">Home</a>
+      <a href="/about" class="nl">About</a>
+      <a href="/home#programs" class="nl">Programs</a>
+      <a href="/pillars" class="nl">The Four Pillars</a>
+      <a href="/resources" class="nl">Resources</a>
+      <a href="https://riley.meetriley.us/login" class="nl">Sign In</a>
+      <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+<article class="doc">
+  <span class="eyebrow">Legal</span>
+  <h1 class="serif">Privacy Policy</h1>
+  <p class="meta">Effective: July 6, 2026 &nbsp;·&nbsp; Last updated: July 6, 2026</p>
+  <p class="lede">Meet Riley is a place people come to rebuild — often at a vulnerable moment. We treat the information you share with the care that deserves. This policy explains what we collect, why, and the control you have over it.</p>
+
+  <div class="callout">
+    <p><strong>Riley is a wellness companion, not a medical or emergency service.</strong> Riley does not provide medical, psychiatric, or crisis care and is not a substitute for a licensed professional. <strong>If you are in crisis or thinking about harming yourself, call or text 988 (Suicide &amp; Crisis Lifeline) or call 911.</strong></p>
+  </div>
+
+  <div class="toc">
+    <div class="toc-title">On this page</div>
+    <ol>
+      <li><a class="inl" href="#who">Who we are</a></li>
+      <li><a class="inl" href="#collect">Information we collect</a></li>
+      <li><a class="inl" href="#sensitive">Sensitive information</a></li>
+      <li><a class="inl" href="#use">How we use your information</a></li>
+      <li><a class="inl" href="#ai">AI and your conversations</a></li>
+      <li><a class="inl" href="#share">When we share information</a></li>
+      <li><a class="inl" href="#retention">How long we keep it</a></li>
+      <li><a class="inl" href="#rights">Your rights and choices</a></li>
+      <li><a class="inl" href="#security">Security</a></li>
+      <li><a class="inl" href="#children">Children</a></li>
+      <li><a class="inl" href="#changes">Changes to this policy</a></li>
+      <li><a class="inl" href="#contact">Contact us</a></li>
+    </ol>
+  </div>
+
+  <h2 id="who" class="serif">1. Who we are</h2>
+  <p>Meet Riley ("<strong>Riley</strong>," "<strong>we</strong>," "<strong>us</strong>") is a product of <strong>The 814 Project, LLC</strong>. When you use our website and app at meetriley.us and its subdomains (the "Service"), The 814 Project, LLC is the controller responsible for your information.</p>
+
+  <h2 id="collect" class="serif">2. Information we collect</h2>
+  <p>We collect only what we need to give you a personalized, supportive experience.</p>
+  <h3>Information you give us</h3>
+  <ul>
+    <li><strong>Account details</strong> — your name and email, provided when you sign in with Google.</li>
+    <li><strong>Wellness inputs you choose to share</strong> — for example a sobriety or start date, daily check-ins, mood and well-being responses, journal entries, program progress, and goals.</li>
+    <li><strong>Conversations with Riley</strong> — the messages you send and Riley's replies, so your history and context carry across sessions.</li>
+    <li><strong>Support and billing details</strong> — messages you send us and, if you subscribe, information needed to process payment (handled by our payment processor — we do not store full card numbers).</li>
+  </ul>
+  <h3>Information collected automatically</h3>
+  <ul>
+    <li><strong>Usage and device data</strong> — pages viewed, features used, approximate location derived from IP, browser and device type, and similar analytics, used to keep the Service working and improve it.</li>
+    <li><strong>Cookies and local storage</strong> — used to keep you signed in and remember preferences.</li>
+  </ul>
+
+  <h2 id="sensitive" class="serif">3. Sensitive information</h2>
+  <p>Because Riley supports recovery, grief, and well-being, some of what you share may feel deeply personal or health-related. You decide what to share. We use this information only to provide and personalize the Service for you, and we never sell it. Where required by law, our use of this information is based on the consent you give by choosing to provide it.</p>
+
+  <h2 id="use" class="serif">4. How we use your information</h2>
+  <ul>
+    <li>To provide the Service and personalize Riley's guidance to you.</li>
+    <li>To remember your history, progress, and preferences across sessions and devices.</li>
+    <li>To keep you safe — including recognizing when you may need crisis resources.</li>
+    <li>To operate, secure, troubleshoot, and improve the Service.</li>
+    <li>To process subscriptions and send Service-related messages.</li>
+    <li>To comply with legal obligations and enforce our terms.</li>
+  </ul>
+
+  <h2 id="ai" class="serif">5. AI and your conversations</h2>
+  <p>Riley's responses are generated using a large language model provided by Anthropic. To answer you, the content of your conversation is sent to Anthropic's API for processing and returned to you. Under Anthropic's commercial API terms, your inputs and outputs are <strong>not used to train their models</strong>. We do not use your conversations to build advertising profiles, and we do not sell your data.</p>
+
+  <h2 id="share" class="serif">6. When we share information</h2>
+  <p>We share information only in these limited situations:</p>
+  <ul>
+    <li><strong>Service providers</strong> who process data on our behalf under contract — including our database and authentication host (Supabase), AI provider (Anthropic), sign-in provider (Google), product analytics (PostHog), payment processor (Stripe), transactional email (Resend), and site hosting (Netlify).</li>
+    <li><strong>Legal reasons</strong> — to comply with law, respond to lawful requests, or protect the rights, safety, and property of you, us, or others.</li>
+    <li><strong>Business transfers</strong> — if The 814 Project, LLC is involved in a merger, acquisition, or sale of assets, your information may transfer as part of that transaction, subject to this policy.</li>
+  </ul>
+  <p><strong>We do not sell your personal information, and we do not share it for cross-context behavioral advertising.</strong></p>
+
+  <h2 id="retention" class="serif">7. How long we keep it</h2>
+  <p>We keep your information for as long as your account is active or as needed to provide the Service. When you delete your account, we delete or de-identify your personal data. For safety and legal reasons, limited records related to a crisis or safety event may be retained in de-identified form for up to about twelve months. We may also retain information as required by law.</p>
+
+  <h2 id="rights" class="serif">8. Your rights and choices</h2>
+  <p>You are in control of your data. From your account settings you can <strong>access, export, or permanently delete</strong> your information at any time. Depending on where you live, you may also have rights to correct your data, object to or restrict certain processing, and to appeal a decision — and to do so without discrimination. To exercise any of these rights, use the in-app controls or contact us below.</p>
+
+  <h2 id="security" class="serif">9. Security</h2>
+  <p>We use technical and organizational safeguards — including encryption in transit, access controls, and reputable infrastructure providers — to protect your information. No system is perfectly secure, but we work to protect your data and to respond promptly if something goes wrong.</p>
+
+  <h2 id="children" class="serif">10. Children</h2>
+  <p>The Service is intended for adults 18 and older. It is not directed to children, and we do not knowingly collect personal information from anyone under 18. If you believe a child has provided us information, please contact us and we will delete it.</p>
+
+  <h2 id="changes" class="serif">11. Changes to this policy</h2>
+  <p>We may update this policy from time to time. When we make material changes, we will update the "Last updated" date above and, where appropriate, notify you in the app. Your continued use of the Service after an update means you accept the revised policy.</p>
+
+  <h2 id="contact" class="serif">12. Contact us</h2>
+  <p>Questions about your privacy, or want to exercise your rights? Reach us at:</p>
+  <p><strong>The 814 Project, LLC</strong><br>
+  Email: <a class="inl" href="mailto:support@meetriley.us">support@meetriley.us</a></p>
+</article>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="logo"><span class="logo-sun"></span>Riley<span>.</span></div>
+        <div style="font-size:13px;color:var(--smoke);margin-top:10px;max-width:260px;line-height:1.6">Build a life you don't want to escape from.</div>
+      </div>
+      <div class="foot-links">
+        <a href="/home">Home</a>
+        <a href="/about">About</a>
+        <a href="/home#programs">Programs</a>
+        <a href="/pillars">The Four Pillars</a>
+        <a href="/resources">Resources</a>
+        <a href="/blog">Blog</a>
+        <a href="https://riley.meetriley.us/login">Sign In</a>
+        <a href="https://riley.meetriley.us/talk">Talk to Riley</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      8:14 — the minute the light comes back.<br>
+      © 2026 The 814 Project, LLC · Meet Riley · Live with purpose.
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

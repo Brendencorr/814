@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Operator Settings — real Integrations status (replaced the fake "Connected")
+- **Why:** Settings hardcoded "Anthropic: Connected / Supabase: Connected" regardless of reality;
+  no way to see which env keys are actually wired. (Also confirmed: **Metricool is NOT integrated** —
+  social publishing is FeedHive; RESEND_API_KEY *is* set per Brenden.)
+- **What:** `admin-integrations.js` (GET, operator-gated) returns a boolean per integration — presence
+  of the Netlify env key, NEVER the value. Settings panel renders it on open: Anthropic/Supabase/
+  Operator (core) · Resend/Web-push (delivery) · FeedHive/PostHog/Canva/Stripe (growth), green
+  Connected / red Not set / grey optional.
+- **Files:** `admin-integrations.js` (new), `operator.html` (loadIntegrations + tgs), `netlify.toml`.
+
 ### Client home reorganized — dynamic tappable stat tiles + de-duplicated
 - **Why:** the home felt cluttered — mood + sobriety each appeared TWICE (a stat tile up top AND a
   full panel lower down: "How are you feeling?" + "Sobriety Streak"); the 4 stat tiles looked

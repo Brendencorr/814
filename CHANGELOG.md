@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Launch fixes — Task 5 (safety/help/data pages, FAQ) + revised AI disclosure (Task 2.2)
+- **AI disclosure moved out of Riley's spoken opening** (founder call): reverted `riley-chat.js` to the warm
+  "Hi, I'm Riley" opening; the SB 243 disclosure is now a **persistent UI line at the chat** in `chat.html`
+  + `riley-auth.html` ("Riley is an AI companion… How she works & keeps you safe →" → `/safety`). she/her +
+  AI-honesty principle stay in the prompt.
+- **New pages (v1 — founder should review copy):** `/safety` (SB 243 protocol; crisis behavior cross-checked
+  vs the real `riley-chat.js` CRISIS SUPPORT — 988/911/SAMHSA, free at all tiers, no risk-assessment Qs,
+  de-identified `crisis_log` ~12mo, lapse-repair), `/data` (plain-English privacy), `/help` (billing, cancel,
+  **refund policy** — 30-day on Companion/Coach; $8.14 programs + bundle non-refundable, memory-per-tier).
+- **Pricing FAQ** accordion (7 items) added to home.html; trust row "Private by design" → `/data`; "30-day
+  guarantee" → "on subscriptions". **Footer links** (Safety/Help/Your Data) added to all 7 marketing pages.
+- **Files:** `safety/data/help.html` (new), `home/chat/riley-auth/about/pillars/resources/blog/terms/privacy.html`,
+  `riley-chat.js`. No migration. Task 5.5 (Terms update list) = handed to founder, not published.
+
 ### Launch fixes — safety/trust copy (Task 2) + pricing page (Task 3) [marketing site]
 - Part of the meetriley.us Launch Fixes handoff (11-task build order). Task 1 code was already done
   (0 `eight14.us` refs); Netlify 301 + Google OAuth origins for riley.meetriley.us are founder-owned.

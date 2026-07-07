@@ -12,6 +12,15 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Interactive-program nudges — email channel via Resend + cron scheduled
+- **Why:** the proactive nudges (session reminders, grief/staying-free date touches, next-day lapse
+  check-in) only wrote in-app alerts; Resend is now confirmed live (`email_configured:true`).
+- **What:** `int-proactive-cron` also sends email via Resend, consent-gated (enrollment `nudge_channels`
+  includes 'email' AND `user_profiles.email_notifications` ≠ false), generic copy only (subject = alert
+  title, never names sensitive content), tracked in `engagement_events`. **Scheduled** daily 15:00 UTC
+  (~9am MT, quiet-hours-safe). Dormant until members enroll; `dry_run` still HTTP-works post-schedule.
+- **Files:** `int-proactive-cron.js`, `netlify.toml` (schedule). No migration.
+
 ### Operator Settings — real Integrations status (replaced the fake "Connected")
 - **Why:** Settings hardcoded "Anthropic: Connected / Supabase: Connected" regardless of reality;
   no way to see which env keys are actually wired. (Also confirmed: **Metricool is NOT integrated** —

@@ -103,16 +103,20 @@ exports.handler = async () => {
   const planByUser = {}; subs.forEach((s) => { const t = String(s.plan_id || "").toLowerCase(); planByUser[s.user_id] = t.indexOf("coach") >= 0 || t.indexOf("concierge") >= 0 ? "coach" : t.indexOf("companion") >= 0 ? "companion" : planByUser[s.user_id] || "guide"; });
   const lastMsgByUser = {}; convs.forEach((c) => { if (!lastMsgByUser[c.user_id]) lastMsgByUser[c.user_id] = c.created_at; });
   const lastCiByUser = {}; cis.forEach((c) => { if (!lastCiByUser[c.user_id]) lastCiByUser[c.user_id] = c.checkin_date; });
-  // Sent templates + "sent a non-transactional today" per user.
-  const sentKeys = {}; const sentTodayNonTx = {};
+  // sentKeys = templates ACTUALLY sent (suppressed=false) — the once-per-template-ever dedup.
+  // loggedKeys = any decision row incl. suppressed — used only to avoid re-logging the same
+  // suppressed decision every hour while dark. A suppressed (never-sent) decision must NOT
+  // block the real send at go-live, or the dark period would silently burn every template.
+  const sentKeys = {}; const loggedKeys = {}; const sentTodayNonTx = {};
   const todayStr = new Date().toISOString().slice(0, 10);
   sends.forEach((s) => {
-    (sentKeys[s.user_id] = sentKeys[s.user_id] || new Set()).add(s.template_key);
+    (loggedKeys[s.user_id] = loggedKeys[s.user_id] || new Set()).add(s.template_key);
+    if (!s.suppressed) (sentKeys[s.user_id] = sentKeys[s.user_id] || new Set()).add(s.template_key);
     if (!s.suppressed && s.flow !== "transactional" && String(s.sent_at || "").slice(0, 10) === todayStr) sentTodayNonTx[s.user_id] = true;
   });
 
   // Log a decision (send or suppression) to email_sends, and (if live) actually send.
-  async function decide(uid, email, key, msg, forceReason) {
+  async function decide(uid, email, key, msg, forceReason, logged) {
     let suppressed = true, reason = forceReason || null, resend_id = null;
     if (!forceReason) {
       if (!ENABLED) { reason = "comms_disabled"; }
@@ -123,7 +127,11 @@ exports.handler = async () => {
         else { reason = "resend_" + (res.error || "error"); }
       }
     }
+    // Don't re-insert the same suppressed decision every hour while dark (would bloat the log);
+    // the real once-ever dedup lives in sentKeys (actual sends), never in the suppressed rows.
+    if (suppressed && logged && logged.has(key)) { bump("suppressed_dupe:" + (reason || "?")); return; }
     await sb.from("email_sends").insert({ user_id: uid, template_key: key, flow: msg.flow, resend_id, suppressed, suppression_reason: reason });
+    if (logged) logged.add(key);
     bump(suppressed ? "suppressed:" + (reason || "?") : "sent:" + key);
   }
 
@@ -140,7 +148,8 @@ exports.handler = async () => {
     const daysAbsent = Math.floor((now - lastActive) / DAY);
     const everMessaged = !!lastMsg;
     const ladder = st.ladder_position || 0;
-    const keys = sentKeys[uid] || new Set();
+    const keys = sentKeys[uid] || new Set();       // actually-sent → once ever
+    const logged = loggedKeys[uid] || new Set();   // any logged decision → avoids dark re-logging
     const vars = { first_name: firstName(prof), session_count: (convs.filter((c) => c.user_id === uid).length) || 0, plan };
     const urls = { unsub: unsubUrl(uid), pref: prefUrl(uid) };
 
@@ -163,7 +172,7 @@ exports.handler = async () => {
     const send = async (key) => {
       if (keys.has(key)) return false;         // once-per-template-ever (except reset_daily handled separately)
       const r = render(key, vars, urls);
-      await decide(uid, prof.email, key, r);
+      await decide(uid, prof.email, key, r, null, logged);
       keys.add(key); fired = true; return true;
     };
 
@@ -194,7 +203,7 @@ exports.handler = async () => {
         const n = resetDay + 1;
         const rd = render("reset_daily", { ...vars, n, module_title: "Day " + n, module_theme: "today's step" }, urls);
         // reset_daily is the ONE template allowed to repeat (once per day, gated by "already_today" above).
-        await decide(uid, prof.email, "reset_daily", rd);
+        await decide(uid, prof.email, "reset_daily", rd, null, logged);
         fired = true;
       }
       else if (resetDay >= 1) await send("guide_3");

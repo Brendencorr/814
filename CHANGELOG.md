@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Launch fixes Tasks 9-11 — a11y + perf + instrumentation (targeted)
+- **Task 9 (a11y):** pillars emoji icons → `aria-hidden` (decorative; text titles carry meaning).
+  Contrast audited: `--smoke #8A8578` passes AA on the dark theme (~5.3:1); only a concern on light
+  backgrounds (rare here). Cardinal img already had alt. (Remaining: full emoji sweep on other pages,
+  modal focus-trap, touch-target audit — flagged.)
+- **Task 10 (perf):** added font **preconnect** on home (LCP page); **lazy-load** the cardinal image
+  (`loading=lazy decoding=async`). Fonts already `display=swap` on 35/36 pages (login = system fonts).
+  (Remaining: hero-image compression needs asset; Netlify asset-opt + UptimeRobot = founder.)
+- **Task 11 (instrumentation):** added PostHog **`story_submitted`** event; **`FUNNEL.md`** = the launch
+  funnel taxonomy for Echo (wired: page_view/waitlist_joined/story_submitted/reset*/checkin; TO-WIRE:
+  signup_started/completed, first_riley_message, account_saved; BLOCKED on payments: program_purchased,
+  subscription_started). FUNNEL.md 404'd publicly (internal doc).
+- **Files:** `home.html`, `pillars.html`, `netlify.toml`, `FUNNEL.md` (new).
+
 ### Customize Website — operator live editor for the marketing site
 - **Why:** the public marketing pages (home/about/pillars/resources) were hardcoded HTML —
   Brenden couldn't change copy or layout without a code edit + redeploy. He wanted to edit

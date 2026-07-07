@@ -233,6 +233,11 @@
   to = "/404.html"
   status = 404
   force = true
+[[redirects]]
+  from = "/FUNNEL.md"
+  to = "/404.html"
+  status = 404
+  force = true
 
 # ── Dashboard clean URLs (must come BEFORE the riley.meetriley.us catch-all) ──
 [[redirects]]

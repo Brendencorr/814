@@ -14,6 +14,8 @@
 <meta property="og:title" content="Meet Riley, Let's Rebuild Together">
 <meta property="og:description" content="A companion for people quietly starting over — grief, movement, food that heals, and the whole rebuild. Meet Riley.">
 <meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -373,7 +375,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 <!-- CARDINAL — a little reminder -->
 <section class="section" data-cms-section="cardinal" data-cms-label="Cardinal">
   <div class="wrap cardinal-band">
-    <img src="/assets/cardinal/png/814-cardinal-perched@2x.png" alt="A red cardinal on a branch" class="reveal" data-cms-img="cardinal_img" data-cms-label="Cardinal image">
+    <img src="/assets/cardinal/png/814-cardinal-perched@2x.png" alt="A red cardinal on a branch" loading="lazy" decoding="async" class="reveal" data-cms-img="cardinal_img" data-cms-label="Cardinal image">
     <div class="ct reveal">
       <div class="eyebrow mt-e" data-cms-text="cardinal_eyebrow" data-cms-label="Cardinal eyebrow">A little reminder</div>
       <div class="h2" data-cms-text="cardinal_title" data-cms-label="Cardinal title" style="font-size:clamp(26px,3.6vw,40px)">You're not alone.</div>
@@ -513,7 +515,7 @@ function storySubmit(){
   msg.textContent=''; btn.disabled=true; btn.textContent='Sending…';
   fetch('/.netlify/functions/story-submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,story:story,consent:consent})})
     .then(function(r){return r.json();}).then(function(x){
-      if(x&&x.ok){ document.getElementById('story-body').innerHTML='<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:10px">&#128330;</div><div style="font-family:DM Serif Display,serif;font-size:20px;color:#f5f0e8">Thank you for sharing.</div><div style="font-size:13px;color:#8a8578;margin-top:8px;line-height:1.6">We just sent you a note. Nothing is ever published without your written OK.</div></div>'; }
+      if(x&&x.ok){ try{if(window.RileyPH)window.RileyPH.track('story_submitted',{});}catch(e){} document.getElementById('story-body').innerHTML='<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:10px">&#128330;</div><div style="font-family:DM Serif Display,serif;font-size:20px;color:#f5f0e8">Thank you for sharing.</div><div style="font-size:13px;color:#8a8578;margin-top:8px;line-height:1.6">We just sent you a note. Nothing is ever published without your written OK.</div></div>'; }
       else { msg.textContent=(x&&x.error)||'Something went wrong — try again.'; btn.disabled=false; btn.textContent='Send my story'; }
     })
     .catch(function(){ msg.textContent='Something went wrong — try again.'; btn.disabled=false; btn.textContent='Send my story'; });

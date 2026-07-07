@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Launch fixes — safety/trust copy (Task 2) + pricing page (Task 3) [marketing site]
+- Part of the meetriley.us Launch Fixes handoff (11-task build order). Task 1 code was already done
+  (0 `eight14.us` refs); Netlify 301 + Google OAuth origins for riley.meetriley.us are founder-owned.
+- **Task 2 (safety & trust):** crisis CTA → "Get immediate support" → `/resources`; meta/og reworked
+  (removed "supportive community" on all 5 marketing pages); **four pillars reordered** (Rebuild →
+  Movement → Food That Heals → Sobriety) in pillars.html; Riley system prompt now states **she/her +
+  AI-honesty**; **SB 243 new-conversation AI disclosure** added to `riley-chat.js`. HELD for founder
+  approval: the About-page disclosure (draft only). DEFERRED: "How Riley works & keeps you safe" →
+  `/safety` link near chat input (waits on /safety being published).
+- **Task 3 (pricing — it lives in `home.html`):** program row split into **self-guided (à la carte
+  $8.14)** vs **Riley-led interactive ("coming soon")**; removed "Monthly workshops" (card + table);
+  Companion → "all self-guided programs", Coach → "all interactive programs included"; bundle → **"The
+  Self-Guided Bundle"**; Guide card gains the 8:14 Reset + **"No credit card required. Ever."** (hero +
+  card); "Riley, any time" → "Riley conversations"; annual/monthly toggle gains **savings text
+  ($53/$58 from `plans`) + aria-pressed**. Prices unchanged ($19/$34/$175/$350 verified in `plans`).
+- **Files:** `home.html`, `about/blog/pillars/resources.html` (og), `netlify/functions/riley-chat.js`. No migration.
+
 ### Interactive-program nudges — email channel via Resend + cron scheduled
 - **Why:** the proactive nudges (session reminders, grief/staying-free date touches, next-day lapse
   check-in) only wrote in-app alerts; Resend is now confirmed live (`email_configured:true`).

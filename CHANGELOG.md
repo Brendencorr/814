@@ -42,6 +42,13 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 - Files: migration 073, comms-templates.js, evaluate-comms.js, comms-unsubscribe.js, preferences.html,
   email-send.js (additive), netlify.toml (hourly schedule + unsubscribe fn).
 
+### Correspondence log — glanceable "Recent correspondence" widget on operator Home
+- Follow-on to the correspondence log: a new **"Recent correspondence"** widget on the operator
+  Home tab shows the latest 25 emails across ALL members at a glance (recipient · subject · time ·
+  kind, green/red status dot) — no need to click into a person. Lazy-loads from admin-correspondence
+  (cached across re-renders), rows with a linked member open that member's panel. Reorderable/hideable
+  like the other Home widgets; appended to existing saved layouts. operator.html only.
+
 ### Correspondence log — every client email is now recorded + visible in the operator
 - **Why:** ~8 functions POSTed to Resend and discarded the result, so "did we email this
   client / did it land?" was unanswerable (this came up when Elizabeth was added). Fixed at the

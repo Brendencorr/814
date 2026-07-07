@@ -1201,6 +1201,7 @@ function renderHome(d){
   W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
+  W.correspondence='<div id="home-corr-body" class="em">Loading…</div>';
   // Latest sign-ups — one section combining the old "New members" + "Last Active Clients":
   // newest 10 members with email, programs owned, signup time, and 7-day activity. Fresh-dot + Mark seen kept.
   var sg=d.recent_signups||[];
@@ -1234,11 +1235,39 @@ function renderHome(d){
   }
   document.getElementById('home-body').innerHTML=html;
   attachHomeDnD();
+  if(document.getElementById('home-corr-body'))loadHomeCorrespondence();
+}
+
+// ── Recent correspondence (Home widget) — glanceable feed of the latest emails we've sent,
+// across ALL members, straight from email_log via admin-correspondence. Cached so a re-render
+// (reorder/range/hide) doesn't re-fetch. A row with a linked member opens that member's panel.
+var _homeCorr=null;
+function loadHomeCorrespondence(force){
+  var el=document.getElementById('home-corr-body'); if(!el)return;
+  if(_homeCorr&&!force){ renderHomeCorr(el,_homeCorr); return; }
+  opGet('/admin-correspondence?limit=25').then(function(d){ _homeCorr=(d&&d.items)||[]; renderHomeCorr(el,_homeCorr); })
+    .catch(function(){ el.innerHTML='<div class="em" style="color:var(--red)">Could not load correspondence.</div>'; });
+}
+function renderHomeCorr(el,rows){
+  if(!rows||!rows.length){ el.innerHTML='<div class="em">No emails sent yet — fills in as Riley emails members</div>'; return; }
+  el.innerHTML='<div class="rp" style="margin:0">'+rows.map(function(r){
+    var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+    var col=r.status==='sent'?'var(--green)':r.status==='failed'?'var(--red)':'var(--muted2)';
+    var grid='grid-template-columns:14px 1.3fr 1fr 96px 78px';
+    var attrs=r.user_id?(' style="cursor:pointer;'+grid+'" onclick="openUserPanel(\''+r.user_id+'\')"'):(' style="'+grid+'"');
+    var reason=(r.status!=='sent'&&r.error)?' <span style="color:var(--muted2)">('+x(r.error)+')</span>':'';
+    return '<div class="rr"'+attrs+'>'+
+      '<span style="color:'+col+'">&#9679;</span>'+
+      '<span style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.to_email||'')+'</span>'+
+      '<span style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.subject||r.kind||'(email)')+reason+'</span>'+
+      '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
+      '<span style="color:var(--muted2);font-size:.64rem;text-transform:uppercase">'+x(r.kind||'')+'</span></div>';
+  }).join('')+'</div>';
 }
 
 // ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
-var HOME_WIDGETS=['hero','stats','lastactive','chart_logins','chart_riley','pages','clicks'];
-var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Latest sign-ups'};
+var HOME_WIDGETS=['hero','stats','lastactive','correspondence','chart_logins','chart_riley','pages','clicks'];
+var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Latest sign-ups',correspondence:'Recent correspondence'};
 var homeEditing=false, _homeData=null, _homeRange=30;
 function setHomeRange(r){ _homeRange=r; var t=document.getElementById('home-rtog'); if(t){t.querySelectorAll('.rtog-btn').forEach(function(b){b.classList.toggle('on',+b.getAttribute('data-r')===r);});} if(_homeData)renderHome(_homeData); }
 function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); return {order:Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(), hidden:Array.isArray(l.hidden)?l.hidden:[]}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }

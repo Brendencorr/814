@@ -22,6 +22,7 @@ const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</
 async function sendEmail(to, subject, html) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { sent: false, reason: "resend_not_configured" };
+  if (!to) return { sent: false, reason: "no_recipient" };
   const from = process.env.RESEND_FROM || "Riley <hello@meetriley.us>";
   try {
     const r = await fetch(RESEND_ENDPOINT, {
@@ -62,8 +63,10 @@ exports.handler = async (event) => {
 
     const first = name ? esc(name.split(" ")[0]) : "";
     await Promise.allSettled([
-      // Notify Brenden with the full submission.
-      sendEmail("brenden@meetriley.us", "New story submission — Meet Riley",
+      // Notify the operator with the full submission. Recipient comes from the
+      // SAFETY_ALERT_EMAIL env var (already configured to Brenden) — NEVER hardcoded,
+      // so the address can't trip Netlify's secret scanner. No-ops if the var is unset.
+      sendEmail(process.env.SAFETY_ALERT_EMAIL, "New story submission — Meet Riley",
         `<div style="font-family:sans-serif;line-height:1.6;color:#222">
           <h2 style="color:#111">New story submission</h2>
           <p><b>Name:</b> ${esc(name) || "(not given)"}<br>

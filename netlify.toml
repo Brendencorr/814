@@ -99,6 +99,17 @@
 [functions."story-submit"]
   timeout = 15
 
+# Lifecycle comms evaluator — hourly cron. DARK until COMMS_ENABLED=true (Brenden flips it).
+# Every hour it derives each member's lifecycle state and logs the decision to email_sends;
+# with COMMS_ENABLED unset it suppresses 100% of sends (zero Resend calls).
+[functions."evaluate-comms"]
+  schedule = "0 * * * *"
+  timeout = 30
+
+# One-click List-Unsubscribe (RFC 8058) + the email-tappable preference links.
+[functions."comms-unsubscribe"]
+  timeout = 10
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0908">
+<title>Email Preferences — Riley</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#0a0908;color:#f5f0e8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{max-width:460px;width:100%;background:#141210;border:1px solid rgba(201,168,76,.18);border-radius:14px;padding:30px 28px}
+.sun{width:38px;height:38px;border-radius:50%;margin-bottom:18px;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f)}
+h1{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:6px}
+.sub{font-size:13px;color:#8a8578;line-height:1.6;margin-bottom:24px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-top:1px solid rgba(255,255,255,.07)}
+.row .t{font-size:14px;color:#f5f0e8}.row .d{font-size:12px;color:#8a8578;margin-top:3px;line-height:1.5}
+.btn{background:transparent;border:1px solid #c9a84c;color:#c9a84c;padding:8px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn:hover{background:rgba(201,168,76,.08)}
+.btn.on{background:#c9a84c;color:#0a0908}
+.msg{font-size:12px;color:#4aad72;min-height:16px;margin-top:14px;font-family:'DM Mono',monospace}
+.note{font-size:11px;color:#5a5450;margin-top:20px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="sun"></div>
+  <h1>Email preferences</h1>
+  <div class="sub">Choose what Riley sends you. Transactional notes (receipts, security) always come through.</div>
+
+  <div class="row">
+    <div><div class="t">Lifecycle emails</div><div class="d">The occasional note as you get started — never more than once a day.</div></div>
+    <div style="display:flex;gap:6px"><button class="btn" onclick="act('lifecycle=1',this)">On</button><button class="btn" onclick="act('',this)">Off</button></div>
+  </div>
+  <div class="row">
+    <div><div class="t">Monthly letter from Brenden</div><div class="d">One short note a month about what we're building.</div></div>
+    <div style="display:flex;gap:6px"><button class="btn" onclick="act('letter=1',this)">On</button><button class="btn" onclick="act('letter=0',this)">Off</button></div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="note" id="note">Signing you in…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+var SB = window.supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+var UID = new URLSearchParams(location.search).get('u') || '';   // email links carry ?u=; authed visit resolves below
+function ready(){ document.getElementById('note').textContent = UID ? 'Your preferences are saved instantly.' : 'Open this from an email link, or sign in, to manage preferences.'; }
+if (UID) { ready(); }
+else {
+  SB.auth.getSession().then(function(r){ if(r.data && r.data.session){ UID = r.data.session.user.id; } ready(); }).catch(ready);
+}
+function act(params, btn){
+  if(!UID){ document.getElementById('msg').style.color='#bf4a4a'; document.getElementById('msg').textContent='Please open this from an email link or sign in first.'; return; }
+  var url = '/.netlify/functions/comms-unsubscribe?u=' + encodeURIComponent(UID) + (params ? '&' + params : '');
+  // highlight the chosen button in its pair
+  var pair = btn.parentNode.querySelectorAll('.btn'); pair.forEach(function(b){b.classList.remove('on');}); btn.classList.add('on');
+  fetch(url, { method:'POST' }).then(function(){ document.getElementById('msg').textContent = '✓ Saved.'; }).catch(function(){ document.getElementById('msg').style.color='#bf4a4a'; document.getElementById('msg').textContent='Something went wrong — try again.'; });
+}
+</script>
+</body>
+</html>

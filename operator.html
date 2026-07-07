@@ -955,6 +955,10 @@ function markSignupsSeen(){ if(window.__newestSignup) localStorage.setItem('814_
 // (Apple restricts web push to installed PWAs). Once enabled, the Home nudge disappears and
 // the on/off + test control lives in Settings (⚙).
 function opU8(b){var p='='.repeat((4-b.length%4)%4);var s=(b+p).replace(/-/g,'+').replace(/_/g,'/');var raw=atob(s);var out=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out;}
+// True if an existing push subscription was created with the SAME VAPID key we want to use.
+// If the browser doesn't expose sub.options.applicationServerKey, assume MISMATCH so we
+// re-subscribe rather than get stuck on a stale key (which silently blocks every push).
+function opSameKey(sub,wantU8){try{var cur=sub.options&&sub.options.applicationServerKey;if(!cur)return false;var a=new Uint8Array(cur);if(a.length!==wantU8.length)return false;for(var i=0;i<a.length;i++)if(a[i]!==wantU8[i])return false;return true;}catch(e){return false;}}
 function opPushOn(){return localStorage.getItem('814_op_push')==='1'&&(window.Notification&&Notification.permission==='granted');}
 function opPushStatus(m,err){var els=document.querySelectorAll('.op-push-status');for(var i=0;i<els.length;i++){els[i].textContent=m||'';els[i].style.color=err?'var(--red)':'var(--muted)';}}
 // Home nudge — shown ONLY until the admin enables alerts, then it disappears (managed in Settings).
@@ -995,8 +999,13 @@ async function enableOperatorPush(){
     var kr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})});
     var kj=await kr.json().catch(function(){return{};});
     if(!kj.publicKey){opPushStatus('Push isn\'t configured on the server (VAPID keys missing).',true);return;}
+    var wantKey=opU8(kj.publicKey);
     var sub=await reg.pushManager.getSubscription();
-    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:opU8(kj.publicKey)});
+    // A subscription bound to a DIFFERENT VAPID key (e.g. the key rotated or moved to the DB)
+    // can never receive our pushes — drop it and re-subscribe with the current key. This makes
+    // Enable self-healing: no need to manually turn off first after a key change.
+    if(sub&&!opSameKey(sub,wantKey)){try{await sub.unsubscribe();}catch(e){}sub=null;}
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wantKey});
     var label=(window.prompt('Name this device (optional) — e.g. "Brenden iPhone":','')||'').trim();
     var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
     var rr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:(sub.toJSON?sub.toJSON():sub),label:label,tz:tz})});

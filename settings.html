@@ -128,8 +128,12 @@ async function enablePush(){
     const reg=await navigator.serviceWorker.ready;
     const {publicKey}=await(await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})})).json();
     if(!publicKey) return false;
+    const wantKey=urlB64ToU8(publicKey);
     let sub=await reg.pushManager.getSubscription();
-    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64ToU8(publicKey)});
+    // A subscription bound to a different VAPID key can never receive our pushes — drop it and
+    // re-subscribe with the current key (self-healing after a key change / DB move).
+    if(sub){try{const cur=sub.options&&sub.options.applicationServerKey;let same=!!cur;if(cur){const a=new Uint8Array(cur);same=a.length===wantKey.length;for(let i=0;same&&i<a.length;i++)same=a[i]===wantKey[i];}if(!same){try{await sub.unsubscribe();}catch(e){}sub=null;}}catch(e){sub=null;}}
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wantKey});
     const tok=(await SB.auth.getSession()).data.session?.access_token;
     const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
     await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',token:tok,subscription:sub,tz})});

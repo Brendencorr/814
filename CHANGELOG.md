@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Web push — client re-subscribe is now self-healing after a key change
+- **Bug:** the enable flows did `getSubscription(); if(!sub) subscribe(newKey)` — so a device
+  holding a subscription bound to an OLD VAPID key kept reusing it and never re-subscribed. The
+  server then signed with the new key → push service 403 → nothing arrived (silent). This bit
+  every device that had ever subscribed under a prior key, independent of the env-var bug.
+- **Fix:** compare the existing subscription's `applicationServerKey` to the current one; on
+  mismatch (or if the browser won't expose it), `unsubscribe()` and re-subscribe with the current
+  key. Applied to `operator.html` (`opSameKey` helper) + inline in `reset.html` + `settings.html`.
+  Enable is now self-healing — no manual "turn off first" needed after a key rotation.
+
 ### Web push — VAPID keypair moved into the database (no more Netlify env-var pairing)
 - **Why:** the VAPID keypair was two Netlify env vars entered as a matched pair by hand; a
   blank/mismatched `VAPID_PRIVATE_KEY` silently disabled all web push (the "no-vapid" bug).

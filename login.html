@@ -25,6 +25,13 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
 .status.ok{color:#3abf6a}.status.err{color:#bf4a4a}
 .note{font-size:.72rem;color:#2a3a4a;margin-top:1.5rem;line-height:1.5}
 .note a{color:#c9a84c;text-decoration:none}
+.divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:#2a3a4a;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#1a2530}
+#ml-email{width:100%;padding:.85rem 1rem;background:#06090e;border:1px solid #1a2530;border-radius:10px;color:#e8e4de;font-size:.95rem;margin-bottom:.6rem;outline:none;transition:border-color .2s}
+#ml-email:focus{border-color:#c9a84c}
+.ml-btn{width:100%;padding:.9rem 1.25rem;background:transparent;border:1px solid #c9a84c;border-radius:10px;color:#c9a84c;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s}
+.ml-btn:hover{background:rgba(201,168,76,0.08)}
+.ml-btn:disabled{opacity:.6;cursor:default}
 </style>
 </head>
 <body>
@@ -43,8 +50,15 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
     Continue with Google
   </button>
 
+  <div class="divider"><span>or</span></div>
+
+  <form id="ml-form" onsubmit="return sendMagic(event)">
+    <input type="email" id="ml-email" placeholder="you@email.com" autocomplete="email" required aria-label="Email address">
+    <button type="submit" class="ml-btn" id="ml-btn">Send me a sign-in link</button>
+  </form>
+
   <div class="status" id="status"></div>
-  <p class="note">By signing in you agree to our <a href="https://meetriley.us/privacy" target="_blank">Privacy Policy</a>. Your conversations with Riley are private.</p>
+  <p class="note">By signing in you agree to our <a href="https://meetriley.us/terms" target="_blank">Terms</a> and <a href="https://meetriley.us/privacy" target="_blank">Privacy Policy</a>. Your conversations with Riley are private.</p>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -94,6 +108,24 @@ function doSignIn() {
     setStatus('Error: ' + e.message, 'err');
     btn.disabled = false;
   });
+}
+
+// Magic-link (passwordless) sign-in — Supabase email OTP. emailRedirectTo uses the same
+// origin-aware DEST the Google flow already uses (so it's an allowed Supabase redirect URL).
+// NOTE: the OTP email is sent by Supabase's default sender for now; moves to Resend/Workspace later.
+function sendMagic(e) {
+  e.preventDefault();
+  var em = (document.getElementById('ml-email').value || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { setStatus('Please enter a valid email.', 'err'); return false; }
+  var b = document.getElementById('ml-btn');
+  b.disabled = true; b.textContent = 'Sending…';
+  _sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: DEST } })
+    .then(function(r) {
+      if (r.error) { setStatus('Error: ' + r.error.message, 'err'); b.disabled = false; b.textContent = 'Send me a sign-in link'; }
+      else { setStatus('Check your email — we sent you a sign-in link.', 'ok'); b.textContent = 'Link sent ✓'; }
+    })
+    .catch(function(err) { setStatus('Error: ' + err.message, 'err'); b.disabled = false; b.textContent = 'Send me a sign-in link'; });
+  return false;
 }
 
 function setStatus(msg, cls) {

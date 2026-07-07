@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Launch fixes Task 7 — durable waitlist + confirmation email + PostHog event
+- `waitlist-join.js` now upserts a **durable, deduped `waitlist` row** (email, plan_intent) IN ADDITION
+  to the existing `events(name='waitlist_joined')` row that Echo's Phase-2 counter reads. Sends a warm
+  **Resend confirmation** to the joiner (no-op if RESEND_API_KEY unset). Plan intent already flows from
+  the CTA (`data-plan-id` → modal). home.html emits **PostHog `waitlist_joined`** (`window.RileyPH.track`)
+  with the plan property on success.
+- **`waitlist`** table = migration **071** (APPLIED live): RLS deny-all (service-role only), unique index
+  on email for idempotent upsert, grants.
+- **Files:** `waitlist-join.js`, `home.html`, `supabase/migrations/071_waitlist.sql`.
+
 ### Launch fixes Task 6 — public "Share your story" form (Decision #14)
 - Replaced the "Share your story" → /login link with a **public no-auth modal** (name optional, email,
   story, consent checkbox) on home.html. Submits to **`story-submit.js`** (service role): validates,

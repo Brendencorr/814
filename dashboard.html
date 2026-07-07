@@ -104,17 +104,22 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .hb-fill{height:100%;border-radius:3px;transition:width 1s ease}
 .hb-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--parchment);width:28px;text-align:right}
 
-/* TREND CARDS */
-.trends{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
-.tcard{background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+/* TREND CARDS — dynamic per member, each is a tappable link into its history */
+.trends{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+.tcard{display:block;text-decoration:none;color:inherit;cursor:pointer;background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
 .tcard:hover{transform:translateY(-2px);border-color:rgba(201,168,76,0.25)}
 .tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .tc-label{font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.12em}
-.tc-trend{font-size:10px;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:3px}
+.tc-trend{font-size:10px;font-family:'DM Mono',monospace}
 .tc-up{color:var(--green2)}.tc-down{color:var(--rust2)}.tc-flat{color:var(--smoke)}
 .tc-value{font-family:'DM Serif Display',serif;font-size:30px;color:var(--parchment);line-height:1;margin-bottom:2px}
 .tc-sub{font-size:10px;color:var(--smoke)}
 .tc-chart{position:absolute;bottom:0;left:0;right:0;height:32px;opacity:0.85}
+.tc-go{position:absolute;top:14px;right:15px;font-size:15px;line-height:1;color:var(--smoke2);transition:color .2s,transform .2s}
+.tcard:hover .tc-go{color:var(--gold);transform:translateX(2px)}
+.tc-prog{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin:9px 0 5px}
+.tc-prog-fill{height:100%;background:linear-gradient(90deg,#c9a84c,#e8d5a3);border-radius:2px}
+.tc-next{font-size:10px;color:var(--smoke)}
 
 /* TWO COL */
 .grid2{display:grid;grid-template-columns:1fr 360px;gap:16px}
@@ -348,25 +353,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         </div>
       </div>
       <div>
-        <div class="panel"><div class="p-body">
-          <div class="rc-label">How are you feeling?</div>
-          <div style="font-size:11px;color:var(--smoke);margin-bottom:10px">Riley adjusts your brief from your answer</div>
-          <div class="mood-row" id="mood-row">
-            <button class="mood-btn" data-n="1" onclick="pickMood(1)">😔</button>
-            <button class="mood-btn" data-n="2" onclick="pickMood(2)">😐</button>
-            <button class="mood-btn" data-n="3" onclick="pickMood(3)">🙂</button>
-            <button class="mood-btn" data-n="4" onclick="pickMood(4)">😊</button>
-            <button class="mood-btn" data-n="5" onclick="pickMood(5)">🔥</button>
-          </div>
-          <div id="mood-saved" style="display:none;font-size:10px;color:var(--green2);font-family:'DM Mono',monospace;margin-top:8px;letter-spacing:0.06em"></div>
-        </div></div>
-        <div class="panel" id="sober-panel" style="display:none"><div class="p-body">
-          <div class="rc-label">Sobriety Streak</div>
-          <div class="sober-wrap">
-            <div class="sober-ring"><svg viewBox="0 0 80 80" width="80" height="80"><defs><linearGradient id="sobGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#c9a84c"/><stop offset="100%" stop-color="#e8d5a3"/></linearGradient></defs><circle cx="40" cy="40" r="32" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="6"/><circle id="sober-ring" cx="40" cy="40" r="32" fill="none" stroke="url(#sobGrad)" stroke-width="6" stroke-dasharray="201" stroke-dashoffset="201" stroke-linecap="round"/></svg><div class="sober-c"><div class="sober-n" id="sober-n">—</div><div class="sober-u">days</div></div></div>
-            <div><div style="font-size:13px;color:var(--parchment);font-weight:500;margin-bottom:4px" id="sober-mile"></div><div style="font-size:11px;color:var(--smoke);line-height:1.5" id="sober-msg">Set your date in Tracker</div><div class="sober-dots" id="sober-dots"></div></div>
-          </div>
-        </div></div>
+        <!-- "How are you feeling?" (mood) + "Sobriety Streak" panels retired as duplicates:
+             mood is now captured in the Riley chat check-in, and both mood + sobriety surface
+             as tappable stat tiles at the top of the page (see DYNAMIC STAT TILES). -->
         <div class="panel" id="habits-panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
         <div class="panel" id="goals-panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
         <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs — <a href="/programs">enroll</a></div></div></div>
@@ -532,7 +521,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const av=document.getElementById('sb-av');if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;
     document.getElementById('sb-name').textContent=fullName;
 
-    const [briefR,sobR,ciR,goalR,habR,hdR,convR,progR,wkR]=await Promise.allSettled([
+    const [briefR,sobR,ciR,goalR,habR,hdR,convR,progR,wkR,nuR]=await Promise.allSettled([
       SB.from('daily_briefs').select('*').eq('user_id',UID).eq('brief_date',TODAY).maybeSingle(),
       SB.from('sobriety_tracker').select('*').eq('user_id',UID).eq('is_active',true).maybeSingle(),
       SB.from('daily_checkins').select('checkin_date,mood,sleep_hours,water_oz,sobriety_day').eq('user_id',UID).gte('checkin_date',dAgo(29)).order('checkin_date',{ascending:false}),
@@ -541,10 +530,11 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       SB.from('habit_completions').select('habit_id,completed_date').eq('user_id',UID).gte('completed_date',dAgo(6)),
       SB.from('riley_conversations').select('session_id,role,content,created_at,title,tags').eq('user_id',UID).order('created_at',{ascending:false}).limit(40),
       SB.from('user_program_progress').select('*,programs(slug,title,emoji,duration_days)').eq('user_id',UID).order('enrolled_at',{ascending:false}).limit(4),
-      SB.from('fitness_logs').select('logged_date,duration_minutes').eq('user_id',UID).gte('logged_date',dAgo(13)).order('logged_date',{ascending:false})
+      SB.from('fitness_logs').select('logged_date,duration_minutes').eq('user_id',UID).gte('logged_date',dAgo(13)).order('logged_date',{ascending:false}),
+      SB.from('nutrition_logs').select('logged_date').eq('user_id',UID).gte('logged_date',dAgo(13)).order('logged_date',{ascending:false})
     ]);
     const g=r=>r.status==='fulfilled'?r.value?.data:null;
-    const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[];
+    const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[],nutrition=g(nuR)||[];
     // Entitlement (for the inline Brief gating) — reuse the gating IIFE's sessionStorage cache.
     let ENT={tier:'guide',features:{}};
     try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:(await authToken()),preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
@@ -617,21 +607,38 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     else if(workouts.length>=3) insight=`${workouts.length} workouts logged in the last two weeks. Your consistency in training is showing up across your whole system.`;
     if(insight){document.getElementById('insight').style.display='flex';document.getElementById('insight-text').textContent=insight;}
 
-    // ── TREND CARDS with sparklines ──
-    function trend(label,value,sub,sparkData,color,id){
-      const arrow=sparkData.length>=2?(sparkData[sparkData.length-1]>sparkData[0]?'<span class="tc-trend tc-up">▲</span>':sparkData[sparkData.length-1]<sparkData[0]?'<span class="tc-trend tc-down">▼</span>':'<span class="tc-trend tc-flat">—</span>'):'';
-      return `<div class="tcard"><div class="tc-head"><span class="tc-label">${label}</span>${arrow}</div><div class="tc-value">${value}</div><div class="tc-sub">${sub}</div><div class="tc-chart">${sparkData.length?areaSpark(id,sparkData,color):''}</div></div>`;
+    // ── DYNAMIC STAT TILES — only the trackers THIS member actually uses (profile +
+    //    entitlements + history), each a tappable link into its own history page. ──
+    const hasFeat=k=>!!(ENT&&ENT.features&&ENT.features[k]&&ENT.features[k].access===true);
+    function tileCard(label,value,sub,sparkData,color,id,href){
+      const arrow=sparkData.length>=2?(sparkData[sparkData.length-1]>sparkData[0]?'<span class="tc-trend tc-up">▲</span> ':sparkData[sparkData.length-1]<sparkData[0]?'<span class="tc-trend tc-down">▼</span> ':''):'';
+      return `<a class="tcard" href="${href}"><span class="tc-go">›</span><div class="tc-head"><span class="tc-label">${label}</span></div><div class="tc-value">${value}</div><div class="tc-sub">${arrow}${sub}</div><div class="tc-chart">${sparkData.length?areaSpark(id,sparkData,color):''}</div></a>`;
+    }
+    // Sobriety: a full ring means nothing (you can't be "partly" N-days sober). Show the
+    // count + progress toward the NEXT milestone — that bar is real, incomplete momentum.
+    function soberTile(days,href){
+      const MS=[7,30,60,90,180,365,730,1095,1460,1825];
+      let next=MS.find(m=>m>days); if(!next)next=Math.ceil((days+1)/365)*365;
+      const prev=MS.filter(m=>m<=days).pop()||0;
+      const lab=next%365===0?(next/365)+(next/365>1?' years':' year'):next+' days';
+      const pct=Math.max(3,Math.min(100,Math.round((days-prev)/((next-prev)||1)*100)));
+      return `<a class="tcard" href="${href}"><span class="tc-go">›</span><div class="tc-head"><span class="tc-label">Sobriety</span></div><div class="tc-value">${days}</div><div class="tc-sub">days sober</div><div class="tc-prog"><div class="tc-prog-fill" style="width:${pct}%"></div></div><div class="tc-next">${next-days} to ${lab}</div></a>`;
     }
     const sleepHist=[...checkins].filter(c=>c.sleep_hours).slice(0,7).reverse().map(c=>c.sleep_hours);
     const moodHist=[...checkins].filter(c=>c.mood).slice(0,7).reverse().map(c=>c.mood);
     const wkByDay={};workouts.forEach(w=>{wkByDay[w.logged_date]=(wkByDay[w.logged_date]||0)+(w.duration_minutes||0);});
     const wkHist=Array.from({length:7},(_,i)=>wkByDay[dAgo(6-i)]||0);
-    const yrs=Math.floor(SOBER_DAYS/365),mos=Math.floor((SOBER_DAYS%365)/30);
-    document.getElementById('trends').innerHTML=
-      (sobriety?trend('Sobriety',SOBER_DAYS||'—',yrs>0?`${yrs}yr ${mos}mo sober`:'days sober',[],'#c9a84c','sp1'):'')+
-      trend('Sleep',sleepLast?sleepLast+'h':'—','last night vs 7d',sleepHist,'#5bc488','sp2')+
-      trend('Mood',moodToday?['','Low','Off','OK','Good','🔥'][moodToday]:'—','7-day trend',moodHist,'#c9a84c','sp3')+
-      trend('Training',workouts.length||'—','workouts · 14d',wkHist,'#4a7ab0','sp4');
+    const nuByDay={};(nutrition||[]).forEach(nl=>{nuByDay[nl.logged_date]=(nuByDay[nl.logged_date]||0)+1;});
+    const nuHist=Array.from({length:7},(_,i)=>nuByDay[dAgo(6-i)]||0);
+    const nuToday=(nutrition||[]).filter(nl=>nl.logged_date===TODAY).length;
+    const moodLabels=['','Low','Off','OK','Good','🔥'];
+    const TILES=[];
+    if(sobriety) TILES.push(soberTile(SOBER_DAYS,'/progress'));
+    TILES.push(tileCard('Mood',moodToday?moodLabels[moodToday]:'—','7-day trend',moodHist,'#c9a84c','sp3','/progress'));
+    if(hasFeat('tracker_sleep')||sleepHist.length) TILES.push(tileCard('Sleep',sleepLast?sleepLast+'h':'—','last night vs 7d',sleepHist,'#5bc488','sp2','/sleep'));
+    if(hasFeat('tracker_fitness')||workouts.length) TILES.push(tileCard('Movement',workouts.length||'—','workouts · 14d',wkHist,'#4a7ab0','sp4','/workouts'));
+    if(hasFeat('tracker_nutrition')||(nutrition&&nutrition.length)) TILES.push(tileCard('Nutrition',nuToday||'—','logged today · 7d',nuHist,'#4aad72','sp5','/nutrition'));
+    document.getElementById('trends').innerHTML=TILES.join('');
 
     // ── BRIEF (consolidated: the real narrative brief, inline + plan-gated) ──
     const _brBody=document.getElementById('brief-body');
@@ -677,23 +684,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(!sList.length)cEl.innerHTML='<div class="empty">No conversations yet.<br><a href="/chat">Start talking to Riley →</a></div>';
     else cEl.innerHTML=sList.slice(0,4).map(s=>{const f=s.msgs.find(m=>m.role==='user');const pv=s.title||f?.content?.slice(0,55)||'Riley Session';return `<a href="/conversations" class="conv"><div><div class="conv-t">${esc(pv)}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><div class="conv-d">${fmtDate(s.created_at)}<br>${fmtTime(s.created_at)}</div></a>`;}).join('');
 
-    // ── MOOD ──
-    if(todayCI?.mood){MOOD=todayCI.mood;hlMood(todayCI.mood);document.getElementById('mood-saved').style.display='block';document.getElementById('mood-saved').textContent='✓ MOOD LOGGED';}
-
-    // ── SOBRIETY ── (panel only shows for members with an active tracker —
-    // not everyone on the platform is pursuing sobriety)
-    const soberPanel=document.getElementById('sober-panel');
-    if(sobriety){
-      soberPanel.style.display='';
-      countUp(document.getElementById('sober-n'),SOBER_DAYS,900);
-      document.getElementById('sober-mile').textContent=yrs>=1?yrs+'yr '+mos+'mo sober':SOBER_DAYS>=90?'Personal best':'Keep going';
-      document.getElementById('sober-msg').textContent=SOBER_DAYS>=365?'Absolutely extraordinary.':SOBER_DAYS>=90?'Personal best territory.':SOBER_DAYS>=30?'A full month strong.':'Every day counts.';
-      const sr=document.getElementById('sober-ring');setTimeout(()=>{sr.style.transition='stroke-dashoffset 1.2s';sr.style.strokeDashoffset=201*(1-Math.min(1,SOBER_DAYS/365));},150);
-      const ciSet=new Set(checkins.map(c=>c.checkin_date));let dots='';for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toLocaleDateString('en-CA');dots+=`<div class="sd ${ds===TODAY?'today':ciSet.has(ds)?'done':''}"></div>`;}
-      document.getElementById('sober-dots').innerHTML=dots;
-    }else{
-      soberPanel.style.display='none';
-    }
+    // ── MOOD state — the visible mood picker AND the standalone sobriety streak panel
+    //    were retired: mood now lives in the Riley chat check-in, and both mood + sobriety
+    //    surface as the tappable stat tiles above. Keep MOOD in state for the mood engine. ──
+    if(todayCI?.mood){MOOD=todayCI.mood;}
 
     // ── HABITS ──
     const hEl=document.getElementById('habit-list');
@@ -1050,7 +1044,7 @@ function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
 // Quick mood tap — logs mood only. It does NOT complete the day's check-in; that happens
 // exclusively in the Riley chat check-in (so the mandatory flow can't be bypassed here).
-async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ MOOD LOGGED';}catch(e){console.error(e);}}
+async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');if(el){el.style.display='block';el.textContent='✓ MOOD LOGGED';}}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else{await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});fireState('goal_completed',{habit_id:id});}}catch(e){ck.classList.toggle('done',was);console.error(e);}}
 // ── Trust & privacy (Trust architecture §1.1 / §1.4) ─────────────────────────
 async function authToken(){try{return (await SB.auth.getSession()).data.session?.access_token||null;}catch(e){return null;}}

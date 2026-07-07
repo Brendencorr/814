@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Client home reorganized — dynamic tappable stat tiles + de-duplicated
+- **Why:** the home felt cluttered — mood + sobriety each appeared TWICE (a stat tile up top AND a
+  full panel lower down: "How are you feeling?" + "Sobriety Streak"); the 4 stat tiles looked
+  tappable but weren't; and the tiles were a FIXED set (not everyone tracks sobriety — some track
+  meals/workouts instead).
+- **What (`dashboard.html` only):**
+  - **Dynamic stat tiles** — the row now shows only the trackers THIS member uses, driven by
+    entitlements + data: Sobriety (if active date), Mood (always), Sleep / Movement / Nutrition (if
+    `tracker_sleep`/`tracker_fitness`/`tracker_nutrition` entitled OR has data). A body-focused member
+    sees Movement + Nutrition instead of Sobriety.
+  - **Tiles are now tappable `<a>`s** → history: Sleep→/sleep, Movement→/workouts, Nutrition→/nutrition,
+    Mood & Sobriety→/progress. Hover "›" affordance; grid is `auto-fit` so 1–5 tiles all look right.
+  - **Sobriety redesigned** — the always-full ring (meaningless) is gone; the tile shows days + a
+    progress bar toward the NEXT milestone ("118 to 1 year"). Real, incomplete momentum.
+  - **Removed the duplicate panels** — "How are you feeling?" (mood now lives in the chat check-in;
+    `saveMood` null-guarded) and "Sobriety Streak". Right column is now Habits · Goals · Programs only.
+  - Added a `nutrition_logs` load for the Nutrition tile. Milestone "✨ N days" slot untouched.
+- **Files:** `dashboard.html`.
+
 ### Scale audit → indexes, cron/metrics batching, app-wide RLS initplan fix
 - **Why:** review for scale to 5k customers. Supabase perf advisor flagged unindexed hot FKs + the
   `auth_rls_initplan` pattern (auth.uid() per-row) across 76 policies. Verdict: stack scales to 5k

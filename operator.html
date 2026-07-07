@@ -716,10 +716,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
             <option value="pillars">The Four Pillars</option>
             <option value="resources">Resources</option>
           </select>
+          <div style="display:inline-flex;gap:2px;background:#161310;border:1px solid rgba(201,168,76,.25);border-radius:8px;padding:3px">
+            <button id="cw-vp-d" onclick="cwSetViewport('desktop')" style="border:none;background:#c9a84c;color:#0a0908;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">🖥 Desktop</button>
+            <button id="cw-vp-m" onclick="cwSetViewport('mobile')" style="border:none;background:transparent;color:#f5f0e8;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">📱 Mobile</button>
+          </div>
           <a id="cw-open" href="/home" target="_blank" rel="noopener" style="font-size:12px;color:#c9a84c;text-decoration:none;white-space:nowrap">Open live ↗</a>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover a <b style="color:#f5f0e8">section</b> for its toolbar — 👁 show/hide · ↑↓ reorder · 🎨 colors. Click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Nothing changes on the live site until you press <b style="color:#c9a84c">Save &amp; publish</b> — then it's live instantly, no redeploy.</div>
+      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover any element for the <b style="color:#f5f0e8">⛶ Layout</b> handle (move · width · height · spacing · align); hover a <b style="color:#f5f0e8">section</b> for 👁 show/hide · ↑↓ reorder · 🎨 colors; click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Use <b style="color:#f5f0e8">📱 Mobile</b> to tune the phone layout separately — desktop changes never affect mobile. Nothing goes live until <b style="color:#c9a84c">Save &amp; publish</b> — then instantly, no redeploy.</div>
       <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;align-items:start" id="cw-grid">
         <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;background:#0a0908;height:74vh">
           <iframe id="cw-frame" title="Website preview" style="width:100%;height:100%;border:0;display:block"></iframe>
@@ -3268,6 +3272,7 @@ var CW_PAGE = 'home';
 var CW_IMG_KEY = null, CW_IMG_LABEL = '';
 function cwEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 
+var CW_VP='desktop';
 function loadSiteEditor(btn){ gs('cw', btn); cwRenderTray(); if(!document.getElementById('cw-frame').src) cwLoadPage(); }
 function cwLoadPage(){
   CW_PAGE = (document.getElementById('cw-page')||{}).value || 'home';
@@ -3275,6 +3280,17 @@ function cwLoadPage(){
   if(f) f.src = '/'+CW_PAGE+'?cms=edit&t='+Date.now();
   var open = document.getElementById('cw-open'); if(open) open.href = '/'+CW_PAGE;
   var msg = document.getElementById('cw-msg'); if(msg) msg.textContent='';
+  cwSetViewport(CW_VP);
+}
+// Desktop / Mobile preview: narrow the iframe to phone width so the page's mobile layout renders
+// and the layout panel (which detects width) edits the MOBILE bucket.
+function cwSetViewport(v){
+  CW_VP = v;
+  var f = document.getElementById('cw-frame');
+  if(f){ if(v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; } else { f.style.width='100%'; f.style.margin='0'; } }
+  var d=document.getElementById('cw-vp-d'), m=document.getElementById('cw-vp-m');
+  if(d){ d.style.background=v==='desktop'?'#c9a84c':'transparent'; d.style.color=v==='desktop'?'#0a0908':'#f5f0e8'; d.style.fontWeight=v==='desktop'?'600':'400'; }
+  if(m){ m.style.background=v==='mobile'?'#c9a84c':'transparent'; m.style.color=v==='mobile'?'#0a0908':'#f5f0e8'; m.style.fontWeight=v==='mobile'?'600':'400'; }
 }
 function cwKey(c){ return c.page+'::'+c.key; }
 function cwOnChange(c){ if(!c||!c.page||!c.key) return; CW_PENDING[cwKey(c)] = c; cwRenderTray(); }

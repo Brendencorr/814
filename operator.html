@@ -2518,10 +2518,29 @@ function renderUserDetail(d){
     html+='<div class="ud-section"><div class="em">No Riley conversations yet.</div></div>';
   }
 
-  html+='<div class="ud-section"><div class="ud-section-label">Correspondence <span style="color:var(--muted2);font-weight:400;font-size:.66rem">emails we\'ve sent this member</span></div><div id="ud-corr-body" class="em">Loading…</div></div>';
+  html+='<div class="ud-section"><div class="ud-section-label" style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">Correspondence <span style="color:var(--muted2);font-weight:400;font-size:.66rem">emails we\'ve sent this member</span>'+(profile.email?'<button onclick="resendWelcome(\''+profile.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.7rem;cursor:pointer;padding:4px 10px;font-weight:600;font-family:inherit">Resend welcome</button><span id="ud-corr-status" style="font-size:.7rem;color:var(--muted)"></span>':'')+'</div><div id="ud-corr-body" class="em">Loading…</div></div>';
   document.getElementById('ud-body').innerHTML=html;
   if(profile.id)loadMembershipPanel(profile.id);
   if(profile.id)loadUserEmails(profile.id);
+}
+
+// ── Resend the welcome email to an existing member (logged via email_log; refreshes the panel).
+function resendWelcome(userId, btn){
+  if(!window.confirm('Re-send the welcome email to this member now?'))return;
+  var el=document.getElementById('ud-corr-status');
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  if(el){el.textContent='';el.style.color='var(--muted)';}
+  fetch(B+'/admin-resend-welcome',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:userId})})
+    .then(function(r){return r.json().catch(function(){return{};});})
+    .then(function(d){
+      var em=d&&d.emailed;
+      if(em&&em.sent){ if(el){el.textContent='✓ Welcome email sent';el.style.color='var(--green)';} }
+      else{ if(el){el.textContent='Failed: '+x((em&&(em.reason||em.detail))||d.error||'unknown');el.style.color='var(--red)';} }
+      _homeCorr=null;             // invalidate the Home widget cache so it refreshes on next render
+      loadUserEmails(userId);     // refresh this member's list to show the newly-logged send
+    })
+    .catch(function(e){ if(el){el.textContent='Error: '+x((e&&e.message)||e);el.style.color='var(--red)';} })
+    .then(function(){ if(btn){btn.disabled=false;btn.textContent='Resend welcome';} });
 }
 
 // ── Correspondence: every email we've sent this member (email_log via admin-correspondence).

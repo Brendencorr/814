@@ -12,6 +12,15 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### "Resend welcome" button on the member panel
+- New `admin-resend-welcome.js` (OPERATOR_KEY-gated POST `{user_id}`) — re-sends the welcome email
+  to an EXISTING member (admin-create-user 409s on existing). Routes through `sendWelcomeEmail()` →
+  `sendClientEmail()`, so the resend is LOGGED to email_log and appears in both correspondence views.
+- operator.html: a **"Resend welcome"** button in the member's Correspondence panel (confirm-guarded;
+  shows the real result inline — sent ✓ / failed + reason — then refreshes the list). Serves the
+  "did their welcome actually land?" case + is a live end-to-end proof of the logging. Files:
+  admin-resend-welcome.js, operator.html, netlify.toml.
+
 ### Lifecycle communications system — BUILT DARK (Tasks 3, 4, 6, 7 of the comms handoff)
 - **State:** 🔴 **DARK.** `COMMS_ENABLED` is unset → the hourly evaluator suppresses 100% of
   sends (it logs every decision to `email_sends` and makes zero Resend calls). **Brenden flips

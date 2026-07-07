@@ -33,10 +33,10 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   — existing 3 callers unaffected) so lifecycle email routes through `sendClientEmail()` and lands in
   `email_log` / the operator correspondence view too, while carrying Reply-To + one-click unsubscribe.
 - 🔴 **RECONCILE BEFORE FLIPPING `COMMS_ENABLED=true`:**
-  1. **`reengagement-cron` (LIVE, daily 16:00 UTC) overlaps the Gone-Quiet ladder** — it already
-     emails users 7-10 days lapsed ("your place is still here"). My global one-per-day gate only sees
-     `email_sends`, NOT that cron, so a lapsed user could get BOTH. **Pick one owner of win-back**
-     (disable reengagement-cron, or drop quiet_2) before go-live.
+  1. ✅ **RESOLVED — `reengagement-cron` vs Gone-Quiet win-back overlap.** `reengagement-cron` now
+     stands down automatically when `COMMS_ENABLED=true` (early-return guard), so it keeps running
+     win-back while comms is dark (no coverage gap) and the Gone-Quiet ladder takes sole ownership the
+     instant you flip the switch (no double-email). Reversible; keyed to the same flag.
   2. **Guide-flow exact timing** (guide_1-7 day thresholds) is a faithful reading of the handoff; the
      authoritative day table lives in `riley-lifecycle-comms-spec-FINAL.md` (not in repo) — reconcile.
 - Files: migration 073, comms-templates.js, evaluate-comms.js, comms-unsubscribe.js, preferences.html,

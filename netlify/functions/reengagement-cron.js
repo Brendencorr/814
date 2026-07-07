@@ -83,6 +83,15 @@ async function sendEmail(to, email, userId) {
 
 exports.handler = async function (event) {
   const _g = requireScheduledOrOperator(event); if (_g) return _g;
+
+  // Win-back ownership handoff: while the lifecycle comms system is DARK this cron is the only
+  // active win-back. The moment COMMS_ENABLED=true, the lifecycle Gone-Quiet ladder (quiet_1/2/3
+  // in evaluate-comms) owns lapsed-member outreach — so this cron stands down automatically to
+  // avoid double-emailing. No coverage gap (it runs until the flip), no overlap (it stops at it).
+  if (String(process.env.COMMS_ENABLED || "").toLowerCase() === "true") {
+    return { statusCode: 200, body: JSON.stringify({ ok: true, skipped: "comms_enabled_owns_winback" }) };
+  }
+
   const supabase = getSupabaseClient();
   const now = Date.now();
   const sevenAgo = new Date(now - 7 * 86400000).toISOString();

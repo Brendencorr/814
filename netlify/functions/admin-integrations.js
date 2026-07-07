@@ -6,7 +6,7 @@
  * x-operator-key). Replaces the old hardcoded "Anthropic: Connected / Supabase: Connected" that lied.
  * Model: n/a
  */
-const { requireOperator } = require("./supabase-client");
+const { requireOperator, getVapidConfig } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -20,12 +20,13 @@ exports.handler = async (event) => {
   const gate = requireOperator(event); if (gate) return gate;
 
   const on = (v) => !!(v && String(v).trim());
+  const vapid = await getVapidConfig();
   const items = [
     { label: "Anthropic — Riley chat",         group: "Core",     ok: on(process.env.ANTHROPIC_API_KEY),                                     critical: true },
     { label: "Supabase — database",            group: "Core",     ok: on(process.env.SUPABASE_SERVICE_KEY) && on(process.env.SUPABASE_URL),   critical: true },
     { label: "Operator key — this dashboard",  group: "Core",     ok: on(process.env.OPERATOR_KEY),                                          critical: true },
     { label: "Resend — email delivery",        group: "Delivery", ok: on(process.env.RESEND_API_KEY) },
-    { label: "Web push — VAPID",               group: "Delivery", ok: on(process.env.VAPID_PUBLIC_KEY) && on(process.env.VAPID_PRIVATE_KEY) },
+    { label: "Web push — VAPID",               group: "Delivery", ok: on(vapid.publicKey) && on(vapid.privateKey), note: vapid.source === "db" ? "keys in database" : undefined },
     { label: "FeedHive — social publishing",   group: "Growth",   ok: on(process.env.FEEDHIVE_API_KEY) },
     { label: "PostHog — attribution",          group: "Growth",   ok: on(process.env.POSTHOG_PROJECT_ID) && (on(process.env.POSTHOG_PERSONAL_KEY) || on(process.env.POSTHOG_PROJECT_KEY)) },
     { label: "Canva — auto-design",            group: "Growth",   ok: on(process.env.CANVA_CONNECT_TOKEN), optional: true },

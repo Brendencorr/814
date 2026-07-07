@@ -9,12 +9,13 @@
  * Model: n/a
  */
 const webpush = require("web-push");
+const { getVapidConfig } = require("./supabase-client");
 
-function vapidReady() {
-  const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) return false;
+async function vapidReady() {
+  const { publicKey, privateKey, subject } = await getVapidConfig();
+  if (!publicKey || !privateKey) return false;
   try {
-    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@meetriley.us", pub, priv);
+    webpush.setVapidDetails(subject, publicKey, privateKey);
     return true;
   } catch (_) { return false; }
 }
@@ -24,7 +25,7 @@ function vapidReady() {
 // user-facing flow.
 async function sendToAllOperators(supabase, payload) {
   try {
-    if (!vapidReady()) return { ok: false, reason: "no-vapid", sent: 0 };
+    if (!(await vapidReady())) return { ok: false, reason: "no-vapid", sent: 0 };
     const { data: devices } = await supabase
       .from("operator_push_subscriptions")
       .select("endpoint, subscription")

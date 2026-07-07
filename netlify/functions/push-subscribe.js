@@ -10,7 +10,7 @@
  * Identity comes from the verified access token. Consent is scoped to '7-day-reset'
  * with an ends_at (7 program days + 3 grace), honored automatically by the cron.
  */
-const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, getVapidConfig } = require("./supabase-client");
 const webpush = require("web-push");
 
 const CORS = {
@@ -30,7 +30,7 @@ exports.handler = async (event) => {
   const action = body.action;
 
   // The public key is safe to expose — the client needs it to subscribe.
-  if (action === "key") return json(200, { publicKey: process.env.VAPID_PUBLIC_KEY || null });
+  if (action === "key") { const { publicKey } = await getVapidConfig(); return json(200, { publicKey: publicKey || null }); }
 
   const supabase = getSupabaseClient();
   const userId = await getUserIdFromToken(supabase, body.token);
@@ -68,12 +68,12 @@ exports.handler = async (event) => {
   // Send a real web push to the caller's own device right now — confirms push works
   // without waiting for the 8:14am/8pm cron.
   if (action === "test") {
-    const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
-    if (!pub || !priv) return json(503, { error: "Push not configured" });
+    const { publicKey, privateKey, subject } = await getVapidConfig();
+    if (!publicKey || !privateKey) return json(503, { error: "Push not configured" });
     const { data: c } = await supabase.from("notification_consents")
       .select("push_subscription").eq("user_id", userId).eq("program_key", PROGRAM).maybeSingle();
     if (!c || !c.push_subscription) return json(400, { error: "No subscription yet" });
-    webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@meetriley.us", pub, priv);
+    webpush.setVapidDetails(subject, publicKey, privateKey);
     try {
       await webpush.sendNotification(c.push_subscription, JSON.stringify({
         title: "Riley — test nudge",

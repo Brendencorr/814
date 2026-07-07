@@ -88,4 +88,39 @@ function requireScheduledOrOperator(event) {
   return { statusCode: 403, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Forbidden' }) };
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator, memberDay, soberDaysForMember };
+// ── Web-push VAPID config — DB-first (push_config singleton), env-var fallback ──────────
+// The keypair lives in the push_config table (migration 074) so it's set ONCE, server-side,
+// and never needs re-entry as a matched pair of Netlify env vars. Cached per warm container.
+// The private key is service-role-only (RLS deny-all) and is NEVER returned to any client —
+// the "key" endpoints echo only publicKey. Falls back to the old VAPID_* env vars if the row
+// is somehow absent, so callers keep working during/after the migration.
+let _vapidCache = null;
+async function getVapidConfig() {
+  if (_vapidCache) return _vapidCache;
+  const env = {
+    publicKey: (process.env.VAPID_PUBLIC_KEY || '').trim(),
+    privateKey: (process.env.VAPID_PRIVATE_KEY || '').trim(),
+    subject: (process.env.VAPID_SUBJECT || 'mailto:hello@meetriley.us').trim(),
+    source: 'env',
+  };
+  try {
+    const supabase = getSupabaseClient();
+    const { data } = await supabase.from('push_config')
+      .select('public_key, private_key, subject').eq('id', 1).maybeSingle();
+    if (data && data.public_key && data.private_key) {
+      _vapidCache = {
+        publicKey: String(data.public_key).trim(),
+        privateKey: String(data.private_key).trim(),
+        subject: (data.subject && String(data.subject).trim()) || env.subject,
+        source: 'db',
+      };
+      return _vapidCache;
+    }
+  } catch (_) { /* fall through to env */ }
+  // Only cache when populated, so a transient DB miss doesn't pin an empty config for the
+  // whole life of the warm container.
+  if (env.publicKey && env.privateKey) _vapidCache = env;
+  return env;
+}
+
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator, memberDay, soberDaysForMember, getVapidConfig };

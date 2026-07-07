@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Web push — VAPID keypair moved into the database (no more Netlify env-var pairing)
+- **Why:** the VAPID keypair was two Netlify env vars entered as a matched pair by hand; a
+  blank/mismatched `VAPID_PRIVATE_KEY` silently disabled all web push (the "no-vapid" bug).
+- **What:** migration **074** — new singleton `push_config` table (id=1, public/private/subject),
+  **RLS on with ZERO policies** (service-role only; private key never leaves the server) +
+  `revoke all from anon, authenticated`. Keypair seeded out-of-band (NOT in the repo). One shared
+  `getVapidConfig()` in `supabase-client.js` reads it (cached per container, env-var fallback).
+- **Wired:** `push-subscribe.js`, `operator-push.js`, `operator-notify.js`, `reset-nudge-cron.js`,
+  `admin-integrations.js` now call `getVapidConfig()` instead of `process.env.VAPID_*`. The two
+  "key" endpoints still return ONLY the public key. Env vars remain a safe fallback.
+- **Keypair is now STABLE** — set once, so browser subscriptions stay valid. Existing operator/
+  member subscriptions were bound to old keys (push never actually worked) → devices re-subscribe
+  once (toggle off/on) after this deploy. Files: migration 074 + the 6 functions above.
+
 ### Build fix — secret-scan false-positive on two non-secret @meetriley.us addresses
 - **Symptom:** deploy FAILED at secret-scan — "found 2 instance(s)": `SAFETY_ALERT_EMAIL`'s value in
   CHANGELOG.md + `comms-templates.js` (×3), and `VAPID_SUBJECT`'s value in email-welcome/operator-notify/

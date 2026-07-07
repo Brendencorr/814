@@ -7,7 +7,7 @@
  * on a lock screen (per the Reset's crisis architecture).
  * Model: n/a
  */
-const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig } = require("./supabase-client");
 const webpush = require("web-push");
 
 const AM_H = 8, AM_M = 14;   // 8:14am — the send time IS the brand
@@ -37,9 +37,9 @@ async function currentDayTheme(supabase, userId) {
 
 exports.handler = async (event) => {
   const _g = requireScheduledOrOperator(event); if (_g) return _g;
-  const pub = process.env.VAPID_PUBLIC_KEY, priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) { console.warn("reset-nudge-cron: VAPID keys not set"); return { statusCode: 200, body: "no-vapid" }; }
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hello@meetriley.us", pub, priv);
+  const { publicKey, privateKey, subject } = await getVapidConfig();
+  if (!publicKey || !privateKey) { console.warn("reset-nudge-cron: VAPID keys not set"); return { statusCode: 200, body: "no-vapid" }; }
+  webpush.setVapidDetails(subject, publicKey, privateKey);
 
   const supabase = getSupabaseClient();
   const nowIso = new Date().toISOString();

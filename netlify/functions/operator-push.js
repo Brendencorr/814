@@ -15,7 +15,7 @@
  *   'test'         → send a test alert to all active operator devices
  * Model: n/a
  */
-const { getSupabaseClient, requireOperator } = require("./supabase-client");
+const { getSupabaseClient, requireOperator, getVapidConfig } = require("./supabase-client");
 const { sendToAllOperators } = require("./operator-notify");
 
 const CORS = {
@@ -38,7 +38,7 @@ exports.handler = async (event) => {
   const action = body.action;
 
   // VAPID public key is safe to expose; still behind the operator gate for consistency.
-  if (action === "key") return json(200, { publicKey: process.env.VAPID_PUBLIC_KEY || null });
+  if (action === "key") { const { publicKey } = await getVapidConfig(); return json(200, { publicKey: publicKey || null }); }
 
   const supabase = getSupabaseClient();
 

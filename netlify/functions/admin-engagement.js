@@ -22,21 +22,13 @@
  */
 
 const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
-const { currentTier } = require("./tier-utils"); // single shared tier resolver
+const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared tier + state resolvers
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
   "Access-Control-Allow-Headers": "Content-Type, x-operator-key",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
 };
-
-function stateFromLastActive(lastActive) {
-  if (!lastActive) return "new";
-  const days = (Date.now() - new Date(lastActive)) / 86400000;
-  if (days <= 2) return "active";
-  if (days <= 7) return "cooling";
-  return "dormant";
-}
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
@@ -55,7 +47,7 @@ exports.handler = async function (event) {
     const sevenAgoDay = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
     const fourteenAgoTs = new Date(now - 14 * 86400000).toISOString();
 
-    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes] = await Promise.all([
+    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes, emailRes] = await Promise.all([
       supabase.from("user_profiles")
         .select("id,full_name,preferred_name,email,avatar_url,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
         .eq("onboarding_completed", true)
@@ -80,6 +72,13 @@ exports.handler = async function (event) {
         .eq("status", "active")
         .order("last_activity", { ascending: false })
         .limit(20000),
+      // latest client email per user — one indexed scan of recent email_log rows
+      // (created_at DESC), grouped in JS. Fixed-size window → scales without a giant
+      // .in(5000 ids) URL. Users beyond the window show no chip (their panel has full history).
+      supabase.from("email_log")
+        .select("user_id,status,subject,kind,created_at")
+        .order("created_at", { ascending: false })
+        .limit(10000),
     ]);
 
     const users   = usersRes.data   || [];
@@ -88,6 +87,15 @@ exports.handler = async function (event) {
     const prodDefs= prodRes.data    || [];
     const entRows = entRes.data     || [];
     const progRows= progRes.data    || [];
+    const emailRows= emailRes.data  || [];
+
+    // Latest email per user (rows already newest-first) → { status, subject, kind, created_at }.
+    const lastEmailByUser = {};
+    for (const e of emailRows) {
+      if (e.user_id && lastEmailByUser[e.user_id] === undefined) {
+        lastEmailByUser[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at };
+      }
+    }
 
     // Latest mood per user (checkins already newest-first)
     const latestMood = {};
@@ -167,6 +175,7 @@ exports.handler = async function (event) {
         products: owned.filter(k => k !== "reset_free" && (prodByKey[k] || {}).status !== "retired").map(k => (prodByKey[k] || {}).display_name || k),
         active_program: activeProgramByUser[u.id] || null,
         last_crisis_level: u.last_crisis_level || null,
+        last_email: lastEmailByUser[u.id] || null,
       };
     });
 

@@ -7,6 +7,7 @@
  * (page/click take val=<page|target>; logins/messages accept optional val=MM-DD)
  */
 const { getSupabaseClient } = require("./supabase-client");
+const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared with admin-engagement
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -37,27 +38,56 @@ exports.handler = async function (event) {
     // sub-query failing just degrades that field; the Home still renders.
     try {
       const { data: signups } = await db.from("user_profiles")
-        .select("id,full_name,preferred_name,email,created_at")
+        .select("id,full_name,preferred_name,email,avatar_url,created_at,last_active_at,brief_open_count,riley_msg_count,last_crisis_level,reengagement_sent_at")
         .order("created_at", { ascending: false }).limit(25);
       const ids = (signups || []).map((s) => s.id);
-      // Program count per user (actual programs bought — product_key prefix 'prog_'; excludes tiers + reset_free).
-      const progCount = {};
+      // Owned products per user → program count + tier (same resolution as admin-engagement).
+      const ownedByUser = {}, progCount = {};
       if (ids.length) {
         try {
           const { data: uap } = await db.from("user_active_products").select("user_id, product_key").in("user_id", ids);
-          (uap || []).forEach((r) => { if (String(r.product_key).startsWith("prog_")) progCount[r.user_id] = (progCount[r.user_id] || 0) + 1; });
+          (uap || []).forEach((r) => {
+            (ownedByUser[r.user_id] ||= []).push(r.product_key);
+            if (String(r.product_key).startsWith("prog_")) progCount[r.user_id] = (progCount[r.user_id] || 0) + 1;
+          });
+        } catch (_) {}
+      }
+      // Latest mood + latest email per recent signup (small .in on ~25 ids — no scale concern).
+      const moodById = {}, lastEmailById = {};
+      if (ids.length) {
+        try {
+          const { data: ck } = await db.from("daily_checkins").select("user_id,mood,checkin_date")
+            .in("user_id", ids).not("mood", "is", null).order("checkin_date", { ascending: false });
+          (ck || []).forEach((c) => { if (moodById[c.user_id] === undefined) moodById[c.user_id] = c.mood; });
+        } catch (_) {}
+        try {
+          const { data: em } = await db.from("email_log").select("user_id,status,subject,kind,created_at")
+            .in("user_id", ids).order("created_at", { ascending: false });
+          (em || []).forEach((e) => { if (e.user_id && lastEmailById[e.user_id] === undefined) lastEmailById[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at }; });
         } catch (_) {}
       }
       // 7-day activity — reuse the analytics blob's last_active (already computed) rather than re-querying.
       const eventsById = {};
       (Array.isArray(blob.last_active) ? blob.last_active : []).forEach((u) => { if (u && u.user_id) eventsById[u.user_id] = u.events_7d || 0; });
+      // Enriched to the engRow shape so the Home "Clients" widget renders the SAME rich row as
+      // Client Overview. Keeps id/name/email/created_at/programs/events_7d for back-compat.
       blob.recent_signups = (signups || []).map((s) => ({
         id: s.id,
         name: s.preferred_name || s.full_name || (s.email || "").split("@")[0] || "Member",
         email: s.email || null,
+        avatar_url: s.avatar_url || null,
         created_at: s.created_at,
+        last_active_at: s.last_active_at || null,
+        state: stateFromLastActive(s.last_active_at),
+        tier: currentTier(ownedByUser[s.id] || []),
         programs: progCount[s.id] || 0,
+        brief_open_count: s.brief_open_count || 0,
+        riley_msg_count: s.riley_msg_count || 0,
+        recent_mood: moodById[s.id] ?? null,
+        last_crisis_level: s.last_crisis_level || null,
+        reengaged: !!s.reengagement_sent_at,
         events_7d: eventsById[s.id] || 0,
+        last_email: lastEmailById[s.id] || null,
       }));
     } catch (_) { blob.recent_signups = []; }
     return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(blob) };

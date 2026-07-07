@@ -1201,26 +1201,17 @@ function renderHome(d){
   W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
-  W.correspondence='<div id="home-corr-body" class="em">Loading…</div>';
-  // Latest sign-ups — one section combining the old "New members" + "Last Active Clients":
-  // newest 10 members with email, programs owned, signup time, and 7-day activity. Fresh-dot + Mark seen kept.
+  // Clients — the unified tracker mirrored on Home: newest members first, rendered with the SAME
+  // rich engRow (state, tier, mood, last-active + email status). Replaces the old "Latest sign-ups"
+  // and "Recent correspondence" widgets. Keeps the "Mark N seen" new-signup affordance.
   var sg=d.recent_signups||[];
-  if(!sg.length){W.lastactive='<div class="em">No sign-ups yet — fills in as people join</div>';}
+  if(!sg.length){ W.clients='<div class="em">No members yet — fills in as people join</div>'; }
   else{
     var lastSeen=localStorage.getItem('814_last_signup_seen')||'';
     window.__newestSignup=sg[0]&&sg[0].created_at;
     var freshN=sg.filter(function(s){return s.created_at&&(!lastSeen||s.created_at>lastSeen);}).length;
-    var markBtn=freshN?'<div style="display:flex;justify-content:flex-end;margin-bottom:.5rem"><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.68rem;cursor:pointer;padding:2px 9px">Mark '+freshN+' seen</button></div>':'';
-    W.lastactive=markBtn+'<div class="rp" style="margin:0">'+sg.slice(0,10).map(function(u){
-      var signed=u.created_at?new Date(u.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
-      var isNew=u.created_at&&(!lastSeen||u.created_at>lastSeen);
-      return '<div class="rr" style="grid-template-columns:1.1fr 1.4fr 88px 130px 52px;cursor:pointer" onclick="openUserPanel(\''+u.id+'\')">'+
-        '<span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(isNew?'<span style="color:var(--gold)">&#9679; </span>':'')+x(u.name||'Member')+'</span>'+
-        '<span style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.email||'')+'</span>'+
-        '<span style="color:var(--muted);font-size:.72rem">'+(u.programs||0)+' program'+(u.programs===1?'':'s')+'</span>'+
-        '<span style="color:var(--muted);font-size:.72rem">'+signed+'</span>'+
-        '<span style="color:var(--gold);font-weight:600" title="activity events · last 7 days">'+(u.events_7d||0)+'</span></div>';
-    }).join('')+'</div>';
+    var markBtn=freshN?'<div style="display:flex;justify-content:flex-end;margin-bottom:.4rem"><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.68rem;cursor:pointer;padding:2px 9px">Mark '+freshN+' new seen</button></div>':'';
+    W.clients=markBtn+'<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden">'+sg.slice(0,10).map(engRow).join('')+'</div>';
   }
   // ── lay out per saved order, minus hidden. Hero is always pinned first. ──
   var titles=Object.assign({},HOME_TITLES,{chart_logins:'Logins · '+R+' days',chart_riley:'Riley Engagement · '+R+' days'});
@@ -1235,42 +1226,14 @@ function renderHome(d){
   }
   document.getElementById('home-body').innerHTML=html;
   attachHomeDnD();
-  if(document.getElementById('home-corr-body'))loadHomeCorrespondence();
-}
-
-// ── Recent correspondence (Home widget) — glanceable feed of the latest emails we've sent,
-// across ALL members, straight from email_log via admin-correspondence. Cached so a re-render
-// (reorder/range/hide) doesn't re-fetch. A row with a linked member opens that member's panel.
-var _homeCorr=null;
-function loadHomeCorrespondence(force){
-  var el=document.getElementById('home-corr-body'); if(!el)return;
-  if(_homeCorr&&!force){ renderHomeCorr(el,_homeCorr); return; }
-  opGet('/admin-correspondence?limit=25').then(function(d){ _homeCorr=(d&&d.items)||[]; renderHomeCorr(el,_homeCorr); })
-    .catch(function(){ el.innerHTML='<div class="em" style="color:var(--red)">Could not load correspondence.</div>'; });
-}
-function renderHomeCorr(el,rows){
-  if(!rows||!rows.length){ el.innerHTML='<div class="em">No emails sent yet — fills in as Riley emails members</div>'; return; }
-  el.innerHTML='<div class="rp" style="margin:0">'+rows.map(function(r){
-    var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
-    var col=r.status==='sent'?'var(--green)':r.status==='failed'?'var(--red)':'var(--muted2)';
-    var grid='grid-template-columns:14px 1.3fr 1fr 96px 78px';
-    var attrs=r.user_id?(' style="cursor:pointer;'+grid+'" onclick="openUserPanel(\''+r.user_id+'\')"'):(' style="'+grid+'"');
-    var reason=(r.status!=='sent'&&r.error)?' <span style="color:var(--muted2)">('+x(r.error)+')</span>':'';
-    return '<div class="rr"'+attrs+'>'+
-      '<span style="color:'+col+'">&#9679;</span>'+
-      '<span style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.to_email||'')+'</span>'+
-      '<span style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.subject||r.kind||'(email)')+reason+'</span>'+
-      '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
-      '<span style="color:var(--muted2);font-size:.64rem;text-transform:uppercase">'+x(r.kind||'')+'</span></div>';
-  }).join('')+'</div>';
 }
 
 // ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
-var HOME_WIDGETS=['hero','stats','lastactive','correspondence','chart_logins','chart_riley','pages','clicks'];
-var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Latest sign-ups',correspondence:'Recent correspondence'};
+var HOME_WIDGETS=['hero','stats','clients','chart_logins','chart_riley','pages','clicks'];
+var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',clients:'Clients'};
 var homeEditing=false, _homeData=null, _homeRange=30;
 function setHomeRange(r){ _homeRange=r; var t=document.getElementById('home-rtog'); if(t){t.querySelectorAll('.rtog-btn').forEach(function(b){b.classList.toggle('on',+b.getAttribute('data-r')===r);});} if(_homeData)renderHome(_homeData); }
-function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); return {order:Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(), hidden:Array.isArray(l.hidden)?l.hidden:[]}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }
+function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); var order=Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(); var hidden=Array.isArray(l.hidden)?l.hidden:[]; order=order.map(function(k){return k==='lastactive'?'clients':k;}).filter(function(k){return k!=='correspondence';}); order=order.filter(function(k,i){return order.indexOf(k)===i;}); hidden=hidden.filter(function(k){return k!=='lastactive'&&k!=='correspondence';}); return {order:order, hidden:hidden}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }
 function saveHomeLayout(l){ try{ localStorage.setItem('814_home_layout',JSON.stringify(l)); }catch(e){} }
 function toggleHomeEdit(){ homeEditing=!homeEditing; var b=document.getElementById('home-edit-btn'); if(b){b.textContent=homeEditing?'✓ Done':'✎ Edit Layout'; b.classList.toggle('editing-on',homeEditing);} var bd=document.getElementById('home-body'); if(bd)bd.classList.toggle('editing',homeEditing); attachHomeDnD(); }
 function homeWidgetShell(key,title,inner){
@@ -1420,17 +1383,23 @@ function engTierBadge(tier){
   if(!m)return'';
   return '<span style="font-size:.62rem;color:'+m[1]+';border:1px solid '+m[1]+';border-radius:10px;padding:.08rem .45rem;white-space:nowrap">'+m[0]+'</span>';
 }
-var _engUsers=[];
-function filterEng(q){
-  var list=_engUsers;
-  if(q){var s=q.toLowerCase();list=_engUsers.filter(function(u){return ((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(s)>=0;});}
+var _engUsers=[], _engSeg='all';
+function engSegMatch(u,seg){ if(seg==='all')return true; if(seg==='attn')return !!u._attn; return u.state===seg; }
+function applyEngFilter(){
+  var qEl=document.getElementById('eng-search'); var s=((qEl&&qEl.value)||'').toLowerCase();
+  var list=_engUsers.filter(function(u){ return engSegMatch(u,_engSeg) && (!s || ((u.name||'')+' '+(u.email||'')).toLowerCase().indexOf(s)>=0); });
   var el=document.getElementById('eng-rows');
   if(el)el.innerHTML=list.length?list.map(engRow).join(''):'<div class="em">No clients match.</div>';
 }
+function filterEng(){ applyEngFilter(); }
+function filterEngSeg(seg){ _engSeg=seg; applyEngFilter(); var bs=document.querySelectorAll('.eng-seg'); for(var i=0;i<bs.length;i++){var on=bs[i].getAttribute('data-seg')===seg;bs[i].classList.toggle('on',on);bs[i].style.background=on?'var(--gold)':'none';bs[i].style.color=on?'#1a1200':'var(--muted)';bs[i].style.borderColor=on?'var(--gold)':'var(--border)';} }
 function engRow(u){
   var col=engColor(u.state);
   var moodC=u.recent_mood==null?'var(--muted2)':(u.recent_mood<=2?'var(--red)':u.recent_mood>=4?'var(--green)':'var(--muted)');
   var reeng=u.won_back?'<span style="color:var(--green)">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold)">✉ emailed</span>':'<span style="color:var(--muted2)">—</span>');
+  var mailC=u.last_email?(u.last_email.status==='sent'?'var(--green)':u.last_email.status==='failed'?'var(--red)':'var(--muted2)'):'var(--muted2)';
+  var mail=u.last_email?('<span style="color:'+mailC+'" title="'+x(u.last_email.subject||'')+'">✉ '+engEsc(u.last_email.kind||'email')+' '+engEsc(u.last_email.status||'')+' · '+engAgo(u.last_email.created_at)+'</span>'):'';
+  var attn=!!u._attn;
   var safety=u.last_crisis_level?'<span style="font-size:.62rem;color:'+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border:1px solid '+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border-radius:10px;padding:.08rem .45rem">⚑ L'+u.last_crisis_level+'</span>':'';
   var prog=u.active_program?('<span style="color:var(--text)">'+engEsc(u.active_program.title)+'</span> — Day '+(u.active_program.days_completed||0)+(u.active_program.duration_days?' of '+u.active_program.duration_days:'')):'<span style="color:var(--muted2)">No active program</span>';
   var products=(u.products&&u.products.length)?u.products.map(engEsc).join(', '):'';
@@ -1438,11 +1407,11 @@ function engRow(u){
   var av=u.avatar_url
     ?'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;overflow:hidden;border:1px solid var(--border)"><img src="'+x(u.avatar_url)+'" alt="" style="width:100%;height:100%;object-fit:cover"></div>'
     :'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--gold);font-weight:600">'+initials+'</div>';
-  return '<div onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer;padding:.65rem .9rem;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'">'+
+  return '<div onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer;padding:.65rem .9rem;border-bottom:1px solid var(--border);'+(attn?'border-left:3px solid var(--gold);':'')+'" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'">'+
     '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem">'+av+
       '<div style="flex:1;min-width:0"><span style="color:var(--text);font-size:.85rem">'+engEsc(u.name)+'</span> <span style="font-size:.68rem;color:var(--muted2)">'+engEsc(u.email||'')+'</span></div>'+
       '<span style="display:inline-block;padding:.1rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span>'+
-      engTierBadge(u.tier)+safety+
+      engTierBadge(u.tier)+safety+(attn?'<span style="font-size:.58rem;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:.08rem .4rem;white-space:nowrap">needs check-in</span>':'')+
     '</div>'+
     '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:.9rem;font-size:.72rem;color:var(--muted)">'+
       '<span>'+prog+'</span>'+
@@ -1452,6 +1421,7 @@ function engRow(u){
       '<span>'+(u.riley_msg_count||0)+' msgs</span>'+
       '<span style="color:'+moodC+'">Mood: '+(u.recent_mood==null?'—':engMood(u.recent_mood))+'</span>'+
       '<span>'+reeng+'</span>'+
+      (mail?'<span>'+mail+'</span>':'')+
     '</div>'+
   '</div>';
 }
@@ -1474,16 +1444,27 @@ function renderEngagement(d){
   ].join('');
   var actChart='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.6rem"><div class="sh" style="margin:0 0 .2rem">App Activity · 14 days</div>'+svgBars(ser.app_opens||[],'var(--gold)',null)+'</div>';
   document.getElementById('eng-stats').innerHTML=hero+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin-bottom:1rem">'+mc+'</div>'+actChart;
+  // One unified tracker: needs-attention rows (severity-sorted) floated to the top + highlighted,
+  // then everyone else. Segment chips + search filter the single list. Replaces the old two tables.
   var na=d.needs_attention||[];
-  document.getElementById('eng-attention').innerHTML=na.length?('<div class="sh" style="margin-bottom:.6rem;color:var(--red)">Needs a Check-In ('+na.length+')</div><div style="background:var(--card);border:1px solid var(--border);margin-bottom:1.6rem">'+na.map(engRow).join('')+'</div>'):'';
+  na.forEach(function(u){ u._attn=true; });
+  var attnIds={}; na.forEach(function(u){ attnIds[u.id]=true; });
   var users=d.users||[];
-  _engUsers=users;
+  _engUsers=na.concat(users.filter(function(u){ return !attnIds[u.id]; }));
+  _engSeg='all';
+  document.getElementById('eng-attention').innerHTML='';
+  var segs=[['all','All',_engUsers.length],['attn','Needs check-in',na.length],['new','New',null],['cooling','Cooling',null],['dormant','Dormant',null],['active','Active',null]];
+  var chipBar=segs.map(function(sg){
+    var on=(_engSeg===sg[0]); var cnt=(sg[2]!=null)?(' ('+sg[2]+')'):'';
+    return '<button class="eng-seg'+(on?' on':'')+'" data-seg="'+sg[0]+'" onclick="filterEngSeg(\''+sg[0]+'\')" style="background:'+(on?'var(--gold)':'none')+';color:'+(on?'#1a1200':'var(--muted)')+';border:1px solid '+(on?'var(--gold)':'var(--border)')+';border-radius:14px;font-size:.7rem;cursor:pointer;padding:4px 11px;white-space:nowrap;font-family:inherit">'+sg[1]+cnt+'</button>';
+  }).join('');
   document.getElementById('eng-table').innerHTML=
-    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.6rem">'+
-      '<div class="sh" style="margin:0">All Clients ('+users.length+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div>'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem">'+
+      '<div class="sh" style="margin:0">Clients ('+_engUsers.length+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div>'+
       '<input id="eng-search" oninput="filterEng(this.value)" placeholder="Search name or email…" style="'+CIN+';max-width:260px;margin:0">'+
     '</div>'+
-    '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="eng-rows">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
+    '<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.7rem">'+chipBar+'</div>'+
+    '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="eng-rows">'+(_engUsers.length?_engUsers.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();loadIntegrations();}
 // Real integration status (Settings) — which Netlify env keys are wired. Booleans only, never values.
@@ -2536,7 +2517,6 @@ function resendWelcome(userId, btn){
       var em=d&&d.emailed;
       if(em&&em.sent){ if(el){el.textContent='✓ Welcome email sent';el.style.color='var(--green)';} }
       else{ if(el){el.textContent='Failed: '+x((em&&(em.reason||em.detail))||d.error||'unknown');el.style.color='var(--red)';} }
-      _homeCorr=null;             // invalidate the Home widget cache so it refreshes on next render
       loadUserEmails(userId);     // refresh this member's list to show the newly-logged send
     })
     .catch(function(e){ if(el){el.textContent='Error: '+x((e&&e.message)||e);el.style.color='var(--red)';} })

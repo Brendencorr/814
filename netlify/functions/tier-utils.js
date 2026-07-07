@@ -22,4 +22,14 @@ function currentTier(owned) {
   return size ? "alacarte" : null; // owns à-la-carte program(s) but no membership tier
 }
 
-module.exports = { currentTier };
+// Engagement state from a member's last_active_at — the ONE definition, shared by
+// admin-engagement (full list) + admin-home (recent signups) so both stay in lockstep.
+function stateFromLastActive(lastActive) {
+  if (!lastActive) return "new";
+  const days = (Date.now() - new Date(lastActive)) / 86400000;
+  if (days <= 2) return "active";
+  if (days <= 7) return "cooling";
+  return "dormant";
+}
+
+module.exports = { currentTier, stateFromLastActive };

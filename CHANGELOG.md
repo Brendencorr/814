@@ -12,6 +12,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Unified Client Tracker — one row + one source across Home and Client Overview
+- **Why:** four overlapping client views (Home "Latest sign-ups" + "Recent correspondence";
+  Client Overview "Needs a Check-In" + "All Clients") were confusing. Collapsed into ONE rich
+  client-row (`engRow`) + ONE data shape, with email status folded into every row.
+- **Client Overview:** the two tables become ONE tracker — needs-attention members float to the
+  top (gold left-border + "needs check-in" tag), with segment chips (All · Needs check-in · New ·
+  Cooling · Dormant · Active) + the search box (`filterEngSeg`/`applyEngFilter`). Hero stats kept.
+- **Home:** "Latest sign-ups" + "Recent correspondence" widgets replaced by ONE **"Clients"** widget
+  — the 10 newest members rendered with the SAME `engRow` (state, tier, mood, last-active + ✉ last-email
+  chip). "Mark N new seen" kept. `HOME_WIDGETS` migrates old keys (`lastactive`→`clients`, drop
+  `correspondence`) so saved layouts move over cleanly.
+- **Data:** `email_log` now joins into the client rows. `admin-engagement.js` adds one batch
+  `email_log` scan (recent 10k, grouped in JS — no N+1, no 5k-id URL) → `users[].last_email`.
+  `admin-home.js` enriches `recent_signups` to the engRow shape (state/tier/mood/last_email via small
+  `.in(~25 ids)` lookups). Shared `stateFromLastActive` extracted to `tier-utils.js` (with `currentTier`)
+  so both endpoints stay in lockstep. `admin-correspondence.js` unchanged (still powers the member panel).
+- Files: tier-utils.js, admin-engagement.js, admin-home.js, operator.html. Operator-only; no member/crisis impact.
+
 ### "Resend welcome" button on the member panel
 - New `admin-resend-welcome.js` (OPERATOR_KEY-gated POST `{user_id}`) — re-sends the welcome email
   to an EXISTING member (admin-create-user 409s on existing). Routes through `sendWelcomeEmail()` →

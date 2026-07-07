@@ -115,7 +115,28 @@
   }
 
   // ── Floating "Chat with Riley" pill (always on) + embedded chat popup ─────
-  var _cov, _cfr;
+  var _cov, _cfr, _miniBtn, _xBtn, _checkinLock = false;
+  // Mandatory daily check-in: while the chat (iframe) reports a check-in in progress,
+  // the popup can't be minimized/closed. Crisis + fail-open always unlock (the iframe
+  // posts 'exempt'). Toggled by postMessage from /chat (same-origin).
+  function setCheckinLock(on){
+    _checkinLock = !!on;
+    [_miniBtn, _xBtn].forEach(function (b) {
+      if (!b) return;
+      b.style.opacity = on ? '0.35' : '';
+      b.style.cursor  = on ? 'not-allowed' : 'pointer';
+      b.title = on ? 'Finish your check-in first' : '';
+    });
+  }
+  function flashLockHint(){
+    if (!_cov || document.getElementById('riley-lock-hint')) return;
+    var t = document.createElement('div'); t.id = 'riley-lock-hint';
+    t.textContent = "Let's finish your check-in first — it only takes a moment.";
+    t.style.cssText = 'position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;max-width:280px;background:#141210;border:1px solid rgba(201,168,76,0.3);color:#f5f0e8;padding:10px 14px;border-radius:10px;font-family:"DM Sans",sans-serif;font-size:12.5px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,0.5);text-align:center';
+    var panel = _cfr && _cfr.parentNode;
+    (panel || _cov).appendChild(t);
+    setTimeout(function () { if (t.parentNode) t.parentNode.removeChild(t); }, 2600);
+  }
   function buildChat() {
     _cov = document.createElement('div'); _cov.id = 'riley-chat-overlay';
     // Docked, NON-blocking widget: no dimming backdrop, clicks pass through to the page
@@ -130,18 +151,27 @@
     var x = document.createElement('button'); x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
     x.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:21px;line-height:1;cursor:pointer';
     x.onclick = closeChat;
-    bar.appendChild(mini); bar.appendChild(x);
+    bar.appendChild(mini); bar.appendChild(x); _miniBtn = mini; _xBtn = x;
     _cfr = document.createElement('iframe'); _cfr.title = 'Chat with Riley';
     _cfr.style.cssText = 'width:100%;height:100%;border:0;display:block';
     panel.appendChild(bar); panel.appendChild(_cfr); _cov.appendChild(panel);
     _cov.addEventListener('click', function (e) { if (e.target === _cov) closeChat(); });
     document.body.appendChild(_cov);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && _cov.style.display === 'flex') closeChat(); });
+    // The chat (iframe) drives the mandatory-check-in lock via same-origin postMessage.
+    window.addEventListener('message', function (e) {
+      if (e.origin !== location.origin || !_cfr || e.source !== _cfr.contentWindow) return;
+      var d = e.data || {};
+      if (d && d.type === 'riley-checkin') setCheckinLock(d.status === 'pending');
+    });
   }
   function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
   // Minimize/close = hide the panel + bring back the pill. The iframe stays mounted, so
   // re-opening resumes the SAME conversation. Never locks the page — dashboard stays usable.
-  function closeChat() { if (_cov) _cov.style.display = 'none'; document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex'; }
+  function closeChat() {
+    if (_checkinLock) { flashLockHint(); return; }   // mandatory check-in in progress → can't dismiss
+    if (_cov) _cov.style.display = 'none'; document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex';
+  }
   // Once per LOCAL day, on the app home, auto-open the chat so Riley greets with the
   // day-aware daily check-in. Strictly one auto-open per day — non-naggy by design.
   function autoOpenDaily() {

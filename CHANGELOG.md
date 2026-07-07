@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Daily check-in merged INTO Riley chat — dark, mandatory, time-aware
+- **Why:** the dashboard auto-fired its **own** rich modal check-in AND the chat popup ran a
+  **separate** lighter check-in — members saw two at once. The chat was also light/cream (off-brand)
+  and the morning goal question asked about "today" at 6am (nonsensical). Also fixed a pre-existing
+  bug: `chat.html` bootstrap threw on missing `#user-avatar`/`#user-name`, so the chat's own
+  check-in + resume never actually ran.
+- **What:** `chat.html` is now the **single** owner of the daily check-in — Riley-led chips, the full
+  rich flow (mood → sleep/heaviness → lane-keyed goal → what shaped it → optional note), crisis scan +
+  Watch/Concern escalation + "give one thing back" card, saving the same `daily_checkins` row. In the
+  **morning** the reflective questions look back at **yesterday**. Chat restyled **dark** (ink/gold/
+  parchment). After the check-in, a warm mood-aware line + resume-or-new. Check-in is **mandatory**:
+  while it's in progress the popup can't be minimized/closed — `chat.html` posts `pending/done/exempt`
+  to `pwa.js` which locks the −/×/ESC/overlay. **Crisis + any error always unlock** (fail-open, never
+  trap). Retired the dashboard modal (`loadDailyCheckin` trigger + the whole engine removed) and
+  neutralized the `saveMood` quick-tap so it logs mood only (no `checkin_completed` bypass).
+- **Files:** `chat.html` (check-in flow, dark theme, contextual greeting, lock signals, bootstrap fix,
+  `newConversation` fix), `pwa.js` (mandatory lock: postMessage listener + guarded close/ESC/overlay),
+  `dashboard.html` (retired modal trigger + dead engine, `saveMood` logs mood only). No migration.
+
 ### Security — internal `*.md` docs no longer publicly served + operator-key note
 - **Why:** `meetriley.us/CLAUDE.md` (and other root docs) returned HTTP 200 — internal dev notes
   were publicly readable, including the documented `Riley814` operator password.

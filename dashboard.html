@@ -678,7 +678,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     else cEl.innerHTML=sList.slice(0,4).map(s=>{const f=s.msgs.find(m=>m.role==='user');const pv=s.title||f?.content?.slice(0,55)||'Riley Session';return `<a href="/conversations" class="conv"><div><div class="conv-t">${esc(pv)}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><div class="conv-d">${fmtDate(s.created_at)}<br>${fmtTime(s.created_at)}</div></a>`;}).join('');
 
     // ── MOOD ──
-    if(todayCI?.mood){MOOD=todayCI.mood;hlMood(todayCI.mood);document.getElementById('mood-saved').style.display='block';document.getElementById('mood-saved').textContent='✓ CHECKED IN TODAY';}
+    if(todayCI?.mood){MOOD=todayCI.mood;hlMood(todayCI.mood);document.getElementById('mood-saved').style.display='block';document.getElementById('mood-saved').textContent='✓ MOOD LOGGED';}
 
     // ── SOBRIETY ── (panel only shows for members with an active tracker —
     // not everyone on the platform is pursuing sobriety)
@@ -760,9 +760,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     loadRileyBrain();
     // Everything Riley Offers — reliable entitlement-driven locked previews
     loadExplore();
-    // Daily Check-In takes priority (the daily heartbeat). Phase 2 discovery only
-    // surfaces on days the check-in is already done, so we never stack two modals.
-    loadDailyCheckin(new URLSearchParams(location.search).get('checkin')==='1').then(function(shown){ if(!shown) loadPhase2Discovery(); });
+    // The daily check-in now lives inside the Riley chat (auto-opened once/day by pwa.js) —
+    // the old dashboard modal was retired to end the double check-in. Phase 2 discovery still runs.
+    loadPhase2Discovery();
     }catch(e){console.error('Dashboard:',e);}
 })();
 
@@ -1034,118 +1034,6 @@ async function wbSave(){
 }
 async function p2skipBaseline(){await markP2('wellness_baseline','skipped');closeP2();}
 
-// ── DAILY CHECK-IN — the daily learning heartbeat (once per 24h) ────────────
-// Day-aware daily check-in: the questions move with the user's LOCAL time of day, so an 11pm
-// login never gets a morning script. timeOfDay() matches the greeting thresholds (see line ~518).
-function timeOfDay(){ const h=new Date().getHours(); return h<12?'morning':(h<17?'midday':'evening'); }
-// ── Daily Check-In v2 (July 2026 spec) — mood + ONE time-aware secondary +
-// focus-keyed goal + optional influences/reflection + a "give one thing back" card.
-// Keyed to the member's primary focus lane (onboarding v2). Sleep asked AM only;
-// standalone water/breakfast/dinner removed. Authored copy is flagged for review. ─
-const CI_MOOD_Q={morning:"How are you feeling this morning?",midday:"How's your day going so far?",evening:"How was today?"};
-const SLEEP_OPTS=[['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']];
-const HEAVY_OPTS=[['light','Light'],['manageable','Manageable'],['heavy','Heavy'],['crushing','Crushing']];
-const OVERALL_OPTS=[['1','Hard'],['2','Rough'],['3','Okay'],['4','Good'],['5','Great']];
-const CI_GOAL={ // focus-keyed goal question — the highest-value question
-  sobriety:{q:"Did you show up for your sobriety today?",opts:[['yes','Yes'],['hard_yes','It was hard, but yes'],['slip','Today was a slip']]},
-  grief:{q:"Did you make room for it today — even a little?",opts:[['yes','Yes'],['partly','Partly'],['carried','It carried me instead']]},
-  body:{q:"Did you move or nourish yourself on purpose today?",opts:[['yes','Yes'],['partly','Partly'],['not_yet','Not yet']]},
-  other:{q:"Did you take one step toward your goal today?",sub:"Small counts.",opts:[['yes','Yes'],['partly','Partly'],['not_yet','Not yet']]}
-};
-const CI_INFL={
-  sobriety:['Cravings','Old places','People','Boredom','Stress','Sleep'],
-  grief:['Waves','Reminders','Loneliness','Anniversary','Numbness','Sleep'],
-  body:['Energy','Time','Motivation','Soreness','Cravings','Sleep'],
-  other:['Focus','Motivation','Time','Energy','Mood','Sleep']
-};
-const CI_INFL_GENERIC=['Work','Family','Money','Weather','Screen time','Something else'];
-let CI_LANE='other', CI_READY=null, CI_CONF=null, CI_NOTE_OK=false, CI_ESC=null;
-// Watch/Concern escalation — trend-based, SEPARATE from the acute crisis detector
-// (crisis-detection.js handles explicit self-harm language → 988 + structured log).
-// Hard rule: a good mood never CLEARS safety; this only softens the plan, never gates it.
-function ciEscalation(){
-  try{
-    var moods=[]; if(DC.mood)moods.push(DC.mood);                          // today first
-    if(Array.isArray(CHECKINS))CHECKINS.forEach(function(c){if(c.mood!=null)moods.push(c.mood);});
-    if(moods.slice(0,5).filter(function(m){return m<=1;}).length>=2)return 'concern'; // repeated hopelessness
-    var run=0; for(var i=0;i<moods.length;i++){if(moods[i]<=2)run++;else break;}
-    if(run>=3)return 'watch';                                             // 3 consecutive very-low moods
-    if(DC.heavy==='crushing'&&DC.mood&&DC.mood<=2)return 'watch';         // crushing heaviness + low mood
-    return null;
-  }catch(e){return null;}
-}
-function ciSecondary(tod){
-  if(tod==='morning')return {key:'sleep',type:'choice',q:"How did you sleep?",opts:SLEEP_OPTS};
-  if(tod==='midday') return {key:'heavy',type:'choice',q:"How heavy does today feel so far?",opts:HEAVY_OPTS};
-  return {key:'overall',type:'choice',q:"How was today, all of it?",opts:OVERALL_OPTS};
-}
-function buildSteps(tod,lane){
-  const g=CI_GOAL[lane]||CI_GOAL.other;
-  return [
-    {key:'mood',type:'mood',q:CI_MOOD_Q[tod]||CI_MOOD_Q.evening,sub:"No wrong answer — just honest."},
-    ciSecondary(tod),
-    {key:'goal',type:'choice',q:g.q,sub:g.sub||'',opts:g.opts},
-    {key:'influences',type:'tags',q:"What shaped that most?",sub:"Pick anything that fits — up to 3.",tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC),optional:true},
-    {key:'note',type:'text',q:"Anything you want me to remember?",ph:"A sentence is enough.",optional:true}
-  ];
-}
-// The one card Riley gives back. Inputs: lane, mood, goal, readiness. AUTHORED COPY.
-function resolveCard(){
-  const lane=CI_LANE, mood=DC.mood||0, goal=DC.goal, low=(CI_READY!=null&&CI_READY<=4);
-  // Escalation takes priority — interrupt the normal card, surface support, no celebration.
-  if(CI_ESC==='concern') return {id:'concern', title:"I've noticed it's been heavy for a while.", body:"You don't have to hold this by yourself. Talking with someone you trust — or a professional — can really help, and I'll stay right here with you too. Would reaching out to one person today feel possible?", cta:{label:'Talk it through with me',href:'/chat'}, celebratory:false};
-  if(CI_ESC==='watch')   return {id:'watch', title:"It seems like things may be feeling heavier lately.", body:"Let's take the pressure off for a bit — no streaks, no big steps. Just showing up counts right now. Want me to keep things lighter for a few days?", cta:{label:'Yes, keep it light',href:'/chat'}, celebratory:false};
-  if(lane==='sobriety'&&goal==='slip')  return {id:'slip',   title:'A slip is a moment, not the story.', body:"You showed up here tonight and told me the truth — that counts more than the slip does. Tomorrow we just make it a little smaller, together. Nothing to fix right now.", cta:{label:'Talk it through with me',href:'/chat'}, celebratory:false};
-  if(low)                                return {id:'reflect',title:'Just this, for now.', body:"No task tonight. Take one slow breath with me, and notice one thing that was true today. That's enough.", celebratory:false};
-  const rough = mood>0 && mood<=2;
-  if(lane==='sobriety' && (rough||goal==='hard_yes')) return {id:'craving', title:'When the pull comes', body:"A craving passes like a wave — usually under 15 minutes. If it hits: name it out loud, drink a full glass of water, and reach for someone (or me). You don't have to white-knuckle it alone.", cta:{label:'I need to talk now',href:'/chat'}, celebratory:false};
-  if(lane==='grief' && (rough||goal==='carried')) return {id:'grief_heavy', title:'No task tonight — just this.', body:"Grief that carries you isn't failure; it's love with nowhere to go. Hand on your chest, one breath, and let tonight just be survived. That's the whole assignment.", celebratory:false};
-  if(lane==='body' && goal==='not_yet') return {id:'reset8', title:'Eight minutes is a win.', body:"Not-yet is still today. If you've got eight minutes, the Reset Workout meets you exactly where your energy is — no equipment, no pressure.", cta:{label:'Start the 8-minute reset',href:'/workouts'}, celebratory:false};
-  if(mood>=4 || goal==='yes')           return {id:'consolidate', title:'Name what worked.', body:"Good days teach us. Five seconds: what helped today? Say it plainly — that's the thing we protect and repeat.", celebratory:true};
-  return {id:'small_step', title:'One small thing.', body:"Small counts, always. Pick the tiniest next step you'll actually do — and let that be plenty for today.", celebratory:false};
-}
-let DAILY_Q=[]; let DC={};
-async function loadDailyCheckin(force){
-  try{
-    // Source of truth is the DB completed flag (keyed on the user's LOCAL date).
-    if(!force && sessionStorage.getItem('dc_seen_'+UID)===TODAY)return false;  // avoid re-nagging within one session
-    const {data:ci}=await SB.from('daily_checkins').select('checkin_completed').eq('user_id',UID).eq('checkin_date',TODAY).maybeSingle();
-    if(!force && ci && ci.checkin_completed)return false;                      // already completed today
-    // Focus lane + branch signals from onboarding v2 (graceful fallback for v1 users).
-    try{
-      const {data:pf}=await SB.from('user_profiles').select('focus_lane,readiness,confidence,note_storage_consent').eq('id',UID).maybeSingle();
-      if(pf){CI_LANE=pf.focus_lane||'other';CI_READY=pf.readiness;CI_CONF=pf.confidence;CI_NOTE_OK=!!pf.note_storage_consent;}
-    }catch(e){}
-    sessionStorage.setItem('dc_seen_'+UID,TODAY);
-    DC={};DAILY_Q=buildSteps(timeOfDay(),CI_LANE);dcShow(0);return true;       // v2 composer, lane-aware
-  }catch(e){return false;}
-}
-function dcShow(i){
-  if(i>=DAILY_Q.length)return dcFinish();
-  if(i===0){try{window.trackEvent&&window.trackEvent('checkin_started',{lane:CI_LANE});}catch(e){}}
-  const q=DAILY_Q[i];
-  let input='';
-  if(q.type==='mood'){
-    input=`<div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">${[[1,'😔'],[2,'😐'],[3,'🙂'],[4,'😊'],[5,'🔥']].map(m=>`<button data-track="mood_chip" onclick="dcAns(${i},${m[0]})" style="flex:1;padding:14px 4px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:24px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${m[1]}</button>`).join('')}</div>`;
-  }else if(q.type==='choice'){
-    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">${q.opts.map(o=>`<button data-track="ci_choice" onclick="dcAns(${i},'${o[0]}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">${o[1]}</button>`).join('')}</div>`;
-  }else if(q.type==='yn'){
-    input=`<div style="display:flex;gap:10px;margin-bottom:18px"><button data-track="ci_yn" onclick="dcAns(${i},true)" style="flex:1;padding:12px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:4px;font-size:14px;color:var(--gold2);cursor:pointer">Yes</button><button data-track="ci_yn" onclick="dcAns(${i},false)" style="flex:1;padding:12px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;font-size:14px;color:var(--parchment);cursor:pointer">Not yet</button></div>`;
-  }else if(q.type==='text'){
-    input=`<input type="text" id="dc-in" placeholder="${q.ph||''}" autofocus style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:12px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">`;
-  }else if(q.type==='tags'){
-    DC[q.key]=DC[q.key]||[]; window._dcTags=q.tags; window._dcKey=q.key;
-    input=`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="dc-tags">${q.tags.map((t,ti)=>`<button data-track="influence_tag" data-ti="${ti}" onclick="dcTag(${ti})" style="padding:9px 14px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:20px;font-size:13px;color:var(--parchment);cursor:pointer">${t}</button>`).join('')}</div>`;
-  }
-  const skipBtn=q.optional?`<button onclick="dcAns(${i},null)" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Skip</button>`:'';
-  const nextBtn=(q.type==='text'||q.type==='tags')?`<button onclick="${q.type==='tags'?'dcTagsDone('+i+')':'dcAnsText('+i+')'}" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Continue</button>`:'';
-  p2Modal(`<div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:28px">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">Daily Check-In · ${i+1} of ${DAILY_Q.length}</div><div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment);line-height:1.4">${q.q}</div>${q.sub?`<div style="font-size:12px;color:var(--smoke);margin-top:5px">${q.sub}</div>`:''}</div></div>${input}<div style="display:flex;align-items:center;gap:14px">${nextBtn}${skipBtn}</div>`);
-  if(q.type==='text')setTimeout(()=>{const el=document.getElementById('dc-in');if(el)el.focus();},120);
-}
-function dcAns(i,val){DC[DAILY_Q[i].key]=val;dcShow(i+1);}
-function dcAnsText(i){const el=document.getElementById('dc-in');DC[DAILY_Q[i].key]=el&&el.value.trim()?el.value.trim():null;dcShow(i+1);}
-function dcTag(ti){var tag=window._dcTags[ti],k=window._dcKey;DC[k]=DC[k]||[];var idx=DC[k].indexOf(tag);if(idx>=0)DC[k].splice(idx,1);else{if(DC[k].length>=3)return;DC[k].push(tag);}var b=document.querySelector('#dc-tags button[data-ti="'+ti+'"]');if(b){var on=DC[k].includes(tag);b.style.borderColor=on?'var(--gold)':'rgba(255,255,255,0.12)';b.style.background=on?'var(--gold-dim)':'var(--ink3)';b.style.color=on?'var(--gold2)':'var(--parchment)';}}
-function dcTagsDone(i){dcShow(i+1);}
 // Fire a Tier 1 (state-changing) event into the State Engine. Fire-and-forget —
 // never blocks the UI; the engine persists user_daily_state + clarity server-side.
 // Note: free-text crisis still flows through checkin-scan, so we do NOT pass the
@@ -1157,77 +1045,12 @@ async function fireState(eventType,data){
   }catch(e){}
 }
 
-async function dcFinish(){
-  try{localStorage.setItem('dc_'+UID,TODAY);}catch(e){}
-  const tod=timeOfDay();
-  const secKey=tod==='morning'?'sleep':(tod==='midday'?'heavy':'overall');
-  const secondary={key:secKey,value:(DC[secKey]!==undefined?DC[secKey]:null)};
-  const row={user_id:UID,checkin_date:TODAY,checkin_completed:true,sobriety_day:SOBER_DAYS>0,
-    secondary:secondary,goal_answer:DC.goal||null,influences:DC.influences||[],daily_log:{sleep:DC.sleep||null}};
-  if(DC.mood)row.mood=DC.mood;
-  // Reflection stored ONLY if the member opted in (onboarding privacy toggle). The
-  // crisis scan below still runs on it either way — safety never depends on storage.
-  if(DC.note&&CI_NOTE_OK)row.notes=DC.note;
-  // Deterministic server-side crisis scan of the free-text. Crisis/distress overrides
-  // the reward card and suppresses all celebratory framing. Never blocks the check-in.
-  let crisisLevel=0,crisisResp='';
-  if(DC.note){
-    try{
-      const tok=(await SB.auth.getSession()).data.session?.access_token;
-      const r=await fetch('/.netlify/functions/checkin-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok,text:DC.note})});
-      const j=await r.json();crisisLevel=j.level||0;crisisResp=j.response||'';
-    }catch(e){console.warn('checkin scan',e.message);}
-  }
-  CI_ESC=(crisisLevel>=2)?null:ciEscalation();
-  const card=(crisisLevel>=2)?null:resolveCard();
-  row.recommendation=card?card.id:(crisisLevel>=3?'crisis':'support');
-  // Analytics: funnel booleans/counts/tiers ONLY — never note text, goal specifics,
-  // mood, or influence tag values. The rich per-day data lives in daily_checkins (RLS).
-  try{if(window.trackEvent){window.trackEvent('checkin_completed',{lane:CI_LANE,note_present:!!DC.note,influence_count:(DC.influences||[]).length,escalation:CI_ESC||'none'});if(CI_ESC)window.trackEvent('escalation_shown',{tier:CI_ESC,lane:CI_LANE});if(crisisLevel>=2)window.trackEvent('crisis_support_shown',{where:'checkin'});}}catch(e){}
-  try{await SB.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'});}catch(e){console.warn('dc save',e.message);}
-  track('daily_checkin',{});
-  if(DC.mood)fireState('mood_checked_in',{mood:DC.mood});
-  if(DC.mood){MOOD=DC.mood;try{hlMood(DC.mood);applyMoodEngine(DC.mood);}catch(e){}}
-  if(crisisLevel>=3)return dcCrisisCard(crisisResp);
-  if(crisisLevel>=2)return dcSupportCard();
-  dcRewardCard(card);
-}
-// Step 6+7 — Riley gives one thing back, then closes. Pattern note = high-confidence only.
-function dcRewardCard(card){
-  try{window.trackEvent&&window.trackEvent('give_one_thing_shown',{});}catch(e){}
-  const cta=card.cta?`<a href="${card.cta.href}" class="tbtn tbtn-gold" style="text-decoration:none;display:inline-block;margin-top:14px">${esc(card.cta.label)}</a>`:'';
-  const note=(CI_CONF!=null&&CI_CONF>=5&&!CI_ESC)?dcStreakNote():''; // low-confidence + watch/concern: never streaks
-  p2Modal(`<div style="padding:6px 2px">
-    <div style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:26px">🐦</span>
-      <div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.35;margin-bottom:8px">${esc(card.title)}</div>
-      <div style="font-size:14.5px;color:var(--smoke);line-height:1.65">${esc(card.body)}</div>${cta}</div></div>
-    ${note?`<div style="font-size:12.5px;color:var(--smoke2);margin-top:16px;text-align:center;font-family:'DM Mono',monospace">${esc(note)}</div>`:''}
-    <div style="text-align:center;margin-top:16px"><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Thanks, Riley</button></div>
-  </div>`);
-}
-function dcStreakNote(){
-  try{
-    if(!Array.isArray(CHECKINS)||!CHECKINS.length)return '';
-    const days=new Set(CHECKINS.map(c=>c.checkin_date));days.add(TODAY);
-    let n=0,d=new Date(TODAY+'T00:00:00');
-    while(days.has(d.toISOString().slice(0,10))){n++;d.setDate(d.getDate()-1);}
-    if(n>=3)return "that's "+n+" in a row";
-  }catch(e){}
-  return '';
-}
-// Level 3 from a check-in note — deterministic crisis card, no auto-close.
-function dcCrisisCard(msg){
-  const safe=esc(msg||'').replace(/\n/g,'<br>');
-  p2Modal(`<div style="padding:4px 0"><div style="font-size:28px;margin-bottom:12px;text-align:center">🐦</div><div style="font-family:'DM Sans',sans-serif;font-size:15px;color:var(--parchment);line-height:1.65">${safe}</div><div style="display:flex;gap:12px;align-items:center;margin-top:20px"><a href="/chat" class="tbtn tbtn-gold" style="text-decoration:none">Talk with Riley</a><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Close</button></div></div>`);
-}
-// Level 2 from a check-in note — gentle presence + resource, no auto-close.
-function dcSupportCard(){
-  p2Modal(`<div style="padding:4px 0"><div style="font-size:28px;margin-bottom:12px;text-align:center">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for being honest with me.</div><div style="font-size:14.5px;color:var(--smoke);line-height:1.65;margin-top:10px">That pull is real, and you don't have to face it by yourself. If it gets heavy, you can call or text <b style="color:var(--parchment)">988</b> any time. I'm right here too.</div><div style="display:flex;gap:12px;align-items:center;margin-top:20px"><a href="/chat" class="tbtn tbtn-gold" style="text-decoration:none">Talk with Riley</a><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Close</button></div></div>`);
-}
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
-async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,checkin_completed:true,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ CHECKED IN TODAY';}catch(e){console.error(e);}}
+// Quick mood tap — logs mood only. It does NOT complete the day's check-in; that happens
+// exclusively in the Riley chat check-in (so the mandatory flow can't be bypassed here).
+async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');el.style.display='block';el.textContent='✓ MOOD LOGGED';}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else{await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});fireState('goal_completed',{habit_id:id});}}catch(e){ck.classList.toggle('done',was);console.error(e);}}
 // ── Trust & privacy (Trust architecture §1.1 / §1.4) ─────────────────────────
 async function authToken(){try{return (await SB.auth.getSession()).data.session?.access_token||null;}catch(e){return null;}}

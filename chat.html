@@ -24,7 +24,7 @@
   --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
 }
 
-body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--ink);min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:#0a0908;color:var(--parchment);min-height:100vh}
 
 /* ── LAYOUT ── */
 .dash-layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
@@ -49,8 +49,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--i
 
 /* ── MAIN ── */
 .dash-main{overflow-y:auto;min-height:100vh}
-.dash-topbar{padding:24px 32px;background:white;border-bottom:1px solid var(--mist);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
-.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--ink)}
+.dash-topbar{padding:24px 32px;background:#0f0d0b;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.topbar-greeting{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment)}
 .topbar-date{font-size:13px;color:var(--smoke);margin-top:2px}
 .topbar-actions{display:flex;gap:10px;align-items:center}
 .topbar-btn{background:var(--ink);color:var(--parchment);border:none;padding:9px 18px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.04em;text-decoration:none;display:inline-block}
@@ -167,7 +167,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--warm-white);color:var(--i
   .dash-content{padding:20px 16px}
 }
 
-.starter-btn { padding:9px 16px; background:white; border:1px solid var(--mist); border-radius:20px; font-size:13px; color:var(--ink); cursor:pointer; transition:border-color .15s; font-family:'DM Sans',sans-serif; }
+.starter-btn { padding:9px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(201,168,76,0.25); border-radius:20px; font-size:13px; color:var(--parchment); cursor:pointer; transition:border-color .15s; font-family:'DM Sans',sans-serif; }
 .starter-btn:hover { border-color:var(--gold); color:var(--gold); }
 .sign-out-btn { margin-left:auto; background:transparent; border:none; color:var(--smoke); font-size:14px; cursor:pointer; padding:4px; }
 .sign-out-btn:hover { color:var(--red); }
@@ -217,7 +217,7 @@ body.embed .topbar-actions a.topbar-btn{display:none}
 </aside>
 
   <!-- Chat main -->
-  <main style="display:flex;flex-direction:column;height:100vh;overflow:hidden;background:var(--warm-white)">
+  <main style="display:flex;flex-direction:column;height:100vh;overflow:hidden;background:#0a0908">
     <!-- Topbar -->
     <div class="dash-topbar" style="flex-shrink:0">
       <div>
@@ -234,7 +234,7 @@ body.embed .topbar-actions a.topbar-btn{display:none}
       <!-- Welcome -->
       <div id="welcome" style="max-width:600px;margin:40px auto;text-align:center">
         <div style="font-size:40px;margin-bottom:16px">🤝</div>
-        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--ink);margin-bottom:12px">Good to see you.</div>
+        <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:12px">Good to see you.</div>
         <div style="font-size:14px;color:var(--smoke);line-height:1.7;margin-bottom:28px">Ask me anything — your recovery, your workouts, your goals, your mindset. I already know your context.</div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center" id="starters">
           <button class="starter-btn" onclick="starter(this)">How am I doing on my goals?</button>
@@ -248,13 +248,13 @@ body.embed .topbar-actions a.topbar-btn{display:none}
     </div>
 
     <!-- Input -->
-    <div style="flex-shrink:0;padding:16px 32px;background:white;border-top:1px solid var(--mist)">
+    <div style="flex-shrink:0;padding:16px 32px;background:#0f0d0b;border-top:1px solid rgba(255,255,255,0.07)">
       <div style="display:flex;gap:10px;max-width:800px;margin:0 auto">
         <textarea id="msg-input" placeholder="Message Riley…" rows="1"
-          style="flex:1;background:var(--warm-white);border:1px solid var(--mist);border-radius:8px;color:var(--ink);font-size:14px;padding:10px 14px;resize:none;outline:none;height:44px;max-height:140px;overflow-y:auto;font-family:DM Sans,sans-serif;line-height:1.4;transition:border-color .15s"
+          style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.22);border-radius:8px;color:var(--parchment);font-size:14px;padding:10px 14px;resize:none;outline:none;height:44px;max-height:140px;overflow-y:auto;font-family:DM Sans,sans-serif;line-height:1.4;transition:border-color .15s"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"
           oninput="this.style.height='44px';this.style.height=Math.min(this.scrollHeight,140)+'px'"
-          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--mist)'"></textarea>
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(201,168,76,0.22)'"></textarea>
         <button id="send-btn" onclick="send()"
           style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
       </div>
@@ -288,11 +288,11 @@ let _db, _user, _uid, _sessionId, _history = [];
   const avatarUrl = meta.avatar_url || meta.picture || '';
   const initials  = fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 
-  document.getElementById('greeting').textContent = 'Riley · Hey, ' + firstName;
-  const av = document.getElementById('user-avatar');
-  if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
-  else av.textContent = initials;
-  document.getElementById('user-name').textContent = fullName;
+  const _g = document.getElementById('greeting'); if (_g) _g.textContent = 'Riley · Hey, ' + firstName;
+  // Populate the sidebar identity (null-safe — these live in the sidebar, absent in embed mode).
+  const av = document.getElementById('sb-av');
+  if (av) { if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'; else av.textContent = initials; }
+  const nm = document.getElementById('sb-name'); if (nm) nm.textContent = fullName;
 
   // ── Smart resume (Option A): auto-continue the latest thread if it last spoke
   //    < 24h ago; if it's older, Riley asks whether to continue or start fresh.
@@ -336,26 +336,79 @@ async function openConversation() {
   }
 }
 
-// ── Day-aware daily check-in — Riley-led, quick chips, once/day (Phase 2) ───────
+// ── Daily check-in — Riley-led, RICH, mandatory, once/day ─────────────────────
+// Single source of the daily heartbeat (the dashboard modal was retired). Lane-aware,
+// time-aware: in the MORNING the reflective questions look back at YESTERDAY (at 6am
+// "did you take a step today?" is nonsensical). Same daily_checkins row as before.
 const RC_TODAY = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": rolls at 4am LOCAL (matches dashboard)
-let RC = {};
+let RC = {}, RC_LANE = 'other', RC_READY = null, RC_CONF = null, RC_NOTE_OK = false, RC_ESC = null, RC_MOODS = [], RC_STEPS = [], RC_SOBER = false, _awaitingNote = null, _ciActive = false;
 function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (h < 17 ? 'midday' : 'evening'); }
-const SLEEP_CHIPS = [['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']];
-const YN_CHIPS = [['1','Yes'],['0','Not yet']];
-const RC_SETS = {
-  morning:{ hi:"Morning, {n}. Let's start the day together.", q:[
-    {k:'mood', q:"How are you feeling this morning?", mood:true},
-    {k:'sleep', q:"How did you sleep?", chips:SLEEP_CHIPS},
-    {k:'water', q:"Had any water yet?", chips:YN_CHIPS, bool:true} ]},
-  midday:{ hi:"Hey {n} — let's check in on your day.", q:[
-    {k:'mood', q:"How's your day going so far?", mood:true},
-    {k:'sleep', q:"How did you sleep last night?", chips:SLEEP_CHIPS},
-    {k:'breakfast', q:"Have you eaten yet today?", chips:YN_CHIPS, bool:true} ]},
-  evening:{ hi:"Hey {n}. Let's catch up on your day.", q:[
-    {k:'mood', q:"How was your day?", mood:true},
-    {k:'sleep', q:"How did you sleep last night?", chips:SLEEP_CHIPS},
-    {k:'breakfast', q:"Did you get a good breakfast today?", chips:YN_CHIPS, bool:true} ]}
+
+// Tell the parent shell (pwa.js) to lock/unlock the popup's close controls while a
+// mandatory check-in is in progress. Same-origin only; no-op on the full-page /chat.
+function postLock(status){
+  _ciActive = (status === 'pending');            // track so an uncaught error can never trap the member
+  try{
+    if(document.body.classList.contains('embed') && window.parent && window.parent !== window)
+      window.parent.postMessage({ type:'riley-checkin', status:status }, location.origin);
+  }catch(e){}
+}
+// Fail-open safety: if anything throws while a mandatory check-in is locked, unlock immediately.
+window.addEventListener('error', function(){ if(_ciActive) postLock('exempt'); });
+window.addEventListener('unhandledrejection', function(){ if(_ciActive) postLock('exempt'); });
+
+// ── Authored question content (ported from the retired dashboard check-in) ──
+const CI_MOOD_Q = { morning:"How are you feeling this morning?", midday:"How's your day going so far?", evening:"How was today?" };
+const SLEEP_OPTS   = [['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']];
+const HEAVY_OPTS   = [['light','Light'],['manageable','Manageable'],['heavy','Heavy'],['crushing','Crushing']];
+const OVERALL_OPTS = [['1','Hard'],['2','Rough'],['3','Okay'],['4','Good'],['5','Great']];
+// Focus-keyed goal question — the highest-value question. Each lane has a morning
+// (yesterday) form and a today form; midday/evening use the today form.
+const CI_GOAL = {
+  sobriety:{ am:"Did you show up for your sobriety yesterday?", day:"Did you show up for your sobriety today?", opts:[['yes','Yes'],['hard_yes','It was hard, but yes'],['slip','It was a slip']] },
+  grief:{    am:"Did you make room for it yesterday — even a little?", day:"Did you make room for it today — even a little?", opts:[['yes','Yes'],['partly','Partly'],['carried','It carried me instead']] },
+  body:{     am:"Did you move or nourish yourself on purpose yesterday?", day:"Did you move or nourish yourself on purpose today?", opts:[['yes','Yes'],['partly','Partly'],['not_yet','Not yet']] },
+  other:{    am:"Did you take a step toward one of your goals yesterday?", day:"Did you take one step toward your goal today?", sub:"Small counts.", opts:[['yes','Yes'],['partly','Partly'],['not_yet','Not yet']] }
 };
+const CI_INFL = {
+  sobriety:['Cravings','Old places','People','Boredom','Stress','Sleep'],
+  grief:['Waves','Reminders','Loneliness','Anniversary','Numbness','Sleep'],
+  body:['Energy','Time','Motivation','Soreness','Cravings','Sleep'],
+  other:['Focus','Motivation','Time','Energy','Mood','Sleep']
+};
+const CI_INFL_GENERIC = ['Work','Family','Money','Weather','Screen time','Something else'];
+function ciSecondary(tod){
+  if(tod==='morning') return { key:'sleep', q:"How did you sleep?",                opts:SLEEP_OPTS };
+  if(tod==='midday')  return { key:'heavy', q:"How heavy does today feel so far?",  opts:HEAVY_OPTS };
+  return                     { key:'overall', q:"How was today, all of it?",        opts:OVERALL_OPTS };
+}
+// Trend-based Watch/Concern escalation — SEPARATE from the acute crisis scan.
+// A good mood never CLEARS safety; this only softens the card, never gates it.
+function ciEscalation(){
+  try{
+    var moods=[]; if(RC.mood)moods.push(RC.mood);
+    RC_MOODS.forEach(function(m){ if(m!=null)moods.push(m); });
+    if(moods.slice(0,5).filter(function(m){return m<=1;}).length>=2)return 'concern';
+    var run=0; for(var i=0;i<moods.length;i++){ if(moods[i]<=2)run++; else break; }
+    if(run>=3)return 'watch';
+    if(RC.heavy==='crushing' && RC.mood && RC.mood<=2)return 'watch';
+    return null;
+  }catch(e){return null;}
+}
+// The one card Riley gives back. Inputs: lane, mood, goal, readiness, escalation. AUTHORED COPY.
+function resolveCard(){
+  const lane=RC_LANE, mood=RC.mood||0, goal=RC.goal, low=(RC_READY!=null && RC_READY<=4);
+  if(RC_ESC==='concern') return {id:'concern', title:"I've noticed it's been heavy for a while.", body:"You don't have to hold this by yourself. Talking with someone you trust — or a professional — can really help, and I'll stay right here with you too. Would reaching out to one person today feel possible?", celebratory:false};
+  if(RC_ESC==='watch')   return {id:'watch', title:"It seems like things may be feeling heavier lately.", body:"Let's take the pressure off for a bit — no streaks, no big steps. Just showing up counts right now. Want me to keep things lighter for a few days?", celebratory:false};
+  if(lane==='sobriety' && goal==='slip')  return {id:'slip', title:'A slip is a moment, not the story.', body:"You showed up here and told me the truth — that counts more than the slip does. Tomorrow we just make it a little smaller, together. Nothing to fix right now.", celebratory:false};
+  if(low)                                 return {id:'reflect', title:'Just this, for now.', body:"No task right now. Take one slow breath with me, and notice one thing that was true today. That's enough.", celebratory:false};
+  const rough = mood>0 && mood<=2;
+  if(lane==='sobriety' && (rough||goal==='hard_yes')) return {id:'craving', title:'When the pull comes', body:"A craving passes like a wave — usually under 15 minutes. If it hits: name it out loud, drink a full glass of water, and reach for someone (or me). You don't have to white-knuckle it alone.", celebratory:false};
+  if(lane==='grief' && (rough||goal==='carried')) return {id:'grief_heavy', title:'No task — just this.', body:"Grief that carries you isn't failure; it's love with nowhere to go. Hand on your chest, one breath, and let today just be survived. That's the whole assignment.", celebratory:false};
+  if(lane==='body' && goal==='not_yet') return {id:'reset8', title:'Eight minutes is a win.', body:"Not-yet is still today. If you've got eight minutes, the Reset Workout meets you exactly where your energy is — no equipment, no pressure.", cta:{label:'Start the 8-minute reset',href:'/workouts'}, celebratory:false};
+  if(mood>=4 || goal==='yes')           return {id:'consolidate', title:'Name what worked.', body:"Good days teach us. Five seconds: what helped today? Say it plainly — that's the thing we protect and repeat.", celebratory:true};
+  return {id:'small_step', title:'One small thing.', body:"Small counts, always. Pick the tiniest next step you'll actually do — and let that be plenty for today.", celebratory:false};
+}
 async function checkinDoneToday(){
   try{
     if(sessionStorage.getItem('rc_dc_'+_uid) === RC_TODAY) return true;        // shown already this session
@@ -363,59 +416,207 @@ async function checkinDoneToday(){
     return !!(data && data.checkin_completed);
   }catch(e){ return true; }   // fail-safe: never block the chat on an error
 }
-function runDailyCheckin(){
-  try{ sessionStorage.setItem('rc_dc_'+_uid, RC_TODAY); }catch(e){}
+function rcName(){ return ((document.getElementById('greeting')||{}).textContent || '').split('Hey, ')[1] || 'there'; }
+async function runDailyCheckin(){
+  postLock('pending');                                   // mandatory: lock the popup close controls
   RC = {};
   const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
-  if(_inp){ _inp.disabled=true; _inp.placeholder='Tap an answer above…'; } if(_snd) _snd.disabled=true;   // guide to the chips; rcAfter re-enables
-  const set = RC_SETS[riToD()];
-  const name = ((document.getElementById('user-name')||{}).textContent || '').split(' ')[0] || 'there';
+  if(_inp){ _inp.disabled=true; _inp.placeholder='Tap an answer above…'; } if(_snd) _snd.disabled=true;   // guide to the chips; the note step + rcHandoff re-enable
   const w = document.getElementById('welcome'); if(w) w.style.display='none';
-  appendMsg('riley', set.hi.replace('{n}', name));
-  rcAsk(set.q, 0);
+  // Focus lane + branch signals from onboarding v2 (graceful fallback for v1 users).
+  try{
+    const {data:pf} = await _db.from('user_profiles').select('focus_lane,readiness,confidence,note_storage_consent,sobriety_date').eq('id',_uid).maybeSingle();
+    if(pf){ RC_LANE=pf.focus_lane||'other'; RC_READY=pf.readiness; RC_CONF=pf.confidence; RC_NOTE_OK=!!pf.note_storage_consent; RC_SOBER=!!pf.sobriety_date; }
+  }catch(e){}
+  // Recent moods → escalation trend (most-recent first).
+  try{
+    const {data:rows} = await _db.from('daily_checkins').select('mood').eq('user_id',_uid).order('checkin_date',{ascending:false}).limit(6);
+    if(Array.isArray(rows)) RC_MOODS = rows.map(r=>r.mood).filter(m=>m!=null);
+  }catch(e){}
+  const tod = riToD(), name = rcName();
+  const hi = tod==='morning' ? ("Morning, "+name+". Let's start the day together.")
+           : tod==='evening' ? ("Hey "+name+". Let's catch up on your day.")
+                             : ("Hey "+name+" — let's check in on your day.");
+  appendMsg('riley', hi);
+  try{ window.trackEvent && window.trackEvent('checkin_started',{lane:RC_LANE}); }catch(e){}
+  RC_STEPS = buildSteps(tod, RC_LANE);
+  rcAsk(0);
 }
-function rcAsk(qs, i){
-  if(i >= qs.length){ rcSave(); rcAfter(); return; }
-  const q = qs[i];
-  appendMsg('riley', q.q);
-  rcChips(q, function(val, label){
-    appendMsg('user', label);
-    RC[q.k] = q.bool ? (val === '1') : val;
-    rcAsk(qs, i+1);
-  });
+function buildSteps(tod, lane){
+  const g = CI_GOAL[lane] || CI_GOAL.other;
+  const goalQ = tod==='morning' ? g.am : g.day;
+  const inflQ = tod==='morning' ? "What shaped yesterday most?" : "What shaped that most?";
+  const sec = ciSecondary(tod);
+  return [
+    { key:'mood', type:'mood', q:CI_MOOD_Q[tod] || CI_MOOD_Q.evening },
+    { key:sec.key, type:'choice', q:sec.q, opts:sec.opts },
+    { key:'goal', type:'choice', q:goalQ, sub:g.sub||'', opts:g.opts },
+    { key:'influences', type:'tags', q:inflQ, sub:"Pick anything that fits — up to 3.", tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC) },
+    { key:'note', type:'note', q:"Anything you want me to remember?", sub:"Optional — a sentence is enough.", optional:true }
+  ];
 }
-function rcChips(q, onPick){
+function rcAsk(i){
+  if(i >= RC_STEPS.length){ rcFinish(); return; }
+  const q = RC_STEPS[i];
+  appendMsg('riley', q.sub ? (q.q + "\n" + q.sub) : q.q);
+  if(q.type==='mood'){
+    rcChips([['1','😔'],['2','😐'],['3','🙂'],['4','😊'],['5','🔥']], true, function(val,label){
+      appendMsg('user', label); RC.mood = parseInt(val,10); rcAsk(i+1);
+    });
+  } else if(q.type==='choice'){
+    rcChips(q.opts, false, function(val,label){
+      appendMsg('user', label); RC[q.key] = val; rcAsk(i+1);
+    });
+  } else if(q.type==='tags'){
+    rcTags(q, function(sel){
+      RC.influences = sel; if(sel.length) appendMsg('user', sel.join(', ')); rcAsk(i+1);
+    });
+  } else if(q.type==='note'){
+    rcNote(function(text){
+      RC.note = text || null; if(text) appendMsg('user', text); rcAsk(i+1);
+    });
+  }
+}
+function rcChips(items, isMood, onPick){
   const box = document.getElementById('messages');
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px 4px';
-  const items = q.mood ? [['1','😔'],['2','😐'],['3','🙂'],['4','😊'],['5','🔥']] : q.chips;
   items.forEach(function(o){
     const b = document.createElement('button');
     b.textContent = o[1];
-    b.style.cssText = 'padding:' + (q.mood ? '8px 12px;font-size:20px' : '8px 14px;font-size:13px;color:var(--ink)') + ';border-radius:999px;border:1px solid var(--mist);background:white;cursor:pointer;transition:border-color .15s';
+    b.style.cssText = 'padding:' + (isMood ? '8px 12px;font-size:20px' : '9px 15px;font-size:13px;color:var(--parchment)') + ';border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:border-color .15s';
     b.onmouseover = function(){ b.style.borderColor='var(--gold)'; };
-    b.onmouseout  = function(){ b.style.borderColor='var(--mist)'; };
+    b.onmouseout  = function(){ b.style.borderColor='rgba(201,168,76,0.25)'; };
     b.onclick = function(){ wrap.remove(); onPick(o[0], o[1]); };
     wrap.appendChild(b);
   });
   box.appendChild(wrap); box.scrollTop = 999999;
 }
-async function rcSave(){
-  try{
-    const log = { sleep: RC.sleep||null, water: RC.water, breakfast: RC.breakfast };
-    const row = { user_id:_uid, checkin_date:RC_TODAY, checkin_completed:true, daily_log:log };
-    if(RC.mood) row.mood = parseInt(RC.mood,10);
-    await _db.from('daily_checkins').upsert(row, { onConflict:'user_id,checkin_date' });
-    if(RC.mood){
-      const tok = (await _db.auth.getSession()).data.session?.access_token;
-      fetch('/.netlify/functions/state-engine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:_uid,token:tok,event_type:'mood_checked_in',event_data:{mood:parseInt(RC.mood,10)}})}).catch(function(){});
-    }
-  }catch(e){}
+// Multi-select influence tags (up to 3) + a Done chip. Empty is allowed (nothing shaped it).
+function rcTags(q, onDone){
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px 4px;align-items:center';
+  const sel = [];
+  q.tags.forEach(function(tag){
+    const b = document.createElement('button');
+    b.textContent = tag;
+    b.style.cssText = 'padding:8px 13px;font-size:13px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
+    b.onclick = function(){
+      const idx = sel.indexOf(tag);
+      if(idx>=0){ sel.splice(idx,1); b.style.borderColor='rgba(201,168,76,0.25)'; b.style.background='rgba(255,255,255,0.04)'; b.style.color='var(--parchment)'; }
+      else{ if(sel.length>=3) return; sel.push(tag); b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)'; }
+    };
+    wrap.appendChild(b);
+  });
+  const done = document.createElement('button');
+  done.textContent = 'Done';
+  done.style.cssText = 'padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer;margin-left:2px';
+  done.onclick = function(){ wrap.remove(); onDone(sel.slice()); };
+  wrap.appendChild(done);
+  box.appendChild(wrap); box.scrollTop = 999999;
 }
-async function rcAfter(){
+// Optional free-text note — captured via the composer (send() routes it here, NOT to the LLM) or skipped.
+function rcNote(onDone){
+  _awaitingNote = function(text){ _awaitingNote = null; onDone(text); };
   const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
-  if(_inp){ _inp.disabled=false; _inp.placeholder='Message Riley…'; } if(_snd) _snd.disabled=false;
-  // After the daily prompt, OFFER to continue the last conversation or start fresh (24h window).
+  if(_inp){ _inp.disabled=false; _inp.placeholder='Type a note, or tap Skip…'; _inp.focus(); } if(_snd) _snd.disabled=false;
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.id = 'rc-note-skip';
+  wrap.style.cssText = 'display:flex;gap:8px;margin:2px 0 6px 4px';
+  const skip = document.createElement('button');
+  skip.textContent = 'Skip';
+  skip.style.cssText = 'padding:8px 15px;font-size:13px;color:var(--smoke);border-radius:999px;border:1px solid rgba(255,255,255,0.14);background:transparent;cursor:pointer';
+  skip.onclick = function(){
+    wrap.remove();
+    const cb = _awaitingNote; _awaitingNote = null;
+    if(_inp){ _inp.disabled=true; _inp.placeholder='One moment…'; } if(_snd) _snd.disabled=true;
+    if(cb) cb(null);
+  };
+  wrap.appendChild(skip);
+  box.appendChild(wrap); box.scrollTop = 999999;
+}
+async function rcFinish(){
+  const tod = riToD();
+  const secKey = tod==='morning' ? 'sleep' : (tod==='midday' ? 'heavy' : 'overall');
+  const row = {
+    user_id:_uid, checkin_date:RC_TODAY, checkin_completed:true, sobriety_day:RC_SOBER,
+    secondary:{ key:secKey, value:(RC[secKey]!==undefined ? RC[secKey] : null) },
+    goal_answer:RC.goal||null, influences:RC.influences||[], daily_log:{ sleep:RC.sleep||null }
+  };
+  if(RC.mood) row.mood = RC.mood;
+  // Reflection stored ONLY if the member opted in (onboarding privacy toggle). The crisis
+  // scan below still runs on it either way — safety never depends on storage.
+  if(RC.note && RC_NOTE_OK) row.notes = RC.note;
+  // Deterministic server-side crisis scan of the free-text. Crisis overrides the reward card
+  // and suppresses celebratory framing. Never blocks the check-in; note never stored on client.
+  let crisisLevel = 0, crisisResp = '';
+  if(RC.note){
+    try{
+      const tok = (await _db.auth.getSession()).data.session?.access_token;
+      const r = await fetch('/.netlify/functions/checkin-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:_uid,token:tok,text:RC.note})});
+      const j = await r.json(); crisisLevel = j.level||0; crisisResp = j.response||'';
+    }catch(e){}
+  }
+  RC_ESC = (crisisLevel>=2) ? null : ciEscalation();
+  if(crisisLevel>=2) postLock('exempt');                 // never trap someone in distress — unlock immediately
+  const card = (crisisLevel>=2) ? null : resolveCard();
+  row.recommendation = card ? card.id : (crisisLevel>=3 ? 'crisis' : 'support');
+  // Analytics: funnel booleans/counts/tiers ONLY — never note text, goal specifics, or tag values.
+  try{ if(window.trackEvent){
+    window.trackEvent('checkin_completed',{lane:RC_LANE,note_present:!!RC.note,influence_count:(RC.influences||[]).length,escalation:RC_ESC||'none'});
+    if(RC_ESC) window.trackEvent('escalation_shown',{tier:RC_ESC,lane:RC_LANE});
+    if(crisisLevel>=2) window.trackEvent('crisis_support_shown',{where:'checkin'});
+  } }catch(e){}
+  try{ await _db.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'}); }catch(e){}
+  try{ sessionStorage.setItem('rc_dc_'+_uid, RC_TODAY); }catch(e){}   // mark seen only AFTER completion
+  if(RC.mood){
+    try{
+      const tok = (await _db.auth.getSession()).data.session?.access_token;
+      fetch('/.netlify/functions/state-engine',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:_uid,token:tok,event_type:'mood_checked_in',event_data:{mood:RC.mood}})}).catch(function(){});
+    }catch(e){}
+  }
+  if(crisisLevel<2) postLock('done');                    // check-in complete for the day → unlock
+  // Riley gives one thing back (or the safety message), then hands into conversation.
+  if(crisisLevel>=3){ appendMsg('riley', crisisResp || "I'm really glad you told me. You don't have to carry this alone — if it gets heavy, you can call or text 988 any time, day or night. I'm right here too."); rcHandoff(true); return; }
+  if(crisisLevel>=2){ appendMsg('riley', "Thank you for being honest with me. That pull is real, and you don't have to face it by yourself. If it gets heavy, you can call or text 988 any time. I'm right here too."); rcHandoff(true); return; }
+  try{ window.trackEvent && window.trackEvent('give_one_thing_shown',{}); }catch(e){}
+  appendMsg('riley', card.title + "\n" + card.body);
+  if(card.cta) rcCardCta(card.cta);
+  rcAfter();
+}
+function rcCardCta(cta){
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'margin:2px 0 6px 4px';
+  const a = document.createElement('a');
+  a.href = cta.href; a.textContent = cta.label;
+  a.style.cssText = 'display:inline-block;padding:9px 16px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
+  wrap.appendChild(a); box.appendChild(wrap); box.scrollTop = 999999;
+}
+// Warm, mood-aware handoff into conversation, then offer to resume (24h) or start new.
+async function rcAfter(){
+  const name = rcName(), mood = RC.mood||0, goal = RC.goal;
+  let line;
+  if(goal==='slip' || goal==='not_yet' || goal==='carried')
+    line = "Thanks for being real with me, "+name+". That's exactly the kind of day I want to be here for — what's going on?";
+  else if(mood && mood<=2)
+    line = "That's a lot to carry, "+name+". I'm really glad you checked in. Want to talk about what's making it heavy?";
+  else if(mood===3)
+    line = "Thanks for being straight with me, "+name+". 'Okay' is worth a look — what's going on?";
+  else if(mood>=4)
+    line = "Love that, "+name+". Let's put it to work — what do you want to focus on?";
+  else
+    line = "Thanks for catching me up, "+name+". What's on your mind?";
+  appendMsg('riley', line);
+  rcHandoff(false);
+}
+async function rcHandoff(quiet){
+  const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
+  if(_inp){ _inp.disabled=false; _inp.placeholder='Message Riley…'; _inp.focus(); } if(_snd) _snd.disabled=false;
+  if(quiet) return;                                      // crisis/support already spoke — let them just talk
+  // Offer to continue the last conversation or start fresh (24h window).
   let cand = loadLiveChat();
   if(!cand){
     try{
@@ -425,10 +626,8 @@ async function rcAfter(){
     }catch(e){}
   }
   if(cand && cand.history && cand.history.length){
-    appendMsg('riley', "Thanks for catching me up. Want to pick up where we left off, or start something new?");
+    appendMsg('riley', "We were mid-conversation last time — want to pick up where we left off, or start something new?");
     rcOfferContinue(cand.sid, cand.history);
-  } else {
-    appendMsg('riley', "Thanks for catching me up. What's on your mind?");
   }
 }
 function rcOfferContinue(sid, history){
@@ -441,7 +640,7 @@ function rcOfferContinue(sid, history){
   b1.onclick = function(){ btns.remove(); resumeSession(sid, history); };
   const b2 = document.createElement('button');
   b2.textContent = 'Start something new';
-  b2.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid var(--mist);background:white;color:var(--ink);font-size:13px;cursor:pointer';
+  b2.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);color:var(--parchment);font-size:13px;cursor:pointer';
   b2.onclick = function(){ btns.remove(); };   // fresh — Riley already asked what's on your mind
   btns.appendChild(b1); btns.appendChild(b2);
   box.appendChild(btns); box.scrollTop = 999999;
@@ -464,12 +663,14 @@ function loadLiveChat() {
 }
 
 function newConversation() {
+  if (_ciActive) return;                            // can't bail out of a mandatory check-in this way
   _sessionId = crypto.randomUUID();
   _history = [];
   try { localStorage.removeItem('riley_live_chat'); } catch (e) {}
-  document.getElementById('messages').innerHTML = '';
-  document.getElementById('messages').appendChild(document.getElementById('welcome') || createWelcome());
-  document.getElementById('welcome').style.display = 'block';
+  const box = document.getElementById('messages');
+  const w = document.getElementById('welcome');   // hold the node ref before clearing
+  box.innerHTML = '';
+  if (w) { box.appendChild(w); w.style.display = 'block'; }
 }
 
 // Auto-continue a thread (< 24h): rehydrate it into the view.
@@ -490,7 +691,7 @@ function offerResume(sid, history) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;align-items:flex-start';
   const bubble = document.createElement('div');
-  bubble.style.cssText = 'max-width:80%;padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.6;background:white;color:var(--ink);border:1px solid var(--mist);border-bottom-left-radius:4px';
+  bubble.style.cssText = 'max-width:80%;padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.6;background:#16130f;color:var(--parchment);border:1px solid rgba(201,168,76,0.16);border-bottom-left-radius:4px';
   bubble.textContent = 'Welcome back. Want to pick up where we left off, or start fresh?';
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap';
@@ -500,7 +701,7 @@ function offerResume(sid, history) {
   b1.onclick = function () { wrap.remove(); resumeSession(sid, history); };
   const b2 = document.createElement('button');
   b2.textContent = 'Start fresh';
-  b2.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid var(--mist);background:white;color:var(--ink);font-size:13px;cursor:pointer';
+  b2.style.cssText = 'padding:8px 14px;border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);color:var(--parchment);font-size:13px;cursor:pointer';
   b2.onclick = function () { wrap.remove(); newConversation(); };
   btns.appendChild(b1); btns.appendChild(b2);
   wrap.appendChild(bubble); wrap.appendChild(btns);
@@ -522,7 +723,7 @@ function appendMsg(role, text) {
   bubble.style.cssText = 'max-width:72%;padding:11px 15px;border-radius:12px;font-size:14px;line-height:1.6;word-break:break-word;white-space:pre-wrap;' +
     (role==='user'
       ? 'background:var(--gold);color:var(--ink);font-weight:500;border-bottom-right-radius:4px'
-      : 'background:white;color:var(--ink);border:1px solid var(--mist);border-bottom-left-radius:4px');
+      : 'background:#16130f;color:var(--parchment);border:1px solid rgba(201,168,76,0.16);border-bottom-left-radius:4px');
   bubble.textContent = text;
   wrap.appendChild(bubble);
   document.getElementById('messages').appendChild(wrap);
@@ -536,6 +737,16 @@ async function send() {
   const text  = input.value.trim();
   if (!text) return;
 
+  // Collecting the optional check-in reflection note → capture it, do NOT send to the LLM.
+  if (_awaitingNote){
+    input.value = ''; input.style.height = '44px';
+    const cb = _awaitingNote; _awaitingNote = null;
+    const skipEl = document.getElementById('rc-note-skip'); if (skipEl) skipEl.remove();
+    input.disabled = true; input.placeholder = 'One moment…'; btn.disabled = true;
+    if (cb) cb(text);
+    return;
+  }
+
   input.value = ''; input.style.height = '44px';
   appendMsg('user', text);
   btn.disabled = true; btn.style.opacity = '.4';
@@ -546,7 +757,7 @@ async function send() {
   const typingWrap = document.createElement('div');
   typingWrap.style.cssText = 'display:flex;justify-content:flex-start';
   const typingBubble = document.createElement('div');
-  typingBubble.style.cssText = 'padding:11px 15px;border-radius:12px;font-size:14px;color:var(--smoke);background:white;border:1px solid var(--mist);border-bottom-left-radius:4px';
+  typingBubble.style.cssText = 'padding:11px 15px;border-radius:12px;font-size:14px;color:var(--smoke);background:#16130f;border:1px solid rgba(201,168,76,0.16);border-bottom-left-radius:4px';
   typingBubble.textContent = 'Riley is thinking…';
   typingWrap.appendChild(typingBubble);
   document.getElementById('messages').appendChild(typingWrap);
@@ -568,7 +779,7 @@ async function send() {
     const reader  = res.body.getReader();
     const decoder = new TextDecoder();
     typingBubble.textContent = '';
-    typingBubble.style.color = 'var(--ink)';
+    typingBubble.style.color = 'var(--parchment)';
 
     while (true) {
       const { done, value } = await reader.read();

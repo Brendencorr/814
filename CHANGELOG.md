@@ -12,6 +12,26 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Scale audit → indexes, cron/metrics batching, app-wide RLS initplan fix
+- **Why:** review for scale to 5k customers. Supabase perf advisor flagged unindexed hot FKs + the
+  `auth_rls_initplan` pattern (auth.uid() per-row) across 76 policies. Verdict: stack scales to 5k
+  comfortably (serverless + PostgREST pooling + parallel indexed hot path); these are the fixes.
+- **What:** migration **067** (hot-path indexes: `int_commitments`/`int_triggers`/`int_trusted_people`.
+  enrollment_id + `user_program_progress`.user_id). **068** (`int_program_metrics()` fn — GROUP BY in
+  Postgres; admin-int-metrics no longer pulls all rows). **069** (guarded, atomic, idempotent DO-block
+  sweep wrapping auth.uid()/role()/jwt() in `(select …)` across all 76 policies — run once, re-run the
+  advisor after). int-proactive-cron: removed the per-enrollment N+1 (batched reads + sync plan).
+- **🔴 Migrations 067→069 need running** (Brenden). Files: `supabase/migrations/067–069`.
+
+### Interactive Riley-led programs — full system SHIPPED (migrations 060–065)
+- 4 coached $18.14 programs (Move Nourish · Living Forward · Building Happiness · Staying Free), draft.
+  Data + engine (`int-session.js`) + 60 sessions + `int-program.html` + in-session Riley chat & Guide
+  cap-exemption + lapse-repair (`lapse-detection.js`, founder canon, crisis path intact) + four-lane
+  routing + in-app proactive cron + operator editor/metrics. `riley-chat.js` gained session-context,
+  slip detection, routing (all additive/gated — default chat unchanged, verified). Migrations 060–065 RUN.
+- **Operator UX:** Programs tab is now ONE catalog (session/module editors expand in each row); Home
+  merged "New members" + "Last Active Clients" → one "Latest sign-ups" widget. See `interactive-programs-2026-07.md`.
+
 ### Daily check-in merged INTO Riley chat — dark, mandatory, time-aware
 - **Why:** the dashboard auto-fired its **own** rich modal check-in AND the chat popup ran a
   **separate** lighter check-in — members saw two at once. The chat was also light/cream (off-brand)

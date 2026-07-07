@@ -186,44 +186,6 @@
   schedule = "0 9 * * *"
 
 # ── Dashboard clean URLs (must come BEFORE the riley.meetriley.us catch-all) ──
-# ===== eight14.us (RETIRED old domain) -> meetriley.us — force-forward EVERYTHING so no
-# old eight14 link ever 404s. eight14.us was the pre-launch domain before the rebrand to
-# meetriley.us (the sole canonical domain now); these 301s are the only place it survives.
-# Placed before the per-path rules so these host-wide 301s win.
-[[redirects]]
-  from = "https://eight14.us/*"
-  to = "https://meetriley.us/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://www.eight14.us/*"
-  to = "https://www.meetriley.us/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://riley.eight14.us/*"
-  to = "https://riley.meetriley.us/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "https://login.eight14.us/*"
-  to = "https://login.meetriley.us/:splat"
-  status = 301
-  force = true
-
-[[redirects]]
-  # RETIRED admin host: admin.eight14.us used to SERVE the operator dashboard. It now
-  # forwards to the operator dashboard on the canonical domain (meetriley.us/operator,
-  # clean-URL -> operator.html) so nothing serves on the old eight14 domain and any old
-  # admin.eight14.us bookmark still lands in the right place.
-  from = "https://admin.eight14.us/*"
-  to = "https://meetriley.us/operator"
-  status = 301
-  force = true
-
 [[redirects]]
   from = "https://riley.meetriley.us/dashboard"
   to   = "/dashboard.html"

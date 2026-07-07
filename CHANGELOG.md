@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Activation funnel events + Lifecycle Comms foundation (DB)
+- **Activation events wired** (closes the acquire→activate funnel gap): `signup_started` (login: google +
+  magic-link), `signup_completed` (new-account heuristic on SIGNED_IN), `first_riley_message` (both chats,
+  once/session), `account_saved` (anon /talk chatter saving). Guarded `window.RileyPH.track` calls.
+- **Lifecycle Comms build STARTED** (separate handoff — builds fully **dark**, `COMMS_ENABLED=false`, never
+  flipped by Claude; copy verbatim; senders riley@/brenden@meetriley.us, reply-to support@, never noreply@).
+  **Task 2 DONE:** migration **073** — `user_comms_state` + `email_sends` (backend-only, RLS deny-all,
+  indexes, grants). Once-per-template uniqueness enforced in function code, not DB.
+  🔴 REMAINING: Task 1 Resend DNS (founder — SPF/DKIM/DMARC at GoDaddy), Task 3 templates (18 verbatim),
+  Task 4 evaluate-comms cron, Task 5 state wiring, Task 6 unsubscribe/prefs, Task 7 test harness.
+- **Files:** `login/riley-auth/chat.html`, `supabase/migrations/073_comms.sql`.
+
 ### Launch fixes Tasks 9-11 — a11y + perf + instrumentation (targeted)
 - **Task 9 (a11y):** pillars emoji icons → `aria-hidden` (decorative; text titles carry meaning).
   Contrast audited: `--smoke #8A8578` passes AA on the dark theme (~5.3:1); only a concern on light

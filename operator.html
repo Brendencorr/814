@@ -756,9 +756,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     <button class="spb" onclick="svp()">Save Profile IDs</button>
   </div>
   <div class="sps">
-    <div class="spsl">Platform Status</div>
-    <div class="spr"><span class="sprl"><span class="sdot on"></span>Anthropic API</span><span class="sprv" style="color:var(--green)">Connected</span></div>
-    <div class="spr"><span class="sprl"><span class="sdot on"></span>Supabase</span><span class="sprv" style="color:var(--green)">Connected</span></div>
+    <div class="spsl">Integrations</div>
+    <div id="platform-status"><div class="spr"><span class="sprl">checking&#8230;</span></div></div>
   </div>
   <div class="sps">
     <div class="spsl">New-member alerts</div>
@@ -1407,7 +1406,24 @@ function renderEngagement(d){
     '</div>'+
     '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden" id="eng-rows">'+(users.length?users.map(engRow).join(''):'<div class="em">No clients yet.</div>')+'</div>';
 }
-function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();}
+function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();loadIntegrations();}
+// Real integration status (Settings) — which Netlify env keys are wired. Booleans only, never values.
+async function loadIntegrations(){
+  var box=document.getElementById('platform-status'); if(!box) return;
+  try{
+    var d=await opGet('/admin-integrations'); var items=d.items||[];
+    var lastGroup=null, html='';
+    items.forEach(function(it){
+      if(it.group && it.group!==lastGroup){ lastGroup=it.group; }
+      var ok=!!it.ok, col=ok?'var(--green)':(it.optional?'var(--muted2)':'var(--red)');
+      var txt=ok?'Connected':(it.optional?(it.note?it.note:'Not set — optional'):'Not set');
+      html+='<div class="spr"><span class="sprl"><span class="sdot'+(ok?' on':'')+'" style="'+(ok?'':'background:'+(it.optional?'var(--muted2)':'var(--red)'))+'"></span>'+engEsc(it.label)+'</span><span class="sprv" style="color:'+col+'">'+txt+'</span></div>';
+    });
+    box.innerHTML=html||'<div class="spr"><span class="sprl">No integrations reported</span></div>';
+  }catch(e){
+    box.innerHTML='<div class="spr"><span class="sprl" style="color:var(--muted2)">'+(e.message==='bad-key'||e.message==='no-key'?'Enter operator key, then reopen Settings':'Could not load status')+'</span></div>';
+  }
+}
 
 // ── Safety queue (crisis flags) — OPERATOR_KEY protected ─────────────────────
 function opKey(){return sessionStorage.getItem('814_opkey')||'';}

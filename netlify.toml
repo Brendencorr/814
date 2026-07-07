@@ -63,6 +63,9 @@
 [functions."admin-int-metrics"]
   timeout = 10
 
+[functions."admin-integrations"]
+  timeout = 10
+
 [functions."admin-pricing"]
   timeout = 10
 

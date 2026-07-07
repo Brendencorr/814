@@ -141,7 +141,9 @@ exports.handler = async (event) => {
       const insert = {
         user_id: userId, program_key: programKey,
         cadence_pref: ["twice_weekly", "weekly"].includes(body.cadence_pref) ? body.cadence_pref : defaultCadence,
-        nudge_channels: Array.isArray(body.nudge_channels) ? body.nudge_channels.filter((c) => ["popup", "push", "email"].includes(c)) : [],
+        // Default a new enrollment to in-app + email (push needs a subscription). Email is still gated
+        // downstream by the member's global email_notifications, and any of these is toggleable later.
+        nudge_channels: Array.isArray(body.nudge_channels) ? body.nudge_channels.filter((c) => ["popup", "push", "email"].includes(c)) : ["popup", "email"],
         state: "active", current_session: 0,
       };
       const { data: created, error } = await sb.from("int_enrollments").insert(insert).select("*").single();

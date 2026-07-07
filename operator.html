@@ -3231,13 +3231,36 @@ async function cwSave(){
 }
 
 /* Image swap modal (upload / paste URL / remove). */
+// Curated brand imagery (committed assets) offered as one-click swaps in the image modal.
+var CW_BRAND_IMAGES=[
+  ['/assets/cardinal/png/814-cardinal-perched@2x.png','Cardinal · perched'],
+  ['/assets/cardinal/png/814-cardinal-flying@2x.png','Cardinal · flying'],
+  ['/assets/cardinal/png/814-cardinal-gentle-reminder@2x.png','Cardinal · reminder'],
+  ['/assets/cardinal/png/814-cardinal-keep-going@2x.png','Cardinal · keep going'],
+  ['/assets/cardinal/png/814-cardinal-success@2x.png','Cardinal · success'],
+  ['/assets/cardinal/png/814-cardinal-thank-you@2x.png','Cardinal · thank you'],
+  ['/assets/cardinal/png/814-feather@2x.png','Feather'],
+  ['/assets/cardinal/png/814-icon-warmth-heart@2x.png','Icon · warmth'],
+  ['/assets/cardinal/png/814-icon-hope-leaf@2x.png','Icon · hope'],
+  ['/assets/cardinal/png/814-icon-connection-people@2x.png','Icon · connection'],
+  ['/assets/cardinal/png/814-icon-guidance-compass@2x.png','Icon · guidance'],
+  ['/assets/cardinal/png/814-icon-purpose-mountain@2x.png','Icon · purpose']
+];
+function cwBrandRow(){
+  return '<div style="font-size:11px;color:#8a8578;margin:2px 0 7px">Or pick a brand image:</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;max-height:132px;overflow-y:auto">'
+    +CW_BRAND_IMAGES.map(function(im){ return '<img src="'+im[0]+'" title="'+cwEsc(im[1])+'" onclick="cwImgPick(\''+im[0]+'\')" style="width:46px;height:46px;object-fit:contain;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:3px;cursor:pointer" onmouseover="this.style.borderColor=\'#c9a84c\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,.12)\'">'; }).join('')
+    +'</div>';
+}
+function cwImgPick(url){ var w=cwFrameWin(); if(w) w.postMessage({type:'cms-set-image',key:CW_IMG_KEY,url:url,label:CW_IMG_LABEL}, location.origin); cwImgClose(); }
 function cwPickImage(key,label){ CW_IMG_KEY=key; CW_IMG_LABEL=label||key;
   var ov=document.getElementById('cw-img-ov'); if(ov) ov.remove();
   ov=document.createElement('div'); ov.id='cw-img-ov';
   ov.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,.82);backdrop-filter:blur(4px);padding:20px';
   ov.innerHTML='<div style="background:#141210;border:1px solid rgba(201,168,76,.28);border-radius:12px;max-width:390px;width:100%;padding:22px;position:relative">'
     +'<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:#f5f0e8;margin-bottom:3px">Image · '+cwEsc(CW_IMG_LABEL)+'</div>'
-    +'<div style="font-size:12px;color:#8a8578;margin-bottom:14px">Upload a logo/image, paste a URL, or remove it.</div>'
+    +'<div style="font-size:12px;color:#8a8578;margin-bottom:14px">Pick a brand image below, upload your own, paste a URL, or remove it.</div>'
+    +cwBrandRow()
     +'<input id="cw-img-file" type="file" accept="image/*" style="width:100%;font-size:12px;color:#f5f0e8;margin-bottom:10px">'
     +'<input id="cw-img-url" type="url" placeholder="…or paste an image URL" style="width:100%;padding:9px 11px;background:#1c1a18;border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#f5f0e8;font-size:13px;margin-bottom:12px;box-sizing:border-box">'
     +'<div style="display:flex;gap:.5rem"><button onclick="cwImgApply()" style="flex:1;padding:10px;background:#c9a84c;color:#0a0908;border:none;border-radius:6px;font-weight:600;cursor:pointer">Use image</button>'

@@ -98,6 +98,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 .sb-tier-items .sni.locked{opacity:0.45;cursor:pointer}
 .sb-badge-soon{margin-left:auto;font-size:7px;font-family:'DM Mono',monospace;color:var(--gold);background:var(--gold-dim);padding:2px 5px;border-radius:8px;letter-spacing:0.06em;text-transform:uppercase}
 .sb-logo-mark{display:inline-flex !important;align-items:center;font-size:26px !important;color:#fff !important;line-height:1}.sb-logo-sun{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 12px rgba(201,168,76,0.5);animation:sbSunBreathe 5s ease-in-out infinite;flex-shrink:0;margin-right:9px}@keyframes sbSunBreathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.06);opacity:1}}
+/* Program Add-ons: distinct family sections (self-guided vs Riley-led) */
+.pg-eyebrow{font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.pg-fam{margin-top:26px;padding-top:22px;border-top:1px solid rgba(255,255,255,0.06)}
+.pg-fam:first-child{margin-top:6px;padding-top:0;border-top:none}
+.pg-fam-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+.pg-fam-title{font-family:'DM Serif Display',serif;font-size:20px;color:var(--parchment)}
+.pg-fam-price{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.06em;background:var(--gold-dim);padding:3px 9px;border-radius:10px;white-space:nowrap}
+.pg-fam-desc{font-size:12.5px;color:var(--smoke);line-height:1.55;margin-bottom:16px;max-width:600px}
 </style>
 </head>
 <body>
@@ -116,10 +125,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
-<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Included with your plan</div>
-<div id="pg-included" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:28px"></div>
-<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:12px">Program Add-ons</div>
-<div id="pg-avail" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px"></div>
+<div class="pg-eyebrow">Included with your plan</div>
+<div id="pg-included" class="pg-grid" style="margin-bottom:4px"></div>
+
+<div class="pg-eyebrow" style="margin-top:34px">Program Add-ons</div>
+<div id="pg-addons"></div>
 <div class="alert" id="pg-alert" style="max-width:400px;margin-top:12px"></div>
 
 </div>
@@ -251,7 +261,7 @@ async function logDay(eid,cur,tot){try{const next=Math.min(cur+1,tot);const {err
    ADD-ONS they can buy. The old loadPrograms/enroll/logDay above are superseded
    by this later declaration and no longer run. */
 async function loadPrograms(){
-  const incEl=document.getElementById('pg-included'), avEl=document.getElementById('pg-avail');
+  const incEl=document.getElementById('pg-included'), addEl=document.getElementById('pg-addons');
   let data={tier:'guide',included:[],available:[]};
   try{
     const tok=(await SB.auth.getSession()).data.session && (await SB.auth.getSession()).data.session.access_token;
@@ -262,8 +272,26 @@ async function loadPrograms(){
   if(incEl) incEl.innerHTML = inc.length ? inc.map(function(p){return programCard(p,true);}).join('')
     : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet — Companion includes the 3 self-guided programs, Coach includes all of them.</div>';
   const av=data.available||[];
-  if(avEl) avEl.innerHTML = av.length ? av.map(function(p){return programCard(p,false);}).join('')
-    : '<div style="font-size:13px;color:var(--smoke);grid-column:1/-1">You have every program. 🎉</div>';
+  if(addEl){
+    if(!av.length){ addEl.innerHTML='<div style="font-size:13px;color:var(--smoke)">You have every program. 🎉</div>'; return; }
+    var selfG=av.filter(function(p){return pgFamily(p.kind)==='self';});
+    var rileyL=av.filter(function(p){return pgFamily(p.kind)==='riley';});
+    addEl.innerHTML =
+        pgSection('Self-Guided Programs','Full program content, yours to keep. Move through it at your own pace — no Riley, no tracking. A one-time purchase.',selfG)
+      + pgSection('Riley-Led Programs','Coaching with Riley — a Session Zero plus 14 guided sessions. Riley builds the plan with you, adapts it every week, and remembers exactly where you are.',rileyL);
+  }
+}
+// Two distinct offerings: self-guided content (self_guided + bundle) vs Riley-led coaching (interactive + guided).
+function pgFamily(k){ return (k==='interactive'||k==='guided')?'riley':'self'; }
+function pgSection(title,desc,list){
+  if(!list.length) return '';
+  var prices=list.map(function(p){return Number(p.price_cents||0);}).filter(function(n){return n>0;});
+  var min=prices.length?Math.min.apply(null,prices):0, max=prices.length?Math.max.apply(null,prices):0;
+  var ptag=min?((min!==max?'from ':'')+pgPrice(min)):'';
+  return '<div class="pg-fam"><div class="pg-fam-head"><span class="pg-fam-title">'+esc(title)+'</span>'
+    +(ptag?'<span class="pg-fam-price">'+ptag+'</span>':'')+'</div>'
+    +'<div class="pg-fam-desc">'+esc(desc)+'</div>'
+    +'<div class="pg-grid">'+list.map(function(p){return programCard(p,false);}).join('')+'</div></div>';
 }
 function pgPrice(c){ return '$'+(Number(c||0)/100).toFixed(2); }
 function pgKind(k){ return k==='guided'?'Riley-guided':k==='interactive'?'Riley-led':k==='bundle'?'Bundle · all 3':'Self-guided'; }

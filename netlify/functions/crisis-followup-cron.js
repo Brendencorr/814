@@ -39,21 +39,21 @@ function buildFollowup(stage, u) {
   const M = {
     1: {
       subject: `Just checking in, ${name}`,
-      body: `it's Riley. I've been thinking about you since we talked. No agenda here — I just wanted to see how you're doing right now. I'm here whenever you want to talk, even if it's just to sit for a minute.`,
+      body: `It's Riley. I've been thinking about you since we talked. No agenda here — I just wanted to see how you're doing right now. I'm here whenever you want to talk, even if it's just to sit for a minute.`,
     },
     2: {
       // Stage 2 is the "next day" restart. Copy stays time-neutral — this cron fires at
       // several UTC hours, so it must never assert "morning" when it's someone's evening.
       subject: `A new day, ${name}`,
-      body: `it's Riley. A new day. I just wanted you to know I'm still here, and I'm really glad you are too. However today feels, you don't have to carry it on your own.`,
+      body: `It's Riley. A new day. I just wanted you to know I'm still here, and I'm really glad you are too. However today feels, you don't have to carry it on your own.`,
     },
     3: {
       subject: `Thinking of you, ${name}`,
-      body: `it's Riley. A few days have gone by and you've been on my mind. There's no pressure to reply — I only wanted you to know the door's open whenever you want it.`,
+      body: `It's Riley. A few days have gone by and you've been on my mind. There's no pressure to reply — I only wanted you to know the door's open whenever you want it.`,
     },
     4: {
       subject: `Still here, ${name}`,
-      body: `it's Riley. It's been about a week. I'm not going anywhere. Whenever you're ready — today, next week, whenever — I'm right here.`,
+      body: `It's Riley. It's been about a week. I'm not going anywhere. Whenever you're ready — today, next week, whenever — I'm right here.`,
     },
   };
   const m = M[stage] || M[1];
@@ -61,7 +61,7 @@ function buildFollowup(stage, u) {
   const text = [
     `Hi ${name},`, ``, m.body, ``,
     `Whenever you want, I'm right here:`, APP_URL, ``,
-    `— Riley`, `Meet Riley`, ``,
+    `— Riley`, ``,
     `(If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.)`,
   ].join("\n");
 
@@ -71,7 +71,7 @@ function buildFollowup(stage, u) {
     <p>${m.body}</p>
     <p>Whenever you want, I'm right here.</p>
     <p style="margin:28px 0"><a href="${APP_URL}" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Talk with Riley →</a></p>
-    <p style="color:#555">— Riley<br>Meet Riley</p>
+    <p style="color:#555">— Riley</p>
     <p style="color:#999;font-size:12px;margin-top:28px">If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.</p>
   </div>`;
 

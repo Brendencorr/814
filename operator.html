@@ -883,7 +883,7 @@ async function loadOverview(btn){
   try{
     var d=await opGet('/admin-home');
     if(d.error)throw new Error(d.error);
-    renderHome(d); renderSignupAlert(d); renderOperatorPushControl();
+    renderHome(d); renderOperatorPushControl();  /* signups now live in renderHome's "Latest sign-ups" widget */
   }catch(e){
     if(body)body.innerHTML='<div class="em" style="color:var(--red)">Could not load analytics: '+x(e.message)+'</div>';
   }
@@ -1152,15 +1152,24 @@ function renderHome(d){
   W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
-  var la=d.last_active||[];
-  if(!la.length){W.lastactive='<div class="em">No client activity logged yet — fills in as people use the app</div>';}
+  // Latest sign-ups — one section combining the old "New members" + "Last Active Clients":
+  // newest 10 members with email, programs owned, signup time, and 7-day activity. Fresh-dot + Mark seen kept.
+  var sg=d.recent_signups||[];
+  if(!sg.length){W.lastactive='<div class="em">No sign-ups yet — fills in as people join</div>';}
   else{
-    W.lastactive='<div class="rp" style="margin:0">'+la.map(function(u){
-      var when=u.last_at?new Date(u.last_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
-      return '<div class="rr" style="grid-template-columns:1fr 90px 140px 70px;cursor:pointer" onclick="openUserPanel(\''+u.user_id+'\')"><span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.name||'Member')+'</span>'+
+    var lastSeen=localStorage.getItem('814_last_signup_seen')||'';
+    window.__newestSignup=sg[0]&&sg[0].created_at;
+    var freshN=sg.filter(function(s){return s.created_at&&(!lastSeen||s.created_at>lastSeen);}).length;
+    var markBtn=freshN?'<div style="display:flex;justify-content:flex-end;margin-bottom:.5rem"><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.68rem;cursor:pointer;padding:2px 9px">Mark '+freshN+' seen</button></div>':'';
+    W.lastactive=markBtn+'<div class="rp" style="margin:0">'+sg.slice(0,10).map(function(u){
+      var signed=u.created_at?new Date(u.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+      var isNew=u.created_at&&(!lastSeen||u.created_at>lastSeen);
+      return '<div class="rr" style="grid-template-columns:1.1fr 1.4fr 88px 130px 52px;cursor:pointer" onclick="openUserPanel(\''+u.id+'\')">'+
+        '<span style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(isNew?'<span style="color:var(--gold)">&#9679; </span>':'')+x(u.name||'Member')+'</span>'+
+        '<span style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(u.email||'')+'</span>'+
         '<span style="color:var(--muted);font-size:.72rem">'+(u.programs||0)+' program'+(u.programs===1?'':'s')+'</span>'+
-        '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
-        '<span style="color:var(--gold);font-weight:600">'+(u.events_7d||0)+'</span></div>';
+        '<span style="color:var(--muted);font-size:.72rem">'+signed+'</span>'+
+        '<span style="color:var(--gold);font-weight:600" title="activity events · last 7 days">'+(u.events_7d||0)+'</span></div>';
     }).join('')+'</div>';
   }
   // ── lay out per saved order, minus hidden. Hero is always pinned first. ──
@@ -1179,8 +1188,8 @@ function renderHome(d){
 }
 
 // ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
-var HOME_WIDGETS=['hero','stats','chart_logins','chart_riley','pages','clicks','lastactive'];
-var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Last Active Clients'};
+var HOME_WIDGETS=['hero','stats','lastactive','chart_logins','chart_riley','pages','clicks'];
+var HOME_TITLES={hero:'Overview',stats:'Key Metrics',chart_logins:'Logins',chart_riley:'Riley Engagement',pages:'Most-Visited Pages',clicks:'Top Clicks',lastactive:'Latest sign-ups'};
 var homeEditing=false, _homeData=null, _homeRange=30;
 function setHomeRange(r){ _homeRange=r; var t=document.getElementById('home-rtog'); if(t){t.querySelectorAll('.rtog-btn').forEach(function(b){b.classList.toggle('on',+b.getAttribute('data-r')===r);});} if(_homeData)renderHome(_homeData); }
 function homeLayout(){ try{ var l=JSON.parse(localStorage.getItem('814_home_layout')||'{}'); return {order:Array.isArray(l.order)?l.order:HOME_WIDGETS.slice(), hidden:Array.isArray(l.hidden)?l.hidden:[]}; }catch(e){ return {order:HOME_WIDGETS.slice(),hidden:[]}; } }

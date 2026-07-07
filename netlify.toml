@@ -7,7 +7,12 @@
   # to ship to the browser (RLS protects all data), and several client pages embed it
   # directly. Marking it here means we don't have to chase every page into OMIT_PATHS
   # (which is what broke the build when library.html was added without being listed).
-  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY,SUPABASE_ANON_KEY,SUPABASE_URL"
+  # SAFETY_ALERT_EMAIL (brenden@meetriley.us) and VAPID_SUBJECT (mailto:hello@meetriley.us)
+  # are non-secret @meetriley.us contact/routing addresses, NOT credentials. They belong in
+  # code as From/Reply-To headers, the safety-alert recipient, and the web-push contact
+  # fallback. The scanner only started flagging them once each was defined as a Netlify env
+  # var (VAPID_SUBJECT was just added) and its literal value appeared in a committed file.
+  SECRETS_SCAN_OMIT_KEYS = "OPERATOR_KEY,SUPABASE_ANON_KEY,SUPABASE_URL,SAFETY_ALERT_EMAIL,VAPID_SUBJECT"
 
 [functions]
   directory = "netlify/functions"

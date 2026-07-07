@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Build fix — secret-scan false-positive on two non-secret @meetriley.us addresses
+- **Symptom:** deploy FAILED at secret-scan — "found 2 instance(s)": `SAFETY_ALERT_EMAIL`'s value in
+  CHANGELOG.md + `comms-templates.js` (×3), and `VAPID_SUBJECT`'s value in email-welcome/operator-notify/
+  push-subscribe/reset-nudge-cron/story-submit/waitlist-join.
+- **Cause:** the scanner only hunts for values of env vars that are *defined in Netlify*. Adding
+  `VAPID_SUBJECT` (for web push) + the new Lifecycle-comms commit hardcoding `brenden@meetriley.us` made
+  each var's literal value appear in committed files for the first time. Both values are non-secret
+  contact/routing addresses (`brenden@meetriley.us`, `mailto:hello@meetriley.us`) that BELONG in code as
+  From/Reply-To headers + the web-push contact fallback — same class as the already-omitted SUPABASE_URL.
+- **Fix:** added `SAFETY_ALERT_EMAIL,VAPID_SUBJECT` to `SECRETS_SCAN_OMIT_KEYS` in `netlify.toml` (+ comment).
+  No code/behavior change. Unblocks the VAPID web-push deploy.
+
 ### Lifecycle Comms — Task 1 (DNS) verified done + Task 3 (templates) built
 - **Task 1 (Resend DNS):** verified via live DNS query — SPF (`send.meetriley.us` Resend subdomain),
   DKIM (`resend._domainkey`), **DMARC** (`p=quarantine`), MX (Google Workspace) ALL present. Domain

@@ -2489,8 +2489,29 @@ function renderUserDetail(d){
     html+='<div class="ud-section"><div class="em">No Riley conversations yet.</div></div>';
   }
 
+  html+='<div class="ud-section"><div class="ud-section-label">Correspondence <span style="color:var(--muted2);font-weight:400;font-size:.66rem">emails we\'ve sent this member</span></div><div id="ud-corr-body" class="em">Loading…</div></div>';
   document.getElementById('ud-body').innerHTML=html;
   if(profile.id)loadMembershipPanel(profile.id);
+  if(profile.id)loadUserEmails(profile.id);
+}
+
+// ── Correspondence: every email we've sent this member (email_log via admin-correspondence).
+// Crisis follow-ups are intentionally excluded upstream (restricted access), so they never show here.
+function loadUserEmails(userId){
+  var el=document.getElementById('ud-corr-body'); if(!el)return;
+  opGet('/admin-correspondence?user_id='+encodeURIComponent(userId)).then(function(d){
+    var rows=(d&&d.items)||[];
+    if(!rows.length){el.innerHTML='<div class="em">No emails sent yet.</div>';return;}
+    el.innerHTML='<div class="rp" style="margin:0">'+rows.map(function(r){
+      var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+      var col=r.status==='sent'?'var(--green)':r.status==='failed'?'var(--red)':'var(--muted2)';
+      var reason=(r.status!=='sent'&&r.error)?' <span style="color:var(--muted2)">('+x(r.error)+')</span>':'';
+      return '<div class="rr" style="grid-template-columns:14px 1fr 118px 84px"><span style="color:'+col+'">&#9679;</span>'+
+        '<span style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.subject||r.kind||'(email)')+reason+'</span>'+
+        '<span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+
+        '<span style="color:var(--muted2);font-size:.64rem;text-transform:uppercase">'+x(r.kind||'')+'</span></div>';
+    }).join('')+'</div>';
+  }).catch(function(){ el.innerHTML='<div class="em" style="color:var(--red)">Could not load correspondence.</div>'; });
 }
 
 // ── Membership & Entitlements panel (v4) — merged into the Users tab ────────
@@ -3070,7 +3091,11 @@ async function createUserSubmit(){
     if(!r.ok||d.error){ res.innerHTML=nuMsg(nuEsc(d.error||'Could not add the member.'),'red'); btn.disabled=false; btn.textContent=lbl; return; }
     var tierLabel=tier==='guide'?'Guide (free)':(tier==='coach'?'Coach':'Companion');
     var emailNote='';
-    if(sendEmail){ emailNote=(d.emailed&&d.emailed.sent)?' &middot; welcome email sent.':' &middot; email will send once Resend is connected.'; }
+    if(sendEmail){
+      if(d.emailed&&d.emailed.sent) emailNote=' &middot; welcome email sent ✓';
+      else if(d.emailed&&d.emailed.status==='skipped') emailNote=' &middot; email not sent ('+x((d.emailed.reason)||'not configured')+')';
+      else emailNote=' &middot; welcome email FAILED — '+x((d.emailed&&(d.emailed.reason||d.emailed.detail))||'unknown');
+    }
     res.innerHTML=nuMsg('&#10003; Added <b>'+nuEsc(name)+'</b> as <b>'+tierLabel+'</b>. They can sign in with Google using <b>'+nuEsc(email)+'</b>.'+emailNote,'green');
     document.getElementById('nu-name').value=''; document.getElementById('nu-email').value=''; document.getElementById('nu-sob').value=''; document.getElementById('nu-tier').value='guide'; document.getElementById('nu-email-toggle').checked=false;
     btn.disabled=false; btn.textContent=lbl;

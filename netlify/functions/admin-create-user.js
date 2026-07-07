@@ -132,7 +132,7 @@ exports.handler = async (event) => {
     // 6. Optional welcome email — Resend-ready, no-ops until RESEND_API_KEY is set.
     let emailed = { sent: false, reason: "not_requested" };
     if (send_email) {
-      try { emailed = await sendWelcomeEmail({ email, name, tier }); }
+      try { emailed = await sendWelcomeEmail({ email, name, tier, userId: uid }); }
       catch (e) { emailed = { sent: false, reason: "error", detail: e.message }; }
     }
 

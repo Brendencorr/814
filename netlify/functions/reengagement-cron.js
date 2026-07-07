@@ -21,6 +21,7 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { sendClientEmail } = require("./email-send");
 
 const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -73,16 +74,11 @@ function buildEmail(u) {
 }
 
 // ── Send via Resend ──────────────────────────────────────────────────────────
-async function sendEmail(to, email) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { skipped: true };
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject: email.subject, html: email.html, text: email.text }),
-  });
-  if (!resp.ok) throw new Error(`Resend ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
-  return await resp.json();
+async function sendEmail(to, email, userId) {
+  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "reengagement", from: FROM_EMAIL, userId });
+  if (r.status === "skipped") return { skipped: true };
+  if (!r.sent) throw new Error((r.reason || "send_failed") + (r.detail ? ": " + r.detail : ""));
+  return { id: r.id };
 }
 
 exports.handler = async function (event) {
@@ -121,7 +117,7 @@ exports.handler = async function (event) {
       if (emailOff.has(u.id)) continue;              // opted out of email updates
       try {
         const email = buildEmail(u);
-        const r = await sendEmail(u.email, email);
+        const r = await sendEmail(u.email, email, u.id);
         if (r.skipped) { result.skipped++; continue; }  // no provider key yet
         // Mark sent + log the touch as an engagement event
         await supabase.from("user_profiles").update({ reengagement_sent_at: new Date().toISOString() }).eq("id", u.id);

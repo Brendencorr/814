@@ -16,6 +16,7 @@
  * Model: n/a
  */
 const { getSupabaseClient } = require("./supabase-client");
+const { sendClientEmail } = require("./email-send");
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (code, obj) => ({ statusCode: code, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(obj) });
@@ -102,7 +103,7 @@ function lapseFollowupAlert(enr) {
 
 // Send one program nudge as email via Resend (same pattern as the other email functions). Generic copy
 // only — the subject is the alert title, which never names the loss / substance / commitment. True on 2xx.
-async function sendProgramEmail(key, to, alert) {
+async function sendProgramEmail(key, to, alert, userId) {
   try {
     const url = "https://www.meetriley.us" + (alert.url || "/dashboard");
     const body = String(alert.body || "").replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;"));
@@ -110,12 +111,8 @@ async function sendProgramEmail(key, to, alert) {
       + '<p style="font-size:16px">' + body + '</p>'
       + '<p style="margin-top:20px"><a href="' + url + '" style="color:#c9a84c;font-weight:600;text-decoration:none">Open Riley &rarr;</a></p>'
       + '<p style="margin-top:28px;font-size:11px;color:#8a8578">You get these because email is on for your Riley program — change it anytime in Settings.</p></div>';
-    const resp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: process.env.RESEND_FROM || "Riley <riley@meetriley.us>", to: [to], subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url }),
-    });
-    return resp.ok;
+    const r = await sendClientEmail({ to, subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url, kind: "program_nudge", userId });
+    return r.sent;
   } catch (e) { console.error("program email send failed (non-fatal):", e.message); return false; }
 }
 
@@ -202,7 +199,7 @@ exports.handler = async (event) => {
         if (resendKey && (p.enr.nudge_channels || []).includes("email")) {
           const prof = profileById[p.enr.user_id];
           if (prof && prof.email && prof.email_notifications !== false) {
-            const ok = await sendProgramEmail(resendKey, prof.email, p.alert);
+            const ok = await sendProgramEmail(resendKey, prof.email, p.alert, p.enr.user_id);
             if (ok) { emailed++; sb.from("engagement_events").insert({ user_id: p.enr.user_id, event_type: "program_nudge_email_sent", event_data: { step: p.step } }).then(() => {}, () => {}); }
           }
         }

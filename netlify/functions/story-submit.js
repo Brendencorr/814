@@ -16,25 +16,11 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const { sendClientEmail } = require("./email-send");
 
-async function sendEmail(to, subject, html) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { sent: false, reason: "resend_not_configured" };
-  if (!to) return { sent: false, reason: "no_recipient" };
-  const from = process.env.RESEND_FROM || "Riley <hello@meetriley.us>";
-  try {
-    const r = await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], subject, html }),
-    });
-    if (!r.ok) return { sent: false, reason: `resend_http_${r.status}` };
-    return { sent: true };
-  } catch (e) {
-    return { sent: false, reason: "resend_error" };
-  }
+async function sendEmail(to, subject, html, kind) {
+  return sendClientEmail({ to, subject, html, kind: kind || "story" });
 }
 
 exports.handler = async (event) => {
@@ -75,7 +61,7 @@ exports.handler = async (event) => {
           <p><b>Story:</b></p>
           <blockquote style="border-left:3px solid #c9a84c;padding-left:14px;white-space:pre-wrap">${esc(story)}</blockquote>
           <p style="color:#888;font-size:13px">Nothing publishes without your review. Status: submitted &rarr; reviewed &rarr; consented &rarr; published.</p>
-        </div>`),
+        </div>`, "story_alert"),
       // Warm confirmation to the submitter.
       sendEmail(email, "Thank you for sharing your story",
         `<div style="font-family:sans-serif;line-height:1.7;color:#222">
@@ -83,7 +69,7 @@ exports.handler = async (event) => {
           <p>Thank you for trusting us with your story. It matters more than you know — this is exactly how the next person feels a little less alone.</p>
           <p><b>Nothing is ever published without your written OK.</b> If we'd love to share yours, we'll reach out to you first — always.</p>
           <p>With care,<br>Brenden &amp; Riley</p>
-        </div>`),
+        </div>`, "story"),
     ]);
 
     return json(200, { ok: true });

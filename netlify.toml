@@ -71,6 +71,9 @@
 [functions."admin-integrations"]
   timeout = 10
 
+[functions."admin-correspondence"]
+  timeout = 10
+
 [functions."admin-pricing"]
   timeout = 10
 

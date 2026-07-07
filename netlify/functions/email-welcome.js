@@ -14,7 +14,7 @@
  *   RESEND_API_KEY  — Resend API key (set this to go live)
  *   RESEND_FROM     — optional From header (default 'Riley <hello@meetriley.us>')
  */
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const { sendClientEmail } = require("./email-send");
 const LOGIN_URL = "https://login.meetriley.us";
 
 function esc(s) {
@@ -46,35 +46,16 @@ function welcomeHtml(first) {
  * @returns {Promise<{sent:boolean, id?:string, reason?:string, detail?:string}>}
  */
 async function sendWelcomeEmail(member) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { sent: false, reason: "resend_not_configured" };
-
   const email = (member && member.email || "").trim();
-  if (!email) return { sent: false, reason: "no_recipient" };
   const first = ((member && member.name) || "").split(" ")[0] || "there";
-  const from = process.env.RESEND_FROM || "Riley <hello@meetriley.us>";
-
-  try {
-    const r = await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from,
-        to: [email],
-        subject: "You're in — welcome to Riley",
-        html: welcomeHtml(first),
-      }),
-    });
-    if (!r.ok) {
-      let detail = "";
-      try { detail = (await r.text()).slice(0, 200); } catch (_) {}
-      return { sent: false, reason: `resend_http_${r.status}`, detail };
-    }
-    const j = await r.json().catch(() => ({}));
-    return { sent: true, id: j.id || null };
-  } catch (e) {
-    return { sent: false, reason: "resend_error", detail: (e && e.message) || String(e) };
-  }
+  return sendClientEmail({
+    to: email,
+    subject: "You're in — welcome to Riley",
+    html: welcomeHtml(first),
+    kind: "welcome",
+    userId: (member && member.userId) || null,
+    meta: { tier: (member && member.tier) || null },
+  });
 }
 
 module.exports = { sendWelcomeEmail };

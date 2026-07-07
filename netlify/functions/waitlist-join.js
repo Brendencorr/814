@@ -16,19 +16,10 @@ const CORS = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const { sendClientEmail } = require("./email-send");
 
 async function sendEmail(to, subject, html) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key || !to) return;
-  const from = process.env.RESEND_FROM || "Riley <hello@meetriley.us>";
-  try {
-    await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], subject, html }),
-    });
-  } catch (e) { /* non-fatal */ }
+  await sendClientEmail({ to, subject, html, kind: "waitlist" });
 }
 
 exports.handler = async (event) => {

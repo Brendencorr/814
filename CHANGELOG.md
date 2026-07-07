@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Correspondence log — every client email is now recorded + visible in the operator
+- **Why:** ~8 functions POSTed to Resend and discarded the result, so "did we email this
+  client / did it land?" was unanswerable (this came up when Elizabeth was added). Fixed at the
+  root: a single choke point.
+- **DB:** migration **075** `email_log` (metadata only — recipient, subject, kind, status,
+  Resend id / error; NEVER the body). RLS on, zero policies (service-role writes, operator reads).
+- **Helper:** new `email-send.js` `sendClientEmail()` — sends via Resend AND logs one row by
+  construction (best-effort, never blocks a send). Returns `{sent,id,status,reason,detail}`.
+- **Wired (6 client senders):** welcome, program nudges (int-proactive), re-engagement, daily
+  brief, waitlist, story — all now route through the helper. **Excluded by design:**
+  crisis-followup + safety-alert (crisis stays out of any operator-visible stream, §1.4).
+- **Operator:** new `admin-correspondence.js` (OPERATOR_KEY-gated GET by user_id/email/recent);
+  client detail panel now shows a "Correspondence" list per member; the Add-User confirmation now
+  shows the REAL send result (sent ✓ / failed + reason) instead of the stale "will send once
+  Resend is connected." Files: migration 075, email-send.js, admin-correspondence.js, + 6 senders,
+  admin-create-user.js, operator.html, netlify.toml.
+
 ### Web push — client re-subscribe is now self-healing after a key change
 - **Bug:** the enable flows did `getSubscription(); if(!sub) subscribe(newKey)` — so a device
   holding a subscription bound to an OLD VAPID key kept reusing it and never re-subscribed. The

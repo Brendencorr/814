@@ -17,6 +17,7 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { sendClientEmail } = require("./email-send");
 
 const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -58,16 +59,11 @@ function buildEmail(name, brief, schedule) {
   return { subject: `${greet}, ${name} — your brief is ready`, text, html };
 }
 
-async function sendEmail(to, email) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { skipped: true };
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject: email.subject, html: email.html, text: email.text }),
-  });
-  if (!resp.ok) throw new Error(`Resend ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
-  return await resp.json();
+async function sendEmail(to, email, userId) {
+  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "brief", from: FROM_EMAIL, userId });
+  if (r.status === "skipped") return { skipped: true };
+  if (!r.sent) throw new Error((r.reason || "send_failed") + (r.detail ? ": " + r.detail : ""));
+  return { id: r.id };
 }
 
 exports.handler = async function (event) {
@@ -113,7 +109,7 @@ exports.handler = async function (event) {
         const { data: brief } = await supabase
           .from("daily_briefs").select("modules").eq("user_id", u.id).eq("brief_date", localToday).maybeSingle();
         const name = (u.preferred_name || u.full_name || "").split(" ")[0] || "friend";
-        const r = await sendEmail(u.email, buildEmail(name, brief, u.notification_schedule || "morning"));
+        const r = await sendEmail(u.email, buildEmail(name, brief, u.notification_schedule || "morning"), u.id);
         if (r.skipped) { result.skipped++; continue; }
         await supabase.from("user_profiles").update({ brief_email_sent_date: localToday }).eq("id", u.id);
         await supabase.from("engagement_events").insert({ user_id: u.id, event_type: "brief_email_sent", event_data: {} });

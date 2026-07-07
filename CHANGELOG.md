@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Lifecycle Comms — Task 1 (DNS) verified done + Task 3 (templates) built
+- **Task 1 (Resend DNS):** verified via live DNS query — SPF (`send.meetriley.us` Resend subdomain),
+  DKIM (`resend._domainkey`), **DMARC** (`p=quarantine`), MX (Google Workspace) ALL present. Domain
+  fully authenticated; `riley@`/`brenden@` will send clean. No GoDaddy changes needed. (Optional: point
+  DMARC `rua` to support@meetriley.us to read reports.)
+- **Task 3 (templates):** `netlify/functions/comms-templates.js` — all **17 template keys** VERBATIM
+  (guide_1–7, reset_daily, quiet_1–3, quiet_reset, paid_1–3, addon_1–2) + brand shell (Ink header/
+  parchment/white card/gold button, 560px) + both footer variants (`FOOTER_VARIANT` env, default B) +
+  `{placeholder}` substitution. `render(key,vars,urls)` → {from,replyTo,subject,preview,html,text}.
+  guide_5 = `author:'interim'` (founder-copy-pending). Chose one module over 36 loose files (Lambda-friendly).
+- 🔴 REMAINING: Task 4 evaluate-comms cron, Task 5 state wiring, Task 6 unsubscribe/prefs, Task 7 harness.
+  Everything stays DARK — `COMMS_ENABLED=false`, nothing sends.
+- **Files:** `netlify/functions/comms-templates.js` (new).
+
 ### Activation funnel events + Lifecycle Comms foundation (DB)
 - **Activation events wired** (closes the acquire→activate funnel gap): `signup_started` (login: google +
   magic-link), `signup_completed` (new-account heuristic on SIGNED_IN), `first_riley_message` (both chats,

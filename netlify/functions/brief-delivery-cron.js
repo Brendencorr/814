@@ -18,6 +18,7 @@
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 const { sendClientEmail } = require("./email-send");
+const { shell, p, btn, esc } = require("./comms-templates");
 
 const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
@@ -47,15 +48,15 @@ function buildEmail(name, brief, schedule) {
     `It takes about 45 seconds. ${APP_URL}/brief`, ``,
     `— Riley`,
   ].join("\n");
-  const html = `<div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;color:#1a1a1a;line-height:1.7;font-size:16px">
-    <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:20px">Meet Riley</p>
-    <p>${greet}, ${name}.</p>
-    <p>${greetLine}</p>
-    ${focus ? `<p style="padding:12px 16px;background:#f7f3ea;border-left:3px solid #c9a84c;border-radius:0 3px 3px 0"><strong>Today's focus:</strong> ${focus}</p>` : ``}
-    <p style="margin:24px 0"><a href="${APP_URL}/brief" style="background:#c9a84c;color:#0a0908;text-decoration:none;padding:12px 28px;border-radius:3px;font-family:Arial,sans-serif;font-size:14px;font-weight:bold">Open today's brief →</a></p>
-    <p style="color:#999;font-size:13px">About 45 seconds. I'll be here.</p>
-    <p style="color:#555">— Riley</p>
-  </div>`;
+  const html = shell(
+    p(esc(greet) + ", " + esc(name) + ".") +
+    p(esc(greetLine)) +
+    (focus ? '<p style="margin:0 0 14px;padding:12px 16px;background:#f7f3ea;border-left:3px solid #c9a84c;border-radius:0 3px 3px 0"><strong>Today\'s focus:</strong> ' + esc(focus) + "</p>" : "") +
+    btn("Open today's brief →", APP_URL + "/brief") +
+    '<p style="color:#8a8578;font-size:13px;margin:2px 0 0">About 45 seconds. I\'ll be here.</p>' +
+    '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>',
+    { preview: focus ? ("Today's focus: " + focus) : "Your brief is ready whenever you are." }
+  );
   return { subject: `${greet}, ${name} — your brief is ready`, text, html };
 }
 

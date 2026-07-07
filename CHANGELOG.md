@@ -18,10 +18,13 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   body font is now Georgia serif; `shell(body,{footerHtml})` accepts a custom footer (so sensitive/crisis
   mail can carry a reply-to-opt-out + 988 footer instead of the marketing unsubscribe). Exported
   `shell/p/btn/em/esc` for reuse.
-- **Retrofit #1 — crisis-followup-cron** now renders through the shared shell (was a bare serif div with
-  a "MEET RILEY" eyebrow). Same copy, unified frame, crisis-appropriate footer (no marketing unsubscribe).
-- 🔜 **Remaining senders to roll onto the shell** (next increment): brief-delivery-cron, int-proactive-cron,
-  reengagement-cron, email-welcome. Files so far: comms-templates.js, crisis-followup-cron.js.
+- ✅ **ALL client senders now render through the shared shell** (same copy, unified frame):
+  crisis-followup-cron (custom reply-to-opt-out + 988 footer), reengagement-cron (dropped its leftover
+  "Meet Riley" double-signoff), brief-delivery-cron (keeps the "Today's focus" callout), int-proactive-cron
+  (custom program opt-out footer), email-welcome (was a dark card → now the light house shell). The old
+  bare-serif "MEET RILEY" eyebrow shell + the dark welcome card are fully retired.
+- Files: comms-templates.js, crisis-followup-cron.js, reengagement-cron.js, brief-delivery-cron.js,
+  int-proactive-cron.js, email-welcome.js.
 
 ### Operator "Client Onboarding Communication" tab — view/edit the whole lifecycle email sequence
 - New operator tab (sidebar **Onboarding Comms**) surfaces all 17 lifecycle emails grouped into the

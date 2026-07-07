@@ -17,6 +17,7 @@
  */
 const { getSupabaseClient } = require("./supabase-client");
 const { sendClientEmail } = require("./email-send");
+const { shell, p, btn } = require("./comms-templates");
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (code, obj) => ({ statusCode: code, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(obj) });
@@ -107,10 +108,13 @@ async function sendProgramEmail(key, to, alert, userId) {
   try {
     const url = "https://www.meetriley.us" + (alert.url || "/dashboard");
     const body = String(alert.body || "").replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;"));
-    const html = '<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#1c1a18;line-height:1.6">'
-      + '<p style="font-size:16px">' + body + '</p>'
-      + '<p style="margin-top:20px"><a href="' + url + '" style="color:#c9a84c;font-weight:600;text-decoration:none">Open Riley &rarr;</a></p>'
-      + '<p style="margin-top:28px;font-size:11px;color:#8a8578">You get these because email is on for your Riley program — change it anytime in Settings.</p></div>';
+    const footer = '<tr><td style="padding:22px 32px 28px;border-top:1px solid #e5ded0">'
+      + '<div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#8a8578">'
+      + 'You get these because email is on for your Riley program — change it anytime in Settings.</div></td></tr>';
+    const html = shell(
+      p(body) + btn("Open Riley →", url) + '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>',
+      { preview: String(alert.body || "").slice(0, 90), footerHtml: footer }
+    );
     const r = await sendClientEmail({ to, subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url, kind: "program_nudge", userId });
     return r.sent;
   } catch (e) { console.error("program email send failed (non-fatal):", e.message); return false; }

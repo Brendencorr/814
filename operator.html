@@ -473,6 +473,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <button class="sni" data-s="m" onclick="loadContent(this)"><span class="sni-ic">📚</span>Content Library</button>
       <button class="sni" data-s="y" onclick="loadPricing(this)"><span class="sni-ic">🗂️</span>Programs</button>
       <button class="sni" data-s="mx" onclick="loadMetrics(this)"><span class="sni-ic">📊</span>Riley Overview</button>
+      <button class="sni" data-s="cw" onclick="loadSiteEditor(this)"><span class="sni-ic">🎨</span>Customize Website</button>
     </nav>
     <div style="flex:1"></div>
     <button class="opsb-gear" onclick="tgs()" title="Settings">⚙&nbsp; Settings</button>
@@ -701,6 +702,46 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   </div>
 </div>
 
+<!-- CUSTOMIZE WEBSITE · live click-to-edit editor for the public marketing site -->
+<div class="sc" id="scw">
+  <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+    <div style="max-width:1280px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem">
+        <div class="cl" style="margin:0">Customize Website</div>
+        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+          <select id="cw-page" onchange="cwLoadPage()" style="background:#161310;border:1px solid rgba(201,168,76,.3);color:#f5f0e8;border-radius:8px;padding:7px 12px;font-size:12.5px;cursor:pointer">
+            <option value="home">Home (landing)</option>
+            <option value="about">About</option>
+            <option value="pillars">The Four Pillars</option>
+            <option value="resources">Resources</option>
+          </select>
+          <a id="cw-open" href="/home" target="_blank" rel="noopener" style="font-size:12px;color:#c9a84c;text-decoration:none;white-space:nowrap">Open live ↗</a>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover a <b style="color:#f5f0e8">section</b> for its toolbar — 👁 show/hide · ↑↓ reorder · 🎨 colors. Click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Nothing changes on the live site until you press <b style="color:#c9a84c">Save &amp; publish</b> — then it's live instantly, no redeploy.</div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;align-items:start" id="cw-grid">
+        <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;background:#0a0908;height:74vh">
+          <iframe id="cw-frame" title="Website preview" style="width:100%;height:100%;border:0;display:block"></iframe>
+        </div>
+        <div style="position:sticky;top:.5rem">
+          <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.9rem;background:#12100d">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+              <div style="font-family:'DM Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#c9a84c">Pending changes</div>
+              <span id="cw-count" style="font-size:11px;color:#8a8578">0</span>
+            </div>
+            <div id="cw-tray" style="max-height:46vh;overflow-y:auto"><div style="padding:.5rem 0;color:#8a8578;font-size:12px">No changes yet.</div></div>
+            <div style="display:flex;gap:.5rem;margin-top:.8rem">
+              <button id="cw-save" onclick="cwSave()" disabled style="flex:1;padding:10px;background:#c9a84c;color:#0a0908;border:none;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer;opacity:.5">Save &amp; publish</button>
+              <button onclick="cwDiscard()" style="padding:10px 12px;background:rgba(255,255,255,.06);color:#f5f0e8;border:none;border-radius:7px;font-size:12px;cursor:pointer">Discard</button>
+            </div>
+            <div id="cw-msg" style="font-size:11px;color:#8a8578;margin-top:.5rem;min-height:14px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- (Clients merged into Engagement; retired duplicate engagement screen) -->
   </main>
 </div>
@@ -851,7 +892,7 @@ async function unlock(){
 }
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});var _p=document.getElementById('s'+n);if(_p)_p.classList.add('active');document.querySelectorAll('.sni').forEach(function(b){b.classList.remove('active');});if(btn&&btn.classList.contains('sni'))btn.classList.add('active');else{var t=document.querySelector('.sni[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu','cw'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});var _p=document.getElementById('s'+n);if(_p)_p.classList.add('active');document.querySelectorAll('.sni').forEach(function(b){b.classList.remove('active');});if(btn&&btn.classList.contains('sni'))btn.classList.add('active');else{var t=document.querySelector('.sni[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -3111,6 +3152,122 @@ function mxLookup(preset){
     .then(function(res){ if(res.status===404){ mxStatus('No member found for that email or id.','var(--red)'); document.getElementById('mx-member').innerHTML=''; mxCurrent=null; return; } if(!res.ok){ mxStatus((res.d&&res.d.error)||'Lookup failed.','var(--red)'); return; } mxRenderMember(res.d.user); mxStatus(''); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Lookup failed.','var(--red)'); });
 }
+
+/* ── CUSTOMIZE WEBSITE — live click-to-edit editor ─────────────────────────────
+   The preview iframe loads the real marketing page in ?cms=edit mode (site-cms.js).
+   It posts each edit up here; we collect them and, on Save, persist via
+   admin-site-content (bulk_upsert / reset). The iframe has NO operator key, so only
+   this parent can write — loading a page in edit mode directly can never save. */
+var CW_PENDING = {};      // "page::key" -> change object
+var CW_PAGE = 'home';
+var CW_IMG_KEY = null, CW_IMG_LABEL = '';
+function cwEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+
+function loadSiteEditor(btn){ gs('cw', btn); cwRenderTray(); if(!document.getElementById('cw-frame').src) cwLoadPage(); }
+function cwLoadPage(){
+  CW_PAGE = (document.getElementById('cw-page')||{}).value || 'home';
+  var f = document.getElementById('cw-frame');
+  if(f) f.src = '/'+CW_PAGE+'?cms=edit&t='+Date.now();
+  var open = document.getElementById('cw-open'); if(open) open.href = '/'+CW_PAGE;
+  var msg = document.getElementById('cw-msg'); if(msg) msg.textContent='';
+}
+function cwKey(c){ return c.page+'::'+c.key; }
+function cwOnChange(c){ if(!c||!c.page||!c.key) return; CW_PENDING[cwKey(c)] = c; cwRenderTray(); }
+function cwOnReset(page,key,kind,label){ if(!page||!key) return; CW_PENDING[page+'::'+key] = {page:page,key:key,kind:kind,label:label,__reset:true}; cwRenderTray(); }
+function cwDrop(k){ delete CW_PENDING[k]; cwRenderTray(); }
+function cwSectionSummary(p){ p=p||{}; var a=[]; if(p.hidden)a.push('hidden'); if(typeof p.sort==='number')a.push('reordered'); if(p.bg)a.push('bg color'); if(p.color)a.push('text color'); return a.join(', ')||'updated'; }
+function cwRenderTray(){
+  var tray=document.getElementById('cw-tray'), count=document.getElementById('cw-count'), save=document.getElementById('cw-save');
+  if(!tray) return;
+  var keys=Object.keys(CW_PENDING);
+  if(count) count.textContent=keys.length;
+  if(save){ save.disabled=keys.length===0; save.style.opacity=keys.length?'1':'.5'; }
+  if(!keys.length){ tray.innerHTML='<div style="padding:.5rem 0;color:#8a8578;font-size:12px">No changes yet.</div>'; return; }
+  tray.innerHTML = keys.map(function(k){
+    var c=CW_PENDING[k];
+    var desc = c.__reset ? 'reset to default'
+      : c.kind==='text'  ? '“'+cwEsc(String((c.props&&c.props.text)||'').slice(0,44))+'”'
+      : c.kind==='image' ? ((c.props&&c.props.hidden)?'image removed':'image updated')
+      :                    cwSectionSummary(c.props);
+    return '<div style="display:flex;justify-content:space-between;gap:.5rem;padding:.45rem 0;border-top:1px solid rgba(255,255,255,.08)">'
+      +'<div style="min-width:0"><div style="color:#f5f0e8;font-size:12.5px">'+cwEsc(c.label||c.key)+'</div>'
+      +'<div style="color:#8a8578;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+cwEsc(c.page)+' · '+desc+'</div></div>'
+      +'<button onclick="cwDrop(\''+cwEsc(k).replace(/'/g,"\\'")+'\')" title="Drop this change" style="background:none;border:none;color:#8a8578;cursor:pointer;font-size:13px">✕</button></div>';
+  }).join('');
+}
+function cwDiscard(){
+  CW_PENDING={}; cwRenderTray();
+  var f=document.getElementById('cw-frame'); if(f) f.src='/'+CW_PAGE+'?cms=edit&t='+Date.now();
+  var msg=document.getElementById('cw-msg'); if(msg) msg.textContent='';
+}
+async function cwSave(){
+  var keys=Object.keys(CW_PENDING); if(!keys.length) return;
+  var msg=document.getElementById('cw-msg'), save=document.getElementById('cw-save');
+  if(save){ save.disabled=true; save.style.opacity='.5'; } if(msg) msg.textContent='Saving…';
+  try{
+    var all=keys.map(function(k){return CW_PENDING[k];});
+    var upserts=all.filter(function(c){return !c.__reset;}).map(function(c){return {page:c.page,key:c.key,kind:c.kind,props:c.props||{}};});
+    var resets =all.filter(function(c){return c.__reset;});
+    if(upserts.length){
+      var r=await fetch(B+'/admin-site-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_upsert',changes:upserts})});
+      if(!r.ok){ if(r.status===401){opForget();throw new Error('Operator key rejected — refresh and re-enter.');} throw new Error('Save failed ('+r.status+')'); }
+    }
+    for(var i=0;i<resets.length;i++){
+      await fetch(B+'/admin-site-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reset',page:resets[i].page,key:resets[i].key})});
+    }
+    CW_PENDING={}; cwRenderTray();
+    if(msg) msg.textContent='Saved — live now.';
+    var f=document.getElementById('cw-frame'); if(f) f.src='/'+CW_PAGE+'?cms=edit&t='+Date.now();  // reload to confirm persisted state
+  }catch(e){ if(msg) msg.textContent=e.message||'Save failed.'; if(save){ save.disabled=false; save.style.opacity='1'; } }
+}
+
+/* Image swap modal (upload / paste URL / remove). */
+function cwPickImage(key,label){ CW_IMG_KEY=key; CW_IMG_LABEL=label||key;
+  var ov=document.getElementById('cw-img-ov'); if(ov) ov.remove();
+  ov=document.createElement('div'); ov.id='cw-img-ov';
+  ov.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,.82);backdrop-filter:blur(4px);padding:20px';
+  ov.innerHTML='<div style="background:#141210;border:1px solid rgba(201,168,76,.28);border-radius:12px;max-width:390px;width:100%;padding:22px;position:relative">'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:#f5f0e8;margin-bottom:3px">Image · '+cwEsc(CW_IMG_LABEL)+'</div>'
+    +'<div style="font-size:12px;color:#8a8578;margin-bottom:14px">Upload a logo/image, paste a URL, or remove it.</div>'
+    +'<input id="cw-img-file" type="file" accept="image/*" style="width:100%;font-size:12px;color:#f5f0e8;margin-bottom:10px">'
+    +'<input id="cw-img-url" type="url" placeholder="…or paste an image URL" style="width:100%;padding:9px 11px;background:#1c1a18;border:1px solid rgba(255,255,255,.12);border-radius:6px;color:#f5f0e8;font-size:13px;margin-bottom:12px;box-sizing:border-box">'
+    +'<div style="display:flex;gap:.5rem"><button onclick="cwImgApply()" style="flex:1;padding:10px;background:#c9a84c;color:#0a0908;border:none;border-radius:6px;font-weight:600;cursor:pointer">Use image</button>'
+    +'<button onclick="cwImgRemove()" style="padding:10px 12px;background:rgba(255,255,255,.06);color:#c0604a;border:none;border-radius:6px;cursor:pointer">Remove</button>'
+    +'<button onclick="cwImgClose()" style="padding:10px 12px;background:none;border:none;color:#8a8578;cursor:pointer">Cancel</button></div>'
+    +'<div id="cw-img-msg" style="font-size:11px;color:#8a8578;margin-top:8px;min-height:12px"></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) cwImgClose(); });
+}
+function cwImgClose(){ var o=document.getElementById('cw-img-ov'); if(o) o.remove(); }
+function cwReadFile(file){ return new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(file); }); }
+function cwFrameWin(){ var f=document.getElementById('cw-frame'); return f&&f.contentWindow; }
+async function cwImgApply(){
+  var f=document.getElementById('cw-img-file'), url=((document.getElementById('cw-img-url')||{}).value||'').trim(), msg=document.getElementById('cw-img-msg');
+  try{
+    var finalUrl=url;
+    if(f && f.files && f.files[0]){
+      if(msg) msg.textContent='Uploading…';
+      var dataUrl=await cwReadFile(f.files[0]);
+      var r=await fetch(B+'/admin-site-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'upload_image',page:CW_PAGE,key:CW_IMG_KEY,dataUrl:dataUrl})});
+      var j=await r.json(); if(!r.ok||!j.url) throw new Error((j&&j.error)||'Upload failed'); finalUrl=j.url;
+    }
+    if(!finalUrl){ if(msg) msg.textContent='Choose a file or paste a URL.'; return; }
+    var w=cwFrameWin(); if(w) w.postMessage({type:'cms-set-image',key:CW_IMG_KEY,url:finalUrl,label:CW_IMG_LABEL}, location.origin);
+    cwImgClose();
+  }catch(e){ if(msg) msg.textContent=e.message||'Failed.'; }
+}
+function cwImgRemove(){ var w=cwFrameWin(); if(w) w.postMessage({type:'cms-set-image',key:CW_IMG_KEY,remove:true,label:CW_IMG_LABEL}, location.origin); cwImgClose(); }
+
+/* Messages from the edit iframe (site-cms.js). */
+window.addEventListener('message', function(e){
+  if(e.origin!==location.origin) return;
+  var f=document.getElementById('cw-frame');
+  if(!f || e.source!==f.contentWindow) return;
+  var d=e.data||{};
+  if(d.type==='cms-change' && d.change) cwOnChange(d.change);
+  else if(d.type==='cms-reset') cwOnReset(d.page, d.key, d.kind, d.label);
+  else if(d.type==='cms-pick-image') cwPickImage(d.key, d.label);
+});
 
 </script>
 </body>

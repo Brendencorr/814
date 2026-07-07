@@ -12,6 +12,26 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Customize Website — operator live editor for the marketing site
+- **Why:** the public marketing pages (home/about/pillars/resources) were hardcoded HTML —
+  Brenden couldn't change copy or layout without a code edit + redeploy. He wanted to edit
+  the site himself from the operator dashboard.
+- **What:** new **Customize Website** operator tab — a live click-to-edit preview of the real
+  page. Click text to edit it; hover a section for its toolbar (👁 show/hide · ↑↓ reorder ·
+  🎨 bg/text colors); click a logo/image to swap/upload/remove. Save → live instantly, **no
+  redeploy**. Runtime-override model: pages are instrumented with `data-cms-*` slots; a shared
+  `site-cms.js` applies overrides on load, and in `?cms=edit` mode (only inside the operator
+  iframe) turns the page into the editor, posting each change to the parent operator which holds
+  the key and saves. **Security:** writes go ONLY through `admin-site-content.js` (OPERATOR_KEY,
+  service key) — RLS blocks anon writes, so loading a page in edit mode directly can never persist.
+  Table `site_content` + public `site-media` bucket (**migration 072**). `resources.html`'s 988
+  crisis section is deliberately NOT instrumented (can't be hidden).
+- **Files:** `operator.html` (tab), `site-cms.js` (new), `netlify/functions/admin-site-content.js`
+  + `site-content.js` (new), `supabase/migrations/072_site_content.sql` (RUN), and `data-cms-*`
+  instrumentation on `home/about/pillars/resources.html`. Extend coverage by adding more
+  `data-cms-*` attributes — no code change needed.
+- **🔴 Migration 072 is RUN.** (Also pending from other sessions: 070_user_stories, 071_waitlist.)
+
 ### Launch fixes Task 7 — durable waitlist + confirmation email + PostHog event
 - `waitlist-join.js` now upserts a **durable, deduped `waitlist` row** (email, plan_intent) IN ADDITION
   to the existing `events(name='waitlist_joined')` row that Echo's Phase-2 counter reads. Sends a warm

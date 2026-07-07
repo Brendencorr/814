@@ -121,6 +121,12 @@
 [functions."reset-nudge-cron"]
   schedule = "*/15 * * * *"
 
+# Interactive-program proactive nudges — daily at 15:00 UTC (~9am MT, a humane hour = quiet-hours-safe
+# for the US). In-app alerts for everyone + opt-in email via Resend (per-enrollment nudge_channels +
+# global email consent). 1/day cap, lapse-aware, dry_run supported. Dormant until members enroll.
+[functions."int-proactive-cron"]
+  schedule = "0 15 * * *"
+
 # Workout & Nutrition plan generator runs as a BACKGROUND function
 # (plan-generate-background.js) — a full 7-day plan exceeds the synchronous
 # timeout, so the -background suffix gives it up to 15 min. The client fires it

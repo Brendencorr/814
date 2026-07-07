@@ -100,6 +100,25 @@ function lapseFollowupAlert(enr) {
   };
 }
 
+// Send one program nudge as email via Resend (same pattern as the other email functions). Generic copy
+// only — the subject is the alert title, which never names the loss / substance / commitment. True on 2xx.
+async function sendProgramEmail(key, to, alert) {
+  try {
+    const url = "https://www.meetriley.us" + (alert.url || "/dashboard");
+    const body = String(alert.body || "").replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;"));
+    const html = '<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#1c1a18;line-height:1.6">'
+      + '<p style="font-size:16px">' + body + '</p>'
+      + '<p style="margin-top:20px"><a href="' + url + '" style="color:#c9a84c;font-weight:600;text-decoration:none">Open Riley &rarr;</a></p>'
+      + '<p style="margin-top:28px;font-size:11px;color:#8a8578">You get these because email is on for your Riley program — change it anytime in Settings.</p></div>';
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: process.env.RESEND_FROM || "Riley <riley@meetriley.us>", to: [to], subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url }),
+    });
+    return resp.ok;
+  } catch (e) { console.error("program email send failed (non-fatal):", e.message); return false; }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   let dryRun = false;
@@ -112,9 +131,9 @@ exports.handler = async (event) => {
 
   // Resilient select — lapse_at lands with migration 065; fall back gracefully if it isn't applied yet.
   let enrolls = [];
-  const withLapseAt = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state, lapse_at").neq("state", "paused");
+  const withLapseAt = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state, lapse_at, nudge_channels").neq("state", "paused");
   if (withLapseAt.error) {
-    const basic = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state").neq("state", "paused");
+    const basic = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state, nudge_channels").neq("state", "paused");
     enrolls = basic.data || [];
   } else {
     enrolls = withLapseAt.data || [];
@@ -156,7 +175,22 @@ exports.handler = async (event) => {
     if (plan) plans.push({ enr, ...plan });
   }
 
-  let sent = 0, cleared = 0;
+  // Email channel (opt-in): fetch addresses + global email consent once, for members whose enrollment
+  // nudge_channels include 'email'. In-app alerts still fire for everyone; email is additive + generic.
+  // Skipped entirely if RESEND isn't configured. Quiet hours = the cron's daily humane run time (netlify.toml).
+  const resendKey = process.env.RESEND_API_KEY;
+  const profileById = {};
+  if (resendKey && !dryRun) {
+    const emailUserIds = [...new Set(plans.filter((p) => (p.enr.nudge_channels || []).includes("email")).map((p) => p.enr.user_id))];
+    if (emailUserIds.length) {
+      try {
+        const { data: profs } = await sb.from("user_profiles").select("id, email, email_notifications").in("id", emailUserIds);
+        (profs || []).forEach((pr) => { profileById[pr.id] = pr; });
+      } catch (_) {}
+    }
+  }
+
+  let sent = 0, cleared = 0, emailed = 0;
   if (!dryRun) {
     for (const p of plans) {
       try {
@@ -164,6 +198,14 @@ exports.handler = async (event) => {
         await sb.from("int_nudges").insert({ enrollment_id: p.enr.id, ladder_step: p.step, channel: "popup", sent_date: todayStr });
         if (p.dateId) await sb.from("int_dates").update({ last_touch: todayStr }).eq("id", p.dateId);
         sent++;
+        // Email — only if the member opted this program into email AND hasn't globally turned email off.
+        if (resendKey && (p.enr.nudge_channels || []).includes("email")) {
+          const prof = profileById[p.enr.user_id];
+          if (prof && prof.email && prof.email_notifications !== false) {
+            const ok = await sendProgramEmail(resendKey, prof.email, p.alert);
+            if (ok) { emailed++; sb.from("engagement_events").insert({ user_id: p.enr.user_id, event_type: "program_nudge_email_sent", event_data: { step: p.step } }).then(() => {}, () => {}); }
+          }
+        }
       } catch (e) { console.error("nudge send failed (non-fatal):", e.message); }
     }
     for (const id of clears) {
@@ -172,8 +214,8 @@ exports.handler = async (event) => {
   }
 
   return json(200, {
-    ok: true, dry_run: dryRun, date: todayStr,
-    enrollments_scanned: (enrolls || []).length, planned: plans.length, sent: dryRun ? 0 : sent,
+    ok: true, dry_run: dryRun, date: todayStr, email_configured: !!resendKey,
+    enrollments_scanned: (enrolls || []).length, planned: plans.length, sent: dryRun ? 0 : sent, emailed: dryRun ? 0 : emailed,
     lapse_auto_cleared: dryRun ? clears.length : cleared,
     preview: plans.slice(0, 25).map((p) => ({ program: p.enr.program_key, step: p.step, title: p.alert.title })),
   });

@@ -83,6 +83,11 @@
 [functions."admin-membership"]
   timeout = 10
 
+# Operator "Client Onboarding Communication" tab — CRUD for the lifecycle email templates
+# (copy/timing/sender/enable overrides in comms_templates; code stays the verbatim fallback).
+[functions."admin-comms"]
+  timeout = 10
+
 # Public marketing-site pricing feed (v4) — no auth, cached 60s.
 [functions."public-pricing"]
   timeout = 10

@@ -12,6 +12,32 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Operator "Client Onboarding Communication" tab — view/edit the whole lifecycle email sequence
+- New operator tab (sidebar **Onboarding Comms**) surfaces all 17 lifecycle emails grouped into the
+  4 flows (Guide · Gone Quiet · Paid Member · Add-on), in send order, each with a **live rendered
+  preview** in the real brand shell. Per email the operator can edit **subject, preview text, sender
+  (Riley/Brenden), timing (day threshold + note), body copy, button, and on/off** — Save, Update
+  preview (non-persisting), or **Reset to original**.
+- **Model:** `comms-templates.js` stays the verbatim fallback; edits are stored as *overrides* in new
+  **migration 076** `comms_templates` (a row only overrides the fields changed). `render()` now takes
+  an optional override (subject/preview/from/body/button); the brand shell is always applied so the
+  DESIGN stays consistent no matter what's edited. Body edits use plain paragraphs + `[text](url)` links.
+- **Real, not cosmetic:** `evaluate-comms.js` reads the overrides — edited copy/sender is what sends,
+  disabled emails are skipped, and the Guide/Gone-Quiet/paid **day thresholds are now operator-editable**
+  (`trigger_days`, falling back to code defaults). Still **DARK** (COMMS_ENABLED unset → nothing sends);
+  the tab banner shows the live on/off state.
+- **Backend:** `admin-comms.js` (OPERATOR_KEY-gated GET/PUT + `action:reset`/`action:preview`).
+- Files: migration 076, comms-templates.js, evaluate-comms.js, admin-comms.js, operator.html, netlify.toml.
+
+### Email copy consistency — "It's Riley" opener + single "— Riley" signoff
+- Per operator standard: the crisis-followup emails now open **"It's Riley."** (was lowercase) across
+  all 4 stages, and sign off with just **"— Riley"** (removed the duplicate "Meet Riley" line; the top
+  "MEET RILEY" brand eyebrow stays). File: crisis-followup-cron.js.
+- 🔎 **Consistency note for a follow-up:** email designs are NOT yet unified — the lifecycle/comms emails
+  use the Ink-header brand shell (with unsubscribe footer), while crisis-followup/brief/proactive crons
+  use a lighter inline "MEET RILEY" serif shell. Standardizing all senders on ONE shared shell is a
+  worthwhile next pass (recommend the comms shell — it has the required List-Unsubscribe + preview text).
+
 ### Unified Client Tracker — one row + one source across Home and Client Overview
 - **Why:** four overlapping client views (Home "Latest sign-ups" + "Recent correspondence";
   Client Overview "Needs a Check-In" + "All Clients") were confusing. Collapsed into ONE rich

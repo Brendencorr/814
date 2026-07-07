@@ -474,6 +474,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <button class="sni" data-s="y" onclick="loadPricing(this)"><span class="sni-ic">🗂️</span>Programs</button>
       <button class="sni" data-s="mx" onclick="loadMetrics(this)"><span class="sni-ic">📊</span>Riley Overview</button>
       <button class="sni" data-s="cw" onclick="loadSiteEditor(this)"><span class="sni-ic">🎨</span>Customize Website</button>
+      <button class="sni" data-s="co" onclick="loadComms(this)"><span class="sni-ic">✉️</span>Onboarding Comms</button>
     </nav>
     <div style="flex:1"></div>
     <button class="opsb-gear" onclick="tgs()" title="Settings">⚙&nbsp; Settings</button>
@@ -743,6 +744,21 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 </div>
 
 <!-- (Clients merged into Engagement; retired duplicate engagement screen) -->
+
+  <!-- CLIENT ONBOARDING COMMUNICATION -->
+  <div class="sc" id="sco">
+    <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
+      <div style="max-width:1180px;margin:0 auto">
+        <div style="margin-bottom:.4rem"><span style="font-family:'Bebas Neue',sans-serif;letter-spacing:.13em;color:var(--gold);font-size:.78rem">LIFECYCLE EMAIL</span></div>
+        <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:1.9rem;color:var(--ink);margin:0 0 .35rem">Client Onboarding Communication</h1>
+        <p style="color:var(--muted);font-size:.9rem;max-width:680px;margin:0 0 1rem;line-height:1.6">The whole lifecycle email sequence, grouped by flow. View, edit copy, retime, change the sender, or turn any message off. Every email shares one brand shell, so edits stay on-brand. The verbatim launch copy is the fallback — <b style="color:var(--ink2)">Reset to original</b> restores it anytime.</p>
+        <div id="comms-dark" style="display:flex;align-items:center;gap:.6rem;background:var(--gold-soft);border:1px solid var(--gold-mid);border-radius:9px;padding:.7rem .95rem;margin-bottom:1.3rem;font-size:.82rem;color:var(--ink2)">
+          <span style="font-size:1rem">🌙</span><span id="comms-dark-txt">Sending is <b style="color:var(--gold)">OFF</b> (dark). Edits are saved and previewed, but no member receives anything until go-live. Checking status…</span>
+        </div>
+        <div id="comms-body"><div style="color:var(--muted);padding:2rem;text-align:center">Loading the sequence…</div></div>
+      </div>
+    </div>
+  </div>
   </main>
 </div>
 
@@ -892,7 +908,7 @@ async function unlock(){
 }
 document.getElementById('pw').addEventListener('keydown',function(e){if(e.key==='Enter')unlock();});
 if(sessionStorage.getItem('814_a')==='1'){document.getElementById('gate').style.display='none';document.getElementById('app').style.display='flex';init();}
-function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu','cw'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});var _p=document.getElementById('s'+n);if(_p)_p.classList.add('active');document.querySelectorAll('.sni').forEach(function(b){b.classList.remove('active');});if(btn&&btn.classList.contains('sni'))btn.classList.add('active');else{var t=document.querySelector('.sni[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
+function gs(n,btn){['o','h','p','r','u','e','s','m','y','ce','mx','at','nu','cw','co'].forEach(function(s){var el=document.getElementById('s'+s);if(el)el.classList.remove('active');});var _p=document.getElementById('s'+n);if(_p)_p.classList.add('active');document.querySelectorAll('.sni').forEach(function(b){b.classList.remove('active');});if(btn&&btn.classList.contains('sni'))btn.classList.add('active');else{var t=document.querySelector('.sni[data-s="'+n+'"]');if(t)t.classList.add('active');}syncSocialTrigger();}
 
 // ── Social Media dropdown (Social / Pipeline / Review) ───────────────────────
 function toggleSocialDD(e){
@@ -3354,6 +3370,120 @@ window.addEventListener('message', function(e){
   else if(d.type==='cms-pick-image') cwPickImage(d.key, d.label);
 });
 
+</script>
+<script>
+/* Client Onboarding Communication tab — CRUD over the lifecycle email templates (admin-comms). */
+(function(){
+  var CF = [];                      // flows from the server
+  function ce(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function findT(k){ for(var i=0;i<CF.length;i++){ var ts=CF[i].templates; for(var j=0;j<ts.length;j++){ if(ts[j].template_key===k) return ts[j]; } } return null; }
+
+  window.loadComms = function(btn){ gs('co', btn); if(!window._commsLoaded){ window._commsLoaded=true; commsLoad(); } };
+
+  async function commsApi(method, payload){
+    var k = (typeof opKey==='function'?opKey():'') || '';
+    if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(k) sessionStorage.setItem('814_opkey',k); }
+    var r = await fetch(B+'/admin-comms', { method:method, headers:{'Content-Type':'application/json','x-operator-key':k}, body:JSON.stringify(payload) });
+    if(r.status===401||r.status===403){ if(typeof opForget==='function')opForget(); throw new Error('bad operator key'); }
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+
+  async function commsLoad(){
+    var body = document.getElementById('comms-body');
+    try{
+      var d = await opGet('/admin-comms');
+      CF = d.flows || [];
+      var dark = document.getElementById('comms-dark'), dt = document.getElementById('comms-dark-txt');
+      if(d.comms_enabled){ dt.innerHTML='Sending is <b style="color:var(--sage)">LIVE</b>. Edits here change what members receive on the next hourly run.'; dark.style.borderColor='var(--sage)'; dark.style.background='var(--sage-soft)'; }
+      else { dt.innerHTML='Sending is <b style="color:var(--gold)">OFF</b> (dark). Edits are saved and previewed, but nothing reaches a member until go-live.'; }
+      renderComms();
+    }catch(e){ body.innerHTML='<div style="color:var(--red);padding:2rem;text-align:center">Couldn’t load the sequence ('+ce(e.message||e)+').</div>'; }
+  }
+
+  function renderComms(){
+    var h='';
+    CF.forEach(function(f){
+      h+='<div style="margin-bottom:1.6rem">';
+      h+='<div style="display:flex;align-items:baseline;gap:.6rem;margin-bottom:.7rem;padding-bottom:.45rem;border-bottom:1px solid var(--border)">';
+      h+='<h2 style="font-family:\'DM Serif Display\',serif;font-size:1.15rem;color:var(--ink);margin:0">'+ce(f.title)+'</h2>';
+      h+='<span style="color:var(--muted);font-size:.78rem">'+ce(f.blurb)+'</span>';
+      h+='<span style="margin-left:auto;color:var(--muted2);font-size:.72rem;font-family:\'DM Mono\',monospace">'+f.templates.length+' emails</span></div>';
+      f.templates.forEach(function(t){ h+=commsRow(t); });
+      h+='</div>';
+    });
+    document.getElementById('comms-body').innerHTML=h;
+  }
+
+  function commsRow(t){
+    var off=(t.enabled===false), b='';
+    if(t.transactional) b+='<span title="Transactional — receipts, always send" style="background:var(--blue-soft);color:var(--blue);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">RECEIPT</span> ';
+    if(t.author==='interim') b+='<span title="Founder copy pending" style="background:var(--gold-soft);color:var(--gold);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">DRAFT</span> ';
+    b+='<span id="ct_'+t.template_key+'_ed" style="background:var(--sage-soft);color:var(--sage);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px;'+(t.edited?'':'display:none')+'">EDITED</span> ';
+    if(off) b+='<span style="background:var(--red-soft);color:var(--red);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">OFF</span> ';
+    var h='<div style="border:1px solid var(--border);border-radius:10px;margin-bottom:.55rem;overflow:hidden;background:var(--surface)"'+(off?' data-off="1"':'')+'>';
+    h+='<div onclick="commsToggle(\''+t.template_key+'\')" style="display:flex;align-items:center;gap:.75rem;padding:.7rem .9rem;cursor:pointer'+(off?';opacity:.6':'')+'">';
+    h+='<span style="font-family:\'DM Mono\',monospace;color:var(--muted2);font-size:.72rem;min-width:1.2rem">'+t.seq+'</span>';
+    h+='<div style="flex:1;min-width:0"><div style="color:var(--ink);font-size:.92rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+ce(t.subject)+'</div>';
+    h+='<div style="color:var(--muted);font-size:.73rem;margin-top:1px">'+ce(t.trigger_label)+' · from '+ce(t.from_sender)+'</div></div>';
+    h+='<div style="display:flex;align-items:center;gap:.35rem">'+b+'<span id="ct_'+t.template_key+'_c" style="color:var(--muted2);font-size:.8rem">▸</span></div></div>';
+    h+='<div id="ct_'+t.template_key+'" style="display:none;border-top:1px solid var(--border);padding:.95rem;background:var(--bg)">'+commsEditor(t)+'</div></div>';
+    return h;
+  }
+
+  function fld(label, field, val, ph){
+    return '<label style="display:block;margin-bottom:.6rem"><span style="display:block;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">'+label+'</span><input data-f="'+field+'" value="'+ce(val)+'" placeholder="'+ce(ph||'')+'" style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.45rem .6rem;font-size:.85rem;font-family:inherit;box-sizing:border-box"></label>';
+  }
+
+  function commsEditor(t){
+    var k=t.template_key;
+    var L='<div style="flex:1;min-width:290px">';
+    L+=fld('Subject line','subject',t.subject);
+    L+=fld('Preview text (inbox snippet)','preview',t.preview);
+    L+='<div style="display:flex;gap:.6rem">';
+    L+='<label style="flex:1"><span style="display:block;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">From</span><select data-f="from_sender" style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.45rem .6rem;font-size:.85rem;box-sizing:border-box"><option value="riley"'+(t.from_sender==='riley'?' selected':'')+'>Riley</option><option value="brenden"'+(t.from_sender==='brenden'?' selected':'')+'>Brenden</option></select></label>';
+    L+='<div style="flex:2">'+fld('Timing note','trigger_label',t.trigger_label)+'</div>';
+    L+='</div>';
+    if(t.trigger_days!=null) L+=fld('Send after (days from the trigger)','trigger_days',t.trigger_days,'e.g. 7');
+    L+='<label style="display:block;margin-bottom:.6rem"><span style="display:block;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Body — one paragraph per blank line · links as [text](https://…)</span><textarea data-f="body_text" rows="9" style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.5rem .6rem;font-size:.83rem;font-family:inherit;line-height:1.55;box-sizing:border-box;resize:vertical">'+ce(t.body_text)+'</textarea></label>';
+    L+='<div style="display:flex;gap:.6rem"><div style="flex:1">'+fld('Button label (optional)','button_label',t.button_label,'Talk with Riley')+'</div><div style="flex:1">'+fld('Button link','button_url',t.button_url,'https://riley.meetriley.us/talk')+'</div></div>';
+    L+='<div style="display:flex;align-items:center;gap:.7rem;margin-top:.3rem;flex-wrap:wrap">';
+    L+='<label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;color:var(--ink2);font-size:.82rem"><input type="checkbox" data-f="enabled" '+(t.enabled!==false?'checked':'')+'> This email is on</label>';
+    L+='<button onclick="commsSave(\''+k+'\')" style="margin-left:auto;background:var(--gold);color:var(--btn-ink);border:none;border-radius:6px;padding:.5rem 1rem;font-weight:700;font-size:.82rem;cursor:pointer">Save</button>';
+    L+='<button onclick="commsPreview(\''+k+'\')" style="background:transparent;border:1px solid var(--border-strong);color:var(--ink2);border-radius:6px;padding:.5rem .8rem;font-size:.82rem;cursor:pointer">Update preview</button>';
+    L+='<button onclick="commsReset(\''+k+'\')" style="background:transparent;border:1px solid var(--red-soft);color:var(--red);border-radius:6px;padding:.5rem .8rem;font-size:.82rem;cursor:pointer">Reset to original</button>';
+    L+='</div><div id="ct_'+k+'_msg" style="font-size:.75rem;color:var(--sage);margin-top:.5rem;min-height:1.1rem;font-family:\'DM Mono\',monospace"></div></div>';
+    var R='<div style="flex:1;min-width:300px"><div style="color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.3rem">Live preview · from '+ce(t.from_email)+' · reply-to '+ce(t.reply_to)+'</div><iframe id="ct_'+k+'_pv" style="width:100%;height:540px;border:1px solid var(--border-strong);border-radius:8px;background:#fff" srcdoc="'+ce(t.preview_html)+'"></iframe></div>';
+    return '<div style="display:flex;gap:1.1rem;flex-wrap:wrap">'+L+R+'</div>';
+  }
+
+  window.commsToggle=function(k){ var el=document.getElementById('ct_'+k), c=document.getElementById('ct_'+k+'_c'); var open=el.style.display!=='none'; el.style.display=open?'none':'block'; c.textContent=open?'▸':'▾'; };
+
+  function gather(k){ var box=document.getElementById('ct_'+k), o={}; box.querySelectorAll('[data-f]').forEach(function(el){ var f=el.getAttribute('data-f'); o[f]=(el.type==='checkbox')?el.checked:el.value; }); return o; }
+
+  window.commsSave=async function(k){
+    var m=document.getElementById('ct_'+k+'_msg'); m.style.color='var(--muted)'; m.textContent='Saving…';
+    try{ var p=gather(k); p.template_key=k; var d=await commsApi('PUT',p);
+      document.getElementById('ct_'+k+'_pv').srcdoc=d.preview_html;
+      var t=findT(k); if(t) Object.assign(t,p), t.edited=true; var ed=document.getElementById('ct_'+k+'_ed'); if(ed) ed.style.display='';
+      m.style.color='var(--sage)'; m.textContent='✓ Saved. This is exactly what will send.';
+    }catch(e){ m.style.color='var(--red)'; m.textContent='Save failed: '+(e.message||e); }
+  };
+
+  window.commsPreview=async function(k){
+    var m=document.getElementById('ct_'+k+'_msg'); m.style.color='var(--muted)'; m.textContent='Rendering…';
+    try{ var p=gather(k); p.template_key=k; p.action='preview'; var d=await commsApi('POST',p);
+      document.getElementById('ct_'+k+'_pv').srcdoc=d.preview_html; m.style.color='var(--muted)'; m.textContent='Preview updated (not yet saved).';
+    }catch(e){ m.style.color='var(--red)'; m.textContent='Preview failed: '+(e.message||e); }
+  };
+
+  window.commsReset=async function(k){
+    if(!window.confirm('Reset this email to the original launch copy? Your edits to it will be discarded.')) return;
+    var m=document.getElementById('ct_'+k+'_msg'); m.style.color='var(--muted)'; m.textContent='Resetting…';
+    try{ await commsApi('POST',{action:'reset',template_key:k}); await commsLoad(); }
+    catch(e){ m.style.color='var(--red)'; m.textContent='Reset failed: '+(e.message||e); }
+  };
+})();
 </script>
 </body>
 </html>

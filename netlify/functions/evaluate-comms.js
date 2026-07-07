@@ -18,7 +18,7 @@
  * follow the handoff exactly. Once-per-template-ever is enforced here in code (not a DB constraint).
  */
 const { getSupabaseClient } = require("./supabase-client");
-const { render } = require("./comms-templates");
+const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 
 const APP = "https://riley.meetriley.us";
@@ -79,13 +79,14 @@ exports.handler = async () => {
   const bump = (k) => { out.decisions[k] = (out.decisions[k] || 0) + 1; };
 
   // ── Load source data (batched, not N+1) ──
-  const [profR, stateR, sendsR, subsR, convR, ciR] = await Promise.allSettled([
+  const [profR, stateR, sendsR, subsR, convR, ciR, tplR] = await Promise.allSettled([
     sb.from("user_profiles").select("id,email,full_name,preferred_name,created_at,onboarding_completed"),
     sb.from("user_comms_state").select("*"),
     sb.from("email_sends").select("user_id,template_key,flow,sent_at,suppressed"),
     sb.from("subscriptions").select("user_id,plan_id,status").eq("status", "active"),
     sb.from("riley_conversations").select("user_id,created_at").order("created_at", { ascending: false }),
     sb.from("daily_checkins").select("user_id,checkin_date").order("checkin_date", { ascending: false }),
+    sb.from("comms_templates").select("*"),  // operator overrides (copy/timing/enabled)
   ]);
   // Surface query failures instead of masking them as "no users": a bad column name makes
   // PostgREST reject the whole query (fulfilled promise, but value.error set) — record it.
@@ -98,6 +99,11 @@ exports.handler = async () => {
   const profiles = g(profR, "user_profiles"), states = g(stateR, "user_comms_state"), sends = g(sendsR, "email_sends"), subs = g(subsR, "subscriptions"), convs = g(convR, "riley_conversations"), cis = g(ciR, "daily_checkins");
   if (Object.keys(loadErrors).length) out.load_errors = loadErrors;
   if (!profiles.length) return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...out, note: "no users" }) };
+
+  // Operator overrides (comms_templates): per-template copy/sender + editable day thresholds + enable.
+  const tplOverride = {}; g(tplR, "comms_templates").forEach((o) => (tplOverride[o.template_key] = o));
+  const dayFor = (key, def) => { const o = tplOverride[key]; return o && o.trigger_days != null ? o.trigger_days : def; };
+  const tplOff = (key) => { const o = tplOverride[key]; return !!(o && o.enabled === false); };
 
   const stateByUser = {}; states.forEach((s) => (stateByUser[s.user_id] = s));
   const planByUser = {}; subs.forEach((s) => { const t = String(s.plan_id || "").toLowerCase(); planByUser[s.user_id] = t.indexOf("coach") >= 0 || t.indexOf("concierge") >= 0 ? "coach" : t.indexOf("companion") >= 0 ? "companion" : planByUser[s.user_id] || "guide"; });
@@ -171,7 +177,8 @@ exports.handler = async () => {
     let fired = false;
     const send = async (key) => {
       if (keys.has(key)) return false;         // once-per-template-ever (except reset_daily handled separately)
-      const r = render(key, vars, urls);
+      if (tplOff(key)) return false;           // operator disabled this template in the dashboard
+      const r = render(key, vars, urls, tplOverride[key]);
       await decide(uid, prof.email, key, r, null, logged);
       keys.add(key); fired = true; return true;
     };
@@ -179,35 +186,35 @@ exports.handler = async () => {
     // 2) GONE QUIET (owns absent users)
     const resetStarted = !!st.reset_started, resetDay = st.reset_day || 0;
     const daysSinceResetActivity = resetStarted ? daysAbsent : 999;
-    if (daysAbsent >= 2) {
+    if (daysAbsent >= dayFor("quiet_1", 2)) {
       if (resetStarted && resetDay < 7 && daysSinceResetActivity >= 2 && !keys.has("quiet_reset")) {
         await send("quiet_reset");
-      } else if (daysAbsent >= 21 && ladder <= 2) {
+      } else if (daysAbsent >= dayFor("quiet_3", 21) && ladder <= 2) {
         if (await send("quiet_3")) await sb.from("user_comms_state").update({ ladder_position: 3 }).eq("user_id", uid);
-      } else if (daysAbsent >= 7 && ladder <= 1) {
+      } else if (daysAbsent >= dayFor("quiet_2", 7) && ladder <= 1) {
         if (await send("quiet_2")) await sb.from("user_comms_state").update({ ladder_position: 2 }).eq("user_id", uid);
-      } else if (daysAbsent >= 2 && !everMessaged && ladder === 0) {
+      } else if (daysAbsent >= dayFor("quiet_1", 2) && !everMessaged && ladder === 0) {
         if (await send("quiet_1")) await sb.from("user_comms_state").update({ ladder_position: 1 }).eq("user_id", uid);
       }
       if (fired) continue;
     }
 
-    // 3) GUIDE FLOW (only if NOT absent). Day-based reading of the copy cadence (reconcile w/ spec).
-    if (!fired && daysAbsent < 2) {
-      if (daysSinceSignup >= 30) await send("guide_7");
-      else if (daysSinceSignup >= 12) await send("guide_6");
-      else if (daysSinceSignup >= 7) await send("guide_5");
-      else if (resetDay >= 4 || daysSinceSignup >= 4) await send("guide_4");
+    // 3) GUIDE FLOW (only if NOT absent). Day thresholds are operator-editable (comms_templates.trigger_days).
+    if (!fired && daysAbsent < dayFor("quiet_1", 2)) {
+      if (daysSinceSignup >= dayFor("guide_7", 30)) await send("guide_7");
+      else if (daysSinceSignup >= dayFor("guide_6", 12)) await send("guide_6");
+      else if (daysSinceSignup >= dayFor("guide_5", 7)) await send("guide_5");
+      else if (resetDay >= dayFor("guide_4", 4) || daysSinceSignup >= dayFor("guide_4", 4)) await send("guide_4");
       // reset_daily: days 2–7, only if push not opted in, for the next uncompleted reset day.
-      else if (resetStarted && resetDay >= 1 && resetDay < 7 && !st.push_opted_in) {
+      else if (resetStarted && resetDay >= 1 && resetDay < 7 && !st.push_opted_in && !tplOff("reset_daily")) {
         const n = resetDay + 1;
-        const rd = render("reset_daily", { ...vars, n, module_title: "Day " + n, module_theme: "today's step" }, urls);
+        const rd = render("reset_daily", { ...vars, n, module_title: "Day " + n, module_theme: "today's step" }, urls, tplOverride["reset_daily"]);
         // reset_daily is the ONE template allowed to repeat (once per day, gated by "already_today" above).
         await decide(uid, prof.email, "reset_daily", rd, null, logged);
         fired = true;
       }
       else if (resetDay >= 1) await send("guide_3");
-      else if (daysSinceSignup >= 1) await send("guide_2");
+      else if (daysSinceSignup >= dayFor("guide_2", 1)) await send("guide_2");
       // guide_1 is sent at signup by the signup hook (not the cron); the cron backstops brand-new
       // users who somehow have no guide_1 yet and are <1 day old.
       else if (daysSinceSignup < 1 && !keys.has("guide_1")) await send("guide_1");
@@ -216,7 +223,7 @@ exports.handler = async () => {
     // 4) PAID / ADDON (cron-driven parts). Event-driven paid_1/paid_2/addon_1 fire on webhooks (dark).
     if (!fired && st.subscription_started_at) {
       const dSub = Math.floor((now - +new Date(st.subscription_started_at)) / DAY);
-      if (dSub >= 25) await send("paid_3");
+      if (dSub >= dayFor("paid_3", 25)) await send("paid_3");
     }
   }
 

@@ -98,6 +98,44 @@ function ghostBtn(label, url) {
 function p(text) { return '<p style="margin:0 0 14px">' + text + "</p>"; }
 function em(text) { return '<p style="margin:14px 0 0;font-style:italic;color:#6b655b;font-size:13px">' + text + "</p>"; }
 
+// Build body html+text from operator-edited plain text (blank-line-separated paragraphs).
+// Supports inline [label](https://url) links and an optional single gold button.
+// Trusted operator content (OPERATOR_KEY-gated), but still escaped for hygiene.
+function bodyFromText(txt, vars, button) {
+  const linkify = (s) => s.replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" style="color:#8a6f22">$1</a>');
+  const paras = String(sub(txt || "", vars)).split(/\n{2,}/).map((s) => s.trim()).filter(Boolean);
+  let html = paras.map((pt) => p(linkify(esc(pt).replace(/\n/g, "<br>")))).join("");
+  let text = paras.join("\n\n");
+  if (button && button.label && button.url) {
+    const bl = sub(button.label, vars), bu = sub(button.url, vars);
+    html += btn(bl, bu);
+    text += "\n\n" + bl + " → " + bu;
+  }
+  return { html, text };
+}
+
+// Sequence + human timing for each template, grouped by the 4 operator flows. Editable copies of
+// trigger_label / trigger_days live in comms_templates; these are the display + fallback defaults.
+const TRIGGERS = {
+  guide_1:     { flow: "guide",      seq: 1, label: "At signup · day 0",              days: 0 },
+  guide_2:     { flow: "guide",      seq: 2, label: "Day 1",                               days: 1 },
+  guide_3:     { flow: "guide",      seq: 3, label: "After Reset Day 1 is completed",      days: null },
+  reset_daily: { flow: "guide",      seq: 4, label: "Reset days 2–7 · daily",     days: null },
+  guide_4:     { flow: "guide",      seq: 5, label: "Day 4",                               days: 4 },
+  guide_5:     { flow: "guide",      seq: 6, label: "Day 7 · end of first week",       days: 7 },
+  guide_6:     { flow: "guide",      seq: 7, label: "Day 12",                              days: 12 },
+  guide_7:     { flow: "guide",      seq: 8, label: "Day 30",                              days: 30 },
+  quiet_1:     { flow: "gone_quiet", seq: 1, label: "2+ days quiet · never messaged",  days: 2 },
+  quiet_2:     { flow: "gone_quiet", seq: 2, label: "7+ days quiet",                       days: 7 },
+  quiet_3:     { flow: "gone_quiet", seq: 3, label: "21+ days quiet · final",          days: 21 },
+  quiet_reset: { flow: "gone_quiet", seq: 4, label: "Reset started, then went quiet",      days: null },
+  paid_1:      { flow: "paid",       seq: 1, label: "On purchase · receipt",           days: null },
+  paid_2:      { flow: "paid",       seq: 2, label: "On upgrade to a memory tier",         days: null },
+  paid_3:      { flow: "paid",       seq: 3, label: "Day 25 of subscription",              days: 25 },
+  addon_1:     { flow: "addon",      seq: 1, label: "On program purchase · receipt",   days: null },
+  addon_2:     { flow: "addon",      seq: 2, label: "A few days later, if unopened",       days: null },
+};
+
 // ── THE DECK (verbatim; {placeholders} only) ──────────────────────────────────────────────────
 // Each entry: from, flow, subject, preview, transactional?, author?, html(v,urls), text(v,urls).
 const TEMPLATES = {
@@ -375,23 +413,37 @@ const TEMPLATES = {
 };
 
 // Render one template into { from, replyTo, subject, preview, html, text, transactional }.
-function render(key, vars, urls) {
+// `override` (optional) is a comms_templates row: any non-null field replaces the code default,
+// and a non-empty body_text swaps the whole body (paragraphs + optional button) — the brand shell
+// is always applied, so the DESIGN stays consistent no matter what the operator edits.
+function render(key, vars, urls, override) {
   const t = TEMPLATES[key];
   if (!t) throw new Error("unknown template: " + key);
   vars = vars || {};
   urls = urls || {};
+  const o = override || {};
+  const fromKey = o.from_sender || t.from;
+  const subject = sub(o.subject != null && o.subject !== "" ? o.subject : t.subject, vars);
+  const preview = sub(o.preview != null && o.preview !== "" ? o.preview : t.preview, vars);
+  let innerHtml, innerText;
+  if (o.body_text != null && String(o.body_text).trim() !== "") {
+    const b = bodyFromText(o.body_text, vars, { label: o.button_label, url: o.button_url });
+    innerHtml = b.html; innerText = b.text;
+  } else {
+    innerHtml = t.html(vars); innerText = t.text(vars);
+  }
   return {
     template_key: key,
     flow: t.flow,
     transactional: !!t.transactional,
     author: t.author || "final",
-    from: SENDERS[t.from] || SENDERS.riley,
+    from: SENDERS[fromKey] || SENDERS.riley,
     replyTo: t.replyTo || REPLY_TO,
-    subject: sub(t.subject, vars),
-    preview: sub(t.preview, vars),
-    html: shell(t.html(vars), { preview: sub(t.preview, vars), unsubUrl: urls.unsub, prefUrl: urls.pref }),
-    text: t.text(vars) + "\n\n---\n" + footerText(urls.unsub || APP + "/preferences", urls.pref || APP + "/preferences"),
+    subject,
+    preview,
+    html: shell(innerHtml, { preview, unsubUrl: urls.unsub, prefUrl: urls.pref }),
+    text: innerText + "\n\n---\n" + footerText(urls.unsub || APP + "/preferences", urls.pref || APP + "/preferences"),
   };
 }
 
-module.exports = { TEMPLATES, render, shell, sub, SENDERS, REPLY_TO };
+module.exports = { TEMPLATES, TRIGGERS, render, shell, sub, SENDERS, REPLY_TO };

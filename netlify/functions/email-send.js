@@ -34,6 +34,10 @@ async function sendClientEmail(m) {
   const userId = m.userId || null;
   const meta = m.meta && typeof m.meta === "object" ? m.meta : {};
   const from = m.from || process.env.RESEND_FROM || DEFAULT_FROM;
+  // Optional, additive: lifecycle email needs a Reply-To (support@) and RFC 8058
+  // List-Unsubscribe headers. Existing callers omit both → behavior unchanged.
+  const replyTo = m.replyTo || null;
+  const extraHeaders = m.headers && typeof m.headers === "object" ? m.headers : null;
   const base = { user_id: userId, to_email: to.toLowerCase(), kind, subject, provider: "resend" };
 
   const key = process.env.RESEND_API_KEY;
@@ -50,7 +54,7 @@ async function sendClientEmail(m) {
     const r = await fetch(RESEND_ENDPOINT, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], subject, html: m.html, ...(m.text ? { text: m.text } : {}) }),
+      body: JSON.stringify({ from, to: [to], subject, html: m.html, ...(m.text ? { text: m.text } : {}), ...(replyTo ? { reply_to: replyTo } : {}), ...(extraHeaders ? { headers: extraHeaders } : {}) }),
     });
     if (!r.ok) {
       let detail = "";

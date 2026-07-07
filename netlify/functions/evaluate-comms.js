@@ -19,9 +19,9 @@
  */
 const { getSupabaseClient } = require("./supabase-client");
 const { render } = require("./comms-templates");
+const { sendClientEmail } = require("./email-send");
 
 const APP = "https://riley.meetriley.us";
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const DAY = 86400000;
 
 function firstName(profile) {
@@ -41,21 +41,21 @@ function inQuietHours(tz) {
 }
 
 async function resendSend(msg, uid) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { id: null, error: "no_key" };
-  const headers = msg.transactional ? {} : {
+  // Route through the single client-email choke point (email-send.js) so every lifecycle
+  // send is also captured in email_log / the operator correspondence view. Reply-To
+  // (support@) and the RFC 8058 one-click List-Unsubscribe headers ride along via the
+  // choke point's additive replyTo/headers params.
+  const headers = msg.transactional ? undefined : {
     "List-Unsubscribe": "<" + unsubUrl(uid) + ">, <mailto:support@meetriley.us?subject=unsubscribe>",
     "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
   };
-  try {
-    const r = await fetch(RESEND_ENDPOINT, {
-      method: "POST",
-      headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: msg.from, to: [msg.to], reply_to: msg.replyTo, subject: msg.subject, html: msg.html, text: msg.text, headers }),
-    });
-    const d = await r.json().catch(() => ({}));
-    return r.ok ? { id: d.id || null } : { id: null, error: "http_" + r.status };
-  } catch (e) { return { id: null, error: "exception" }; }
+  const r = await sendClientEmail({
+    to: msg.to, from: msg.from, replyTo: msg.replyTo, subject: msg.subject,
+    html: msg.html, text: msg.text, headers,
+    kind: "lifecycle:" + (msg.flow || "comms"), userId: uid,
+    meta: { template_key: msg.template_key },
+  });
+  return r.sent ? { id: r.id } : { id: null, error: r.reason || "error" };
 }
 
 async function phEmit(templateKey, uid) {

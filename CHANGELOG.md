@@ -12,6 +12,36 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Lifecycle communications system — BUILT DARK (Tasks 3, 4, 6, 7 of the comms handoff)
+- **State:** 🔴 **DARK.** `COMMS_ENABLED` is unset → the hourly evaluator suppresses 100% of
+  sends (it logs every decision to `email_sends` and makes zero Resend calls). **Brenden flips
+  `COMMS_ENABLED=true` to go live** — do NOT set it. Copy is verbatim from the deck (placeholders only).
+- **DB:** migration **073** — `user_comms_state` (per-user lifecycle snapshot: door/plan/ladder/
+  reset/prefs/timezone) + `email_sends` (decision ledger: template_key, flow, suppressed, reason,
+  resend_id). RLS on, zero policies (service-role only). APPLIED.
+- **Templates:** `comms-templates.js` — 17 verbatim keys (guide_1-7, reset_daily, quiet_1-3,
+  quiet_reset, paid_1-3, addon_1-2), on-brand Ink/parchment shell, `render()`. Senders
+  riley@ (lifecycle) / brenden@ (founder), Reply-To always support@. guide_5 = interim (founder copy pending).
+- **Evaluator:** `evaluate-comms.js` — **hourly cron** (`0 * * * *`). Derives each member's state
+  SERVER-SIDE from user_profiles/subscriptions/riley_conversations/daily_checkins (no client wiring
+  needed). Global gates: unsubscribed · quiet-hours (9pm-8am local) · one-non-tx-per-day · lapse-repair.
+  Then Gone-Quiet ladder → Guide flow → Paid/Add-on. Each key sends **at most once/user ever** (except
+  reset_daily), enforced in code. `DRY_RUN=true` supported for a live dress-rehearsal that still sends nothing.
+- **Unsubscribe/prefs:** `comms-unsubscribe.js` (RFC 8058 one-click List-Unsubscribe + email-tappable
+  letter opt-in/out + resubscribe, uid-based no-login) + authed `/preferences` page (`preferences.html`).
+- **Single-choke-point alignment:** extended `email-send.js` additively (optional `replyTo` + `headers`
+  — existing 3 callers unaffected) so lifecycle email routes through `sendClientEmail()` and lands in
+  `email_log` / the operator correspondence view too, while carrying Reply-To + one-click unsubscribe.
+- 🔴 **RECONCILE BEFORE FLIPPING `COMMS_ENABLED=true`:**
+  1. **`reengagement-cron` (LIVE, daily 16:00 UTC) overlaps the Gone-Quiet ladder** — it already
+     emails users 7-10 days lapsed ("your place is still here"). My global one-per-day gate only sees
+     `email_sends`, NOT that cron, so a lapsed user could get BOTH. **Pick one owner of win-back**
+     (disable reengagement-cron, or drop quiet_2) before go-live.
+  2. **Guide-flow exact timing** (guide_1-7 day thresholds) is a faithful reading of the handoff; the
+     authoritative day table lives in `riley-lifecycle-comms-spec-FINAL.md` (not in repo) — reconcile.
+- Files: migration 073, comms-templates.js, evaluate-comms.js, comms-unsubscribe.js, preferences.html,
+  email-send.js (additive), netlify.toml (hourly schedule + unsubscribe fn).
+
 ### Correspondence log — every client email is now recorded + visible in the operator
 - **Why:** ~8 functions POSTed to Resend and discarded the result, so "did we email this
   client / did it land?" was unanswerable (this came up when Elizabeth was added). Fixed at the

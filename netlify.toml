@@ -87,6 +87,10 @@
 [functions."site-config"]
   timeout = 10
 
+# Public "Share your story" submissions (Task 6) — service-role insert + 2 Resend emails.
+[functions."story-submit"]
+  timeout = 15
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

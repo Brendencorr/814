@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Launch fixes Task 6 — public "Share your story" form (Decision #14)
+- Replaced the "Share your story" → /login link with a **public no-auth modal** (name optional, email,
+  story, consent checkbox) on home.html. Submits to **`story-submit.js`** (service role): validates,
+  **rate-limits** (max 3/email/15min), inserts to **`user_stories`**, then Resend-emails Brenden the full
+  submission + a warm confirmation to the submitter (no-op if RESEND_API_KEY unset). Nothing publishes
+  without review — status workflow submitted → reviewed → consented → published.
+- **`user_stories`** table = migration **070** (APPLIED live via MCP): RLS **deny-all** (no policies →
+  anon/authenticated blocked; service role only), status CHECK, index, service_role/postgres grants.
+- **Files:** `story-submit.js` (new), `home.html` (modal + JS), `netlify.toml`, `supabase/migrations/070_user_stories.sql`.
+
 ### Launch fixes — Task 5 (safety/help/data pages, FAQ) + revised AI disclosure (Task 2.2)
 - **AI disclosure moved out of Riley's spoken opening** (founder call): reverted `riley-chat.js` to the warm
   "Hi, I'm Riley" opening; the SB 243 disclosure is now a **persistent UI line at the chat** in `chat.html`

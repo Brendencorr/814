@@ -351,7 +351,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="eyebrow mt-e">Real Stories</div>
     <div class="quote">"I know. Me too."</div>
     <p class="invite">Real stories are coming — from real people walking this road. Be the first to share yours, and help the next person feel a little less alone.</p>
-    <a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-lg">Share your story</a>
+    <button type="button" class="btn btn-ghost btn-lg" onclick="storyOpen()" style="cursor:pointer">Share your story</button>
   </div>
 </section>
 
@@ -482,6 +482,43 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
     </div>
   </div>
 </div>
+
+<!-- STORY SUBMISSION MODAL (Task 6 / Decision #14) -->
+<div id="story-modal" style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;background:rgba(6,6,8,0.82);backdrop-filter:blur(4px);padding:20px">
+  <div style="background:#141210;border:1px solid rgba(201,168,76,0.22);border-radius:14px;max-width:460px;width:100%;padding:28px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,0.55)">
+    <button onclick="storyClose()" aria-label="Close" style="position:absolute;top:8px;right:12px;background:none;border:none;color:#8a8578;font-size:24px;line-height:1;cursor:pointer">&times;</button>
+    <div id="story-body">
+      <div style="font-family:'DM Serif Display',serif;font-size:22px;color:#f5f0e8;margin-bottom:8px">Share your story</div>
+      <div style="font-size:13px;color:#8a8578;line-height:1.6;margin-bottom:18px">Your words could be the reason the next person feels a little less alone. Nothing is ever published without your written OK.</div>
+      <input id="story-name" type="text" placeholder="Your name (optional)" aria-label="Your name" style="width:100%;padding:11px 13px;background:#1c1a18;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#f5f0e8;font-size:14px;outline:none;margin-bottom:10px;box-sizing:border-box">
+      <input id="story-email" type="email" placeholder="you@email.com" aria-label="Your email" style="width:100%;padding:11px 13px;background:#1c1a18;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#f5f0e8;font-size:14px;outline:none;margin-bottom:10px;box-sizing:border-box">
+      <textarea id="story-text" rows="5" placeholder="Share as much or as little as you like…" aria-label="Your story" style="width:100%;padding:11px 13px;background:#1c1a18;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#f5f0e8;font-size:14px;outline:none;margin-bottom:12px;box-sizing:border-box;resize:vertical;font-family:inherit"></textarea>
+      <label style="display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:#8a8578;line-height:1.5;margin-bottom:14px;cursor:pointer"><input id="story-consent" type="checkbox" style="margin-top:2px;flex-shrink:0"><span>I'm okay with The 8:14 Project sharing this story publicly. Nothing is ever published without your written OK.</span></label>
+      <button onclick="storySubmit()" id="story-submit" style="width:100%;padding:12px;background:#c9a84c;color:#0a0908;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer">Send my story</button>
+      <div id="story-msg" style="font-size:12px;color:#8b3a3a;margin-top:10px;min-height:14px"></div>
+    </div>
+  </div>
+</div>
+<script>
+function storyOpen(){var m=document.getElementById('story-modal');if(m)m.style.display='flex';}
+function storyClose(){var m=document.getElementById('story-modal');if(m)m.style.display='none';}
+function storySubmit(){
+  var name=(document.getElementById('story-name').value||'').trim();
+  var email=(document.getElementById('story-email').value||'').trim();
+  var story=(document.getElementById('story-text').value||'').trim();
+  var consent=!!document.getElementById('story-consent').checked;
+  var msg=document.getElementById('story-msg'), btn=document.getElementById('story-submit');
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent='Please enter a valid email.'; return; }
+  if(story.length<10){ msg.textContent='Please share a little more of your story.'; return; }
+  msg.textContent=''; btn.disabled=true; btn.textContent='Sending…';
+  fetch('/.netlify/functions/story-submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,story:story,consent:consent})})
+    .then(function(r){return r.json();}).then(function(x){
+      if(x&&x.ok){ document.getElementById('story-body').innerHTML='<div style="text-align:center;padding:14px 0"><div style="font-size:30px;margin-bottom:10px">&#128330;</div><div style="font-family:DM Serif Display,serif;font-size:20px;color:#f5f0e8">Thank you for sharing.</div><div style="font-size:13px;color:#8a8578;margin-top:8px;line-height:1.6">We just sent you a note. Nothing is ever published without your written OK.</div></div>'; }
+      else { msg.textContent=(x&&x.error)||'Something went wrong — try again.'; btn.disabled=false; btn.textContent='Send my story'; }
+    })
+    .catch(function(){ msg.textContent='Something went wrong — try again.'; btn.disabled=false; btn.textContent='Send my story'; });
+}
+</script>
 <script>
 /* Doc 1 §1 + Doc 0 §7: pricing renders from the `plans` table (public-read) — one row change
    updates the site, no deploy. Annual pre-selected. Fail-safe: the cards keep their correct

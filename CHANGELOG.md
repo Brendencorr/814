@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Security — internal `*.md` docs no longer publicly served + operator-key note
+- **Why:** `meetriley.us/CLAUDE.md` (and other root docs) returned HTTP 200 — internal dev notes
+  were publicly readable, including the documented `Riley814` operator password.
+- **What:** `netlify.toml` now force-404s the internal docs on every host (`/CLAUDE.md`,
+  `/CHANGELOG.md`, `/DATA_CONTRACT.md`, `/ENTITLEMENTS_ADMIN.md`, `/INTERACTIVE_PROGRAMS_QA.md`,
+  `/README.md`) via a new `/404.html`. Scrubbed the literal `Riley814` from `CLAUDE.md` — the operator
+  key is validated SERVER-SIDE by `requireOperator()` (supabase-client.js); value lives only in the
+  Netlify `OPERATOR_KEY` env var + a password manager. Verified NO secret values (service key, etc.)
+  are committed; the Supabase anon key is public-by-design (RLS-protected) — no action there.
+- 🔴 **OPERATOR TODO (Brenden, in Netlify → Environment variables):** **rotate `OPERATOR_KEY`** to a
+  strong random value. The old value was documented in a publicly-served file, so treat it as
+  compromised. After rotating, operators sign in with the new key (prompted once).
+- **Files:** `netlify.toml`, `404.html` (new), `CLAUDE.md`.
+
 ### `7e132fa` — Programs page: split add-ons into Self-Guided vs Riley-Led
 - **Why:** the client `/programs` "Program Add-ons" grid mixed self-guided content programs
   ($8.14, no Riley) with Riley-led coaching programs ($18.14, Session Zero + 14 sessions) in one

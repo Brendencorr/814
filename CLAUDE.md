@@ -49,7 +49,7 @@ Netlify scheduled functions do NOT need a -background suffix — the schedule ma
 
 ## Repo Structure
 - netlify/functions/ — 8 Netlify serverless functions
-- dashboard.html — private agent dashboard (password: Riley814)
+- dashboard.html — private agent dashboard (gated by the OPERATOR_KEY env var; value is NOT stored in this repo)
 - supabase/migrations/ — SQL migrations to run in Supabase SQL editor
 - All agent functions use the same handler pattern — only system prompts and Supabase logic differ
 
@@ -167,8 +167,10 @@ When user_id and session_id are provided:
 - Both the user message and Riley's reply are saved to riley_conversations automatically
 
 ## Operator Dashboard (admin.meetriley.us)
-admin.meetriley.us serves dashboard.html — private operator tool for Brenden only.
-Password gate: Riley814 (stored in sessionStorage).
+admin.meetriley.us serves operator.html — private operator tool for Brenden only.
+Password gate: the operator types the OPERATOR_KEY, which is validated SERVER-SIDE by
+requireOperator() (no client-side password, no key value stored in this repo). Set/rotate
+OPERATOR_KEY in Netlify → Environment variables; keep the value only in a password manager.
 
 Design system:
 - Background: #06090e | Cards: #0a1018 | Borders: #1a2530

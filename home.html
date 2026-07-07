@@ -10,9 +10,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Riley">
 <title>Meet Riley, Let's Rebuild Together</title>
-<meta name="description" content="Rebuild your life, one day at a time. A wellness platform for people quietly starting over — through sobriety, movement, and food that heals.">
+<meta name="description" content="A companion for people quietly starting over — grief, movement, food that heals, and the whole rebuild. Meet Riley.">
 <meta property="og:title" content="Meet Riley, Let's Rebuild Together">
-<meta property="og:description" content="Become who you were meant to be. Personalized coaching, evidence-based programs, and a supportive community to help you build a life you don't want to escape from.">
+<meta property="og:description" content="A companion for people quietly starting over — grief, movement, food that heals, and the whole rebuild. Meet Riley.">
 <meta property="og:type" content="website">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -203,6 +203,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
       <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-lg">Start free</a>
       <a href="https://riley.meetriley.us/talk" class="btn btn-ghost btn-lg">Talk to Riley</a>
     </div>
+    <div class="micro">No credit card required. Ever.</div>
   </div>
 </header>
 
@@ -231,30 +232,33 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="eyebrow mt-e">Membership</div>
     <div class="h2">Start where you are.</div>
     <!-- Billing toggle — annual pre-selected (Doc 0 §2 / Doc 1 §1) -->
-    <div class="bill-toggle" style="display:inline-flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;margin:4px auto 26px">
-      <button type="button" id="bt-annual" onclick="setBilling('annual')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gold,#c9a84c);color:#0a0908">Annual</button>
-      <button type="button" id="bt-monthly" onclick="setBilling('monthly')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--parchment,#f5f0e8)">Monthly</button>
+    <div class="bill-toggle" role="group" aria-label="Billing period" style="display:inline-flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;margin:4px auto 26px">
+      <button type="button" id="bt-annual" aria-pressed="true" onclick="setBilling('annual')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gold,#c9a84c);color:#0a0908">Annual</button>
+      <button type="button" id="bt-monthly" aria-pressed="false" onclick="setBilling('monthly')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:transparent;color:var(--parchment,#f5f0e8)">Monthly</button>
     </div>
     <div class="prog-grid">
       <div class="pcard reveal" data-plan="guide">
         <div class="ptag">Free, forever</div>
         <h3>The Riley Guide</h3>
         <div class="price" data-price>Free</div>
-        <div class="pdesc">For people who simply want to begin. Riley in your corner — not a trial, not a timer. Every topic open, real support the moment you need it.</div>
+        <div class="pdesc">For people who simply want to begin. Riley in your corner — not a trial, not a timer. Every topic open, real support the moment you need it. Includes The 8:14 Reset — 7 days, 8 minutes 14 seconds a day.</div>
         <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm">Meet Riley, free</a>
+        <div style="font-size:11px;color:var(--smoke);margin-top:8px">No credit card required. Ever.</div>
       </div>
       <div class="pcard feat reveal" data-plan="companion">
         <div class="ptag" data-badge>The primary membership</div>
         <h3>The Riley Companion</h3>
         <div class="price" data-price>$175<span>/yr</span></div>
-        <div class="pdesc">You're not doing this alone. Unlimited Riley — any hour, any topic — long-term memory, every program, daily check-ins, the habit tracker, and monthly workshops.</div>
+        <div class="psave" data-save style="font-size:11px;color:var(--gold,#c9a84c);font-family:'DM Mono',monospace;letter-spacing:0.04em;min-height:15px;margin:-4px 0 8px">Save $53/yr vs monthly</div>
+        <div class="pdesc">You're not doing this alone. Unlimited Riley — any hour, any topic — long-term memory, all self-guided programs, daily check-ins, and the habit tracker.</div>
         <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="companion">Start with Companion</a>
       </div>
       <div class="pcard reveal" data-plan="coach">
         <div class="ptag">Go all in</div>
         <h3>The Riley Coach</h3>
         <div class="price" data-price>$350<span>/yr</span></div>
-        <div class="pdesc">Personalized guidance that grows with you. Everything in Companion, plus adaptive workouts + nutrition, proactive check-ins Riley starts, and your Knowledge Graph.</div>
+        <div class="psave" data-save style="font-size:11px;color:var(--gold,#c9a84c);font-family:'DM Mono',monospace;letter-spacing:0.04em;min-height:15px;margin:-4px 0 8px">Save $58/yr vs monthly</div>
+        <div class="pdesc">Personalized guidance that grows with you. Everything in Companion, plus all Riley-led interactive programs included, adaptive workouts + nutrition, proactive check-ins Riley starts, and your Knowledge Graph.</div>
         <a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="coach">Go all-in with Coach</a>
       </div>
     </div>
@@ -269,7 +273,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
       <span>&#10003; Cancel anytime — one click, no phone call</span>
       <span>&#10003; Private by design — your words stay yours</span>
       <span>&#10003; 30-day guarantee on any paid plan</span>
-      <a href="https://riley.meetriley.us/talk" style="color:var(--gold,#c9a84c);text-decoration:none">In crisis? Riley responds right away &rarr;</a>
+      <a href="/resources" style="color:var(--gold,#c9a84c);text-decoration:none">In crisis? Get immediate support &rarr;</a>
     </div>
     <details style="max-width:720px;margin:0 auto;text-align:left;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:4px 22px">
       <summary style="cursor:pointer;padding:16px 2px;font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment,#f5f0e8)">Compare the plans</summary>
@@ -279,11 +283,11 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
           <th style="padding:8px 6px;font-weight:600">&nbsp;</th><th style="padding:8px 6px;font-weight:600;text-align:center">Guide</th><th style="padding:8px 6px;font-weight:600;text-align:center">Companion</th><th style="padding:8px 6px;font-weight:600;text-align:center">Coach</th></tr></thead>
         <tbody>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Every topic, always</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
-          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley, any time</td><td style="text-align:center;opacity:0.7;font-size:12px">A few a day</td><td style="text-align:center;color:var(--gold,#c9a84c)">Unlimited</td><td style="text-align:center;color:var(--gold,#c9a84c)">Unlimited</td></tr>
+          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley conversations</td><td style="text-align:center;opacity:0.7;font-size:12px">A few a day</td><td style="text-align:center;color:var(--gold,#c9a84c)">Unlimited</td><td style="text-align:center;color:var(--gold,#c9a84c)">Unlimited</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Long-term memory</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
-          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Every program included</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
+          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Self-guided programs<span style="display:block;font-size:11px;opacity:0.6">Sobriety &middot; Grief &amp; Life Transitions &middot; Body Rebuild</span></td><td style="text-align:center;opacity:0.7;font-size:12px">&agrave; la carte $8.14</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
+          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley-led interactive programs<span style="display:block;font-size:11px;opacity:0.6">Coming soon</span></td><td style="text-align:center;opacity:0.7;font-size:12px">&agrave; la carte $18.14</td><td style="text-align:center;opacity:0.7;font-size:12px">&agrave; la carte $18.14</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Daily check-ins + habit tracker</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
-          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Monthly workshops</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Adaptive workouts + nutrition</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Proactive check-ins Riley starts</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Your Knowledge Graph</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;opacity:0.35">&mdash;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
@@ -306,7 +310,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
       <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Body Rebuild</h3><div class="price">$8.14</div><div class="pdesc">Full program — 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_body">Get it</a></div>
     </div>
     <div style="max-width:560px;margin:18px auto 0;background:linear-gradient(165deg,#1a160e,var(--ink));border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
-      <div style="text-align:left"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)">All three — the Self-Guided Bundle</div><div style="font-size:12px;color:var(--smoke);margin-top:3px">Sobriety &middot; Grief &amp; Life Transitions &middot; Body Rebuild — lifetime access.</div></div>
+      <div style="text-align:left"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)">The Self-Guided Bundle</div><div style="font-size:12px;color:var(--smoke);margin-top:3px">All three books, no coach — $18.14 &middot; Sobriety, Grief &amp; Life Transitions, Body Rebuild &middot; lifetime access.</div></div>
       <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--gold2)">$18.14</span><a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="prog_bundle_selfguided">Get all 3</a></div>
     </div>
     <p class="sub" style="font-size:13px;margin:22px auto 0;max-width:520px;opacity:0.85">Every program purchase counts — $8.14 off Companion if you upgrade within 90 days.</p>
@@ -472,13 +476,16 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
       var el=card.querySelector('[data-price]'); if(!el)return;
       if(mode==='annual'&&p.price_annual_cents){ el.innerHTML=d(p.price_annual_cents)+'<span>/yr</span>'; }
       else if(p.price_monthly_cents){ el.innerHTML=d(p.price_monthly_cents)+'<span>/mo</span>'; }
+      var sv=card.querySelector('[data-save]');
+      if(sv&&mode==='annual'&&p.annual_savings_cents){ sv.textContent='Save '+d(p.annual_savings_cents)+'/yr vs monthly'; }
     });
   }
   window.setBilling=function(m){
     mode=m; paint();
     var a=document.getElementById('bt-annual'), mo=document.getElementById('bt-monthly');
-    if(a){a.style.background=m==='annual'?'#c9a84c':'transparent';a.style.color=m==='annual'?'#0a0908':'#f5f0e8';}
-    if(mo){mo.style.background=m==='monthly'?'#c9a84c':'transparent';mo.style.color=m==='monthly'?'#0a0908':'#f5f0e8';}
+    if(a){a.style.background=m==='annual'?'#c9a84c':'transparent';a.style.color=m==='annual'?'#0a0908':'#f5f0e8';a.setAttribute('aria-pressed',m==='annual'?'true':'false');}
+    if(mo){mo.style.background=m==='monthly'?'#c9a84c':'transparent';mo.style.color=m==='monthly'?'#0a0908':'#f5f0e8';mo.setAttribute('aria-pressed',m==='monthly'?'true':'false');}
+    document.querySelectorAll('[data-save]').forEach(function(sv){ sv.style.display=(m==='annual')?'':'none'; });
   };
   try{
     fetch(SB+'/rest/v1/plans?select=id,price_monthly_cents,price_annual_cents,annual_savings_cents&status=eq.active',{headers:{apikey:KEY,Authorization:'Bearer '+KEY}})

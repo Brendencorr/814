@@ -40,9 +40,9 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   key is validated SERVER-SIDE by `requireOperator()` (supabase-client.js); value lives only in the
   Netlify `OPERATOR_KEY` env var + a password manager. Verified NO secret values (service key, etc.)
   are committed; the Supabase anon key is public-by-design (RLS-protected) — no action there.
-- 🔴 **OPERATOR TODO (Brenden, in Netlify → Environment variables):** **rotate `OPERATOR_KEY`** to a
-  strong random value. The old value was documented in a publicly-served file, so treat it as
-  compromised. After rotating, operators sign in with the new key (prompted once).
+- ✅ **DONE (2026-07-07) — `OPERATOR_KEY` rotated** by Brenden + redeployed. Verified: the old `Riley814`
+  key now returns **401** at `admin.meetriley.us/.netlify/functions/admin-home` (rotation took, gate intact).
+  New value lives only in the Netlify env var + a password manager. Exposure fully closed.
 - **Files:** `netlify.toml`, `404.html` (new), `CLAUDE.md`.
 
 ### `7e132fa` — Programs page: split add-ons into Self-Guided vs Riley-Led

@@ -52,6 +52,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   use a lighter inline "MEET RILEY" serif shell. Standardizing all senders on ONE shared shell is a
   worthwhile next pass (recommend the comms shell — it has the required List-Unsubscribe + preview text).
 
+### Client Tracker v2 — "Filter by" dropdown + per-segment email-sent status + on Home
+- **Dropdown replaces chips:** the tracker header now has a grouped **"Filter by"** `<select>`
+  (All · Needs check-in · Tier: Guide/Companion/Coach · Status: New/Cooling/Dormant/Active) +
+  search. Shared `trackerHtml`/`trackerFilter`/`trackerSeg` (namespaced by prefix) so ONE tracker
+  component drives both surfaces. `engSegMatch` now handles tier filters too.
+- **On Home:** the "Clients" widget gets the same header, over the **15 newest** members
+  (`_trackers['home']`, rendered after home-body via `trackerFilter('home')`).
+- **Per-segment email status:** picking a segment shows, per member, whether THAT stage's email
+  was sent — green ✓ / red ✗ — plus a summary count ("5 New · 3 welcome sent · 2 missing").
+  Mapping (`SEG_MAIL`): New & tiers→welcome, Cooling & Active→brief, Dormant→reengagement.
+  `engRow(u, mailKind)` renders the ✓/✗ pill (falls back to the ✉ last-email chip when no segment).
+- **Data:** admin-engagement + admin-home now return `email_kinds` per member (latest status per
+  kind) from the existing `email_log` scan — no extra queries. Files: admin-engagement.js,
+  admin-home.js, operator.html. Operator-only.
+
 ### Unified Client Tracker — one row + one source across Home and Client Overview
 - **Why:** four overlapping client views (Home "Latest sign-ups" + "Recent correspondence";
   Client Overview "Needs a Check-In" + "All Clients") were confusing. Collapsed into ONE rich

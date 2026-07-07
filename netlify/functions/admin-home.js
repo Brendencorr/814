@@ -53,7 +53,7 @@ exports.handler = async function (event) {
         } catch (_) {}
       }
       // Latest mood + latest email per recent signup (small .in on ~25 ids — no scale concern).
-      const moodById = {}, lastEmailById = {};
+      const moodById = {}, lastEmailById = {}, emailKindsById = {};
       if (ids.length) {
         try {
           const { data: ck } = await db.from("daily_checkins").select("user_id,mood,checkin_date")
@@ -63,7 +63,12 @@ exports.handler = async function (event) {
         try {
           const { data: em } = await db.from("email_log").select("user_id,status,subject,kind,created_at")
             .in("user_id", ids).order("created_at", { ascending: false });
-          (em || []).forEach((e) => { if (e.user_id && lastEmailById[e.user_id] === undefined) lastEmailById[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at }; });
+          (em || []).forEach((e) => {
+            if (!e.user_id) return;
+            if (lastEmailById[e.user_id] === undefined) lastEmailById[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at };
+            const km = (emailKindsById[e.user_id] ||= {});
+            if (e.kind && km[e.kind] === undefined) km[e.kind] = e.status;
+          });
         } catch (_) {}
       }
       // 7-day activity — reuse the analytics blob's last_active (already computed) rather than re-querying.
@@ -88,6 +93,7 @@ exports.handler = async function (event) {
         reengaged: !!s.reengagement_sent_at,
         events_7d: eventsById[s.id] || 0,
         last_email: lastEmailById[s.id] || null,
+        email_kinds: emailKindsById[s.id] || {},
       }));
     } catch (_) { blob.recent_signups = []; }
     return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(blob) };

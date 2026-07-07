@@ -90,11 +90,12 @@ exports.handler = async function (event) {
     const emailRows= emailRes.data  || [];
 
     // Latest email per user (rows already newest-first) → { status, subject, kind, created_at }.
-    const lastEmailByUser = {};
+    const lastEmailByUser = {}, emailKindsByUser = {};
     for (const e of emailRows) {
-      if (e.user_id && lastEmailByUser[e.user_id] === undefined) {
-        lastEmailByUser[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at };
-      }
+      if (!e.user_id) continue;
+      if (lastEmailByUser[e.user_id] === undefined) lastEmailByUser[e.user_id] = { status: e.status, subject: e.subject, kind: e.kind, created_at: e.created_at };
+      const km = (emailKindsByUser[e.user_id] ||= {});
+      if (e.kind && km[e.kind] === undefined) km[e.kind] = e.status; // latest status per kind → segment email checks
     }
 
     // Latest mood per user (checkins already newest-first)
@@ -176,6 +177,7 @@ exports.handler = async function (event) {
         active_program: activeProgramByUser[u.id] || null,
         last_crisis_level: u.last_crisis_level || null,
         last_email: lastEmailByUser[u.id] || null,
+        email_kinds: emailKindsByUser[u.id] || {},
       };
     });
 

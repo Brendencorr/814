@@ -127,6 +127,10 @@
 [functions."rpc-introspect"]
   timeout = 20
 
+# Stripe catalog push (operator-gated) — creates all Products + Prices from stripe-catalog.js. Idempotent.
+[functions."stripe-setup"]
+  timeout = 26
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

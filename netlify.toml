@@ -136,6 +136,10 @@
 [functions."stripe-webhook"]
   timeout = 10
 
+# Stripe checkout — member-facing; opens a Checkout Session carrying the grant metadata.
+[functions."stripe-checkout"]
+  timeout = 15
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

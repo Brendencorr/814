@@ -200,6 +200,7 @@ function rileyUnlockWaitlist(){
   document.getElementById('rw-join').onclick=async function(){
     const btn=this; btn.disabled=true; btn.textContent='Opening checkout…';
     try{
+      if(!(await paymentsLive())){ document.getElementById('rw-body').textContent='Memberships open very soon — thanks for your patience.'; btn.disabled=false; btn.textContent='Continue to checkout →'; return; }
       const tok=(await SB.auth.getSession()).data.session?.access_token;
       if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
       const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:plan+'_monthly'})});
@@ -313,9 +314,13 @@ function programCard(p,owned){
     return '<div class="card" style="opacity:.9">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';
   return '<div class="card">'+head+'<button class="btn btn-gold" style="width:100%;text-align:center" onclick="buyProgram(\''+p.key+'\')">Get it · '+pgPrice(p.price_cents)+'</button></div>';
 }
+// Payments gate — the in-app buy buttons take real money ONLY when app_settings.payments_live=true
+// (the single go-live switch, shared with the marketing site). Fail-closed: any error → blocked.
+async function paymentsLive(){ try{ const {data}=await SB.from('app_settings').select('value').eq('key','payments_live').maybeSingle(); return !!(data&&String(data.value).toLowerCase()==='true'); }catch(e){ return false; } }
 async function buyProgram(key){
   A('pg-alert','Opening secure checkout…',true);
   try{
+    if(!(await paymentsLive())){ A('pg-alert','Purchasing opens very soon — hang tight while we finish setup.',true); return; }
     const tok=(await SB.auth.getSession()).data.session?.access_token;
     if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
     const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:key})});

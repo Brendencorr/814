@@ -123,6 +123,10 @@
 [functions."payment-webhook"]
   timeout = 10
 
+# TEMPORARY — RockPaperCoin GraphQL schema discovery (operator-gated). Remove after the integration is built.
+[functions."rpc-introspect"]
+  timeout = 20
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

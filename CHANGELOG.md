@@ -27,6 +27,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 - Note: "our touch" currently counts comms sends (email_sends); folding in email_log (brief/welcome) is a
   possible enhancement. Files: evaluate-comms.js, comms-templates.js.
 
+### TEMPORARY 24h promo — auto-comp every new signup to Coach tier (+ iPhone push message)
+- **Operator-requested:** for 24h, every NEW signup is auto-enrolled to **Coach** tier.
+  Implemented as a scheduled **sweep** (`auto-comp-cron.js`, every 10 min) — NOT a signup-path
+  trigger, so it can't break/slow account creation. Comps by inserting a comped `coach`
+  `subscriptions` row (same mechanism as Add-User); idempotent; writes an `admin_audit` row per
+  comp (`source:'auto_promo_24h'` — traceable + revocable).
+- **Window** stored in `app_settings` (`auto_comp_coach_start`/`_until`, 2026-07-08 00:37Z →
+  2026-07-09 00:37Z). The cron no-ops after `_until`. 🔴 REMOVE the netlify.toml schedule after the
+  promo (inert regardless). To stop early: delete the app_settings rows.
+- **iPhone push fix:** operator "Enable notifications" now detects iOS-not-installed and tells the
+  user to open in **Safari → Add to Home Screen → open from the icon** (iOS only allows web push
+  from an installed PWA, Safari only — Chrome/iOS can't). File: operator.html.
+- Files: auto-comp-cron.js (new), netlify.toml, operator.html.
+
 ### Unified email shell (hybrid) — rolling every sender onto ONE house style
 - Operator chose the house shell: **Shell A's Ink header + Riley. wordmark + footer**, with **Shell B's
   serif font/voice**, always signed **"— Riley"**. Implemented in the shared `shell()` (comms-templates.js):

@@ -1011,7 +1011,7 @@ function renderOperatorPushSetting(){
 function renderOpPush(){ renderOperatorPushControl(); renderOperatorPushSetting(); }
 async function enableOperatorPush(){
   try{
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)){opPushStatus('This browser can\'t receive push notifications.',true);return;}
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){var _ios=/iP(hone|ad|od)/.test(navigator.userAgent||'');var _standalone=(window.navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);opPushStatus(_ios&&!_standalone?'On iPhone/iPad: open this page in Safari, tap Share → "Add to Home Screen", then open it from that icon and enable notifications. (iOS only allows web notifications from an installed app, and only via Safari — not Chrome.)':'This browser can\'t receive push notifications. On iPhone, use Safari + "Add to Home Screen".',true);return;}
     opPushStatus('Requesting permission…');
     var perm=await Notification.requestPermission();
     if(perm!=='granted'){opPushStatus('Notifications are blocked for this site — enable them in your browser settings, then try again.',true);return;}

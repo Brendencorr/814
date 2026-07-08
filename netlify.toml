@@ -158,6 +158,12 @@
 [functions."int-proactive-cron"]
   schedule = "0 15 * * *"
 
+# TEMPORARY 24h promo (2026-07-07, operator-requested): auto-comp every NEW signup to Coach
+# tier while the app_settings.auto_comp_coach_until window is open. A scheduled SWEEP every
+# 10 min — never touches the signup path. Inert once the window passes; REMOVE this block after.
+[functions."auto-comp-cron"]
+  schedule = "*/10 * * * *"
+
 # Workout & Nutrition plan generator runs as a BACKGROUND function
 # (plan-generate-background.js) — a full 7-day plan exceeds the synchronous
 # timeout, so the -background suffix gives it up to 15 min. The client fires it

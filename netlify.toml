@@ -140,6 +140,10 @@
 [functions."stripe-checkout"]
   timeout = 15
 
+# Stripe Customer Portal — member-facing; opens Stripe's hosted manage/cancel/upgrade/invoices portal.
+[functions."stripe-portal"]
+  timeout = 10
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

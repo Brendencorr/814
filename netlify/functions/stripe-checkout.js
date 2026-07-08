@@ -28,7 +28,8 @@ exports.handler = async (event) => {
 
   let body = {}; try { body = JSON.parse(event.body || "{}"); } catch (_) { return json(400, { error: "bad_json" }); }
   const token = body.token || (event.headers && (event.headers.authorization || event.headers.Authorization) || "").replace(/^Bearer\s+/i, "");
-  const uid = token ? await getUserIdFromToken(token) : null;
+  const sb = getSupabaseClient();
+  const uid = token ? await getUserIdFromToken(sb, token) : null;
   if (!uid) return json(401, { error: "unauthorized" });
 
   const lookup = String(body.lookup_key || "").trim();
@@ -43,7 +44,6 @@ exports.handler = async (event) => {
     if (!price) return json(400, { error: "price_not_found", detail: "run stripe-setup first" });
 
     // Reuse or create the member's Stripe Customer.
-    const sb = getSupabaseClient();
     const { data: prof } = await sb.from("user_profiles").select("email,full_name,stripe_customer_id").eq("id", uid).maybeSingle();
     let customer = prof && prof.stripe_customer_id;
     if (!customer) {

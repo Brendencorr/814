@@ -36,14 +36,16 @@ const SUBSCRIPTIONS = [
 // ── One-time programs → Products with a single one-time Price. lookup_key = product_key (unique/stable).
 // program_id (= product_key) is what the webhook writes to `purchases` on payment.
 const PROGRAMS = [
-  { product_key: "prog_sobriety",          name: "Sobriety (self-guided)",              unit_amount: 814 },
-  { product_key: "prog_grief",             name: "Grief & Life Transitions (self-guided)", unit_amount: 814 },
-  { product_key: "prog_body",              name: "Body Rebuild (self-guided)",          unit_amount: 814 },
-  { product_key: "prog_bundle_selfguided", name: "Self-Guided Bundle — all 3",          unit_amount: 1814 },
-  { product_key: "prog_int_move_nourish",  name: "Move Nourish",                         unit_amount: 1814 },
-  { product_key: "prog_int_grief",         name: "Living Forward",                       unit_amount: 1814 },
-  { product_key: "prog_int_happiness",     name: "Building Happiness",                   unit_amount: 1814 },
-  { product_key: "prog_int_staying_free",  name: "Staying Free",                         unit_amount: 1814 },
+  // Self-guided ($8.14)
+  { product_key: "prog_sobriety",          name: "Sobriety (self-guided)",                 unit_amount: 814,  kind: "self_guided" },
+  { product_key: "prog_grief",             name: "Grief & Life Transitions (self-guided)", unit_amount: 814,  kind: "self_guided" },
+  { product_key: "prog_body",              name: "Body Rebuild (self-guided)",             unit_amount: 814,  kind: "self_guided" },
+  { product_key: "prog_bundle_selfguided", name: "Self-Guided Bundle — all 3",             unit_amount: 1814, kind: "bundle" },
+  // Interactive / Riley-led coached programs ($18.14) — the 4 live in the products table
+  { product_key: "prog_int_move_nourish",  name: "Move Nourish (Riley-led)",               unit_amount: 1814, kind: "interactive" },
+  { product_key: "prog_int_grief",         name: "Living Forward (Riley-led)",             unit_amount: 1814, kind: "interactive" },
+  { product_key: "prog_int_happiness",     name: "Building Happiness (Riley-led)",         unit_amount: 1814, kind: "interactive" },
+  { product_key: "prog_int_staying_free",  name: "Staying Free (Riley-led)",               unit_amount: 1814, kind: "interactive" },
 ];
 
 // ── Resolution maps ──

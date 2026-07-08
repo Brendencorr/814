@@ -38,10 +38,15 @@ exports.handler = async (event) => {
   if (!sub && !program) return json(400, { error: "unknown_product", lookup_key: lookup });
 
   try {
-    // Resolve the Stripe Price by lookup_key (created by stripe-setup).
-    const pr = await sGet("prices?lookup_keys[]=" + encodeURIComponent(lookup) + "&limit=1");
-    const price = pr && pr.data && pr.data[0];
-    if (!price) return json(400, { error: "price_not_found", detail: "run stripe-setup first" });
+    // Resolve the Price by PRODUCT id (riley_<key> — fixed + unambiguous), NOT by lookup_key. Programs
+    // are one product = one price; subscriptions are one product with two prices, disambiguated by interval.
+    // This is deterministic and immune to any lookup_key crossing in the catalog.
+    const productId = sub ? ("riley_" + sub.plan) : ("riley_" + lookup);
+    const want = sub ? (sub.term === "annual" ? "year" : "month") : null;
+    const pr = await sGet("prices?product=" + encodeURIComponent(productId) + "&active=true&limit=10");
+    const prices = (pr && pr.data) || [];
+    const price = sub ? prices.find((p) => p.recurring && p.recurring.interval === want) : prices[0];
+    if (!price || !price.id) return json(400, { error: "price_not_found", detail: "no active price for " + productId + " — run stripe-setup" });
 
     // Reuse or create the member's Stripe Customer.
     const { data: prof } = await sb.from("user_profiles").select("email,full_name,stripe_customer_id").eq("id", uid).maybeSingle();

@@ -118,6 +118,11 @@
 [functions."comms-unsubscribe"]
   timeout = 10
 
+# Payment grant webhook — RockPaperCoin/Stripe → Zapier POSTs here on a paid invoice; grants the
+# tier/program. DORMANT until PAYMENTS_WEBHOOK_SECRET is set (no secret → 503, grants nothing).
+[functions."payment-webhook"]
+  timeout = 10
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

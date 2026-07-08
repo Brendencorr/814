@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Payment grant webhook (RockPaperCoin/Stripe → Zapier → Riley) — DORMANT
+- New `payment-webhook.js` + migration **077** `payments`. On a paid invoice, a Zap POSTs here and Riley
+  grants the tier/program by inserting the same `subscriptions`/`purchases` row a comp uses (picked up by
+  `user_active_products`). Contract: email, external_id, amount_cents|amount, optional plan/term/program/product.
+- **Safe by design:** DORMANT until `PAYMENTS_WEBHOOK_SECRET` is set (no secret → 503, grants nothing);
+  idempotent (unique `external_id` → replays log `duplicate`); fail-closed (unmatched email or unresolvable
+  amount/product → logged `unmatched`/`needs_review`, grants NOTHING — never guesses a tier). Every event
+  logged to `payments` for audit. Amounts map tiers uniquely ($19/$175 companion, $34/$350 coach); $8.14
+  programs need an explicit `program` field (mapped in the Zap).
+- 🔴 Before go-live: RockPaperCoin has NO public API (its Zapier app is a private beta) → checkout uses RPC
+  hosted payment links (one per product). Set PAYMENTS_WEBHOOK_SECRET, build the Zap (RPC "Invoice Paid" →
+  Webhooks POST), wire the app's buy buttons to the RPC links, and verify user_active_products honors expires_at
+  for monthly renewals. Files: payment-webhook.js, migration 077, netlify.toml.
+
+
 ### Signup flow fixes — no sign-in loop, no rebuild-date prompt, app-install after onboarding
 - **1) Fixed the "loops back to sign-in" bug.** After Google authorize, the OAuth callback landed on
   `/dashboard`, which bounces to the marketing/sign-in page the instant `getSession()` is momentarily null

@@ -12,6 +12,14 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Check-in fix — Phase-2 "note from Riley" no longer collides with the daily check-in
+- **Bug:** on the app home, the chat auto-opens the daily check-in (pwa.js) AND `loadPhase2Discovery()`
+  immediately popped the Phase-2 "A note from Riley" modal — two Riley prompts on screen at once.
+- **Fix:** dashboard.html now delays the Phase-2 trigger to **~5 min into the session**
+  (`setTimeout(loadPhase2Discovery, 5*60*1000)`) so it surfaces only after someone's settled in, well
+  clear of the check-in. Still once/day gated (set only when it fires); the timer clears if they leave
+  the page first. Only initial-trigger delayed; nothing else changed. File: dashboard.html.
+
 ### Quality sweep — 4-agent audit → fixed P0 security + P1 + design/UX defects
 - **P0 (security):** `evaluate-comms.js` and `int-proactive-cron.js` were scheduled crons with **NO
   auth gate** (every other cron gates) — publicly triggerable, which would let anyone drive lifecycle/

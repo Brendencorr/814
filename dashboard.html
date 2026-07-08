@@ -755,9 +755,12 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     loadRileyBrain();
     // Everything Riley Offers — reliable entitlement-driven locked previews
     loadExplore();
-    // The daily check-in now lives inside the Riley chat (auto-opened once/day by pwa.js) —
-    // the old dashboard modal was retired to end the double check-in. Phase 2 discovery still runs.
-    loadPhase2Discovery();
+    // The daily check-in now lives inside the Riley chat (auto-opened once/day by pwa.js) — the old
+    // dashboard modal was retired to end the double check-in. Phase-2 discovery (the "A note from
+    // Riley" prompt) is delayed ~5 min into the session so it never collides with that check-in.
+    // It's once/day gated (set only when it actually fires), and the timer clears if the member
+    // leaves the page first — so it only surfaces for someone who's settled into their session.
+    setTimeout(loadPhase2Discovery, 5 * 60 * 1000);
     }catch(e){console.error('Dashboard:',e);}
 })();
 

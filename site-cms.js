@@ -26,6 +26,7 @@
     "home";
   var EDIT = /[?&]cms=edit\b/.test(location.search);
   var MOBILE_BP = 768;
+  var _editVp = "d";                            // which layout bucket the editor edits (driven by the operator's Desktop/Mobile toggle)
   var OVERRIDES = {};
   var SECTION_STATE = {};                       // key -> {hidden, sort, bg, color, accent}
   var STYLE_STATE = {};                         // key -> { d:{}, m:{}, base:{} }  (desktop / mobile layout + universal)
@@ -50,17 +51,24 @@
       .map(function (k) { return k + ":" + map[k] + " !important;"; }).join("");
   }
   function rebuildStyleSheet() {
-    var base = "", d = "", m = "";
+    var base = "", d = "", m = "", act = "";
     Object.keys(STYLE_STATE).forEach(function (key) {
       var st = STYLE_STATE[key]; if (!st) return;
       var sel = selFor(key); if (!sel) return;
       if (nonEmpty(st.base)) { var bb = cssDecl(st.base); if (bb) base += sel + "{" + bb + "}"; }
       if (nonEmpty(st.d)) { var dd = cssDecl(st.d); if (dd) d += sel + "{" + dd + "}"; }
       if (nonEmpty(st.m)) { var mm = cssDecl(st.m); if (mm) m += sel + "{" + mm + "}"; }
+      if (EDIT) { var bk = st[_editVp] || {}; if (nonEmpty(bk)) { var aa = cssDecl(bk); if (aa) act += sel + "{" + aa + "}"; } }
     });
-    var css = base +
-              (d ? "@media(min-width:" + (MOBILE_BP + 1) + "px){" + d + "}" : "") +
-              (m ? "@media(max-width:" + MOBILE_BP + "px){" + m + "}" : "");
+    // In the editor, render the SELECTED viewport's layout UNCONDITIONALLY (so the operator's
+    // desktop edits are visible even when the preview iframe is narrower than the breakpoint —
+    // the edit bucket follows the Desktop/Mobile toggle, not the iframe width). The PUBLIC site
+    // uses real media queries so each visitor gets the right one by their actual screen width.
+    var css = EDIT
+      ? base + act
+      : base +
+        (d ? "@media(min-width:" + (MOBILE_BP + 1) + "px){" + d + "}" : "") +
+        (m ? "@media(max-width:" + MOBILE_BP + "px){" + m + "}" : "");
     var tag = document.getElementById("cms-overrides");
     if (!tag) { tag = document.createElement("style"); tag.id = "cms-overrides"; document.head.appendChild(tag); }
     tag.textContent = css;
@@ -214,7 +222,7 @@
 
   function pxOf(map, k, fallback) { var v = map[k]; if (v == null || v === "") return fallback; var n = parseFloat(v); return isNaN(n) ? fallback : n; }
   function computedPx(el, prop, fb) { try { var n = parseFloat(getComputedStyle(el)[prop]); return isNaN(n) ? fb : Math.round(n); } catch (e) { return fb; } }
-  function curVp() { return window.innerWidth <= MOBILE_BP ? "m" : "d"; }
+  function curVp() { return EDIT ? _editVp : (window.innerWidth <= MOBILE_BP ? "m" : "d"); }
 
   function startDrag(e) {
     e.preventDefault(); e.stopPropagation();
@@ -427,6 +435,10 @@
         if (d.remove) { img.style.display = "none"; pushElement(d.key); }
         else { if (d.url) img.src = d.url; if (typeof d.alt === "string") img.alt = d.alt; img.style.display = ""; pushElement(d.key); }
       }
+    } else if (d.type === "cms-viewport") {
+      _editVp = (d.vp === "mobile") ? "m" : "d";
+      var pv = document.getElementById("cms-lpanel"); if (pv) pv.remove();
+      rebuildStyleSheet();
     } else if (d.type === "cms-reload") { location.reload(); }
   });
 

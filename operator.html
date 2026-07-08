@@ -3287,7 +3287,11 @@ function cwLoadPage(){
 function cwSetViewport(v){
   CW_VP = v;
   var f = document.getElementById('cw-frame');
-  if(f){ if(v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; } else { f.style.width='100%'; f.style.margin='0'; } }
+  if(f){
+    if(v==='mobile'){ f.style.width='390px'; f.style.margin='0 auto'; } else { f.style.width='100%'; f.style.margin='0'; }
+    // Tell the preview which layout bucket to edit + render (drives the panel, not the iframe width).
+    try{ if(f.contentWindow) f.contentWindow.postMessage({type:'cms-viewport', vp:v}, location.origin); }catch(e){}
+  }
   var d=document.getElementById('cw-vp-d'), m=document.getElementById('cw-vp-m');
   if(d){ d.style.background=v==='desktop'?'#c9a84c':'transparent'; d.style.color=v==='desktop'?'#0a0908':'#f5f0e8'; d.style.fontWeight=v==='desktop'?'600':'400'; }
   if(m){ m.style.background=v==='mobile'?'#c9a84c':'transparent'; m.style.color=v==='mobile'?'#0a0908':'#f5f0e8'; m.style.fontWeight=v==='mobile'?'600':'400'; }
@@ -3412,6 +3416,7 @@ window.addEventListener('message', function(e){
   if(d.type==='cms-change' && d.change) cwOnChange(d.change);
   else if(d.type==='cms-reset') cwOnReset(d.page, d.key, d.kind, d.label);
   else if(d.type==='cms-pick-image') cwPickImage(d.key, d.label);
+  else if(d.type==='cms-ready') cwSetViewport(CW_VP);   // re-apply the chosen viewport after every (re)load
 });
 
 </script>

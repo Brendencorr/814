@@ -113,11 +113,16 @@ exports.handler = async () => {
   // loggedKeys = any decision row incl. suppressed — used only to avoid re-logging the same
   // suppressed decision every hour while dark. A suppressed (never-sent) decision must NOT
   // block the real send at go-live, or the dark period would silently burn every template.
-  const sentKeys = {}; const loggedKeys = {}; const sentTodayNonTx = {};
+  const sentKeys = {}; const loggedKeys = {}; const sentTodayNonTx = {}; const lastEmailByUser = {};
   const todayStr = new Date().toISOString().slice(0, 10);
   sends.forEach((s) => {
     (loggedKeys[s.user_id] = loggedKeys[s.user_id] || new Set()).add(s.template_key);
-    if (!s.suppressed) (sentKeys[s.user_id] = sentKeys[s.user_id] || new Set()).add(s.template_key);
+    if (!s.suppressed) {
+      (sentKeys[s.user_id] = sentKeys[s.user_id] || new Set()).add(s.template_key);
+      // "our last touch" = the last email we actually SENT them (suppressed rows while dark don't count).
+      const t = +new Date(s.sent_at || 0);
+      if (t && (!lastEmailByUser[s.user_id] || t > lastEmailByUser[s.user_id])) lastEmailByUser[s.user_id] = t;
+    }
     if (!s.suppressed && s.flow !== "transactional" && String(s.sent_at || "").slice(0, 10) === todayStr) sentTodayNonTx[s.user_id] = true;
   });
 
@@ -153,6 +158,13 @@ exports.handler = async () => {
     const daysSinceSignup = Math.floor((now - signupAt) / DAY);
     const daysAbsent = Math.floor((now - lastActive) / DAY);
     const everMessaged = !!lastMsg;
+    // "Last touch" = the later of the member's own activity and the last email WE sent them. Gone-Quiet
+    // is keyed on QUIET_GAP days of NO touch (default 14, editable via quiet_1.trigger_days). Because the
+    // onboarding series keeps emailing, each email refreshes the touch — so win-back can never start
+    // mid-onboarding, and the ladder auto-spaces (each quiet email is itself a touch).
+    const lastTouch = Math.max(lastActive, lastEmailByUser[uid] || 0);
+    const daysSinceTouch = Math.floor((now - lastTouch) / DAY);
+    const QUIET_GAP = dayFor("quiet_1", 14);
     const ladder = st.ladder_position || 0;
     const keys = sentKeys[uid] || new Set();       // actually-sent → once ever
     const logged = loggedKeys[uid] || new Set();   // any logged decision → avoids dark re-logging
@@ -186,21 +198,24 @@ exports.handler = async () => {
     // 2) GONE QUIET (owns absent users)
     const resetStarted = !!st.reset_started, resetDay = st.reset_day || 0;
     const daysSinceResetActivity = resetStarted ? daysAbsent : 999;
-    if (daysAbsent >= dayFor("quiet_1", 2)) {
-      if (resetStarted && resetDay < 7 && daysSinceResetActivity >= 2 && !keys.has("quiet_reset")) {
+    // Win-back starts only after QUIET_GAP days of NO touch (from us OR them). Each quiet email is
+    // itself a touch, so the ladder (quiet_1→2→3) auto-spaces at QUIET_GAP-day intervals.
+    if (daysSinceTouch >= QUIET_GAP) {
+      if (resetStarted && resetDay < 7 && !keys.has("quiet_reset")) {
         await send("quiet_reset");
-      } else if (daysAbsent >= dayFor("quiet_3", 21) && ladder <= 2) {
-        if (await send("quiet_3")) await sb.from("user_comms_state").update({ ladder_position: 3 }).eq("user_id", uid);
-      } else if (daysAbsent >= dayFor("quiet_2", 7) && ladder <= 1) {
-        if (await send("quiet_2")) await sb.from("user_comms_state").update({ ladder_position: 2 }).eq("user_id", uid);
-      } else if (daysAbsent >= dayFor("quiet_1", 2) && !everMessaged && ladder === 0) {
+      } else if (ladder === 0) {
         if (await send("quiet_1")) await sb.from("user_comms_state").update({ ladder_position: 1 }).eq("user_id", uid);
+      } else if (ladder === 1) {
+        if (await send("quiet_2")) await sb.from("user_comms_state").update({ ladder_position: 2 }).eq("user_id", uid);
+      } else if (ladder === 2) {
+        if (await send("quiet_3")) await sb.from("user_comms_state").update({ ladder_position: 3 }).eq("user_id", uid);
       }
       if (fired) continue;
     }
 
-    // 3) GUIDE FLOW (only if NOT absent). Day thresholds are operator-editable (comms_templates.trigger_days).
-    if (!fired && daysAbsent < dayFor("quiet_1", 2)) {
+    // 3) GUIDE FLOW (runs while still "in touch" — i.e., not yet in win-back). The onboarding series
+    // keeps refreshing the touch, so it completes on its calendar before Gone-Quiet can start.
+    if (!fired && daysSinceTouch < QUIET_GAP) {
       if (daysSinceSignup >= dayFor("guide_7", 30)) await send("guide_7");
       else if (daysSinceSignup >= dayFor("guide_6", 12)) await send("guide_6");
       else if (daysSinceSignup >= dayFor("guide_5", 7)) await send("guide_5");

@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Gone-Quiet reworked to "14 days since the last touch" (fixes onboarding overlap)
+- **Why:** the old rule (win-back after 2 idle days) could cut a new member's onboarding short — a signup
+  who didn't return for 2 days flipped straight into win-back. Operator's call: start win-back only after
+  **14 days of NO touch — from us OR them**.
+- **How (`evaluate-comms.js`):** `lastTouch = max(member activity, last email WE actually sent)`;
+  Gone-Quiet only fires when `daysSinceTouch >= QUIET_GAP` (default 14, editable via `quiet_1.trigger_days`).
+  Because every onboarding email is itself a touch, the Guide series **self-protects its window** — win-back
+  can't begin until 14 days after the LAST onboarding email. The quiet_1→2→3 ladder is now ladder-position
+  stepped and **auto-spaces** at 14-day intervals (each quiet email refreshes the touch). Guide flow now
+  gates on `daysSinceTouch < QUIET_GAP` instead of `daysAbsent < 2`. Still DARK.
+- Onboarding/Gone-Quiet remain mutually exclusive + 1-email/day cap (unchanged). Timing map (`TRIGGERS`)
+  relabeled: quiet_1 = "after N days no contact" (days 14, editable); quiet_2/3 = "auto-spaced" (no day field).
+- Note: "our touch" currently counts comms sends (email_sends); folding in email_log (brief/welcome) is a
+  possible enhancement. Files: evaluate-comms.js, comms-templates.js.
+
 ### Unified email shell (hybrid) — rolling every sender onto ONE house style
 - Operator chose the house shell: **Shell A's Ink header + Riley. wordmark + footer**, with **Shell B's
   serif font/voice**, always signed **"— Riley"**. Implemented in the shared `shell()` (comms-templates.js):

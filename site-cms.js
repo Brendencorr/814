@@ -1,21 +1,21 @@
 /* site-cms.js — runtime overrides for the marketing site + the in-page live editor.
  *
  * TWO MODES:
- *  1) Apply (always): fetch /.netlify/functions/site-content?page=<page> and apply overrides on top
- *     of the page's hardcoded defaults — text, images, section state (hidden/order/colors), AND
- *     per-element LAYOUT css that is RESPONSIVE: desktop layout applies only >768px and mobile
- *     layout only ≤768px, injected as a media-queried <style> block. So unless the operator
- *     explicitly edits mobile, phones keep the page's original responsive design.
- *  2) Edit (?cms=edit, only inside the operator "Customize Website" iframe): click text to edit it,
- *     click a logo to swap it, use each section's toolbar (hide·reorder·colors), and the "⛶ Layout"
- *     handle on ANY element to move/size/space it. When the operator previews at phone width, the
- *     layout panel edits the MOBILE bucket; at full width, the DESKTOP bucket. The editor NEVER
- *     writes to Supabase — it posts each change to window.parent (the operator, which saves).
+ *  1) Apply (always): fetch /.netlify/functions/site-content?page=<page> and apply overrides on top of
+ *     the page's hardcoded defaults — text, images, section state (hidden/order/colors), a per-element
+ *     universal style (color / bold / italic), AND per-element RESPONSIVE layout: desktop layout only
+ *     >768px and mobile only ≤768px, injected as a media-queried <style>. So unless the operator edits
+ *     mobile, phones keep the page's original responsive design.
+ *  2) Edit (?cms=edit, only inside the operator "Customize Website" iframe): click text to edit it, click
+ *     a logo to swap it, use each section's toolbar (hide·reorder·colors), and the "⛶ Layout" handle on
+ *     ANY element to move it (DRAG the handle, or nudge/size/space via its panel) + recolor/bold/italic
+ *     text. When previewing at phone width the layout edits the MOBILE bucket; at full width, DESKTOP.
+ *     The editor NEVER writes to Supabase — it posts each change to window.parent (which saves).
  *
- * Override props by kind (all may also carry `css` = desktop layout map, `cssMobile` = ≤768px map):
- *   text    → {text, css, cssMobile}
- *   image   → {src, alt, hidden, css, cssMobile}
- *   section → {hidden, sort, bg, color, accent, css, cssMobile}
+ * Override props by kind (all may carry `css`=desktop layout, `cssMobile`=≤768px layout, `cssBase`=universal):
+ *   text    → {text, css, cssMobile, cssBase}
+ *   image   → {src, alt, hidden, css, cssMobile, cssBase}
+ *   section → {hidden, sort, bg, color, accent, css, cssMobile, cssBase}
  */
 (function () {
   "use strict";
@@ -25,11 +25,10 @@
     (location.pathname.replace(/^\/+|\/+$/g, "").split("/")[0] || "home").replace(/\.html?$/, "") ||
     "home";
   var EDIT = /[?&]cms=edit\b/.test(location.search);
-  var MOBILE_BP = 768;                         // ≤768px = mobile bucket
+  var MOBILE_BP = 768;
   var OVERRIDES = {};
   var SECTION_STATE = {};                       // key -> {hidden, sort, bg, color, accent}
-  var STYLE_STATE = {};                         // key -> { d:{cssMap}, m:{cssMap} }  (desktop / mobile layout)
-  var LAYOUT_PROPS = ["margin-top", "margin-bottom", "margin-left", "margin-right", "max-width", "min-height", "padding", "font-size", "text-align"];
+  var STYLE_STATE = {};                         // key -> { d:{}, m:{}, base:{} }  (desktop / mobile layout + universal)
 
   function q(sel, ctx) { return (ctx || document).querySelector(sel); }
   function qa(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
@@ -41,27 +40,26 @@
   }
   function attrOf(el) { return el.hasAttribute("data-cms-text") ? "data-cms-text" : el.hasAttribute("data-cms-img") ? "data-cms-img" : "data-cms-section"; }
   function kindOf(el) { return el.hasAttribute("data-cms-text") ? "text" : el.hasAttribute("data-cms-img") ? "image" : "section"; }
-  function styleOf(key) { return STYLE_STATE[key] || (STYLE_STATE[key] = { d: {}, m: {} }); }
+  function styleOf(key) { var s = STYLE_STATE[key]; if (!s) { s = STYLE_STATE[key] = { d: {}, m: {}, base: {} }; } if (!s.base) s.base = {}; return s; }
   function nonEmpty(map) { return map && Object.keys(map).some(function (k) { return map[k] !== "" && map[k] != null; }); }
 
-  // ── Responsive override stylesheet (desktop / mobile media queries) ──
-  function selFor(key) {
-    var el = elFor(key); if (!el) return null;
-    return "[" + attrOf(el) + '="' + attrEsc(key) + '"]';
-  }
+  // ── Responsive override stylesheet (universal base + desktop / mobile media queries) ──
+  function selFor(key) { var el = elFor(key); if (!el) return null; return "[" + attrOf(el) + '="' + attrEsc(key) + '"]'; }
   function cssDecl(map) {
     return Object.keys(map).filter(function (k) { return map[k] !== "" && map[k] != null; })
       .map(function (k) { return k + ":" + map[k] + " !important;"; }).join("");
   }
   function rebuildStyleSheet() {
-    var d = "", m = "";
+    var base = "", d = "", m = "";
     Object.keys(STYLE_STATE).forEach(function (key) {
       var st = STYLE_STATE[key]; if (!st) return;
       var sel = selFor(key); if (!sel) return;
+      if (nonEmpty(st.base)) { var bb = cssDecl(st.base); if (bb) base += sel + "{" + bb + "}"; }
       if (nonEmpty(st.d)) { var dd = cssDecl(st.d); if (dd) d += sel + "{" + dd + "}"; }
       if (nonEmpty(st.m)) { var mm = cssDecl(st.m); if (mm) m += sel + "{" + mm + "}"; }
     });
-    var css = (d ? "@media(min-width:" + (MOBILE_BP + 1) + "px){" + d + "}" : "") +
+    var css = base +
+              (d ? "@media(min-width:" + (MOBILE_BP + 1) + "px){" + d + "}" : "") +
               (m ? "@media(max-width:" + MOBILE_BP + "px){" + m + "}" : "");
     var tag = document.getElementById("cms-overrides");
     if (!tag) { tag = document.createElement("style"); tag.id = "cms-overrides"; document.head.appendChild(tag); }
@@ -73,6 +71,7 @@
     var st = styleOf(key);
     if (props.css) st.d = Object.assign({}, props.css);
     if (props.cssMobile) st.m = Object.assign({}, props.cssMobile);
+    if (props.cssBase) st.base = Object.assign({}, props.cssBase);
   }
   function applyText(key, props) {
     var el = q('[data-cms-text="' + attrEsc(key) + '"]');
@@ -142,11 +141,10 @@
   function sectionOf(key) { return SECTION_STATE[key] || (SECTION_STATE[key] = {}); }
   function labelOf(el, key) { return (el && el.getAttribute("data-cms-label")) || key; }
 
-  // Unified "persist this element" — text/img/section props + both layout buckets.
   function pushElement(key) {
     var el = elFor(key); if (!el) return;
     var kind = kindOf(el), st = styleOf(key), props;
-    var layout = { css: st.d || {}, cssMobile: st.m || {} };
+    var layout = { css: st.d || {}, cssMobile: st.m || {}, cssBase: st.base || {} };
     if (kind === "text") props = Object.assign({ text: el.textContent }, layout);
     else if (kind === "image") props = Object.assign({ src: el.getAttribute("src") || "", alt: el.alt || "", hidden: el.style.display === "none" }, layout);
     else { var s = SECTION_STATE[key] || {}; props = Object.assign({ hidden: !!s.hidden, sort: s.sort, bg: s.bg || "", color: s.color || "", accent: s.accent || "" }, layout); }
@@ -160,6 +158,7 @@
       '.cmsEdit [data-cms-text][contenteditable="true"]{outline:2px solid #c9a84c;background:rgba(201,168,76,.10);cursor:text}',
       '.cmsEdit [data-cms-section]{position:relative}',
       '.cmsEdit [data-cms-section]:hover{outline:1px dashed rgba(201,168,76,.5);outline-offset:-1px}',
+      '.cmsDragging,.cmsDragging *{cursor:grabbing !important;user-select:none !important}',
       '.cms-tools{position:absolute;top:6px;right:6px;z-index:2147483000;display:flex;gap:4px;align-items:center;background:rgba(10,9,8,.92);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:4px 6px;opacity:0;pointer-events:none;transition:opacity .12s;font-family:system-ui,sans-serif}',
       '.cmsEdit [data-cms-section]:hover > .cms-tools,.cms-tools:hover{opacity:1;pointer-events:auto}',
       '.cms-tools button{background:rgba(255,255,255,.08);border:none;color:#f5f0e8;font-size:12px;line-height:1;padding:5px 7px;border-radius:5px;cursor:pointer}',
@@ -167,36 +166,39 @@
       '.cms-tools input[type=color]{width:22px;height:22px;padding:0;border:1px solid rgba(255,255,255,.25);border-radius:4px;background:none;cursor:pointer}',
       '.cms-tools .cms-lbl{color:#c9a84c;font-size:9px;letter-spacing:.08em;text-transform:uppercase;margin-right:2px}',
       '.cms-hiddenmark{outline:2px dashed rgba(201,168,76,.6) !important;opacity:.45}',
-      '.cms-lh{position:fixed;z-index:2147483600;display:none;width:24px;height:24px;border:none;border-radius:6px;background:#c9a84c;color:#0a0908;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.45);font-family:system-ui,sans-serif}',
+      '.cms-lh{position:fixed;z-index:2147483600;display:none;width:24px;height:24px;border:none;border-radius:6px;background:#c9a84c;color:#0a0908;font-size:13px;line-height:1;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.45);font-family:system-ui,sans-serif}',
       '.cms-lpanel{position:fixed;z-index:2147483601;width:214px;background:rgba(12,11,9,.98);border:1px solid rgba(201,168,76,.5);border-radius:10px;padding:11px;font-family:system-ui,sans-serif;box-shadow:0 12px 44px rgba(0,0,0,.6);color:#f5f0e8}',
       '.cms-lpanel .lp-h{display:flex;justify-content:space-between;align-items:center;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#c9a84c;margin-bottom:4px}',
       '.cms-lpanel .lp-vp{font-size:10px;color:#8a8578;margin-bottom:9px}',
       '.cms-lpanel .lp-vp b{color:#e8d5a3}',
       '.cms-lpanel button{background:rgba(255,255,255,.08);border:none;color:#f5f0e8;border-radius:5px;cursor:pointer;font-size:12px;line-height:1;padding:6px 8px}',
       '.cms-lpanel button:hover{background:rgba(201,168,76,.35)}',
+      '.cms-lpanel button.on{background:#c9a84c;color:#0a0908}',
       '.cms-lpanel .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:112px;margin:0 auto 10px}',
       '.cms-lpanel .pad button{padding:7px 0}',
       '.cms-lpanel .pad .sp{visibility:hidden}',
       '.cms-lpanel .row{display:flex;align-items:center;gap:5px;margin:6px 0;font-size:11px}',
       '.cms-lpanel .row label{width:52px;color:#8a8578}',
       '.cms-lpanel .row .val{min-width:40px;text-align:center;font-family:ui-monospace,monospace;color:#e8d5a3}',
-      '.cms-lpanel .row.al button{flex:1}',
+      '.cms-lpanel .row.al button,.cms-lpanel .row.st button{flex:1}',
+      '.cms-lpanel .row input[type=color]{width:26px;height:24px;padding:0;border:1px solid rgba(255,255,255,.25);border-radius:4px;background:none;cursor:pointer}',
       '.cms-lpanel .lp-foot{display:flex;justify-content:space-between;margin-top:9px;border-top:1px solid rgba(255,255,255,.08);padding-top:9px}',
-      '.cms-lpanel .lp-foot button.reset{color:#c0a05a}'
+      '.cms-lpanel .lp-foot button.reset{color:#c0a05a}',
+      '.cms-draghint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483602;background:rgba(10,9,8,.95);border:1px solid rgba(201,168,76,.5);color:#e8d5a3;font-family:system-ui,sans-serif;font-size:11px;padding:6px 12px;border-radius:20px;pointer-events:none}'
     ].join("");
     var st = document.createElement("style"); st.id = "cms-editor-css"; st.textContent = css;
     document.head.appendChild(st);
   }
 
-  // ── Floating layout handle ──
-  var _lh = null, _lhKey = null, _lhHideT = null;
+  // ── Floating layout handle (click = panel · drag = move) ──
+  var _lh = null, _lhKey = null, _lhHideT = null, _drag = null;
   function ensureHandle() {
     if (_lh) return _lh;
     _lh = document.createElement("button");
-    _lh.className = "cms-lh"; _lh.textContent = "⛶"; _lh.title = "Layout & spacing";
+    _lh.className = "cms-lh"; _lh.textContent = "⛶"; _lh.title = "Drag to move · click for spacing";
     _lh.addEventListener("mouseenter", function () { clearTimeout(_lhHideT); });
     _lh.addEventListener("mouseleave", scheduleHideHandle);
-    _lh.addEventListener("click", function (e) { e.preventDefault(); e.stopPropagation(); if (_lhKey) openLayout(_lhKey); });
+    _lh.addEventListener("mousedown", startDrag);
     document.body.appendChild(_lh);
     return _lh;
   }
@@ -208,7 +210,38 @@
     _lh.style.display = "block";
     clearTimeout(_lhHideT);
   }
-  function scheduleHideHandle() { clearTimeout(_lhHideT); _lhHideT = setTimeout(function () { if (_lh) _lh.style.display = "none"; }, 350); }
+  function scheduleHideHandle() { if (_drag) return; clearTimeout(_lhHideT); _lhHideT = setTimeout(function () { if (_lh && !_drag) _lh.style.display = "none"; }, 350); }
+
+  function pxOf(map, k, fallback) { var v = map[k]; if (v == null || v === "") return fallback; var n = parseFloat(v); return isNaN(n) ? fallback : n; }
+  function computedPx(el, prop, fb) { try { var n = parseFloat(getComputedStyle(el)[prop]); return isNaN(n) ? fb : Math.round(n); } catch (e) { return fb; } }
+  function curVp() { return window.innerWidth <= MOBILE_BP ? "m" : "d"; }
+
+  function startDrag(e) {
+    e.preventDefault(); e.stopPropagation();
+    var key = _lhKey; if (!key) return;
+    var el = elFor(key); if (!el) return;
+    var st = styleOf(key), vp = curVp(), css = st[vp];
+    _drag = { key: key, css: css, x: e.clientX, y: e.clientY, ml: pxOf(css, "margin-left", 0), mt: pxOf(css, "margin-top", 0), moved: false };
+    document.documentElement.classList.add("cmsDragging");
+    var h = document.createElement("div"); h.className = "cms-draghint"; h.id = "cms-draghint"; h.textContent = "Drag to move · release to drop"; document.body.appendChild(h);
+  }
+  document.addEventListener("mousemove", function (e) {
+    if (!_drag) return;
+    var dx = e.clientX - _drag.x, dy = e.clientY - _drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) _drag.moved = true;
+    _drag.css["margin-left"] = (_drag.ml + dx) + "px";
+    _drag.css["margin-top"] = (_drag.mt + dy) + "px";
+    rebuildStyleSheet();
+  });
+  document.addEventListener("mouseup", function () {
+    if (!_drag) return;
+    var d = _drag; _drag = null;
+    document.documentElement.classList.remove("cmsDragging");
+    var hint = document.getElementById("cms-draghint"); if (hint) hint.remove();
+    if (d.moved) pushElement(d.key);
+    else openLayout(d.key);      // it was a click, not a drag
+    scheduleHideHandle();
+  });
 
   function initEditor() {
     if (document.documentElement.classList.contains("cmsEdit")) return;
@@ -217,7 +250,6 @@
 
     document.addEventListener("click", function (e) { var a = e.target.closest && e.target.closest("a"); if (a) e.preventDefault(); }, true);
 
-    // TEXT slots.
     qa("[data-cms-text]").forEach(function (el) {
       el.addEventListener("mouseenter", function () { showHandleFor(el, el.getAttribute("data-cms-text")); });
       el.addEventListener("mouseleave", scheduleHideHandle);
@@ -238,7 +270,6 @@
       });
     });
 
-    // IMAGE slots.
     qa("[data-cms-img]").forEach(function (el) {
       el.addEventListener("mouseenter", function () { showHandleFor(el, el.getAttribute("data-cms-img")); });
       el.addEventListener("mouseleave", scheduleHideHandle);
@@ -248,7 +279,6 @@
       });
     });
 
-    // SECTION toolbars.
     qa("[data-cms-section]").forEach(function (sec) {
       var key = sec.getAttribute("data-cms-section");
       var state = sectionOf(key);
@@ -274,25 +304,21 @@
       bar.querySelector('[data-a="color"]').addEventListener("input", function () { state.color = this.value; sec.style.color = this.value; pushElement(key); });
       bar.querySelector('[data-a="layout"]').addEventListener("click", function () { openLayout(key); });
       bar.querySelector('[data-a="reset"]').addEventListener("click", function () {
-        SECTION_STATE[key] = {}; STYLE_STATE[key] = { d: {}, m: {} };
+        SECTION_STATE[key] = {}; STYLE_STATE[key] = { d: {}, m: {}, base: {} };
         sec.style.backgroundColor = ""; sec.style.color = ""; sec.style.display = ""; sec.classList.remove("cms-hiddenmark");
         rebuildStyleSheet();
         post("cms-reset", { key: key, kind: "section", label: labelOf(sec, key) });
       });
     });
 
-    document.addEventListener("scroll", function () { if (_lh) _lh.style.display = "none"; }, true);
+    document.addEventListener("scroll", function () { if (_lh && !_drag) _lh.style.display = "none"; }, true);
     post("cms-ready", { page: PAGE });
   }
 
-  // ── Layout panel (viewport-aware: edits desktop or mobile bucket by current width) ──
-  function pxOf(map, k, fallback) { var v = map[k]; if (v == null || v === "") return fallback; var n = parseFloat(v); return isNaN(n) ? fallback : n; }
-  function computedPx(el, prop, fb) { try { var n = parseFloat(getComputedStyle(el)[prop]); return isNaN(n) ? fb : Math.round(n); } catch (e) { return fb; } }
-  function curVp() { return window.innerWidth <= MOBILE_BP ? "m" : "d"; }
-
+  // ── Layout + style panel ──
   function openLayout(key) {
     var el = elFor(key); if (!el) return;
-    var kind = kindOf(el), st = styleOf(key), vp = curVp(), css = st[vp];
+    var kind = kindOf(el), st = styleOf(key), vp = curVp(), css = st[vp], base = st.base;
     var old = document.getElementById("cms-lpanel"); if (old) old.remove();
     if (_lh) _lh.style.display = "none";
 
@@ -310,12 +336,16 @@
       '<div class="row"><label>Padding</label><button data-a="p-">−</button><span class="val" id="lp-p">0</span><button data-a="p+">+</button></div>' +
       (kind === "text" ? '<div class="row"><label>Text</label><button data-a="t-">−</button><span class="val" id="lp-t">—</span><button data-a="t+">+</button></div>' : '') +
       '<div class="row al"><label>Align</label><button data-a="al" data-v="left">L</button><button data-a="al" data-v="center">C</button><button data-a="al" data-v="right">R</button></div>' +
+      (kind === "text"
+        ? '<div class="row"><label>Color</label><input type="color" data-a="color" value="' + toHex(base["color"], computedHex(el, "color", "#e8e4de")) + '"><button data-a="colorclear" title="Clear colour">—</button></div>' +
+          '<div class="row st"><label>Style</label><button data-a="bold" class="' + (base["font-weight"] === "700" ? "on" : "") + '">B</button><button data-a="italic" class="' + (base["font-style"] === "italic" ? "on" : "") + '">I</button></div>'
+        : '') +
       '<div class="lp-foot"><button data-a="reset" class="reset">Reset ' + (vp === "m" ? "mobile" : "desktop") + '</button><button data-a="close">Done</button></div>';
     document.body.appendChild(p);
 
     var r = el.getBoundingClientRect();
     p.style.left = Math.min(window.innerWidth - 226, Math.max(8, r.left)) + "px";
-    p.style.top = Math.min(window.innerHeight - 300, Math.max(8, r.top)) + "px";
+    p.style.top = Math.min(window.innerHeight - 330, Math.max(8, r.top)) + "px";
 
     function refresh() {
       var w = p.querySelector("#lp-w"); if (w) w.textContent = css["max-width"] ? pxOf(css, "max-width", 0) : "auto";
@@ -326,6 +356,9 @@
     function commit() { rebuildStyleSheet(); pushElement(key); refresh(); }
     refresh();
 
+    p.addEventListener("input", function (e) {
+      if (e.target.getAttribute("data-a") === "color") { base["color"] = e.target.value; commit(); }
+    });
     p.addEventListener("click", function (e) {
       var b = e.target.closest("button"); if (!b) return; e.stopPropagation();
       var a = b.getAttribute("data-a");
@@ -349,6 +382,9 @@
       if (a === "t-") { css["font-size"] = Math.max(8, pxOf(css, "font-size", computedPx(el, "fontSize", 16)) - 1) + "px"; commit(); return; }
       if (a === "t+") { css["font-size"] = (pxOf(css, "font-size", computedPx(el, "fontSize", 16)) + 1) + "px"; commit(); return; }
       if (a === "al") { css["text-align"] = b.getAttribute("data-v"); commit(); return; }
+      if (a === "colorclear") { base["color"] = ""; var ci = p.querySelector('[data-a="color"]'); if (ci) ci.value = computedHex(el, "color", "#e8e4de"); commit(); return; }
+      if (a === "bold") { base["font-weight"] = (base["font-weight"] === "700") ? "" : "700"; b.classList.toggle("on", base["font-weight"] === "700"); commit(); return; }
+      if (a === "italic") { base["font-style"] = (base["font-style"] === "italic") ? "" : "italic"; b.classList.toggle("on", base["font-style"] === "italic"); commit(); return; }
       if (a === "reset") { st[vp] = {}; css = st[vp]; rebuildStyleSheet(); pushElement(key); refresh(); return; }
     });
 
@@ -374,6 +410,13 @@
   }
 
   function toHex(v, fallback) { if (!v) return fallback; if (/^#[0-9a-f]{6}$/i.test(v)) return v; return fallback; }
+  function computedHex(el, prop, fb) {
+    try {
+      var c = getComputedStyle(el)[prop]; var m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c);
+      if (!m) return fb;
+      return "#" + [1, 2, 3].map(function (i) { return ("0" + parseInt(m[i], 10).toString(16)).slice(-2); }).join("");
+    } catch (e) { return fb; }
+  }
 
   window.addEventListener("message", function (e) {
     if (e.origin !== location.origin) return;

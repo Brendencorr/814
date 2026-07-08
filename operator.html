@@ -723,7 +723,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <a id="cw-open" href="/home" target="_blank" rel="noopener" style="font-size:12px;color:#c9a84c;text-decoration:none;white-space:nowrap">Open live ↗</a>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover any element for the <b style="color:#f5f0e8">⛶ Layout</b> handle (move · width · height · spacing · align); hover a <b style="color:#f5f0e8">section</b> for 👁 show/hide · ↑↓ reorder · 🎨 colors; click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Use <b style="color:#f5f0e8">📱 Mobile</b> to tune the phone layout separately — desktop changes never affect mobile. Nothing goes live until <b style="color:#c9a84c">Save &amp; publish</b> — then instantly, no redeploy.</div>
+      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover any element for the <b style="color:#f5f0e8">⛶ handle</b> — <b style="color:#f5f0e8">drag it to move</b> the element, or click it for the panel (width · height · spacing · align · text colour · bold/italic). Hover a <b style="color:#f5f0e8">section</b> for 👁 show/hide · ↑↓ reorder · 🎨 colors; click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Use <b style="color:#f5f0e8">📱 Mobile</b> to tune the phone layout separately — desktop changes never affect mobile. Nothing goes live until <b style="color:#c9a84c">Save &amp; publish</b> — then instantly, no redeploy.</div>
       <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;align-items:start" id="cw-grid">
         <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;background:#0a0908;height:74vh">
           <iframe id="cw-frame" title="Website preview" style="width:100%;height:100%;border:0;display:block"></iframe>
@@ -3296,7 +3296,7 @@ function cwKey(c){ return c.page+'::'+c.key; }
 function cwOnChange(c){ if(!c||!c.page||!c.key) return; CW_PENDING[cwKey(c)] = c; cwRenderTray(); }
 function cwOnReset(page,key,kind,label){ if(!page||!key) return; CW_PENDING[page+'::'+key] = {page:page,key:key,kind:kind,label:label,__reset:true}; cwRenderTray(); }
 function cwDrop(k){ delete CW_PENDING[k]; cwRenderTray(); }
-function cwHasCss(p){ return !!(p&&p.css&&Object.keys(p.css).some(function(k){return p.css[k]!=='';})); }
+function cwHasCss(p){ if(!p) return false; return ['css','cssMobile','cssBase'].some(function(k){ var m=p[k]; return m && Object.keys(m).some(function(x){return m[x]!=='' && m[x]!=null;}); }); }
 function cwSectionSummary(p){ p=p||{}; var a=[]; if(p.hidden)a.push('hidden'); if(typeof p.sort==='number')a.push('reordered'); if(p.bg)a.push('bg color'); if(p.color)a.push('text color'); if(cwHasCss(p))a.push('layout'); return a.join(', ')||'updated'; }
 function cwRenderTray(){
   var tray=document.getElementById('cw-tray'), count=document.getElementById('cw-count'), save=document.getElementById('cw-save');

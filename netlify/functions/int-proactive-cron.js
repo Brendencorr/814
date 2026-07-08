@@ -15,7 +15,7 @@
  * Uses the service key (scans all users; bypasses RLS by design).
  * Model: n/a
  */
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 const { sendClientEmail } = require("./email-send");
 const { shell, p, btn } = require("./comms-templates");
 
@@ -122,6 +122,7 @@ async function sendProgramEmail(key, to, alert, userId) {
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;   // scheduler or operator-key only
   let dryRun = false;
   try { dryRun = JSON.parse(event.body || "{}").dry_run === true; } catch (_) {}
 

@@ -138,7 +138,7 @@ async function boot(){
   const meta=USER.user_metadata||{};
   const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
   const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const av=document.getElementById('sb-av');if(av){if(meta.avatar_url||meta.picture)av.innerHTML='<img src="'+(meta.avatar_url||meta.picture)+'">';else av.textContent=initials;}
+  const av=document.getElementById('sb-av');if(av){if(meta.avatar_url||meta.picture)av.innerHTML='<img src="'+(meta.avatar_url||meta.picture)+'" alt="'+initials+'">';else av.textContent=initials;}
   document.getElementById('sb-name').textContent=fullName;
   document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   if(!(await knowledgeGraphEntitled())){return lockedPage();}

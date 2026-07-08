@@ -17,7 +17,7 @@
  * should be reconciled against that spec before COMMS_ENABLED is flipped. Gone-Quiet ladder + gates
  * follow the handoff exactly. Once-per-template-ever is enforced here in code (not a DB constraint).
  */
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 
@@ -70,7 +70,8 @@ async function phEmit(templateKey, uid) {
   } catch (e) {}
 }
 
-exports.handler = async () => {
+exports.handler = async (event) => {
+  const _g = requireScheduledOrOperator(event); if (_g) return _g;   // scheduler or operator-key only
   const ENABLED = String(process.env.COMMS_ENABLED || "").toLowerCase() === "true";
   const DRY_RUN = String(process.env.DRY_RUN || "").toLowerCase() === "true";
   const sb = getSupabaseClient();

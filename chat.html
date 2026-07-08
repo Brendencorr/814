@@ -21,7 +21,7 @@
   --ink:#0f0e0d;--parchment:#f5f0e8;--warm-white:#faf8f4;
   --gold:#c9a84c;--gold-light:#e8d5a3;--gold-dim:rgba(201,168,76,0.15);
   --riley-blue:#2a4a6e;--riley-blue-light:#4a7ab0;
-  --mist:#e8e4dc;--smoke:#8a8578;--green:#4a7c59;--red:#8b3a3a;
+  --mist:#e8e4dc;--smoke:#8a8578;--smoke2:#544f4a;--green:#4a7c59;--red:#8b3a3a;
 }
 
 body{font-family:'DM Sans',sans-serif;background:#0a0908;color:var(--parchment);min-height:100vh}
@@ -202,7 +202,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0908;color:var(--parchment);
 /* Embed mode — dashboard chat popup (iframe of /chat?embed=1): drop the portal chrome */
 body.embed .sidebar{display:none}
 body.embed main{height:100vh}
-body.embed .topbar-actions a.topbar-btn{display:none}
+body.embed .topbar-actions{display:none}
 </style>
 </head>
 <body>
@@ -222,7 +222,7 @@ body.embed .topbar-actions a.topbar-btn{display:none}
     <div class="dash-topbar" style="flex-shrink:0">
       <div>
         <div class="topbar-greeting" id="greeting">Riley</div>
-        <div class="topbar-date">Your AI Chief of Staff · Ask anything</div>
+        <div class="topbar-date">Your companion · Here whenever you need</div>
       </div>
       <div class="topbar-actions">
         <button class="topbar-btn gold" onclick="newConversation()">New Conversation</button>

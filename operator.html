@@ -1210,7 +1210,7 @@ function renderHome(d){
       '</div>'+
     '</div>'+
   '</div>';
-  W.stats='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:.75rem">'+
+  W.stats='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:.75rem">'+
     statCard({label:'Total Clients',value:(c.total!=null?c.total:'—'),sub:'all-time',kind:'total',color:'var(--gold)'})+
     statCard({label:'Active · 7d',value:(c.active_7d!=null?c.active_7d:'—'),sub:'vs prior week',kind:'active',color:'var(--green)',delta:{cur:c.active_7d,prev:p.active_7d}})+
     statCard({label:'New · 7d',value:(c.new_7d!=null?c.new_7d:'—'),sub:'signups vs prior',kind:'new',color:'var(--blue)',delta:{cur:c.new_7d,prev:p.new_7d}})+
@@ -1605,14 +1605,14 @@ function safetyCard(f){
     '</div>'+
   '</div>';
 }
-async function markHandled(id){try{await safetyApi('resolve',{id:id});loadSafety();}catch(e){window.alert('Could not mark handled: '+e.message);}}
+async function markHandled(id){try{await safetyApi('resolve',{id:id});loadEngagement();}catch(e){window.alert('Could not mark handled: '+e.message);}}
 function updateSafetyBadge(n){var b=document.getElementById('safety-badge');if(b){b.textContent=n?n:'';b.style.display=n?'inline-block':'none';}}
 function markSafetySeen(d){var flags=(d&&d.flags)||[];if(flags.length){try{localStorage.setItem('814_safety_seen',flags[0].created_at);}catch(e){}}}
 function showSafetyPopup(fresh){
   var ov=document.getElementById('safety-pop');
   if(!ov){ov=document.createElement('div');ov.id='safety-pop';ov.style.cssText='position:fixed;top:1rem;right:1rem;z-index:10000;max-width:360px';document.body.appendChild(ov);}
   var items=fresh.slice(0,5).map(function(f){var c=f.level>=3?'#d9534f':'#c9a84c';return '<div style="font-size:.8rem;margin:.22rem 0;color:#f0e0e0"><span style="color:'+c+'">●</span> '+engEsc(f.name)+' — '+(f.level>=3?'Level 3':'Level 2')+'</div>';}).join('');
-  ov.innerHTML='<div style="background:#2a1414;border:1px solid #7a2e2e;border-radius:8px;padding:1rem 1.1rem;box-shadow:0 10px 40px rgba(0,0,0,.5)"><div style="color:#f0c0c0;font-weight:700;font-size:.92rem;margin-bottom:.5rem">⚠ '+fresh.length+' new safety flag'+(fresh.length>1?'s':'')+'</div>'+items+'<div style="display:flex;gap:.6rem;margin-top:.7rem"><button class="bo" style="border-color:#d9534f;color:#f0c0c0" onclick="dismissSafetyPopup();loadSafety(document.querySelector(\'[data-s=s]\'));">View</button><button class="bo" onclick="dismissSafetyPopup()">Dismiss</button></div></div>';
+  ov.innerHTML='<div style="background:#2a1414;border:1px solid #7a2e2e;border-radius:8px;padding:1rem 1.1rem;box-shadow:0 10px 40px rgba(0,0,0,.5)"><div style="color:#f0c0c0;font-weight:700;font-size:.92rem;margin-bottom:.5rem">⚠ '+fresh.length+' new safety flag'+(fresh.length>1?'s':'')+'</div>'+items+'<div style="display:flex;gap:.6rem;margin-top:.7rem"><button class="bo" style="border-color:#d9534f;color:#f0c0c0" onclick="dismissSafetyPopup();loadEngagement(document.querySelector(\'[data-s=e]\'));">View</button><button class="bo" onclick="dismissSafetyPopup()">Dismiss</button></div></div>';
   ov.style.display='block';
   try{localStorage.setItem('814_safety_seen',fresh[0].created_at);}catch(e){}
 }
@@ -3078,7 +3078,7 @@ async function renderFinanceHome(){
   try{
     var d=await finSummary();
     var paid=d.revenue.breakdown.companion+d.revenue.breakdown.coach+d.revenue.breakdown.mentor;
-    var nc=d.net>=0?'var(--green2)':'var(--red)';
+    var nc=d.net>=0?'var(--green)':'var(--red)';
     el.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1.4rem">'+
       finCard('Revenue · MRR',finMoney(d.revenue.mrr),paid+' paid subs','var(--green)')+
       finCard('Expenses / mo',finMoney(d.expenses.monthly),'operating burn','var(--gold)')+
@@ -3091,7 +3091,7 @@ async function renderFinanceOverview(){
   el.innerHTML='<div class="em">Loading revenue & expenses…</div>';
   try{
     var d=await finSummary(); _finData=d; var b=d.revenue.breakdown;
-    var nc=d.net>=0?'var(--green2)':'var(--red)';
+    var nc=d.net>=0?'var(--green)':'var(--red)';
     var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.3rem">'+
       finCard('Revenue · MRR',finMoney(d.revenue.mrr),'recurring/mo','var(--green)')+
       finCard('Paid subscriptions',String(b.companion+b.coach+b.mentor),b.companion+' Companion · '+b.coach+' Coach')+

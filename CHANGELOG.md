@@ -12,6 +12,34 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Quality sweep — 4-agent audit → fixed P0 security + P1 + design/UX defects
+- **P0 (security):** `evaluate-comms.js` and `int-proactive-cron.js` were scheduled crons with **NO
+  auth gate** (every other cron gates) — publicly triggerable, which would let anyone drive lifecycle/
+  program email sends once COMMS/RESEND go live. Added `requireScheduledOrOperator` to both.
+- **P1:** operator crisis "Mark handled" / safety-popup **"View"** dumped the operator on an orphaned
+  `#ss` screen (Safety was merged into Client Overview) — repointed both to `loadEngagement()` /
+  `[data-s=e]`. • Force-404'd publicly-servable **`/004_dashboard.sql` + `/migration.sql`** (schema
+  leak, repo root = publish dir). • `week-one-letter` (700-tok member gen) had no timeout block →
+  added `timeout=26`. • `login.html` loaded **zero brand fonts** (system stack) → added DM Serif/Sans.
+  • Deleted dead `dashboard-auth.js` (unreferenced, stale facts).
+- **P2 (design/UX):** operator `--green2` (undefined → wrong Net/mo color) → `var(--green)`;
+  chat.html undefined `--smoke2` → defined; off-brand "Your AI Chief of Staff" → "Your companion";
+  chat embed selector didn't hide the New-Conversation button (collided w/ popup controls) → fixed;
+  operator Home Key-Metrics grid → responsive `auto-fit`; `weekly-pipeline-cron` max_tokens 2000→**4000**
+  (CLAUDE.md rule); added analytics (track/posthog) to program.html + int-program.html; aria-labels on
+  delete buttons (finance/tracker/nutrition) + lifemap avatar alt; profile MB copy (6→5 to match hint);
+  journey "See Your Timeline" → `/progress` (was `/roadmap`→Reflection).
+- **Verified GOOD (no false fixes):** all model strings `claude-sonnet-4-6`; L3 crisis short-circuits
+  first; crisis/safety excluded from email_log; no IDOR; finance/tracker DO define `--green2` (left alone).
+- 🔵 **Deferred (hygiene, low-risk-if-left):** operator dead-code (~350 lines legacy pipeline/review/
+  users fns) + `syncSocialTrigger`/dead `gs()` sections; ~49 duplicate `[[redirects]]` in netlify.toml;
+  `waitlist-join` rate-limit; move root `004_dashboard.sql`/`migration.sql` into supabase/migrations;
+  CLAUDE.md "8 functions" (now 92); `/assets/*/README.md` 404; orphaned `admin-metrics.js`;
+  payment-webhook idempotency race; operator FeedHive Settings stale block; home.html monthly-toggle
+  fallback. Files: evaluate-comms.js, int-proactive-cron.js, weekly-pipeline-cron.js, operator.html,
+  login.html, chat.html, program.html, int-program.html, profile.html, journey.html, finance.html,
+  nutrition.html, lifemap.html, tracker.html, netlify.toml, (deleted) dashboard-auth.js.
+
 ### Member UX fixes — chat pill on the chat page + hamburger/topbar overlap
 - **Chat pill:** the floating "Chat with Riley" pill no longer shows on the full **chat page**
   (`/chat`) — you're already chatting there. `pwa.js` now computes `onChatPage` and skips both

@@ -289,7 +289,7 @@ async function loadNutrition(){
   function renderList(el,items){
     if(!items.length){el.innerHTML='<div class="empty" style="text-align:left;padding:12px 0">Nothing logged yet.</div>';return;}
     el.innerHTML='<div class="log-list">'+items.map(l=>{const det=[l.calories?l.calories+' kcal':null,l.protein_g?l.protein_g+'g protein':null,l.notes].filter(Boolean).join(' · ');
-      return`<div class="log-row"><div class="log-icon">${icons[l.label]||'🍽️'}</div><div class="log-info"><div class="log-title">${esc(l.label||'Meal')}</div>${det?`<div class="log-detail">${esc(det)}</div>`:''}</div><div class="log-date">${fmtTime(l.created_at)}</div><button onclick="deleteMeal('${l.id}')" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px;padding:0 4px;margin-left:6px">×</button></div>`;
+      return`<div class="log-row"><div class="log-icon">${icons[l.label]||'🍽️'}</div><div class="log-info"><div class="log-title">${esc(l.label||'Meal')}</div>${det?`<div class="log-detail">${esc(det)}</div>`:''}</div><div class="log-date">${fmtTime(l.created_at)}</div><button onclick="deleteMeal('${l.id}')" aria-label="Delete meal" title="Delete meal" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px;padding:0 4px;margin-left:6px">×</button></div>`;
     }).join('')+'</div>';
   }
   renderList(document.getElementById('n-today'),tl);

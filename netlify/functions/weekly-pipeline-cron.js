@@ -25,7 +25,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 
 // ── Claude API call (non-streaming) ──────────────────────────────────────────
-async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 2000) {
+async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 4000) {
   const res = await fetch(ANTHROPIC_API_URL, {
     method: "POST",
     headers: {

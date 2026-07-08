@@ -156,6 +156,11 @@
 [functions."journey-step"]
   timeout = 26
 
+# Member-facing Day-7 letter — generates a ~700-token letter on first view; needs headroom over
+# the default 10s (matches its generative siblings daily-brief / journey-step).
+[functions."week-one-letter"]
+  timeout = 26
+
 # The 8:14 Reset AM (~8:14am) / PM (~8pm) web-push nudges — scheduled every 15 min;
 # the function checks each member's local time + quiet hours + once-a-day dedup.
 [functions."reset-nudge-cron"]
@@ -277,6 +282,19 @@
   force = true
 [[redirects]]
   from = "/FUNNEL.md"
+  to = "/404.html"
+  status = 404
+  force = true
+# Committed root SQL schema files must NOT be publicly downloadable — the repo root is the
+# publish dir, so /004_dashboard.sql etc. would otherwise serve the full schema. Force-404 them
+# like the internal *.md docs. (Longer term: move these into supabase/migrations/.)
+[[redirects]]
+  from = "/004_dashboard.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/migration.sql"
   to = "/404.html"
   status = 404
   force = true

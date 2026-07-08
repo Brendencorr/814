@@ -106,7 +106,7 @@ async function load(){
 
 $('av-file').addEventListener('change', async e=>{
   const file=e.target.files[0]; if(!file) return;
-  if(file.size>6*1024*1024){status('That image is a bit large — please pick one under ~5 MB.',true);return;}
+  if(file.size>5*1024*1024){status('That image is a bit large — please pick one under ~5 MB.',true);return;}
   status('Uploading photo…');
   const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
   const path=UID+'/avatar.'+ext;

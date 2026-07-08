@@ -29,7 +29,11 @@ async function sPost(path, obj) {
 // Idempotent product by fixed id.
 async function ensureProduct(id, name, description, metaKey, metaVal) {
   const got = await sGet("products/" + id);
-  if (got && got.id) return got;
+  if (got && got.id) {
+    // Refresh name + description on re-runs so catalog copy edits take effect on existing products.
+    const upd = { name }; if (description) upd.description = description;
+    return sPost("products/" + id, upd);
+  }
   const params = { id, name, ["metadata[" + metaKey + "]"]: metaVal };
   if (description) params.description = description;
   return sPost("products", params);
@@ -63,13 +67,29 @@ exports.handler = async (event) => {
     }
     // One-time programs.
     for (const pg of PROGRAMS) {
-      const prod = await ensureProduct("riley_" + pg.product_key, pg.name, "", "riley_program", pg.product_key);
+      const prod = await ensureProduct("riley_" + pg.product_key, pg.name, pg.description, "riley_program", pg.product_key);
       if (!prod.id) { out.errors.push({ product: pg.product_key, error: prod.error }); continue; }
       out.products.push({ key: pg.product_key, id: prod.id });
       const price = await ensurePrice(pg.product_key, prod.id, pg.unit_amount, null, pg.name);
       if (price.id) out.prices[pg.product_key] = price.id;
       else out.errors.push({ price: pg.product_key, error: price.error });
     }
+    // Create the webhook endpoint (idempotent by url). We deliberately DON'T return the signing secret —
+    // reveal it in Stripe (Developers → Webhooks → this endpoint → Signing secret) → Netlify STRIPE_WEBHOOK_SECRET.
+    try {
+      const whUrl = "https://www.meetriley.us/.netlify/functions/stripe-webhook";
+      const list = await sGet("webhook_endpoints?limit=100");
+      const existing = ((list && list.data) || []).find((w) => w.url === whUrl);
+      if (existing) { out.webhook = { id: existing.id, url: whUrl, existed: true }; }
+      else {
+        const evs = ["checkout.session.completed", "invoice.paid", "customer.subscription.updated", "customer.subscription.deleted", "charge.refunded"];
+        const wb = new URLSearchParams(); wb.append("url", whUrl); evs.forEach((e, i) => wb.append("enabled_events[" + i + "]", e));
+        const wr = await fetch(STRIPE + "webhook_endpoints", { method: "POST", headers: authHeaders(), body: wb });
+        const w = await wr.json();
+        out.webhook = w.id ? { id: w.id, url: whUrl, created: true, next: "reveal the signing secret in Stripe → Webhooks → this endpoint → Netlify STRIPE_WEBHOOK_SECRET" } : { error: (w.error && w.error.message) || "create failed" };
+      }
+    } catch (e) { out.webhook = { error: String((e && e.message) || e) }; }
+
     out.ok = out.errors.length === 0;
     out.counts = { products: out.products.length, prices: Object.keys(out.prices).length };
     return json(200, out);

@@ -12,6 +12,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Stripe payments — direct integration BUILT (sandbox; not live)
+- Replaced RockPaperCoin/Zapier with **direct Stripe** (Billing + Checkout + Portal + Webhooks).
+  "Stripe for money, Supabase for access." Everything is in **test/sandbox** — no real money, NOT live.
+- **Functions:** `stripe-catalog.js` (source of truth: 2 subs + 8 one-time programs, price maps),
+  `stripe-setup.js` (operator-gated; pushed 10 products/12 prices to sandbox; fixed product ids `riley_<key>`),
+  `stripe-webhook.js` (signature-verified, idempotent, fail-closed; grant/renew/tier-swap/revoke; LIVE — secret
+  set), `stripe-checkout.js` (member Checkout Session; resolves price by PRODUCT id not lookup_key; promo codes
+  + receipts + Tax opt-in), `stripe-portal.js` (Customer Portal). Migrations **077** `payments`, **078**
+  `user_profiles.stripe_customer_id`.
+- **Buttons:** programs.html `buyProgram` + Companion/Coach modal → real checkout (was waitlist). settings.html
+  gets a "Manage billing" card → portal. Marketing home.html stays waitlist-gated by `app_settings.payments_live`
+  (flip that ONE flag at go-live → marketing routes to checkout).
+- 🔴 **NOT LIVE.** Go-live = Stripe business verification → live keys → re-run stripe-setup (live) → live webhook
+  endpoint + STRIPE_WEBHOOK_SECRET → flip payments_live=true. Open: harden webhook lookup_key at renewal; test the
+  6 checks in sandbox; remove obsolete temp fns rpc-introspect + old payment-webhook. Full record:
+  memory/stripe-payments-2026-07.md. Files: stripe-*.js, programs.html, settings.html, migrations 077/078, netlify.toml.
+
+
 ### Check-in polish — celebratory reflect card no longer reads as "auto-answered"
 - **Report:** after skipping the note question, the good-day "give one thing back" card
   ("Name what worked… what helped today?") was immediately followed by the handoff

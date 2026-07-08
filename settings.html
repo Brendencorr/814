@@ -67,6 +67,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="row"><div class="lbl">Delete account<div class="val">Permanently erase your account &amp; data</div></div><button class="linkbtn danger" id="del-account">Delete account</button></div>
   </div>
 
+  <div class="card" id="billing-card" style="display:none">
+    <h2>Membership &amp; billing</h2>
+    <div class="cdesc">Update your card, switch plans, cancel, or view &amp; download invoices — handled securely by Stripe.</div>
+    <div class="row"><div class="lbl">Billing<div class="val">Manage your subscription &amp; payment method</div></div><button class="linkbtn" id="manage-billing">Manage billing</button></div>
+  </div>
+
   <div class="card">
     <h2>Notifications</h2>
     <div class="cdesc">Choose how Riley reaches you. Safety messages always come through.</div>
@@ -104,11 +110,12 @@ async function load(){
   USER=session.user; UID=USER.id;
   $('acct-email').textContent=USER.email||'';
   try{
-    const {data:prof}=await SB.from('user_profiles').select('sobriety_date,email_notifications,push_notifications,is_admin').eq('id',UID).maybeSingle();
+    const {data:prof}=await SB.from('user_profiles').select('sobriety_date,email_notifications,push_notifications,is_admin,stripe_customer_id').eq('id',UID).maybeSingle();
     if(prof&&prof.sobriety_date) $('f-date').value=prof.sobriety_date;
     setEmailToggle(!prof || prof.email_notifications !== false);   // default ON
     setPushToggle(!prof || prof.push_notifications !== false);
     if(prof && prof.is_admin){ const ac=$('admin-card'); if(ac) ac.style.display=''; }
+    if(prof && prof.stripe_customer_id){ const bc=$('billing-card'); if(bc) bc.style.display=''; }   // show billing only if they have a Stripe account
   }catch(e){ setEmailToggle(true); setPushToggle(true); }
 }
 
@@ -164,6 +171,20 @@ $('signout').addEventListener('click', async ()=>{
 });
 
 $('del-account').addEventListener('click', ()=> RileyDeleteAccount.open({ supabase: SB, redirectTo: 'https://meetriley.us' }));
+
+// Manage billing → Stripe Customer Portal (update card / switch plan / cancel / invoices).
+(function(){ var b=$('manage-billing'); if(!b) return;
+  b.addEventListener('click', async function(){
+    b.disabled=true; var t=b.textContent; b.textContent='Opening…';
+    try{
+      var tok=(await SB.auth.getSession()).data.session && (await SB.auth.getSession()).data.session.access_token;
+      var r=await fetch('/.netlify/functions/stripe-portal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok})});
+      var d=await r.json();
+      if(d&&d.url){ window.location.href=d.url; return; }
+      b.disabled=false; b.textContent=t; alert(d&&d.error==='no_billing_account'?'You\'ll have billing options here after your first purchase.':'Could not open billing — please try again.');
+    }catch(e){ b.disabled=false; b.textContent=t; }
+  });
+})();
 
 // Install lives here for returning members (pwa.js only auto-offers on first login).
 $('install-app').addEventListener('click', ()=>{

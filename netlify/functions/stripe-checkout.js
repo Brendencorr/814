@@ -68,6 +68,7 @@ exports.handler = async (event) => {
       cancel_url: APP + "/programs?checkout=cancel",
       "metadata[user_id]": uid,
       "metadata[product_type]": sub ? "subscription" : "program",
+      allow_promotion_codes: "true",   // shows the "Add promotion code" field on the Checkout page
     };
     if (sub) {
       params["metadata[plan]"] = sub.plan; params["metadata[term]"] = sub.term;
@@ -75,6 +76,9 @@ exports.handler = async (event) => {
       params["subscription_data[metadata][plan]"] = sub.plan;
     } else {
       params["metadata[program]"] = program;
+      // One-time buys: Stripe emails a receipt. (Subscriptions get invoices/receipts via the invoice-email
+      // setting in the Stripe dashboard.)
+      if (prof && prof.email) params["payment_intent_data[receipt_email]"] = prof.email;
     }
     if (String(process.env.STRIPE_TAX_ENABLED || "").toLowerCase() === "true") {
       params["automatic_tax[enabled]"] = "true";

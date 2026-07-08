@@ -10,6 +10,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-08
+
+### Stripe LIVE — +2 webhook events, Customer Portal config, product descriptions (`8f33dc0`)
+- Live Stripe is wired: live secret + webhook secret set by Brenden; 10 products / 12 prices live w/ descriptions;
+  live endpoint armed. In-app buy buttons gated on `app_settings.payments_live` (still **false** → nothing charges).
+- **+2 webhook events** (`stripe-webhook.js`, now 7): `invoice.payment_failed` → KEEP access during Stripe's
+  auto-retry/dunning window, just log (if retries ultimately fail, `subscription.deleted` revokes); `charge.dispute.created`
+  → chargeback → revoke + flag in `payments` for review. `stripe-setup.js` now **updates** the existing endpoint's
+  events (not create-only).
+- **Customer Portal config** (`stripe-setup.js`): creates a `billing_portal/configurations` (idempotent) so
+  `stripe-portal` opens in live — update card / cancel / view+download invoices / update email+address. (Plan-switch
+  left to dashboard — needs per-product config.)
+- **Product descriptions** (`stripe-catalog.js`): custom buyer-facing copy on both subs + all 8 programs; `stripe-setup`
+  now refreshes name+description on existing products on re-run.
+- 🔴 **Re-run stripe-setup (live, operator) to APPLY** the 7-event update + portal config on the live account.
+  Still NOT go-live (`payments_live=false`). Dashboard-only follow-ups (Brenden): invoice branding logo+colors
+  (#0a0908 ink / #c9a84c gold), refund-policy footer, create actual promo Coupons (checkout already allows codes).
+  Files: stripe-webhook.js, stripe-setup.js, stripe-catalog.js.
+
 ## 2026-07-07
 
 ### Stripe payments — direct integration BUILT (sandbox; not live)

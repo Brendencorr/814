@@ -78,17 +78,36 @@ exports.handler = async (event) => {
     // reveal it in Stripe (Developers → Webhooks → this endpoint → Signing secret) → Netlify STRIPE_WEBHOOK_SECRET.
     try {
       const whUrl = "https://www.meetriley.us/.netlify/functions/stripe-webhook";
+      const evs = ["checkout.session.completed", "invoice.paid", "invoice.payment_failed", "customer.subscription.updated", "customer.subscription.deleted", "charge.refunded", "charge.dispute.created"];
       const list = await sGet("webhook_endpoints?limit=100");
       const existing = ((list && list.data) || []).find((w) => w.url === whUrl);
-      if (existing) { out.webhook = { id: existing.id, url: whUrl, existed: true }; }
-      else {
-        const evs = ["checkout.session.completed", "invoice.paid", "customer.subscription.updated", "customer.subscription.deleted", "charge.refunded"];
-        const wb = new URLSearchParams(); wb.append("url", whUrl); evs.forEach((e, i) => wb.append("enabled_events[" + i + "]", e));
-        const wr = await fetch(STRIPE + "webhook_endpoints", { method: "POST", headers: authHeaders(), body: wb });
-        const w = await wr.json();
-        out.webhook = w.id ? { id: w.id, url: whUrl, created: true, next: "reveal the signing secret in Stripe → Webhooks → this endpoint → Netlify STRIPE_WEBHOOK_SECRET" } : { error: (w.error && w.error.message) || "create failed" };
-      }
+      const wb = new URLSearchParams(); if (!existing) wb.append("url", whUrl); evs.forEach((e, i) => wb.append("enabled_events[" + i + "]", e));
+      const wr = await fetch(STRIPE + "webhook_endpoints" + (existing ? "/" + existing.id : ""), { method: "POST", headers: authHeaders(), body: wb });
+      const w = await wr.json();
+      out.webhook = w.id ? { id: w.id, url: whUrl, events: evs.length, action: existing ? "updated" : "created", next: existing ? undefined : "reveal the signing secret in Stripe → Webhooks → Netlify STRIPE_WEBHOOK_SECRET" } : { error: (w.error && w.error.message) || "failed" };
     } catch (e) { out.webhook = { error: String((e && e.message) || e) }; }
+
+    // Customer Portal configuration — required (in live) for stripe-portal sessions to open. Enables
+    // update-card / cancel / view+download invoices / update email+address. (Plan-switching left to the
+    // dashboard — it needs per-product config.) Idempotent: only create if none exists yet.
+    try {
+      const have = await sGet("billing_portal/configurations?limit=1");
+      if (have && have.data && have.data[0]) {
+        out.portal = { id: have.data[0].id, existed: true };
+      } else {
+        const c = new URLSearchParams();
+        c.append("business_profile[headline]", "Manage your Riley membership");
+        c.append("features[customer_update][enabled]", "true");
+        c.append("features[customer_update][allowed_updates][0]", "email");
+        c.append("features[customer_update][allowed_updates][1]", "address");
+        c.append("features[invoice_history][enabled]", "true");
+        c.append("features[payment_method_update][enabled]", "true");
+        c.append("features[subscription_cancel][enabled]", "true");
+        const cr = await fetch(STRIPE + "billing_portal/configurations", { method: "POST", headers: authHeaders(), body: c });
+        const cj = await cr.json();
+        out.portal = cj.id ? { id: cj.id, created: true } : { error: (cj.error && cj.error.message) || "failed" };
+      }
+    } catch (e) { out.portal = { error: String((e && e.message) || e) }; }
 
     out.ok = out.errors.length === 0;
     out.counts = { products: out.products.length, prices: Object.keys(out.prices).length };

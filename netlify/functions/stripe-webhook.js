@@ -112,6 +112,18 @@ exports.handler = async (event) => {
         await log(uid ? "revoked" : "unmatched", { user_id: uid, detail: "refunded" });
         break;
       }
+      case "invoice.payment_failed": { // renewal card declined — KEEP access during Stripe's automatic
+        // retries (dunning). If they ultimately fail, customer.subscription.deleted revokes. Just log now.
+        const uid = await uidByCustomer(sb, obj.customer);
+        await log(uid ? "payment_failed" : "unmatched", { user_id: uid, detail: "renewal payment failed — in Stripe retry window" });
+        break;
+      }
+      case "charge.dispute.created": { // chargeback → revoke (and it's flagged in payments for you to review)
+        const uid = await uidByCustomer(sb, obj.customer);
+        if (uid) await sb.from("subscriptions").update({ status: "canceled", expires_at: new Date().toISOString() }).eq("user_id", uid).eq("status", "active");
+        await log(uid ? "revoked" : "unmatched", { user_id: uid, detail: "chargeback / dispute opened" });
+        break;
+      }
       default: await log("ignored", {});
     }
     return json(200, { received: true });

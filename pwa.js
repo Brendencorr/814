@@ -11,6 +11,9 @@
   var isIOS = /iphone|ipad|ipod/i.test(ua);
   var isSafari = /safari/i.test(ua) && !/crios|fxios|chrome|android/i.test(ua);
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
+  // On the full chat page (/chat) the member IS already chatting — never show the floating
+  // "Chat with Riley" pill or hijack /chat links there. (The embed iframe already returns above.)
+  var onChatPage = /(^|\/)chat(\.html)?\/?$/.test(location.pathname.toLowerCase());
   var deferredPrompt = null;
   // "Download the Riley app" is only offered AFTER a member finishes onboarding in the chat. The flag
   // is set at onboarding completion (and whenever we confirm onboarding_completed) in riley-auth/dashboard.
@@ -53,7 +56,7 @@
         '#riley-hamburger{display:flex}',
         '.sidebar{display:flex !important;position:fixed !important;top:0;left:0;bottom:0;height:100vh;width:272px;max-width:84vw;z-index:9998;transform:translateX(-104%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 0 44px rgba(0,0,0,0.6);overflow-y:auto}',
         '.sidebar.riley-mobile-open{transform:translateX(0)}',
-        '.topbar{padding-left:66px !important}',
+        '.topbar,.dash-topbar{padding-left:66px !important}',
       '}'
     ].join(''));
     var burger = document.createElement('div');
@@ -196,8 +199,8 @@
     b.addEventListener('click', openChat);
     document.body.appendChild(b);
   }
-  // Any existing "/chat" link opens the popup instead of navigating.
-  document.addEventListener('click', function (e) {
+  // Any existing "/chat" link opens the popup instead of navigating — except on the chat page itself.
+  if (!onChatPage) document.addEventListener('click', function (e) {
     var a = e.target.closest ? e.target.closest('a[href]') : null;
     if (a && /^\/chat(\?|$)/.test(a.getAttribute('href') || '')) { e.preventDefault(); openChat(); }
   });
@@ -231,7 +234,7 @@
 
   window.addEventListener('load', function () {
     setTimeout(function () {
-      chatPill();                                          // always-on: Chat with Riley
+      if (!onChatPage) chatPill();                         // Chat pill — but NOT on the chat page itself
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)

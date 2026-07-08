@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Member UX fixes — chat pill on the chat page + hamburger/topbar overlap
+- **Chat pill:** the floating "Chat with Riley" pill no longer shows on the full **chat page**
+  (`/chat`) — you're already chatting there. `pwa.js` now computes `onChatPage` and skips both
+  `chatPill()` and the `/chat` link-intercept there (the embedded popup iframe already returned
+  early via `?embed=1`; opening the popup already hid the pill). So the pill only appears where it's
+  actually useful, and disappears the moment a conversation is the page.
+- **Hamburger overlap:** the fixed mobile hamburger sat on top of the greeting on pages whose
+  top-bar isn't `.topbar` (e.g. chat.html uses `.dash-topbar`). Extended the pwa mobile clearance to
+  `.topbar,.dash-topbar{padding-left:66px}`. Verified EVERY sidebar/hamburger page uses one of those
+  two top-bar classes, so the greeting now clears the hamburger on all member pages. (All pages
+  already carry a proper viewport meta.) File: pwa.js.
+
 ### Payment grant webhook (RockPaperCoin/Stripe → Zapier → Riley) — DORMANT
 - New `payment-webhook.js` + migration **077** `payments`. On a paid invoice, a Zap POSTs here and Riley
   grants the tier/program by inserting the same `subscriptions`/`purchases` row a comp uses (picked up by

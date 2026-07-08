@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Check-in polish — celebratory reflect card no longer reads as "auto-answered"
+- **Report:** after skipping the note question, the good-day "give one thing back" card
+  ("Name what worked… what helped today?") was immediately followed by the handoff
+  ("Love that, {name}. Let's put it to work…") — two Riley messages back-to-back, so the
+  reflection prompt felt auto-skipped/auto-answered. (The step machinery is correct — `rcAsk(i)`
+  advances exactly one step; this was pacing + copy, not a double-advance.)
+- **Fix (chat.html `rcAfter`):** a ~1.4s beat before the handoff so the reflection card lands
+  first; and the mood≥4 handoff no longer presumes an answer — now invites one:
+  "No rush, {name} — tell me what worked today, or just start wherever feels right." File: chat.html.
+
 ### Check-in fix — Phase-2 "note from Riley" no longer collides with the daily check-in
 - **Bug:** on the app home, the chat auto-opens the daily check-in (pwa.js) AND `loadPhase2Discovery()`
   immediately popped the Phase-2 "A note from Riley" modal — two Riley prompts on screen at once.

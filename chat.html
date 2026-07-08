@@ -598,6 +598,9 @@ function rcCardCta(cta){
 // Warm, mood-aware handoff into conversation, then offer to resume (24h) or start new.
 async function rcAfter(){
   const name = rcName(), mood = RC.mood||0, goal = RC.goal;
+  // A beat so the "give one thing back" card lands before Riley opens the floor. Without it the
+  // reflection prompt + this handoff fire back-to-back and read as if Riley answered for the member.
+  await new Promise(function(r){ setTimeout(r, 1400); });
   let line;
   if(goal==='slip' || goal==='not_yet' || goal==='carried')
     line = "Thanks for being real with me, "+name+". That's exactly the kind of day I want to be here for — what's going on?";
@@ -606,7 +609,7 @@ async function rcAfter(){
   else if(mood===3)
     line = "Thanks for being straight with me, "+name+". 'Okay' is worth a look — what's going on?";
   else if(mood>=4)
-    line = "Love that, "+name+". Let's put it to work — what do you want to focus on?";
+    line = "No rush, "+name+" — tell me what worked today, or just start wherever feels right.";
   else
     line = "Thanks for catching me up, "+name+". What's on your mind?";
   appendMsg('riley', line);

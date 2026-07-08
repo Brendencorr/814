@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-07
 
+### Signup flow fixes — no sign-in loop, no rebuild-date prompt, app-install after onboarding
+- **1) Fixed the "loops back to sign-in" bug.** After Google authorize, the OAuth callback landed on
+  `/dashboard`, which bounces to the marketing/sign-in page the instant `getSession()` is momentarily null
+  (post-OAuth hydration race). Now `login.html` lands the callback on **`/riley-auth.html`** (the onboarding
+  chat) — it tolerates the race (waits for the SIGNED_IN event) and routes: new members straight into the
+  onboarding chat, already-onboarded members onward to `/dashboard`. Single sign-up now goes straight to chat.
+- **2) Removed the "When did you start your rebuild?" prompt.** `renderSobrietyInfo()` no longer auto-shows
+  the sobriety-set-bar for members without a date — sobriety stays optional (settable from the tracker),
+  never pushed during onboarding. (Element already `display:none` by default; the banner + Edit path for
+  members who DO track a date are unchanged.)
+- **3) "Download the Riley app" now appears only AFTER onboarding.** `pwa.js` gates both install affordances
+  (login popup + install pill) on a new `riley_onboarded` localStorage flag, set at onboarding completion
+  (riley-auth) and whenever `onboarding_completed` is confirmed (riley-auth handlePostAuth + dashboard guard).
+- Files: login.html, riley-auth.html, dashboard.html, pwa.js.
+
 ### Gone-Quiet reworked to "14 days since the last touch" (fixes onboarding overlap)
 - **Why:** the old rule (win-back after 2 idle days) could cut a new member's onboarding short — a signup
   who didn't return for 2 days flipped straight into win-back. Operator's call: start win-back only after

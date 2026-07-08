@@ -497,6 +497,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
       if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/riley-auth.html';return;}
+      try{localStorage.setItem('riley_onboarded','1');}catch(e){}   // onboarded → app-install prompt (pwa.js) now allowed
       // One-time consent for members who onboarded before consent existed.
       // Blocks here (serial) so it never stacks with the daily check-in modal.
       await requireConsent(ob.consent_at);

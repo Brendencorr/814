@@ -517,7 +517,7 @@ async function handlePostAuth(session) {
     onboarded = data && data.onboarding_completed === true;
     consentAt = data ? data.consent_at : null;
   } catch (e) {}
-  if (onboarded) { window.location.href = '/dashboard'; return; }
+  if (onboarded) { try { localStorage.setItem('riley_onboarded', '1'); } catch (e) {} window.location.href = '/dashboard'; return; }
   try {
     await runOnboarding(session, consentAt);
   } catch (e) {
@@ -665,6 +665,8 @@ async function runOnboarding(session, consentAt) {
   patch.onboarding_completed = true;
   patch.onboarding_step = 7;
   patch.onboarding_completed_at = new Date().toISOString();
+  // Onboarding is done — now the app-install prompt (pwa.js) is allowed to appear.
+  try { localStorage.setItem('riley_onboarded', '1'); } catch (e) {}
   try { await sb.from('user_profiles').upsert(patch, { onConflict: 'id' }); } catch (e) { console.warn('onboarding save', e && e.message); }
   // influences is saved separately + non-fatally: if migration 036 (the influences
   // column) hasn't been run in Supabase yet, this fails quietly and onboarding still
@@ -801,7 +803,9 @@ function renderSobrietyInfo() {
     document.getElementById('sobriety-banner').style.display = 'flex';
     document.getElementById('sobriety-set-bar').style.display = 'none';
   } else {
-    document.getElementById('sobriety-set-bar').style.display = 'flex';
+    // No date set — do NOT prompt for it. The "When did you start your rebuild?" ask was removed from
+    // onboarding; sobriety stays optional (settable from the tracker), never pushed on new members.
+    document.getElementById('sobriety-set-bar').style.display = 'none';
     document.getElementById('sobriety-banner').style.display = 'none';
   }
 }

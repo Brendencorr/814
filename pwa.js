@@ -12,6 +12,9 @@
   var isSafari = /safari/i.test(ua) && !/crios|fxios|chrome|android/i.test(ua);
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
   var deferredPrompt = null;
+  // "Download the Riley app" is only offered AFTER a member finishes onboarding in the chat. The flag
+  // is set at onboarding completion (and whenever we confirm onboarding_completed) in riley-auth/dashboard.
+  function isOnboarded() { try { return localStorage.getItem('riley_onboarded') === '1'; } catch (e) { return false; } }
 
   // ── 1) Register the network-first service worker ─────────────────────────
   if ('serviceWorker' in navigator) {
@@ -230,6 +233,7 @@
     setTimeout(function () {
       chatPill();                                          // always-on: Chat with Riley
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
+      if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)
       installFirstLogin();                                 // first-ever login → offer install
     }, onLogin ? 900 : 500);

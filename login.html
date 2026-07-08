@@ -68,9 +68,12 @@ var _sb = window.supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
-// Origin-aware so sign-in works on whatever domain serves this page:
-// login.<base> → the app at riley.<base>/dashboard. Falls back to riley.meetriley.us if the host is unexpected.
-var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/dashboard' : 'https://riley.meetriley.us/dashboard'; })();
+// Origin-aware so sign-in works on whatever domain serves this page. We land the OAuth callback on
+// /riley-auth.html (the onboarding chat) — NOT /dashboard — because that page tolerates the post-OAuth
+// session-hydration race (it waits for the SIGNED_IN event) and routes correctly: new members straight
+// into the onboarding chat, already-onboarded members onward to /dashboard. Landing on /dashboard could
+// bounce a not-yet-hydrated session back to the marketing/sign-in page (the "loops back to sign-in" bug).
+var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/^login\./, ''); return base && base !== h ? 'https://riley.' + base + '/riley-auth.html' : 'https://riley.meetriley.us/riley-auth.html'; })();
 
 // If already logged in, go straight to dashboard
 _sb.auth.getSession().then(function(r) {

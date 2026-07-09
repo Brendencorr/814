@@ -2548,6 +2548,7 @@ function renderUserDetail(d){
 
   html+='<div class="ud-section"><div class="ud-section-label" style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">Correspondence <span style="color:var(--muted2);font-weight:400;font-size:.66rem">emails we\'ve sent this member</span>'+(profile.email?'<button onclick="resendWelcome(\''+profile.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.7rem;cursor:pointer;padding:4px 10px;font-weight:600;font-family:inherit">Resend welcome</button><span id="ud-corr-status" style="font-size:.7rem;color:var(--muted)"></span>':'')+'</div><div id="ud-corr-body" class="em">Loading…</div></div>';
   html+='<div class="ud-section"><div class="ud-section-label" style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">Billing <span style="color:var(--muted2);font-weight:400;font-size:.66rem">subscription, payments &amp; receipts &middot; via Stripe (no card data)</span></div><div id="ud-billing-body" class="em">Loading…</div></div>';
+  html+='<div class="ud-section" style="border:1px solid rgba(200,70,70,.32);border-radius:10px;padding:.7rem .85rem;margin-top:.5rem"><div class="ud-section-label" style="color:#e08a8a">Danger zone <span style="color:var(--muted2);font-weight:400;font-size:.63rem">deactivate = cancel sub + revoke access, data kept (reversible) &middot; delete = erase everything</span></div><div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.55rem"><button onclick="deactivateMember(\''+profile.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.72rem;cursor:pointer;padding:5px 12px;font-weight:600;font-family:inherit">Deactivate</button><button onclick="deleteMemberHard(\''+profile.id+'\',this)" style="background:none;border:1px solid rgba(200,70,70,.5);border-radius:6px;color:#e07070;font-size:.72rem;cursor:pointer;padding:5px 12px;font-weight:600;font-family:inherit">Delete account</button></div></div>';
   document.getElementById('ud-body').innerHTML=html;
   if(profile.id)loadMembershipPanel(profile.id);
   if(profile.id)loadUserEmails(profile.id);
@@ -2638,6 +2639,30 @@ function refundCharge(userId,chargeId,btn){
   fetch(B+'/admin-billing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refund',user_id:userId,charge_id:chargeId})})
     .then(function(r){return r.json();}).then(function(d){ if(d&&d.error){window.alert('Refund failed: '+d.error);} loadBillingPanel(userId); })
     .catch(function(){ if(btn){btn.disabled=false;btn.textContent='Refund';} });
+}
+
+// ── Danger zone: Deactivate (reversible) + Delete account (hard erase). admin-account is
+// OPERATOR_KEY-gated; the global fetch injector adds x-operator-key. Deactivate cancels Stripe +
+// the subscription and keeps data; Delete cancels Stripe first, then erases everything.
+function deactivateMember(userId,btn){
+  if(!window.confirm('Deactivate this member?\n\nTheir subscription is canceled and membership access revoked, but all their data is KEPT (reversible - you can re-comp them later).'))return;
+  if(btn){btn.disabled=true;btn.textContent='Deactivating…';}
+  fetch(B+'/admin-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deactivate',user_id:userId})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d&&d.ok){ window.alert('Deactivated. Subscriptions canceled: '+(d.subs_canceled||0)+'.'); if(typeof loadBillingPanel==='function')loadBillingPanel(userId); if(typeof loadMembershipPanel==='function')loadMembershipPanel(userId); }
+      else { window.alert('Deactivate failed: '+((d&&d.error)||'unknown')); }
+      if(btn){btn.disabled=false;btn.textContent='Deactivate';}
+    }).catch(function(){ if(btn){btn.disabled=false;btn.textContent='Deactivate';} window.alert('Deactivate failed (network).'); });
+}
+function deleteMemberHard(userId,btn){
+  var typed=window.prompt('HARD DELETE - permanently erases this member and ALL their data. Crisis-safety records are kept de-identified per policy. This CANNOT be undone.\n\nType DELETE to confirm:');
+  if(typed!=='DELETE'){ if(typed!==null) window.alert('Not deleted - you must type DELETE exactly.'); return; }
+  if(btn){btn.disabled=true;btn.textContent='Deleting…';}
+  fetch(B+'/admin-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',user_id:userId,confirm:true})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(d&&d.ok&&d.deleted){ window.alert('Account deleted. Login removed: '+(d.auth_deleted?'yes':'no - contact support')+'.'); if(typeof closeUserPanel==='function')closeUserPanel(); if(typeof loadUsers==='function')loadUsers(); }
+      else { window.alert('Delete failed: '+((d&&d.error)||'unknown')); if(btn){btn.disabled=false;btn.textContent='Delete account';} }
+    }).catch(function(){ if(btn){btn.disabled=false;btn.textContent='Delete account';} window.alert('Delete failed (network).'); });
 }
 
 // ── Membership & Entitlements panel (v4) - merged into the Users tab ────────

@@ -12,6 +12,22 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Operator customer lifecycle: Deactivate + Delete account (new `admin-account.js`)
+- **Why:** the operator could cancel/refund a member's Stripe subscription (admin-billing) but could NOT
+  deactivate or delete a customer from the dashboard - full erasure was member-self-serve only.
+- **New `admin-account.js`** (OPERATOR_KEY-gated, writes `admin_audit`): `deactivate` = cancel Stripe sub +
+  set `subscriptions` canceled/expired (revoke access) but KEEP data (reversible); `delete` = cancel Stripe
+  FIRST, then hard-erase via the shared `eraseMemberById()` (requires `confirm:true`). crisis_log retained
+  de-identified per policy.
+- **auth-handler.js:** extracted the erasure into a shared `eraseMemberById(supabase, userId)` (exported) that
+  BOTH self-serve `delete_account` and the operator `delete` now call - one table list, can't drift. **Added the
+  Memory v2 tables** `session_summaries` + `chat_turn_signals` to `ACCOUNT_DELETE_TABLES` (self-serve deletion
+  was leaving them behind - closes an audit gap).
+- **operator.html:** member-detail "Danger zone" with Deactivate + Delete account (type-DELETE-to-confirm);
+  auto-authed via the x-operator-key injector. Inline JS re-verified (`node -c`).
+- Stripe billing tracking + cancel/refund already existed in the member detail (`admin-billing` + the Billing
+  panel); it shows "No billing account yet" until `STRIPE_SECRET_KEY` is set + real purchases exist.
+
 ### Typography: NO EM-DASHES anywhere - plain hyphen only (`f092040`, `126140f`, `8cd8d98` + DB)
 - **Why:** Brenden - the em-dash "-" reads too large. Standing rule now: plain hyphen `-` everywhere, never
   em/en-dashes. (Logged in Claude memory MEMORY.md standing directives + working-preferences.)

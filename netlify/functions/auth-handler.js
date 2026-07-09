@@ -280,55 +280,65 @@ const ACCOUNT_DELETE_TABLES = [
   "usage_counters", "user_daily_state", "user_goals", "user_program_progress",
   "week_one_letters", "wellness_baseline", "wellness_plans", "wellness_profile",
   "wellness_weekly",
+  // Memory v2 tables (Master Build Spec) - erase these too. (api_cost_log / system_incidents
+  // store only a hashed id, never user_id, so they're already de-identified.)
+  "session_summaries", "chat_turn_signals",
 ];
 
 // ── Action: delete_account - permanently close the account + erase all data ────
 // Wipes every member-owned row, the profile, and the auth login itself (the member
 // cannot sign back in). crisis_log is retained, de-identified (see note above).
-async function deleteAccount(supabase, body) {
-  const user = await verifyToken(supabase, body.token);
-  if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete the account" });
-
+// Shared erasure by user id - used by BOTH member self-serve delete_account AND the operator
+// admin-account "delete" action. ONE table list, one code path, so neither can drift.
+async function eraseMemberById(supabase, userId) {
   // Best-effort: remove an uploaded avatar from storage (skip external OAuth photos).
   try {
-    const { data: prof } = await supabase.from("user_profiles").select("avatar_url").eq("id", user.id).maybeSingle();
+    const { data: prof } = await supabase.from("user_profiles").select("avatar_url").eq("id", userId).maybeSingle();
     const url = prof?.avatar_url || "";
     const marker = "/storage/v1/object/public/avatars/";
     if (url.includes(marker)) {
       const path = decodeURIComponent(url.split(marker)[1].split("?")[0]);
       await supabase.storage.from("avatars").remove([path]);
     }
-  } catch (e) { console.warn("delete_account avatar cleanup (non-fatal):", e.message); }
+  } catch (e) { console.warn("eraseMember avatar cleanup (non-fatal):", e.message); }
 
   // Wipe all member-owned rows. Two passes so any FK-ordering hiccup self-heals.
   let failed = ACCOUNT_DELETE_TABLES.slice();
   for (let pass = 0; pass < 2 && failed.length; pass++) {
     const targets = failed;
-    const results = await Promise.allSettled(targets.map((t) => supabase.from(t).delete().eq("user_id", user.id)));
+    const results = await Promise.allSettled(targets.map((t) => supabase.from(t).delete().eq("user_id", userId)));
     failed = targets.filter((t, i) => results[i].status !== "fulfilled" || results[i].value.error);
   }
-  if (failed.length) console.error("delete_account residual table failures:", failed.join(", "));
+  if (failed.length) console.error("eraseMember residual table failures:", failed.join(", "));
 
   // Delete the profile row entirely - this de-identifies any retained crisis_log.
-  try { await supabase.from("user_profiles").delete().eq("id", user.id); }
-  catch (e) { console.error("delete_account profile delete failed:", e.message); failed.push("user_profiles"); }
+  try { await supabase.from("user_profiles").delete().eq("id", userId); }
+  catch (e) { console.error("eraseMember profile delete failed:", e.message); failed.push("user_profiles"); }
 
   // Remove the auth login - the account is now truly closed.
   let authDeleted = false;
   try {
-    const { error } = await supabase.auth.admin.deleteUser(user.id);
+    const { error } = await supabase.auth.admin.deleteUser(userId);
     if (error) throw error;
     authDeleted = true;
-  } catch (e) {
-    console.error("delete_account auth.admin.deleteUser failed:", e.message);
-  }
+  } catch (e) { console.error("eraseMember auth.admin.deleteUser failed:", e.message); }
 
+  return { authDeleted, failed };
+}
+
+async function deleteAccount(supabase, body) {
+  const user = await verifyToken(supabase, body.token);
+  if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete the account" });
+  const { authDeleted, failed } = await eraseMemberById(supabase, user.id);
   console.log(`delete_account ${user.id}: auth_deleted=${authDeleted}, table_failures=${failed.length}`);
   if (!authDeleted) {
     return json(500, { error: "Your data was cleared, but the login couldn't be fully removed. Please contact support so we can finish closing the account.", auth_deleted: false });
   }
   return json(200, { success: true, auth_deleted: true });
 }
+
+// Exported so the operator admin-account function reuses the exact same erasure.
+exports.eraseMemberById = eraseMemberById;
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 exports.handler = async function (event) {

@@ -1,5 +1,5 @@
 /**
- * content-design.js - Riley grounds render engine (render_engine = 'riley-grounds').
+ * content-design.js - Riley grounds render engine (render_engine = 'native').
  *
  * The server-side design step for CONTENT_ENGINE_v3, mirroring content-atlas.js but
  * rendering LOCALLY with @napi-rs/canvas onto the six locked grounds (no external
@@ -185,9 +185,9 @@ async function renderAsset({ ground, layout, format, eyebrow, headline }) {
 // ── design assignment via the rotation rules ──────────────────────────────────────
 const HEAVY_RE = /grief|grieve|mourn|loss|lost|died|death|slip|relapse|2\s?am|rock bottom|alone/i;
 async function recentHistory(db) {
-  // reconstruct a rotation history from recent riley-grounds assets (for the run rules)
+  // reconstruct a rotation history from recent native assets (for the run rules)
   const { data } = await db.from("content_creative_assets")
-    .select("render_payload, created_at").eq("render_engine", "riley-grounds")
+    .select("render_payload, created_at").eq("render_engine", "native")
     .order("created_at", { ascending: false }).limit(12);
   return (data || []).reverse().map((a) => a.render_payload).filter((p) => p && p.ground)
     .map((p) => ({ format: p.format, ground: p.ground, mode: GROUND_META[p.ground] ? GROUND_META[p.ground].mode : "dark", layout: p.layout }));
@@ -236,11 +236,13 @@ async function renderBrief(briefId, opts = {}) {
 
     const altText = `${headline} - Riley`.slice(0, 125);
     const payload = { ground: design.ground, layout: design.layout, format: design.format, eyebrow: design.eyebrow, headline };
-    const { data: row } = await db.from("content_creative_assets").insert({
+    // render_engine must satisfy the content_creative_assets CHECK
+    // (canva|creatomate|bannerbear|placid|native|manual) - the grounds engine is 'native'.
+    const { data: row, error: insErr } = await db.from("content_creative_assets").insert({
       brief_id: briefId,
       asset_type: assetType,
       platform: ["instagram","tiktok","linkedin","facebook","youtube_shorts","pinterest","x"].includes(platform) ? platform : "instagram",
-      render_engine: "riley-grounds",
+      render_engine: "native",
       template_id: `${design.format}:${design.ground}:${design.layout}`,
       file_url: fileUrl,
       storage_path: storagePath,
@@ -250,6 +252,10 @@ async function renderBrief(briefId, opts = {}) {
       render_payload: payload,
       qa_passed: altText.length <= 125,
     }).select().single();
+    if (insErr || !row) {
+      await db.from("content_briefs").update({ status: "brief" }).eq("id", briefId);
+      return { designed: false, reason: `asset insert failed: ${insErr ? insErr.message : "no row returned"}` };
+    }
     asset = row;
   } catch (e) {
     await db.from("content_briefs").update({ status: "brief" }).eq("id", briefId);
@@ -257,7 +263,7 @@ async function renderBrief(briefId, opts = {}) {
   }
 
   await db.from("content_briefs").update({ status: "designed" }).eq("id", briefId);
-  return { designed: !!asset, assets: asset ? [asset] : [], design };
+  return { designed: true, assets: [asset], design };
 }
 
 // ── the six-grounds gallery (Designs tab) ─────────────────────────────────────────
@@ -313,8 +319,8 @@ exports.handler = async function (event) {
     if (body.action === "swap") {
       if (!body.brief_id || !body.ground) return json(400, { error: "brief_id and ground required" });
       const db = contentDb();
-      // remove prior riley-grounds assets for this brief, then re-render with the chosen ground
-      await db.from("content_creative_assets").delete().eq("brief_id", body.brief_id).eq("render_engine", "riley-grounds");
+      // remove prior native assets for this brief, then re-render with the chosen ground
+      await db.from("content_creative_assets").delete().eq("brief_id", body.brief_id).eq("render_engine", "native");
       return json(200, await renderBrief(body.brief_id, { override: { ground: body.ground, layout: body.layout } }));
     }
     return json(400, { error: "unknown action" });

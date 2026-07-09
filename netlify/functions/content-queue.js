@@ -159,7 +159,7 @@ exports.handler = async function (event) {
     if (action === "swap_design") {
       if (!item.brief_id) return json(400, { error: "this item has no brief to design" });
       if (!body.ground) return json(400, { error: "ground required" });
-      await db.from("content_creative_assets").delete().eq("brief_id", item.brief_id).eq("render_engine", "riley-grounds");
+      await db.from("content_creative_assets").delete().eq("brief_id", item.brief_id).eq("render_engine", "native");
       let r;
       try { r = await renderBrief(item.brief_id, { override: { ground: body.ground, layout: body.layout } }); }
       catch (e) { return json(500, { error: "render failed: " + e.message }); }

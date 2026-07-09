@@ -10,6 +10,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-09
+
+### Operator per-member Billing panel + admin-billing engine + live cancel verified
+- **`admin-billing.js`** (OPERATOR-gated, `36e21d0`): `get` (subs + charges + card brand/last4 + Stripe hosted
+  `receipt_url`; NO raw banking), `cancel` (immediate/at_period_end), `refund` (operator-initiated).
+- **`operator.html`**: new **Billing** section in the member-detail view (`renderUserDetail`) — mirrors the
+  Correspondence panel. Shows subscription (plan/amount/status) + payments (amount, card, hosted receipt link)
+  with **Cancel** and **Refund** buttons wired to `admin-billing` (patched `fetch` injects the operator key).
+- ✅ **Live cancel verified**: canceled a real Companion sub → Stripe `canceled` + `customer.subscription.deleted`
+  webhook → Supabase revoked. grant/renew/cancel→revoke all proven on live keys.
+- ⚠️ **COMMS still DARK** — Brenden asked to enable; NOT flipped (standing rule: `COMMS_ENABLED` is a Netlify env
+  var he sets; sensitive auto-outreach). Prereqs before flip: mailboxes live, reconcile `reengagement-cron` ↔
+  Gone-Quiet double-send, DRY-run preview. 🔴 Stripe LIVE branding still unset (Public details name + Branding icon).
+
 ## 2026-07-08
 
 ### Stripe LIVE verified end-to-end + post-checkout redirect hardening + operator test-checkout

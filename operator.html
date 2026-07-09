@@ -2547,9 +2547,11 @@ function renderUserDetail(d){
   }
 
   html+='<div class="ud-section"><div class="ud-section-label" style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">Correspondence <span style="color:var(--muted2);font-weight:400;font-size:.66rem">emails we\'ve sent this member</span>'+(profile.email?'<button onclick="resendWelcome(\''+profile.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.7rem;cursor:pointer;padding:4px 10px;font-weight:600;font-family:inherit">Resend welcome</button><span id="ud-corr-status" style="font-size:.7rem;color:var(--muted)"></span>':'')+'</div><div id="ud-corr-body" class="em">Loading…</div></div>';
+  html+='<div class="ud-section"><div class="ud-section-label" style="display:flex;align-items:center;gap:.55rem;flex-wrap:wrap">Billing <span style="color:var(--muted2);font-weight:400;font-size:.66rem">subscription, payments &amp; receipts &middot; via Stripe (no card data)</span></div><div id="ud-billing-body" class="em">Loading…</div></div>';
   document.getElementById('ud-body').innerHTML=html;
   if(profile.id)loadMembershipPanel(profile.id);
   if(profile.id)loadUserEmails(profile.id);
+  if(profile.id)loadBillingPanel(profile.id);
 }
 
 // ── Resend the welcome email to an existing member (logged via email_log; refreshes the panel).
@@ -2587,6 +2589,55 @@ function loadUserEmails(userId){
         '<span style="color:var(--muted2);font-size:.64rem;text-transform:uppercase">'+x(r.kind||'')+'</span></div>';
     }).join('')+'</div>';
   }).catch(function(){ el.innerHTML='<div class="em" style="color:var(--red)">Could not load correspondence.</div>'; });
+}
+
+// ── Billing: the member's Stripe subscription + payments (with hosted receipts) + cancel/refund controls.
+// No raw banking data — Stripe holds the card; we surface amount, status, card brand/last4 + the hosted
+// receipt link. Cancel/refund go through admin-billing; the stripe-webhook keeps Supabase access in lockstep.
+function money(c){return '$'+((c||0)/100).toFixed(2);}
+function loadBillingPanel(userId){
+  var el=document.getElementById('ud-billing-body'); if(!el)return;
+  fetch(B+'/admin-billing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',user_id:userId})})
+    .then(function(r){return r.json();}).then(function(d){
+      if(!d||!d.customer){el.innerHTML='<div class="em">No billing account yet — this member hasn\'t purchased.</div>';return;}
+      var subs=(d.subscriptions||[]), pays=(d.payments||[]), h='';
+      if(subs.length){
+        h+='<div style="margin-bottom:.55rem">'+subs.map(function(s){
+          var active=(s.status==='active'||s.status==='trialing');
+          var badge='<span style="color:'+(active?'var(--green)':'var(--muted2)')+';font-size:.64rem;text-transform:uppercase">'+x(s.status)+(s.cancel_at_period_end?' &middot; ends period':'')+'</span>';
+          var btn=active?'<button onclick="cancelSub(\''+userId+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--red);font-size:.66rem;cursor:pointer;padding:3px 9px;font-weight:600;font-family:inherit">Cancel</button>':'';
+          return '<div class="rr" style="grid-template-columns:1fr auto auto;gap:.5rem;align-items:center"><span style="color:var(--ink)">'+x(s.plan||'plan')+' &middot; '+money(s.amount)+'/'+x(s.interval||'mo')+'</span>'+badge+btn+'</div>';
+        }).join('')+'</div>';
+      }
+      if(pays.length){
+        h+='<div class="rp" style="margin:0">'+pays.map(function(p){
+          var when=p.created?new Date(p.created*1000).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+          var refunded=(p.refunded||p.amount_refunded>0);
+          var col=refunded?'var(--muted2)':(p.status==='succeeded'?'var(--green)':'var(--red)');
+          var card=p.card_brand?(x(p.card_brand)+' &middot;'+x(p.card_last4||'')):'';
+          var receipt=p.receipt_url?'<a href="'+x(p.receipt_url)+'" target="_blank" rel="noopener" style="color:var(--gold);font-size:.66rem">receipt ↗</a>':'';
+          var btn=(!refunded&&p.status==='succeeded')?'<button onclick="refundCharge(\''+userId+'\',\''+p.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--red);font-size:.64rem;cursor:pointer;padding:2px 8px;font-family:inherit">Refund</button>':(refunded?'<span style="color:var(--muted2);font-size:.62rem">refunded</span>':'');
+          return '<div class="rr" style="grid-template-columns:14px 1fr 118px auto auto;gap:.4rem;align-items:center"><span style="color:'+col+'">&#9679;</span><span style="color:var(--ink)">'+money(p.amount)+' <span style="color:var(--muted2);font-size:.62rem">'+card+'</span></span><span style="color:var(--muted);font-size:.72rem">'+when+'</span>'+receipt+btn+'</div>';
+        }).join('')+'</div>';
+      }
+      el.innerHTML=h||'<div class="em">No subscriptions or payments.</div>';
+    }).catch(function(){ el.innerHTML='<div class="em" style="color:var(--red)">Could not load billing.</div>'; });
+}
+// Cancel the member's active subscription (immediate). stripe-webhook revokes access on the deleted event.
+function cancelSub(userId,btn){
+  if(!window.confirm('Cancel this member\'s subscription now? Their access ends immediately.'))return;
+  if(btn){btn.disabled=true;btn.textContent='Cancelling…';}
+  fetch(B+'/admin-billing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'cancel',user_id:userId})})
+    .then(function(r){return r.json();}).then(function(){ loadBillingPanel(userId); })
+    .catch(function(){ if(btn){btn.disabled=false;btn.textContent='Cancel';} });
+}
+// Refund a charge in full (operator-initiated). stripe-webhook revokes access on charge.refunded.
+function refundCharge(userId,chargeId,btn){
+  if(!window.confirm('Refund this charge in full? This returns the money to the member\'s card.'))return;
+  if(btn){btn.disabled=true;btn.textContent='Refunding…';}
+  fetch(B+'/admin-billing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refund',user_id:userId,charge_id:chargeId})})
+    .then(function(r){return r.json();}).then(function(d){ if(d&&d.error){window.alert('Refund failed: '+d.error);} loadBillingPanel(userId); })
+    .catch(function(){ if(btn){btn.disabled=false;btn.textContent='Refund';} });
 }
 
 // ── Membership & Entitlements panel (v4) — merged into the Users tab ────────

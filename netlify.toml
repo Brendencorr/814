@@ -32,11 +32,9 @@
   external_node_modules = ["@napi-rs/canvas"]
 
 # Grounds render engine: needs the render + upload budget.
+# (content-queue already has its own [functions."content-queue"] block below with
+# timeout=26; the top-level external_node_modules above covers it for the renderer.)
 [functions."content-design"]
-  timeout = 26
-
-# content-queue's publish action makes an Echo (Claude) call + FeedHive round-trip.
-[functions."content-queue"]
   timeout = 26
 
 [functions."scout"]

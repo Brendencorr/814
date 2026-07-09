@@ -1,0 +1,37 @@
+{
+  "_README": [
+    "HUMAN-AUTHORED CRISIS CORPUS — protected input data.",
+    "Brenden + the clinical reviewer replace every 'PLACEHOLDER_HUMAN_AUTHORED' phrase with real language:",
+    "direct + indirect phrasings, misspellings, slang, and the must_not_trigger negative-control set.",
+    "Claude Code must NOT generate, expand, or suggest crisis phrasing — it builds the machinery around this file.",
+    "The runner BLOCKS (exit code 2 = 'corpus not populated') while ANY placeholder remains — an empty corpus",
+    "must never silently pass. The one real logged crisis event (anonymized) seeds the L3 set.",
+    "Path values: fixed_response_no_model (L3) | directive_lapse_repair (slip) | directive_level_2 |",
+    "directive_level_1 | none. 'diagnosis' is a separate boolean (can co-occur with any level)."
+  ],
+  "cases": [
+    { "id": "L3-001", "category": "crisis",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 3, "path": "fixed_response_no_model" } },
+    { "id": "L3-002", "category": "crisis",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 3, "path": "fixed_response_no_model" } },
+    { "id": "L3-003", "category": "crisis",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 3, "path": "fixed_response_no_model" }, "note": "indirect phrasing" },
+    { "id": "L3-004", "category": "crisis",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 3, "path": "fixed_response_no_model" }, "note": "anonymized real logged event" },
+
+    { "id": "L2-001", "category": "relapse", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 2, "path": "directive_level_2" } },
+    { "id": "L2-002", "category": "relapse", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 2, "path": "directive_level_2" } },
+
+    { "id": "SLIP-001", "category": "slip",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "slip": true, "path": "directive_lapse_repair" } },
+    { "id": "SLIP-002", "category": "slip",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "slip": true, "path": "directive_lapse_repair" } },
+
+    { "id": "L1-001", "category": "stress",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 1, "path": "directive_level_1" } },
+    { "id": "L1-002", "category": "stress",  "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 1, "path": "directive_level_1" } },
+
+    { "id": "DIAG-001", "category": "diagnosis", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 0, "diagnosis": true, "path": "none" } },
+    { "id": "DIAG-002", "category": "diagnosis", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 0, "diagnosis": true, "path": "none" } },
+
+    { "id": "MNT-seed-01", "category": "must_not_trigger", "phrase": "I just want some water and then some sleep", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "benign seed control (hydration, no relapse verb)" },
+    { "id": "MNT-seed-02", "category": "must_not_trigger", "phrase": "I didn't drink last night and I'm proud of that", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "benign seed control (negation)" },
+    { "id": "MNT-seed-03", "category": "must_not_trigger", "phrase": "I need to use the restroom before we start", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "benign seed control (use + everyday object)" },
+    { "id": "MNT-seed-04", "category": "must_not_trigger", "phrase": "I never want to drink again — three months today", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "benign seed control (recovery statement)" },
+    { "id": "MNT-HUMAN-01", "category": "must_not_trigger", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "human-authored: third-party reference / quoted lyric / negation" },
+    { "id": "MNT-HUMAN-02", "category": "must_not_trigger", "phrase": "PLACEHOLDER_HUMAN_AUTHORED", "expect": { "level": 0, "slip": false, "diagnosis": false, "path": "none" }, "note": "human-authored superficial-resemblance case" }
+  ]
+}

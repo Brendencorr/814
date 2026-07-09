@@ -520,6 +520,7 @@ function buildUserContext(profile, clientData) {
       clientData.memory.slice(0, 15).forEach(m => {
         lines.push(`  - [${m.memory_type}] ${m.content}`);
       });
+      lines.push("  BUILD THE RELATIONSHIP: you are getting to know them over time, not running an intake. When it fits the moment, gently check in on a SPECIFIC thing you know about their life (their people, their work, their program, the thing that has been weighing on them) the way a friend who remembers would. One caring, specific question at a time - never interrogate, never recite the list back, never say you 'remembered' or 'looked it up'.");
     }
 
     // ── RECENT CONVERSATIONS (Spec §2 episodic memory) - pick up where you left off ──
@@ -529,6 +530,12 @@ function buildUserContext(profile, clientData) {
         const threads = Array.isArray(s.open_threads) && s.open_threads.length ? ` · left open: ${s.open_threads.slice(0, 3).join("; ")}` : "";
         lines.push(`  - ${s.summary}${s.emotional_tone ? ` (tone: ${s.emotional_tone})` : ""}${threads}`);
       });
+    }
+
+    // ── OPEN THREADS - date-triggered follow-ups they mentioned were coming up (the day has now passed) ──
+    if (clientData.followups && clientData.followups.length) {
+      lines.push("\nOPEN THREADS TO FOLLOW UP ON (they mentioned these were coming up, and the day has now passed - if the moment fits, ask how it went, warmly and just once; if they would rather not get into it, let it go gracefully):");
+      clientData.followups.forEach((f) => lines.push(`  - ${f.content}`));
     }
 
     // ── ACTIVE LIFE EVENTS - shape Riley's whole approach ──
@@ -620,8 +627,11 @@ async function getClientData(supabase, userId, queryText) {
     const day = parseInt(appToday.slice(8, 10), 10);
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
+    // Catch window for due follow-ups: surface for a few days after the date, never a stale month-old one.
+    const fourAgo = new Date(); fourAgo.setDate(fourAgo.getDate() - 4);
+    const fourISO = fourAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
@@ -639,6 +649,8 @@ async function getClientData(supabase, userId, queryText) {
       supabase.from("life_map").select("facet,content").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(60),
       // Episodic memory (Spec §2): recent cross-session summaries so Riley can pick up where they left off.
       supabase.from("session_summaries").select("summary,open_threads,emotional_tone,session_end").eq("user_id", userId).order("created_at", { ascending: false }).limit(3),
+      // Date-triggered open-loop follow-ups now due (surfaced in the prompt, then marked so Riley asks once).
+      supabase.from("member_followups").select("id,content,due_at").eq("user_id", userId).eq("status", "open").lte("due_at", appToday).gte("due_at", fourISO).order("due_at", { ascending: true }).limit(3),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -675,6 +687,14 @@ async function getClientData(supabase, userId, queryText) {
     // Recency reads (always run) - the fail-open baseline.
     let memory  = memoryRes.value?.data || [];
     let lifeMap = lifeMapRes.value?.data || [];
+
+    // Open-loop follow-ups now due. Surface once: mark them 'surfaced' (fire-and-forget) so Riley asks a
+    // single time and never nags. Fail-open - a missing table or error just yields no follow-ups.
+    const followups = followupsRes.value?.data || [];
+    if (followups.length) {
+      supabase.from("member_followups").update({ status: "surfaced", surfaced_at: new Date().toISOString() })
+        .in("id", followups.map((f) => f.id)).then(() => {}, () => {});
+    }
 
     // ── Hybrid semantic recall (Spec §1.3) - relevance, not just recency. FAIL-OPEN:
     // with no embedding key (embeddingsEnabled=false) or ANY error, memory/lifeMap stay
@@ -713,6 +733,7 @@ async function getClientData(supabase, userId, queryText) {
       ownedProducts,
       tier,
       memory,
+      followups,
       lifeEvents: lifeEventsRes.value?.data || [],
       sensitiveDates,
       wellness: wellnessRes.value?.data || null,
@@ -854,8 +875,9 @@ async function extractMemories(supabase, userId, conversation) {
     const transcript = conversation.slice(-10)
       .map((m) => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
 
-    const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation.
-Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0, "supersedes": "<verbatim text of an existing memory this CORRECTS or CONTRADICTS, or omit>"}.
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation. Today is ${todayStr}.
+Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general, followup], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0, "supersedes": "<verbatim text of an existing memory this CORRECTS or CONTRADICTS, or omit>", "due": "YYYY-MM-DD (ONLY for facet followup)"}.
 Capture these facets especially - they matter most:
 - win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
 - fear: something they're afraid of.
@@ -867,6 +889,7 @@ Capture these facets especially - they matter most:
 - vision: who they're becoming - a 1/5/10-year hope, a dream, a life goal.
 - energy: when they have energy or crash (e.g. "sharp in the mornings", "wiped by 3pm") - helps Riley time recommendations.
 - general: any other durable fact (name, loss, trigger, preference, life event) - set memory_type; mark grief/loss/trauma as "sensitive".
+- followup: a SPECIFIC dated thing coming up where asking afterward would show you care - an interview, a doctor/court/therapy appointment, a hard conversation, a trip, a first day, a deadline. Set "content" to a short natural phrase ("her job interview", "his custody hearing", "the first day at the new job") and "due" to the calendar date it happens (resolve "Thursday" / "next week" / "the 14th" against today, ${todayStr}). ONLY with a real near-term date; never vague someday plans. A followup is not a durable fact - do not also add it as "general".
 Use "supersedes" ONLY when the person states something that changes or contradicts a KNOWN fact below (a breakup after "married", a new job after "unemployed", a corrected name). Copy the known text verbatim into "supersedes".
 Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known (unless superseding), nothing speculative.
 Already known (do not repeat unless superseding): ${known.length ? known.join(" | ") : "nothing yet"}`;
@@ -889,6 +912,20 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
     for (const m of items.slice(0, 7)) {
       if (!m.content || String(m.content).length < 3) continue;
       const content = String(m.content).slice(0, 300);
+
+      // ── FOLLOW-UP (open loop) - a dated thing to gently ask about later. Own table, not durable memory. ──
+      if (m.facet === "followup") {
+        const due = /^\d{4}-\d{2}-\d{2}$/.test(String(m.due || "")) ? m.due : null;
+        if (due) {
+          try {
+            const { data: exist } = await supabase.from("member_followups").select("id")
+              .eq("user_id", userId).eq("status", "open").ilike("content", content.slice(0, 30) + "%").limit(1);
+            if (!exist || !exist.length) await supabase.from("member_followups").insert({ user_id: userId, content, due_at: due, source: "conversation" });
+          } catch (_) {}
+        }
+        continue;
+      }
+
       const isFacet = LIFE_FACETS.includes(m.facet);
       const table = isFacet ? "life_map" : "riley_memory";
       const conf = typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8;

@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Riley Relationship Engine (slice 1+2): actively use memory + date-triggered open-loop follow-ups
+- **Why:** Brenden - take the onboarding personalization into Riley's ongoing behavior so it "continually
+  builds trust." Two highest-leverage pieces first: (1) Riley proactively USES what it knows (now that
+  onboarding feeds real life-context into `riley_memory`), and (2) Riley follows up on time-bound things
+  after they happen ("how did Thursday go?") - the single most "it actually cares" behavior.
+- **What (#1 - active use):** `riley-chat.js` system prompt gains a "BUILD THE RELATIONSHIP" directive inside
+  the memory block - Riley gently checks in on ONE specific thing it knows (their people, work, program, what's
+  weighing on them) when the moment fits, never interrogating or reciting. Fires only when there are specifics.
+- **What (#2 - open-loop follow-ups):** new **`member_followups`** table (migration 084) - date-triggered,
+  kept SEPARATE from `riley_memory` so reconcile/decay/embeddings never touch these resolvable items.
+  Capture: the existing (fire-and-forget, Haiku) `extractMemories` gains a `followup` facet with a resolved
+  `due` date (today injected so "Thursday" resolves) → inserts `{content, due_at}` (deduped). Surface: the
+  context loader pulls open follow-ups due within a 4-day catch window into an "OPEN THREADS TO FOLLOW UP ON"
+  prompt section, then marks them `surfaced` (fire-and-forget) so Riley asks ONCE and never nags. Fail-open
+  throughout. Added to `ACCOUNT_DELETE_TABLES`. Surface logic validated against the live table.
+- **Guardrails preserved:** crisis path untouched, no gender assumptions, hyphens only, model unchanged.
+  `node --check` passes. Next slices (Brenden's list): tenure-calibrated trust, pattern-noticing, milestones.
+- **Files:** `riley-chat.js`, `auth-handler.js`, `supabase/migrations/084_member_followups.sql`.
+
 ### Onboarding deepening: contextual lean-in + "about your world" - all wired into Riley's memory
 - **Why:** Brenden loved the onboarding and wanted it to get to know people more personally, so Riley can
   build trust over time. Principle: add DEPTH, not length - Riley leaning in with one optional tap, never a

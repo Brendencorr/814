@@ -291,6 +291,7 @@ const ACCOUNT_DELETE_TABLES = [
   // profile row is removed), payments (financial record; Stripe is authoritative), admins (operator).
   "int_enrollments", "phq_gad_scores", "who5_scores", "program_module_progress",
   "user_active_products", "user_comms_state", "email_log", "email_sends", "feature_interest",
+  "member_followups",
 ];
 
 // ── Action: delete_account - permanently close the account + erase all data ────

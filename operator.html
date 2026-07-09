@@ -2322,20 +2322,21 @@ var _usersLoaded = false;
 
 function loadUsers(btn){
   if(btn){gs('u',btn);}
-  document.getElementById('users-empty').textContent='Loading users…';
-  document.getElementById('users-empty').style.display='block';
-  // Remove old rows (keep header)
+  // Guard every lookup: loadUsers can be called from contexts where the Users-list DOM isn't mounted
+  // (e.g. right after a delete from the member panel) - a missing element must NEVER throw (that bubbled
+  // up and got mislabeled "Delete failed (network)" when the delete had actually succeeded).
+  var empty=document.getElementById('users-empty');
+  if(empty){empty.textContent='Loading users…';empty.style.display='block';}
   var list=document.getElementById('users-list');
-  var rows=list.querySelectorAll('.user-row:not(.uh)');
-  rows.forEach(function(r){r.remove();});
-
+  if(!list)return;
+  list.querySelectorAll('.user-row:not(.uh)').forEach(function(r){r.remove();});
   opGet('/admin-users').then(function(d){
     _allUsers=d.users||[];
     _usersLoaded=true;
     renderUserList(_allUsers);
     renderUsersSummary();
   }).catch(function(e){
-    document.getElementById('users-empty').textContent='Error loading users: '+e.message;
+    var em=document.getElementById('users-empty'); if(em)em.textContent='Error loading users: '+e.message;
   });
 }
 
@@ -2653,7 +2654,7 @@ function deactivateMember(userId,btn){
     .then(function(r){return r.text().then(function(t){var d=null;try{d=JSON.parse(t);}catch(e){} return {status:r.status,d:d,raw:t};});})
     .then(function(res){
       var d=res.d;
-      if(d&&d.ok){ window.alert('Deactivated. Subscriptions canceled: '+(d.subs_canceled||0)+'.'); if(typeof loadBillingPanel==='function')loadBillingPanel(userId); if(typeof loadMembershipPanel==='function')loadMembershipPanel(userId); }
+      if(d&&d.ok){ window.alert('Deactivated. Subscriptions canceled: '+(d.subs_canceled||0)+'.'); try{ if(typeof loadBillingPanel==='function')loadBillingPanel(userId); if(typeof loadMembershipPanel==='function')loadMembershipPanel(userId); }catch(_){} }
       else { window.alert('Deactivate failed (HTTP '+res.status+'): '+((d&&(d.detail||d.error))||(res.raw?res.raw.slice(0,160):'no response body'))); }
       if(btn){btn.disabled=false;btn.textContent='Deactivate';}
     }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='Deactivate';} window.alert('Deactivate failed (network): '+((e&&e.message)||e)); });
@@ -2666,7 +2667,7 @@ function deleteMemberHard(userId,btn){
     .then(function(r){return r.text().then(function(t){var d=null;try{d=JSON.parse(t);}catch(e){} return {status:r.status,d:d,raw:t};});})
     .then(function(res){
       var d=res.d;
-      if(d&&d.ok&&d.deleted){ window.alert('Account deleted. Login removed: '+(d.auth_deleted?'yes':'no - contact support')+'.'); if(typeof closeUserPanel==='function')closeUserPanel(); if(typeof loadUsers==='function')loadUsers(); return; }
+      if(d&&d.ok&&d.deleted){ window.alert('Account deleted. Login removed: '+(d.auth_deleted?'yes':'no - contact support')+'.'); try{ if(typeof closeUserPanel==='function')closeUserPanel(); if(typeof loadUsers==='function')loadUsers(); }catch(_){} return; }
       window.alert('Delete failed (HTTP '+res.status+'): '+((d&&(d.detail||d.error))||(res.raw?res.raw.slice(0,160):'no response body')));
       if(btn){btn.disabled=false;btn.textContent='Delete account';}
     }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='Delete account';} window.alert('Delete failed (network): '+((e&&e.message)||e)); });

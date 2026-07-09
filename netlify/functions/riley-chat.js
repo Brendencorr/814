@@ -30,6 +30,10 @@ const { detectSlipDisclosure, lapseRepairDirective } = require("./lapse-detectio
 const { getRemaining, incrementUsage } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
+// Memory v2 (Master Build Spec §1/§8/§9) — all fail-open / dark until an embedding key is set.
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
+const { embed, toVectorLiteral, embeddingsEnabled } = require("./embeddings");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -543,7 +547,7 @@ async function getUserProfile(supabase, userId) {
   } catch { return null; }
 }
 
-async function getClientData(supabase, userId) {
+async function getClientData(supabase, userId, queryText) {
   if (!userId) return null;
   try {
     // Resolve the user's timezone FIRST so every "which day is it" below uses their LOCAL 4am
@@ -596,6 +600,30 @@ async function getClientData(supabase, userId) {
     const sharedDates = calRes.value?.data || [];
     const sensitiveDates = [...personalDates.filter(d => d.is_sensitive !== false), ...sharedDates];
 
+    // Recency reads (always run) — the fail-open baseline.
+    let memory  = memoryRes.value?.data || [];
+    let lifeMap = lifeMapRes.value?.data || [];
+
+    // ── Hybrid semantic recall (Spec §1.3) — relevance, not just recency. FAIL-OPEN:
+    // with no embedding key (embeddingsEnabled=false) or ANY error, memory/lifeMap stay
+    // exactly the recency reads above → byte-identical to pre-v2 behavior. When live, the
+    // most relevant memories to THIS message are surfaced (plus why/vision anchors from the RPC).
+    if (queryText && embeddingsEnabled()) {
+      try {
+        const lit = toVectorLiteral(await embed(queryText));
+        if (lit) {
+          const { data: rag } = await supabase.rpc("match_member_memory", { p_user_id: userId, p_query_embedding: lit, p_limit: 8 });
+          if (Array.isArray(rag) && rag.length) {
+            const dedupe = (arr) => { const seen = new Set(); return arr.filter((x) => { const k = (x.content || "").trim().toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; }); };
+            const ragMem = rag.filter((r) => r.source_table === "riley_memory").map((r) => ({ memory_type: r.kind, content: r.content, confidence: r.confidence }));
+            const ragMap = rag.filter((r) => r.source_table === "life_map").map((r) => ({ facet: r.kind, content: r.content }));
+            memory  = dedupe([...ragMem, ...memory]).slice(0, 15);   // relevant first, recency fills, same cap
+            lifeMap = dedupe([...ragMap, ...lifeMap]).slice(0, 60);
+          }
+        }
+      } catch (_) { /* fail-open: keep the recency reads */ }
+    }
+
     // Live coached (interactive) programs — for Riley's four-lane routing/recommendation. Only 'live'
     // ones surface (drafts are never recommended); owned/Coach are flagged so Riley never sells them.
     let interactivePrograms = [];
@@ -612,12 +640,12 @@ async function getClientData(supabase, userId) {
       programs: programsRes.value?.data || [],
       ownedProducts,
       tier,
-      memory: memoryRes.value?.data || [],
+      memory,
       lifeEvents: lifeEventsRes.value?.data || [],
       sensitiveDates,
       wellness: wellnessRes.value?.data || null,
       wellnessPlans: plansRes.value?.data || [],
-      lifeMap: lifeMapRes.value?.data || [],
+      lifeMap,
       interactivePrograms,
     };
   } catch (e) {
@@ -649,17 +677,21 @@ async function getContentContext(supabase) {
   } catch { return ""; }
 }
 
-async function buildSystemPrompt(supabase, userId) {
+async function buildSystemPrompt(supabase, userId, queryText) {
   const [profile, clientData, contentCtx] = await Promise.all([
     userId ? getUserProfile(supabase, userId) : Promise.resolve(null),
-    getClientData(supabase, userId),
+    getClientData(supabase, userId, queryText),
     getContentContext(supabase),
   ]);
-  const text = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(profile, clientData)) + contentCtx;
-  // Exposed alongside the prompt text so the handler can enforce Riley Guide's
-  // chat cap without a second round-trip — tier/ownedProducts are already
-  // resolved inside getClientData.
-  return { text, tier: clientData?.tier || null, ownedProducts: clientData?.ownedProducts || [] };
+  // Prompt caching (Spec §8.1): the static persona is a stable, cacheable PREFIX; the
+  // per-member context + weekly content are the dynamic tail. Because the placeholder
+  // sits at the very end of the base prompt, persona + dynamic is byte-identical to the
+  // old single string — behavior is unchanged; this only lets the handler cache the
+  // persona on non-safety turns. `text` remains the exact full string for safety turns.
+  const persona = RILEY_BASE_PROMPT.split("[USER_CONTEXT_PLACEHOLDER]")[0];
+  const dynamic = buildUserContext(profile, clientData) + contentCtx;
+  const text = persona + dynamic;
+  return { text, cachedSystem: persona, dynamicSystem: dynamic, tier: clientData?.tier || null, ownedProducts: clientData?.ownedProducts || [] };
 }
 
 async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
@@ -736,18 +768,21 @@ const LIFE_FACETS = ["win", "fear", "joy", "relationship", "recovery_dna", "valu
 async function extractMemories(supabase, userId, conversation) {
   if (!userId || !conversation || conversation.length < 4) return;
   try {
-    // What we already know (memory + Life Map), so Claude doesn't repeat it.
+    // What we already know — WITH ids + table, so we can REINFORCE / SUPERSEDE, not just dedupe.
     const [memEx, mapEx] = await Promise.all([
-      supabase.from("riley_memory").select("content").eq("user_id", userId).eq("is_active", true).limit(30),
-      supabase.from("life_map").select("content").eq("user_id", userId).eq("is_active", true).limit(50),
+      supabase.from("riley_memory").select("id,content").eq("user_id", userId).eq("is_active", true).limit(40),
+      supabase.from("life_map").select("id,content").eq("user_id", userId).eq("is_active", true).limit(60),
     ]);
-    const known = [...(memEx.data || []), ...(mapEx.data || [])].map(m => m.content);
+    const knownByContent = new Map(); // normalized content -> {id, table}
+    (memEx.data || []).forEach((r) => knownByContent.set(String(r.content || "").trim().toLowerCase(), { id: r.id, table: "riley_memory" }));
+    (mapEx.data || []).forEach((r) => knownByContent.set(String(r.content || "").trim().toLowerCase(), { id: r.id, table: "life_map" }));
+    const known = [...(memEx.data || []), ...(mapEx.data || [])].map((m) => m.content);
 
     const transcript = conversation.slice(-10)
-      .map(m => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
+      .map((m) => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n");
 
     const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation.
-Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0}.
+Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0, "supersedes": "<verbatim text of an existing memory this CORRECTS or CONTRADICTS, or omit>"}.
 Capture these facets especially — they matter most:
 - win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
 - fear: something they're afraid of.
@@ -759,40 +794,66 @@ Capture these facets especially — they matter most:
 - vision: who they're becoming — a 1/5/10-year hope, a dream, a life goal.
 - energy: when they have energy or crash (e.g. "sharp in the mornings", "wiped by 3pm") — helps Riley time recommendations.
 - general: any other durable fact (name, loss, trigger, preference, life event) — set memory_type; mark grief/loss/trauma as "sensitive".
-Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known, nothing speculative.
-Already known (do not repeat): ${known.length ? known.join(" | ") : "nothing yet"}`;
+Use "supersedes" ONLY when the person states something that changes or contradicts a KNOWN fact below (a breakup after "married", a new job after "unemployed", a corrected name). Copy the known text verbatim into "supersedes".
+Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known (unless superseding), nothing speculative.
+Already known (do not repeat unless superseding): ${known.length ? known.join(" | ") : "nothing yet"}`;
 
-    const resp = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 600, system: sys, messages: [{ role: "user", content: transcript }] }),
-    });
-    if (!resp.ok) return;
-    const d = await resp.json();
-    let items;
-    let raw = (d.content?.[0]?.text || "[]").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    // Utility model (Haiku) via the shared client — non-blocking, cost-logged, fail-open.
+    let raw;
+    try {
+      const r = await callClaude({ system: sys, messages: [{ role: "user", content: transcript }], max_tokens: 600, model: MODELS.memory, functionName: "riley-memory-extract", userId, supabase });
+      raw = r.text || "[]";
+    } catch (_) { return; }
+    raw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
     const a = raw.indexOf("["), b = raw.lastIndexOf("]");
     if (a >= 0 && b > a) raw = raw.slice(a, b + 1);
-    try { items = JSON.parse(raw); } catch { return; }
+    let items; try { items = JSON.parse(raw); } catch { return; }
     if (!Array.isArray(items) || !items.length) return;
 
-    const memRows = [], mapRows = [];
+    const now = new Date().toISOString();
+    const semantic = embeddingsEnabled();
+
     for (const m of items.slice(0, 7)) {
       if (!m.content || String(m.content).length < 3) continue;
       const content = String(m.content).slice(0, 300);
-      if (LIFE_FACETS.includes(m.facet)) {
-        mapRows.push({ user_id: userId, facet: m.facet, content, source: "conversation", is_active: true });
-      } else {
-        memRows.push({
-          user_id: userId,
-          memory_type: ["long_term", "preference", "sensitive", "journey"].includes(m.memory_type) ? m.memory_type : "long_term",
-          content, confidence: typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8,
-          source: "conversation", is_active: true,
-        });
+      const isFacet = LIFE_FACETS.includes(m.facet);
+      const table = isFacet ? "life_map" : "riley_memory";
+      const conf = typeof m.confidence === "number" ? Math.max(0, Math.min(1, m.confidence)) : 0.8;
+      const emb = semantic ? toVectorLiteral(await embed(content)) : null;
+
+      const baseRow = isFacet
+        ? { user_id: userId, facet: m.facet, content, source: "conversation", is_active: true, status: "active", confidence: conf, last_reinforced_at: now }
+        : { user_id: userId, memory_type: ["long_term", "preference", "sensitive", "journey"].includes(m.memory_type) ? m.memory_type : "long_term", content, source: "conversation", is_active: true, status: "active", confidence: conf, last_reinforced_at: now, last_confirmed_at: now };
+      if (emb) baseRow.embedding = emb;
+
+      // ── SUPERSEDE — explicit correction/contradiction of a known fact (works dark too) ──
+      const supKey = m.supersedes ? String(m.supersedes).trim().toLowerCase() : null;
+      const target = supKey && knownByContent.get(supKey);
+      if (target) {
+        try {
+          const { data: ins } = await supabase.from(table).insert(baseRow).select("id").maybeSingle();
+          await supabase.from(target.table).update({ is_active: false, status: "superseded", superseded_by: (ins && ins.id) || null }).eq("id", target.id);
+        } catch (_) {}
+        continue;
       }
+
+      // ── REINFORCE — a near-duplicate already exists (semantic) → bump, don't duplicate ──
+      if (semantic && emb) {
+        try {
+          const { data: near } = await supabase.rpc("nearest_memory", { p_user_id: userId, p_query_embedding: emb });
+          const top = Array.isArray(near) ? near[0] : near;
+          if (top && top.similarity != null && top.similarity > 0.92) {
+            const { data: cur } = await supabase.from(top.source_table).select("confidence").eq("id", top.id).maybeSingle();
+            const bump = Math.min(1.0, ((cur && typeof cur.confidence === "number") ? cur.confidence : conf) + 0.1);
+            await supabase.from(top.source_table).update({ confidence: bump, last_reinforced_at: now, is_active: true, status: "active" }).eq("id", top.id);
+            continue;
+          }
+        } catch (_) {}
+      }
+
+      // ── NEW ──
+      try { await supabase.from(table).insert(baseRow); } catch (_) {}
     }
-    if (memRows.length) await supabase.from("riley_memory").insert(memRows);
-    if (mapRows.length) await supabase.from("life_map").insert(mapRows);
   } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
 }
 
@@ -906,6 +967,10 @@ exports.handler = async function (event) {
   // SECURITY: identity is derived from the verified access token below (see buildSystemPrompt
   // block), NEVER from a client-supplied user_id (which can be forged → IDOR).
   let user_id = null;
+  // Query text for semantic recall (Spec §1.3) — the latest user turn. Fail-open if absent.
+  const _histForQuery = Array.isArray(messages) ? messages : [];
+  const _lastUserForQuery = [..._histForQuery].reverse().find((m) => m && m.role === "user" && typeof m.content === "string" && m.content.trim());
+  const queryText = (_lastUserForQuery && _lastUserForQuery.content) || message || "";
 
   // Log parsed fields
   console.log(`[riley-chat] parsed — message="${message?.slice(0,50)}" messages.length=${messages?.length ?? "undefined"}`);
@@ -932,11 +997,17 @@ exports.handler = async function (event) {
   let systemPrompt = RILEY_BASE_PROMPT.replace("[USER_CONTEXT_PLACEHOLDER]", buildUserContext(null));
   let userTier = null, ownedProducts = [];
   let supabase = null;
+  // Prompt-caching handles (Spec §8.1): populated only when context builds cleanly. The
+  // cached path is used ONLY when systemPrompt is still the pristine persona+dynamic (no
+  // directive was prepended) — see `useCached` at the model call.
+  let cachedSystem = null, dynamicSystem = null;
   try {
     supabase = getSupabaseClient();
     user_id = await getUserIdFromToken(supabase, body.token);   // verified identity; null (= anon) if no/invalid token
-    const built = await buildSystemPrompt(supabase, user_id);
+    const built = await buildSystemPrompt(supabase, user_id, queryText);
     systemPrompt  = built.text;
+    cachedSystem  = built.cachedSystem;
+    dynamicSystem = built.dynamicSystem;
     userTier      = built.tier;
     ownedProducts = built.ownedProducts;
   } catch (e) {
@@ -1064,33 +1135,28 @@ exports.handler = async function (event) {
     systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord}. If it fits naturally, you may mention it warmly near the end — something like "we've got a couple conversations left ${periodWord} — want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
   }
 
-  const response = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model:      "claude-sonnet-4-6",
-      max_tokens: 1000,
-      system:     systemPrompt,
-      messages:   conversationHistory,
-    }),
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    console.error("Anthropic API error:", response.status, err);
+  // ── Model call via the shared client (Spec §8.1 caching · §8.4 cost · §9.1 failover) ──
+  // Cache the static persona ONLY on unmodified turns; any prepended directive (session,
+  // safety, near-limit) makes systemPrompt differ from persona+dynamic, so those turns use
+  // the exact full-string prompt uncached — byte-identical to pre-v2 behavior. On total
+  // upstream failure (after one retry + a Haiku fallback) return a warm graceful line, never
+  // a 502. Crisis Level 3 already returned deterministically above and never reaches here.
+  const useCached = !!cachedSystem && systemPrompt === (cachedSystem + dynamicSystem);
+  let reply = "";
+  try {
+    const result = useCached
+      ? await callClaude({ cachedSystem, dynamicSystem, messages: conversationHistory, max_tokens: 1000, model: MODELS.chat, functionName: "riley-chat", userId: user_id, supabase, allowFallback: true })
+      : await callClaude({ system: systemPrompt,        messages: conversationHistory, max_tokens: 1000, model: MODELS.chat, functionName: "riley-chat", userId: user_id, supabase, allowFallback: true });
+    reply = result.text || "";
+  } catch (e) {
+    console.error("[riley-chat] model call failed after retry + fallback:", e.status, e.detail);
+    const graceful = "I'm having trouble thinking clearly right now — give me a minute and try again. If you're in crisis, call or text 988; someone's there any time.";
     return {
-      statusCode: 502,
-      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Upstream API error", detail: err.slice(0, 200) }),
+      statusCode: 200,
+      headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8" },
+      body: graceful,
     };
   }
-
-  const data  = await response.json();
-  const reply = data.content?.[0]?.text || "";
 
   // Persist conversation for logged-in users (non-blocking)
   if (supabase && user_id && session_id && reply) {

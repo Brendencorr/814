@@ -12,6 +12,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Banger onboarding + check-in - breathing sun mark, Riley writes the plan live, gift cards
+- **Why:** Brenden, post-launch: "an absolutely BANGER onboarding flow and checkin." Both flows were already
+  solid; this elevates the two most emotional surfaces. Vibe he chose: cinematic & alive + warm & minimal;
+  the plan reveal = Riley writes it live from the member's answers.
+- **What (`onboarding.html`):** Replaced the 🐦 emoji with Riley's breathing "sun" mark (the SAME brand
+  asset the chat + marketing popup already use - `radial-gradient` gold orb, 5s breathe) on the welcome,
+  crisis-support, and finish screens. The aha moment (`sPreview`) now has Riley WRITE the plan
+  char-by-char, weaving the member's name + their own words back with key phrases in gold; tap-to-skip and
+  `prefers-reduced-motion` both fast-forward to the full text; CTAs reveal only after the plan finishes.
+- **What (`chat.html` daily check-in - ADDITIVE, crisis path untouched):** The "give one thing back" is now
+  a distinct gift card (breathing sun + serif title; celebratory variant glows warmer; any CTA folds
+  inside) instead of a plain bubble, preceded by a short considering-beat (animated dots) so the reward
+  reads as chosen. The beat/card are NEVER used on the crisis path (levels >=2 still return early with an
+  immediate plain-text safety message + unlock).
+- **Verified:** rendered the sun mark, the live-typed plan, and both card variants in an isolated harness
+  (screenshotted) before shipping; both files pass `node --check`.
+- **Files:** `onboarding.html`, `chat.html`.
+
 ### Grounds design engine wired into the live Content Engine - approve → design → review → publish
 - **Why:** CONTENT_ENGINE_v3 was live (briefs → approval_queue → publishing) but the design step was empty
   (`content_creative_assets` = 0 rows): the only engine was Canva (`content-atlas.js`), gated off, so approving a

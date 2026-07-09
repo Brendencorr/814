@@ -504,6 +504,21 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
       if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/riley-auth.html';return;}
       try{localStorage.setItem('riley_onboarded','1');}catch(e){}   // onboarded → app-install prompt (pwa.js) now allowed
+      // Buy-intent from the marketing pricing CTAs (buy → sign in → land here → open Checkout). Only fires when
+      // payments are live; ANY hiccup falls through to the normal dashboard so a member is never trapped.
+      try{
+        var _buy=sessionStorage.getItem('riley_buy_intent');
+        if(_buy){
+          sessionStorage.removeItem('riley_buy_intent');
+          const {data:_pl}=await SB.from('app_settings').select('value').eq('key','payments_live').maybeSingle();
+          if(_pl&&String(_pl.value).toLowerCase()==='true'){
+            const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
+            const _cr=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,lookup_key:_buy})});
+            const _cj=await _cr.json();
+            if(_cj&&_cj.url){window.location.href=_cj.url;return;}
+          }
+        }
+      }catch(e){}
       // One-time consent for members who onboarded before consent existed.
       // Blocks here (serial) so it never stacks with the daily check-in modal.
       await requireConsent(ob.consent_at);

@@ -12,6 +12,15 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Marketing → checkout funnel (buy → sign in → auto-checkout) — DORMANT until payments_live
+- **home.html** (emitter): when `payments_live` is true, a paid CTA carries its plan to `/login?buy=<lookup_key>`
+  (subs default to monthly via LKMAP; programs pass through; free/no-plan CTAs still just hit `/login`).
+- **login.html** (capture): stashes `?buy` into sessionStorage (survives the Google OAuth same-origin round-trip).
+- **dashboard.html** (receiver): after the onboarding check, reads the intent, and — only if `payments_live` —
+  opens `stripe-checkout` and redirects to Stripe. Every onboarded user lands on `/dashboard` (riley-auth:520),
+  so returning buyers checkout immediately and new users after onboarding. **Each piece is a no-op until
+  `payments_live=true`**, so current behavior (waitlist) is untouched. All 6 CTA plan-ids verified → valid keys.
+
 ### Operator per-member Billing panel + admin-billing engine + live cancel verified
 - **`admin-billing.js`** (OPERATOR-gated, `36e21d0`): `get` (subs + charges + card brand/last4 + Stripe hosted
   `receipt_url`; NO raw banking), `cancel` (immediate/at_period_end), `refund` (operator-initiated).

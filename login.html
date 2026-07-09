@@ -42,7 +42,10 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
   <div class="tagline">Let's Rebuild Together</div>
   <div id="paid-banner" style="display:none;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:12px 14px;margin-bottom:1rem;color:#e8e4de;font-size:.9rem;line-height:1.5">✓ Payment complete — sign in to unlock your membership.</div>
   <p class="desc">Sign in to talk with Riley, track your progress, and access your programs.</p>
-  <script>try{ if(new URLSearchParams(location.search).get('paid')==='1'){ var _pb=document.getElementById('paid-banner'); if(_pb)_pb.style.display='block'; } }catch(e){}</script>
+  <script>try{ if(new URLSearchParams(location.search).get('paid')==='1'){ var _pb=document.getElementById('paid-banner'); if(_pb)_pb.style.display='block'; } }catch(e){}
+  // Carry a "buy" intent from the marketing pricing CTAs through sign-in (same-origin sessionStorage survives the
+  // Google OAuth round-trip back to this origin); dashboard.html reads it after auth and opens Stripe Checkout.
+  try{ var _buy=new URLSearchParams(location.search).get('buy'); if(_buy) sessionStorage.setItem('riley_buy_intent', _buy); }catch(e){}</script>
 
   <button class="google-btn" id="btn" onclick="doSignIn()">
     <svg width="20" height="20" viewBox="0 0 24 24">

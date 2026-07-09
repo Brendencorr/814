@@ -567,8 +567,15 @@ function storySubmit(){
         else { if(msg)msg.textContent=(x&&x.error)||'Something went wrong — try again.'; if(btn){btn.disabled=false;btn.textContent='Join the waitlist';} } })
       .catch(function(){ if(msg)msg.textContent='Something went wrong — try again.'; if(btn){btn.disabled=false;btn.textContent='Join the waitlist';} });
   };
+  // Buy-intent routing: when payments are live, a paid CTA carries its plan to sign-in → checkout (login stashes
+  // ?buy → dashboard fires stripe-checkout). Subscriptions default to monthly. Free/no-plan CTAs just hit /login.
+  var LKMAP={companion:'companion_monthly',coach:'coach_monthly'};
   document.querySelectorAll('a[data-cta]').forEach(function(a){
-    a.addEventListener('click',function(e){ if(LIVE)return; e.preventDefault(); wlPlan=a.getAttribute('data-plan-id')||''; var em=document.getElementById('wl-email'); if(em)em.value=''; var mm=document.getElementById('wl-msg'); if(mm)mm.textContent=''; var m=document.getElementById('wl-modal'); if(m)m.style.display='flex'; });
+    a.addEventListener('click',function(e){
+      var plan=a.getAttribute('data-plan-id')||'';
+      if(LIVE){ if(plan){ e.preventDefault(); location.href='https://riley.meetriley.us/login?buy='+encodeURIComponent(LKMAP[plan]||plan); } return; }
+      e.preventDefault(); wlPlan=plan; var em=document.getElementById('wl-email'); if(em)em.value=''; var mm=document.getElementById('wl-msg'); if(mm)mm.textContent=''; var m=document.getElementById('wl-modal'); if(m)m.style.display='flex';
+    });
   });
 })();
 </script>

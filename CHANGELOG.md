@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Onboarding deepening: contextual lean-in + "about your world" - all wired into Riley's memory
+- **Why:** Brenden loved the onboarding and wanted it to get to know people more personally, so Riley can
+  build trust over time. Principle: add DEPTH, not length - Riley leaning in with one optional tap, never a
+  longer form. Everything feeds `riley_memory` (verified: the exact table riley-chat.js loads into Riley's
+  context every message + the pgvector recall indexes), so Riley can reference it in future conversations.
+- **What (Screen 3b - contextual lean-in):** after "What brings you here", a reason that warrants a gentle
+  follow-up triggers ONE single-tap question with a dignified opt-out: grieving → "what kind of loss?"
+  (loved one / relationship / job or identity / pet / rather not say); struggling emotionally → "what's
+  weighing on you most?" (work / family / relationship / health / money / everything); sobriety → "what are
+  you working to stay free from?". Skippable. Non-answers ("rather not say" / "not sure") save nothing.
+- **What (Screen 7b - a little about your world):** an optional, skippable screen after Confidence - chips
+  (married/partnered · kids · working · in school · in a recovery program · support nearby · live alone) +
+  one free-text line (crisis-scanned like the rest). Captures the life context that makes Riley feel like it
+  knows them (family, work, support network).
+- **Memory:** `saveMemory` now also writes `status:'active'` + `last_confirmed_at` so onboarding facts are
+  first-class in memory-v2 (reconcile + recall rank them). Reuses the existing crisis scan + 988 interrupt.
+- **Verified:** both new screens rendered in an isolated harness (screenshot) - visually identical to the
+  loved flow. `node --check` passes. Files: `onboarding.html`.
+
 ### Social design engine follow-ups: fix schedule crash + add cancel-scheduled-post
 - **Why:** With designs rendering, "Final approve → schedule" threw `Cannot read properties of null
   (reading 'id')`. Cause: `content_publishing_jobs` has `CHECK (publisher IN ('buffer','native'))` but the

@@ -120,7 +120,7 @@ function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/<
 function swap(html){const m=el();m.style.animation='fadeout .3s forwards';setTimeout(()=>{m.innerHTML=html;m.style.animation='rise .7s cubic-bezier(.2,.7,.2,1) backwards';window.scrollTo(0,0);},300);}
 function dots(n){return `<div class="progress-dots">${[1,2,3,4,5,6,7,8,9].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
 async function save(patch,step){try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_version:2,...patch,...(step!=null?{onboarding_step:step}:{})},{onConflict:'id'});}catch(e){console.warn('save',e.message);}}
-async function saveMemory(rows){try{await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true})));}catch(e){console.warn('mem',e.message);}}
+async function saveMemory(rows){try{const now=new Date().toISOString();await SB.from('riley_memory').insert(rows.map(r=>({user_id:UID,memory_type:r.type||'long_term',content:r.content,source:'onboarding',confidence:1.0,is_active:true,status:'active',last_confirmed_at:now})));}catch(e){console.warn('mem',e.message);}}
 function ruler(id,lo,hi,cur){
   const nums=[...Array(11).keys()].map(n=>`<button class="rnum ${cur===n?'sel':''}" data-track="ruler" data-r="${n}" onclick="pickRuler('${id}',${n})">${n}</button>`).join('');
   return `<div class="ruler" id="${id}">${nums}</div><div class="ranchor"><span>${lo}</span><span>${hi}</span></div>`;
@@ -225,7 +225,59 @@ async function doneBrings(){
   const sob=A.why_set.some(i=>WHY[i]==='I am working on my sobriety.');
   await save({why_here:A.why_here,why_here_detail:A.why_here_detail,sobriety_interest:sob},2);
   await saveMemory([{content:`Why they came to Riley: ${A.why_here}${A.why_here_detail?' - '+A.why_here_detail:''}`,type:'long_term'}]);
+  maybeLeanIn();
+}
+
+// ── Screen 3b · Contextual "lean-in" - Riley responds to the heavy thing they shared ──────────────
+// Optional, single-tap, dignified opt-out. Only shows for reasons that warrant a gentle follow-up.
+// Saved to riley_memory (what Riley reads every message) so it can reference this later - builds trust.
+const LEANIN={
+  'I am grieving.':{q:"I'm so sorry. If you're open to it - what kind of loss?",mem:"The kind of loss they're grieving",opts:['A loved one','A relationship','A job or identity','A pet','Something else',"I'd rather not say"]},
+  'I am struggling emotionally.':{q:"What's weighing on you most right now?",mem:"What's weighing on them most",opts:['Work','Family','A relationship','Health','Money','Everything at once','Not sure']},
+  'I am working on my sobriety.':{q:"What are you working to stay free from?",mem:"What they're working to stay free from",opts:['Alcohol','Substances','A behavior','Just staying the course',"I'd rather not say"]}
+};
+function heavyReason(){const set=(A.why_set||[]).map(i=>WHY[i]);for(const w of set){if(LEANIN[w])return w;}return null;}
+function maybeLeanIn(){const w=heavyReason();if(w)sLeanIn(w);else sStart();}
+function sLeanIn(w){
+  const cfg=LEANIN[w];A._leanFor=w;
+  swap(`<div class="section-label">Getting to know you</div>
+    <div class="riley-says">${esc(cfg.q)}</div>
+    <div class="riley-sub">One tap - only if you want to. It just helps me understand.</div>
+    <div class="opts" id="li-opts">${cfg.opts.map((o,i)=>`<button class="opt" data-track="leanin_opt" onclick="pickLeanIn(${i})">${esc(o)}</button>`).join('')}</div>
+    <div class="actions"><button class="skip" onclick="sStart()" style="margin-right:auto">Skip</button></div>
+    ${dots(2)}`);
+}
+async function pickLeanIn(i){
+  const cfg=LEANIN[A._leanFor];if(!cfg)return sStart();
+  const val=cfg.opts[i];A.leanin_answer=val;
+  if(!/rather not say|not sure/i.test(val))await saveMemory([{content:`${cfg.mem}: ${val}`,type:'long_term'}]);
   sStart();
+}
+
+// ── Screen 7b · "A little about your world" - optional life-context (family / work / support) ──────
+// Everything optional + skippable. Chips + one free-text line (crisis-scanned). Feeds riley_memory so
+// Riley can show up like it knows them (kids, a program, support nearby, living alone).
+const LIFE_CHIPS=['Married or partnered','Have kids','Working','In school','In a recovery program','Have support nearby','Live alone'];
+function sLifeContext(){
+  A.life_flags=A.life_flags||[];
+  swap(`<div class="section-label">A little about your world</div>
+    <div class="riley-says">Anything you'd like me to know about your life?</div>
+    <div class="riley-sub">The more I know, the better I can show up for you. Totally optional - tap what fits.</div>
+    <div class="chips" id="life-chips">${LIFE_CHIPS.map((c,i)=>`<button class="chip ${A.life_flags.includes(c)?'sel':''}" data-track="life_chip" onclick="tglLife(${i})">${esc(c)}</button>`).join('')}</div>
+    <div style="margin-top:10px"><textarea id="life-text" placeholder="Anything else, in your words… (optional)">${esc(A.life_text||'')}</textarea></div>
+    <div class="actions"><button class="skip" onclick="skipLife()" style="margin-right:auto">Skip</button><button class="btn" onclick="doneLife()">Continue</button></div>
+    ${dots(7)}`);
+}
+function tglLife(i){const c=LIFE_CHIPS[i];A.life_flags=A.life_flags||[];const idx=A.life_flags.indexOf(c);if(idx>=0)A.life_flags.splice(idx,1);else A.life_flags.push(c);document.querySelectorAll('#life-chips .chip').forEach((el,k)=>el.classList.toggle('sel',A.life_flags.includes(LIFE_CHIPS[k])));}
+function skipLife(){A.life_flags=[];A.life_text=null;sClose();}
+async function doneLife(){
+  const t=document.getElementById('life-text');A.life_text=(t&&t.value.trim())||null;
+  if(A.life_text){const lvl=await crisisScan(A.life_text);if(lvl>=3){return crisisInterrupt(sLifeContext);}}
+  const parts=[];
+  if(A.life_flags&&A.life_flags.length)parts.push(A.life_flags.join('; '));
+  if(A.life_text)parts.push(A.life_text);
+  if(parts.length)await saveMemory([{content:`About their life: ${parts.join(' - ')}`,type:'long_term'}]);
+  sClose();
 }
 
 // ── Screen 4 · Where we start (up to 3; the FIRST pick is the starting lane) ────
@@ -325,7 +377,7 @@ function sConfidence(){
 }
 async function doneConfidence(){
   A.confidence=A._confidence;if(A.confidence==null)return;
-  await save({confidence:A.confidence},7);sClose();
+  await save({confidence:A.confidence},7);sLifeContext();
 }
 
 // ── Screen 8 · Staying close (time) → notification rationale ───────────────────

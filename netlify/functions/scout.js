@@ -84,6 +84,7 @@ Caption template: [2-sentence Riley commentary + credit line]
 ---END SCOUT REPORT---
 
 RULES:
+- Punctuation: always use a plain hyphen "-" for dashes. Never use em-dashes or en-dashes (the longer dash characters).
 - Be specific. "Anxiety in recovery" is too broad. "Why anxiety gets worse at week 3 and what to do" is specific.
 - Be current. Reference actual events, seasons, cultural moments happening right now.
 - Never recommend video production - text and carousel content only for Phase 1.

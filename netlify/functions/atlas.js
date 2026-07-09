@@ -77,6 +77,7 @@ GAPS & REQUESTS:
 ---END ATLAS REPORT---
 
 RULES:
+- Punctuation: always use a plain hyphen (-) for dashes. Never use em-dashes or en-dashes.
 - Never miss a scheduled slot without flagging it.
 - Always sequence content so the week builds - Monday starts strong, Friday winds down.
 - Program launches override the default schedule - sequence everything around the launch.

@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Memory v2 + cost/reliability foundation — SHIPPED DARK (fail-open; byte-identical until an embedding key is set)
+- **Migrations 079–081** (applied): pgvector; `embedding vector(1024)` + reconcile cols (`confidence`,
+  `last_reinforced_at`, `superseded_by`, `status`, `source`) on `riley_memory`+`life_map`; HNSW cosine indexes;
+  RPCs `match_member_memory` (hybrid recall), `nearest_memory` (dedup), `decay_memories`, `merge_duplicate_memories`;
+  new RLS tables `session_summaries`, `chat_turn_signals`, `api_cost_log`, `system_incidents`.
+- **riley-chat.js**: hybrid semantic recall keyed on the current message (fail-open to recency); reconcile-not-insert
+  extractor (NEW/REINFORCE/SUPERSEDE + embed-on-write, Haiku); model call routed through new **anthropic-client**
+  (prompt caching on unmodified turns · retry→Haiku fallback→graceful line · cost logging). Crisis L3 untouched.
+- New modules: `anthropic-client.js`, `model-router.js` (Sonnet chat / Haiku utility), `embeddings.js`
+  (provider-swappable, 2s timeout, null-on-fail), `memory-maintenance-cron.js` (weekly Mon 09:00 UTC),
+  `post-hoc-crisis-scan.js` (nightly safety backstop; never touches the live deterministic path).
+- **Safety net**: `tests/crisis` (human-authored corpus; BLOCKS build until populated; caught a real L2
+  false-positive on "drink some water") + `tests/golden` (voice/rules); `.github/workflows/ci.yml`; `npm test`.
+- **Docs**: `docs/architecture-memory-v2.md`, `docs/data-map.md`, `docs/data-retention.md`, `docs/runbooks/`.
+- 🔴 Activate semantic layer: set `EMBEDDINGS_API_KEY` (+ `EMBEDDINGS_PROVIDER`) in Netlify → run
+  `memory-maintenance-cron` once to backfill. Until then fully dark.
+- 🔴 CLAUDE.md "all functions sonnet" is now superseded for UTILITY calls only (Haiku 4.5) per spec §8.2 —
+  conversation stays claude-sonnet-4-6.
+
 ### Marketing → checkout funnel (buy → sign in → auto-checkout) — DORMANT until payments_live
 - **home.html** (emitter): when `payments_live` is true, a paid CTA carries its plan to `/login?buy=<lookup_key>`
   (subs default to monthly via LKMAP; programs pass through; free/no-plan CTAs still just hit `/login`).

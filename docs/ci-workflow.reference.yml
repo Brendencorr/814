@@ -1,0 +1,57 @@
+name: CI
+
+# Master Build Spec §13 — every PR runs syntax, the golden suite, the crisis suite, a
+# lightweight secret scan, and a migration-sequence check. A BROKEN crisis rule fails the
+# build outright; an UNPOPULATED crisis corpus (placeholders remaining) is surfaced as a
+# warning here and hard-blocked by the separate pre-deploy gate before launch.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+
+      - name: Syntax-check all functions
+        run: |
+          set -e
+          for f in netlify/functions/*.js; do node -c "$f"; done
+          echo "All functions parse."
+
+      - name: Golden suite (voice/rules)
+        run: node tests/golden/runner.js
+
+      - name: Crisis suite (fail on broken rule; warn on unpopulated corpus)
+        run: |
+          set +e
+          node tests/crisis/runner.js
+          code=$?
+          if [ "$code" -eq 1 ]; then echo "::error::Crisis suite FAILED — a detection rule is broken."; exit 1; fi
+          if [ "$code" -eq 2 ]; then echo "::warning::Crisis corpus not yet populated (placeholders remain). Must be authored before launch."; fi
+          echo "Crisis suite machinery OK (exit $code)."
+
+      - name: Lightweight secret scan
+        run: |
+          set -e
+          # Flag long literal values assigned to key/secret/token-looking names (not via process.env).
+          if grep -RInE "(api[_-]?key|service[_-]?key|secret|token)['\"]?[[:space:]]*[:=][[:space:]]*['\"][A-Za-z0-9_-]{24,}" \
+             --include="*.js" netlify/ 2>/dev/null \
+             | grep -vE "process\.env|PLACEHOLDER|example|_test|X-Chat"; then
+            echo "::error::Possible hardcoded secret found."; exit 1
+          fi
+          echo "No obvious hardcoded secrets."
+
+      - name: Migration sequence sanity
+        run: |
+          set -e
+          ls supabase/migrations/ | grep -E "^[0-9]{3}_" | sort -c && echo "Migrations sequentially ordered."

@@ -3110,14 +3110,28 @@ function ceRenderPending(q){
 function ceRenderJobs(jobs){
   var body=document.getElementById('ce-body');
   if(!jobs.length){body.innerHTML='<div class="em">Nothing here yet.</div>';return;}
+  var cancelable=ceView==='scheduled';
   var html='';
   jobs.forEach(function(j){
     var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'-');
     html+='<div class="ce-job"><span class="ce-job-plat">'+x(j.platform)+'</span>';
     html+='<span class="ce-job-cap">'+x((j.caption_final||'').slice(0,120))+'</span>';
-    html+='<span class="ce-job-when">'+when+' · '+x(j.state)+'</span></div>';
+    html+='<span class="ce-job-when">'+when+' · '+x(j.state)+'</span>';
+    if(cancelable)html+='<button class="ce-btn reject" style="flex:0;padding:.3rem .7rem;font-size:.7rem;margin-left:.6rem" onclick="ceCancelJob(\''+j.id+'\',this)">Cancel</button>';
+    html+='</div>';
   });
   body.innerHTML=html;
+}
+
+async function ceCancelJob(jobId,btn){
+  if(!confirm('Cancel this scheduled post? It will be removed from FeedHive and returned to Review.'))return;
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'cancel_job',id:jobId})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    ceRefresh();
+  }catch(e){alert('Could not cancel: '+e.message);if(btn){btn.disabled=false;btn.textContent='Cancel';}}
 }
 
 async function ceAct(id,action,btn){

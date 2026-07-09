@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Social design engine follow-ups: fix schedule crash + add cancel-scheduled-post
+- **Why:** With designs rendering, "Final approve → schedule" threw `Cannot read properties of null
+  (reading 'id')`. Cause: `content_publishing_jobs` has `CHECK (publisher IN ('buffer','native'))` but the
+  code inserted `publisher:'feedhive'` → the job insert failed → `job.id` on null. (Same class as the
+  render_engine CHECK.) The operator also had no way to cancel a scheduled post.
+- **What:** `content-queue.js` - `publisher:'native'` (+ a null-guard so a failed job insert skips instead
+  of crashing the whole publish). New **`cancel_job`** action: best-effort FeedHive delete (`DELETE /posts/:id`)
+  + set the job `state='cancelled'` (removes it from Scheduled) + return the post to Review. `operator.html` -
+  a **Cancel** button on each Scheduled job. Confirmed: FeedHive receives BOTH the caption (text + hashtags)
+  AND the rendered design (media) - the `feedhive-publish` call sends `{text, media, scheduled_at}` (draft mode).
+- **Files:** `content-queue.js`, `operator.html`.
+
 ### Comms go-live hardening (still DARK): signed unsubscribe links + timezone-aware quiet hours
 - **Why:** pre-go-live audit flagged two dev items on the lifecycle-comms system before `COMMS_ENABLED` is
   ever flipped: (1) unsubscribe/preference links were raw `?u=<uid>` (someone could forge a link for another

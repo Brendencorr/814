@@ -119,6 +119,25 @@ exports.handler = async function (event) {
     const { action, id, note } = body;
     if (!action || !id) return json(400, { error: "action and id required" });
 
+    // CANCEL a scheduled/queued post (Scheduled tab). `id` here is a PUBLISHING JOB id
+    // (not a queue item), so handle it before the queue lookup. Removes it from FeedHive
+    // (best-effort) and returns the post to Review so it can be re-scheduled or rejected.
+    if (action === "cancel_job") {
+      const { data: job } = await db.from("content_publishing_jobs").select("*").eq("id", id).single();
+      if (!job) return json(404, { error: "job not found" });
+      const fhId = job.buffer_post_id;
+      if (fhId && fhId !== "scheduled" && process.env.FEEDHIVE_API_KEY) {
+        try {
+          await fetch(`https://api.feedhive.com/posts/${encodeURIComponent(fhId)}`, {
+            method: "DELETE", headers: { Authorization: `Bearer ${process.env.FEEDHIVE_API_KEY}` },
+          });
+        } catch (e) { console.error("feedhive delete failed (non-fatal):", e.message); }
+      }
+      await db.from("content_publishing_jobs").update({ state: "cancelled", error_detail: "cancelled by operator" }).eq("id", id);
+      if (job.approval_id) await db.from("content_approval_queue").update({ status: "designed" }).eq("id", job.approval_id);
+      return json(200, { ok: true, status: "cancelled" });
+    }
+
     const { data: item, error: itemErr } = await db.from("content_approval_queue").select("*").eq("id", id).single();
     if (itemErr || !item) return json(404, { error: "queue item not found" });
 
@@ -208,7 +227,7 @@ exports.handler = async function (event) {
         const jobRow = {
           approval_id: id,
           platform: ["instagram","tiktok","linkedin","facebook","youtube_shorts","pinterest","x"].includes(pkg.platform) ? pkg.platform : "instagram",
-          publisher: "feedhive",
+          publisher: "native",  // CHECK allows only 'buffer'|'native'; FeedHive publish is server-side = native
           caption_final: pkg.caption_final || masterCaption,
           hashtags_final: pkg.hashtags_final || [],
           media_urls: pkg.media_urls || mediaUrls,
@@ -216,7 +235,8 @@ exports.handler = async function (event) {
           scheduled_for: pkg.scheduled_for || null,
           state: "queued",
         };
-        const { data: job } = await db.from("content_publishing_jobs").insert(jobRow).select().single();
+        const { data: job, error: jobErr } = await db.from("content_publishing_jobs").insert(jobRow).select().single();
+        if (jobErr || !job) { console.error("publishing_jobs insert failed:", jobErr && jobErr.message); continue; }
 
         // Push to FeedHive if the site URL is set (reposts = quote/link with attribution, never re-upload)
         if (siteUrl) {

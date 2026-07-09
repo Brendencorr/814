@@ -12,6 +12,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Memory v2 completeness pass (punch-list 8–14) + launch-audit fixes — SHIPPED
+- **Audit fixes (P0/P1):** subscriptions bridge in riley-chat + riley-brain (paying members were
+  metered as Guide once free_access_mode off); onboarding Day-1 free-text now runs the crisis check
+  (`reset-day.js`); `content-atlas.js` operator-gated (was ungated model-cost endpoint).
+- **#8 Coach adaptive plans:** `plan-adapt-cron.js` (weekly Mon 13:00 UTC) — regenerates plans from
+  completion % with a visible "what changed" line. Closes the confirmed no-schedule gap.
+- **#9 Member-visible memory:** `member-memory.js` + `/memory` page + settings link — see/fix/remove
+  what Riley remembers (IDOR-guarded; crisis_log never shown; corrections logged for the ops metric).
+- **#10 Session summaries (Phase 2):** cross-session episodic memory injected as "RECENT CONVERSATIONS."
+- **#11 P2 hardening:** atomic webhook idempotency (stripe + payment webhooks, claim-before-grant);
+  waitlist-join flood cap + send-once (email-bomb fix); story-submit global cap; CLAUDE.md Haiku-routing
+  note; tagged 18 approved library items `guide_starter=true` (Guide now sees curated content).
+- **#14 Observability:** `health-chat.js` + `/api/health-chat` (uptime monitor target); k6 load script
+  `tests/load/chat-load.js` (run vs staging).
+- 🔴 Needs Brenden's hands (can't automate): #12 set `EMBEDDINGS_API_KEY` in Netlify (+ provider pick);
+  #13 activate CI (move `docs/ci-workflow.reference.yml` into `.github/workflows/` via GitHub UI); #14
+  provision staging + uptime/status/Sentry. comms-unsubscribe HMAC deferred (reversible).
+
 ### Memory v2 + cost/reliability foundation — SHIPPED DARK (fail-open; byte-identical until an embedding key is set)
 - **Migrations 079–081** (applied): pgvector; `embedding vector(1024)` + reconcile cols (`confidence`,
   `last_reinforced_at`, `superseded_by`, `status`, `source`) on `riley_memory`+`life_map`; HNSW cosine indexes;

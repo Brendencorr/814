@@ -16,6 +16,28 @@
 
 [functions]
   directory = "netlify/functions"
+  # The grounds render engine (content-design.js) reads the locked kit off disk.
+  # Bundle the grounds + DM fonts + nav lockups into every function package so they
+  # resolve at runtime (the /brand/* tree is force-404'd for the public site only).
+  included_files = [
+    "brand/template-kit/grounds/**",
+    "brand/template-kit/fonts/**",
+    "brand/template-kit/riley-nav-logo.png",
+    "brand/template-kit/riley-nav-ink.png"
+  ]
+  # Keep the @napi-rs/canvas native binary external (ship the prebuilt .node rather
+  # than inline it). Top-level so every function that reaches the renderer gets it -
+  # content-design AND content-queue (which calls renderBrief in-process). Ignored
+  # harmlessly by the file-tracing bundler, which includes native modules anyway.
+  external_node_modules = ["@napi-rs/canvas"]
+
+# Grounds render engine: needs the render + upload budget.
+[functions."content-design"]
+  timeout = 26
+
+# content-queue's publish action makes an Echo (Claude) call + FeedHive round-trip.
+[functions."content-queue"]
+  timeout = 26
 
 [functions."scout"]
   timeout = 26

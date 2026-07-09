@@ -530,8 +530,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <!-- sub-tabs -->
       <div style="display:flex;gap:.4rem;margin-bottom:1.1rem;border-bottom:1px solid var(--border)">
         <button class="ce-tab active" id="ce-tab-pending" onclick="ceTab('pending')">Pending <span id="ce-c-pending" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-review" onclick="ceTab('review')">Review <span id="ce-c-review" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-scheduled" onclick="ceTab('scheduled')">Scheduled <span id="ce-c-scheduled" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-published" onclick="ceTab('published')">Published <span id="ce-c-published" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-designs" onclick="ceTab('designs')">Designs 🎨</button>
         <button class="ce-tab" id="ce-tab-performance" onclick="ceTab('performance')">Performance 📊</button>
       </div>
       <div id="ce-body"><div class="em">Loading…</div></div>
@@ -2890,7 +2892,7 @@ function fdt(s){
 /* ═══════════ CONTENT ENGINE ═══════════ */
 var ceView='pending';
 function loadCE(btn){gs('ce',btn);ceRefresh();}
-function ceTab(v){ceView=v;['pending','scheduled','published','performance'].forEach(function(t){document.getElementById('ce-tab-'+t).classList.toggle('active',t===v);});ceRefresh();}
+function ceTab(v){ceView=v;['pending','review','scheduled','published','designs','performance'].forEach(function(t){var el=document.getElementById('ce-tab-'+t);if(el)el.classList.toggle('active',t===v);});ceRefresh();}
 
 async function ceRefresh(){
   var body=document.getElementById('ce-body');
@@ -2899,6 +2901,7 @@ async function ceRefresh(){
   try{
     var cts=await fetch(B+'/content-queue?view=counts').then(function(r){return r.json();});
     document.getElementById('ce-c-pending').textContent=cts.pending||0;
+    var rv=document.getElementById('ce-c-review');if(rv)rv.textContent=cts.review||0;
     document.getElementById('ce-c-scheduled').textContent=cts.scheduled||0;
     document.getElementById('ce-c-published').textContent=cts.published||0;
     var lr=cts.last_run;
@@ -2909,6 +2912,12 @@ async function ceRefresh(){
     if(ceView==='pending'){
       var d=await fetch(B+'/content-queue?view=pending').then(function(r){return r.json();});
       ceRenderPending(d.queue||[]);
+    }else if(ceView==='review'){
+      var d=await fetch(B+'/content-queue?view=review').then(function(r){return r.json();});
+      ceRenderReview(d.queue||[]);
+    }else if(ceView==='designs'){
+      var d=await fetch(B+'/content-design?view=gallery').then(function(r){return r.json();});
+      ceRenderDesigns(d);
     }else if(ceView==='performance'){
       var d=await fetch(B+'/content-queue?view=performance').then(function(r){return r.json();});
       ceRenderPerformance(d);
@@ -2917,6 +2926,82 @@ async function ceRefresh(){
       ceRenderJobs(d.jobs||[]);
     }
   }catch(e){body.innerHTML='<div class="em" style="color:var(--red)">Error: '+e.message+'</div>';}
+}
+
+var CE_GROUNDS=['dawn','first-light','veil','parchment','framed','first-blush'];
+
+// REVIEW: posts with a design assigned, awaiting final approval
+function ceRenderReview(q){
+  var body=document.getElementById('ce-body');
+  if(!q.length){body.innerHTML='<div class="em">Nothing in review. Approve a pending post and Riley assigns it a design here.</div>';return;}
+  var html='<div class="ce-grid">';
+  q.forEach(function(it){
+    var a=(it.assets||[])[0]||null;
+    var cap=(it.brief&&(it.brief.headline_hook||it.brief.caption))||it.preview_caption||'(no caption)';
+    html+='<div class="ce-card">';
+    if(a&&a.file_url){
+      html+='<img src="'+x(a.file_url)+'" alt="" style="width:100%;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">';
+      html+='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted2)">'+x(a.template_id||'')+' · '+x(a.dimensions||'')+'</div>';
+    }else{
+      html+='<div class="em" style="padding:1.5rem;text-align:center">No design rendered.<br>Try Swap, or check the render logs.</div>';
+    }
+    html+='<div class="ce-cap">'+x(cap)+'</div>';
+    // swap picker (grounds)
+    html+='<div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Swap ground</div>';
+    html+='<div style="display:flex;flex-wrap:wrap;gap:.3rem">';
+    CE_GROUNDS.forEach(function(g){
+      html+='<button class="ce-btn" style="flex:0;padding:.25rem .5rem;font-size:.66rem" onclick="ceSwap(\''+it.id+'\',\''+g+'\',this)">'+g+'</button>';
+    });
+    html+='</div>';
+    html+='<div class="ce-actions" style="margin-top:.4rem">';
+    html+='<button class="ce-btn approve" onclick="ceFinalApprove(\''+it.id+'\',this)">Final approve → schedule</button>';
+    html+='<button class="ce-btn reject" onclick="ceAct(\''+it.id+'\',\'reject\',this)">Reject</button>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  body.innerHTML=html;
+}
+
+// DESIGNS: the locked grounds gallery (reference)
+function ceRenderDesigns(d){
+  var body=document.getElementById('ce-body');
+  var grounds=d.grounds||[];
+  var html='<div style="font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:1rem;max-width:680px">The six locked grounds. When you approve a post, Riley auto-assigns a compliant design and renders it onto one of these; you can swap it in Review. '+x(d.rules||'')+'</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem">';
+  grounds.forEach(function(g){
+    html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden">';
+    if(g.thumb){html+='<img src="data:image/png;base64,'+g.thumb+'" alt="" style="width:100%;display:block">';}
+    html+='<div style="padding:.6rem .7rem"><div style="font-size:.82rem;color:var(--ink);font-weight:600;text-transform:capitalize">'+x(g.ground.split('-').join(' '))+' <span style="font-size:.6rem;color:var(--muted2);text-transform:uppercase">· '+x(g.mode)+'</span></div>';
+    html+='<div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:.2rem">'+x(g.use_for||'')+'</div></div></div>';
+  });
+  html+='</div>';
+  // layouts
+  if(d.layouts&&d.layouts.length){
+    html+='<div class="sh" style="margin:1.4rem 0 .5rem">Layouts</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.6rem">';
+    d.layouts.forEach(function(l){html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.7rem .8rem"><div style="font-size:.8rem;color:var(--ink);font-weight:600">'+x(l.label)+'</div><div style="font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:.15rem">'+x(l.desc)+'</div></div>';});
+    html+='</div>';
+  }
+  body.innerHTML=html;
+}
+
+async function ceFinalApprove(id,btn){
+  if(btn){btn.disabled=true;btn.textContent='Scheduling…';}
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'publish',id:id})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    ceRefresh();
+  }catch(e){alert('Could not schedule: '+e.message);if(btn){btn.disabled=false;btn.textContent='Final approve → schedule';}}
+}
+
+async function ceSwap(id,ground,btn){
+  if(btn){btn.disabled=true;btn.textContent='…';}
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'swap_design',id:id,ground:ground})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    ceRefresh();
+  }catch(e){alert('Could not swap: '+e.message);if(btn){btn.disabled=false;btn.textContent=ground;}}
 }
 
 function ceRenderPerformance(d){
@@ -3006,7 +3091,7 @@ function ceRenderPending(q){
     if(blocked){
       html+='<button class="ce-btn approve" disabled title="Blocked by Sentinel">Blocked</button>';
     }else{
-      html+='<button class="ce-btn approve" onclick="ceAct(\''+it.id+'\',\'approve\',this)">'+(it.kind==='repost'?'Approve repost':'Approve')+'</button>';
+      html+='<button class="ce-btn approve" title="Approve the copy - Riley assigns a design, then you review before it schedules" onclick="ceAct(\''+it.id+'\',\'approve\',this)">'+(it.kind==='repost'?'Approve repost':'Approve copy →')+'</button>';
     }
     html+='<button class="ce-btn" onclick="ceRevise(\''+it.id+'\')">Revise</button>';
     html+='<button class="ce-btn reject" onclick="ceAct(\''+it.id+'\',\'reject\',this)">Reject</button>';

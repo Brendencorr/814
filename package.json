@@ -12,6 +12,7 @@
     "test:crisis": "node tests/crisis/runner.js"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.2",
     "@supabase/supabase-js": "^2.0.0",
     "web-push": "^3.6.7"
   },

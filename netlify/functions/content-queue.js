@@ -2,15 +2,20 @@
  * content-queue.js - admin API for the content Review screen.
  * Called by the operator dashboard (password-gated, server-side service key).
  *
- * GET  ?view=pending|scheduled|published|counts   → list queue / jobs
- * POST {action:'approve', id}   → Echo formats per platform → Buffer → publishing_jobs
+ * GET  ?view=pending|review|scheduled|published|counts   → list queue / jobs
+ * POST {action:'approve', id}       → assign + render a design → status 'designed' (Review)
+ * POST {action:'swap_design', id, ground, layout?}  → re-render on a different ground
+ * POST {action:'publish', id}       → Echo per-platform → publishing_jobs → FeedHive (with media)
  * POST {action:'revise', id, note}
  * POST {action:'reject', id}
  *
+ * Two-step: approve = approve the COPY (auto-assigns a design, moves to Review);
+ * publish = final approval of the finished post. Design engine = content-design.js.
  * HARD RULE: an item with safety_verdict='block' can NEVER be approved here.
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
+const { renderBrief } = require("./content-design");
 
 function json(status, data) {
   return { statusCode: status, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data) };
@@ -27,14 +32,16 @@ exports.handler = async function (event) {
       const view = (event.queryStringParameters || {}).view || "pending";
 
       if (view === "counts") {
-        const [pending, scheduled, published, runs] = await Promise.all([
+        const [pending, review, scheduled, published, runs] = await Promise.all([
           db.from("content_approval_queue").select("id", { count: "exact", head: true }).eq("status", "pending"),
+          db.from("content_approval_queue").select("id", { count: "exact", head: true }).eq("status", "designed"),
           db.from("content_publishing_jobs").select("id", { count: "exact", head: true }).in("state", ["queued", "sent_to_buffer", "scheduled"]),
           db.from("content_publishing_jobs").select("id", { count: "exact", head: true }).eq("state", "published"),
           db.from("content_engine_runs").select("*").order("started_at", { ascending: false }).limit(1),
         ]);
         return json(200, {
           pending: pending.count || 0,
+          review: review.count || 0,
           scheduled: scheduled.count || 0,
           published: published.count || 0,
           last_run: runs.data?.[0] || null,
@@ -80,6 +87,27 @@ exports.handler = async function (event) {
         });
       }
 
+      // review queue - items with a design assigned, awaiting final approval
+      if (view === "review") {
+        const { data: q } = await db.from("content_approval_queue").select("*")
+          .eq("status", "designed").order("reviewed_at", { ascending: false }).limit(60);
+        const briefIds = [...new Set((q || []).map((r) => r.brief_id).filter(Boolean))];
+        let assetsByBrief = {}, captionByBrief = {};
+        if (briefIds.length) {
+          const { data: assets } = await db.from("content_creative_assets")
+            .select("brief_id, file_url, template_id, dimensions, alt_text").in("brief_id", briefIds);
+          (assets || []).forEach((a) => { (assetsByBrief[a.brief_id] = assetsByBrief[a.brief_id] || []).push(a); });
+          const { data: briefs } = await db.from("content_briefs").select("id, caption, headline_hook").in("id", briefIds);
+          (briefs || []).forEach((b) => { captionByBrief[b.id] = b; });
+        }
+        const queue = (q || []).map((r) => ({
+          ...r,
+          assets: assetsByBrief[r.brief_id] || [],
+          brief: captionByBrief[r.brief_id] || null,
+        }));
+        return json(200, { queue });
+      }
+
       // pending queue (default) - include brief caption + assets
       const { data: queue } = await db.from("content_approval_queue").select("*")
         .eq("status", "pending").order("created_at", { ascending: false }).limit(60);
@@ -107,9 +135,42 @@ exports.handler = async function (event) {
       return json(200, { ok: true, status: "revise" });
     }
 
-    // APPROVE
+    // APPROVE (copy) → auto-assign + render a design → move to Review (status 'designed')
     if (action === "approve") {
       // HARD GATE: blocked items can never be approved.
+      if (item.safety_verdict === "block") {
+        return json(403, { error: "This item is blocked by Sentinel and cannot be approved. Revise or reject it." });
+      }
+      let design = { designed: false, assets: [] };
+      if (item.brief_id) {
+        try { design = await renderBrief(item.brief_id); }
+        catch (e) { design = { designed: false, reason: e.message, assets: [] }; }
+      }
+      const assetIds = (design.assets || []).map((a) => a.id);
+      await db.from("content_approval_queue").update({
+        status: "designed",
+        asset_ids: assetIds.length ? assetIds : (item.asset_ids || null),
+        reviewed_at: new Date().toISOString(),
+      }).eq("id", id);
+      return json(200, { ok: true, status: "designed", designed: design.designed, assets: design.assets || [], reason: design.reason || null });
+    }
+
+    // SWAP the assigned design (re-render on a chosen ground/layout) - stays in Review
+    if (action === "swap_design") {
+      if (!item.brief_id) return json(400, { error: "this item has no brief to design" });
+      if (!body.ground) return json(400, { error: "ground required" });
+      await db.from("content_creative_assets").delete().eq("brief_id", item.brief_id).eq("render_engine", "riley-grounds");
+      let r;
+      try { r = await renderBrief(item.brief_id, { override: { ground: body.ground, layout: body.layout } }); }
+      catch (e) { return json(500, { error: "render failed: " + e.message }); }
+      const swapIds = (r.assets || []).map((a) => a.id);
+      await db.from("content_approval_queue").update({ asset_ids: swapIds }).eq("id", id);
+      return json(200, { ok: true, status: "designed", designed: r.designed, assets: r.assets || [] });
+    }
+
+    // PUBLISH (final approval) → Echo per-platform → publishing jobs → FeedHive (with media)
+    if (action === "publish" || action === "final_approve") {
+      // HARD GATE: blocked items can never be published.
       if (item.safety_verdict === "block") {
         return json(403, { error: "This item is blocked by Sentinel and cannot be approved. Revise or reject it." });
       }
@@ -165,10 +226,12 @@ exports.handler = async function (event) {
             if (item.kind === "repost" && item.original_url) {
               text = `${jobRow.caption_final}\n\nvia ${item.original_creator || "original creator"}: ${item.original_url}`;
             }
+            // attach the rendered design(s) as media (reposts link the original, never re-upload)
+            const media = (item.kind === "repost") ? [] : (jobRow.media_urls || []).filter(Boolean).map((u) => ({ type: "image", url: u }));
             const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "x-operator-key": process.env.OPERATOR_KEY || "" },
-              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for }),
+              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media }),
             });
             const bd = await res.json();
             if (bd.success) {

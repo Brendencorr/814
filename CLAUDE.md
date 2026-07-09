@@ -75,6 +75,20 @@ Rotation rules enforced in netlify/functions/template-rotation.js.
   >3 light in a row · weekly mix of post/story/reel/carousel · Week 1 = all Riley/launch · Weeks 2-4 = ≥4
   Riley/program posts per week (rest may be web-sourced). Self-test: `node netlify/functions/template-rotation.js --selftest`.
 
+### Grounds render engine (content-design.js) - the LIVE design step for CONTENT_ENGINE_v3
+- `netlify/functions/content-design.js` renders a brief onto a ground SERVER-SIDE with **@napi-rs/canvas**
+  (render_engine='riley-grounds'), a Node port of the Pillow layouts. It reads grounds+fonts off disk (bundled via
+  netlify.toml `included_files`), assigns a ground via template-rotation.js (Veil for heavy), uploads the PNG to the
+  public **content-assets** Supabase bucket, and inserts a **content_creative_assets** row. This is a new pluggable
+  engine alongside content-atlas.js (Canva) - Canva stays available but is no longer required.
+- @napi-rs/canvas is **lazy-required** so a bundling problem degrades the design step only (renderBrief returns
+  {designed:false}) instead of breaking content-queue. Keep it in netlify.toml `external_node_modules`.
+- **Two-step lifecycle** (content-queue.js): `pending` → **approve** (auto-assigns + renders a design → status
+  `designed`) → **Review** (operator swaps ground / final-approves) → **publish** (Echo per-platform →
+  content_publishing_jobs → feedhive-publish WITH the rendered image as media) → `scheduled`. The `designed`
+  review_status enum value is added in migration 083. Operator UI: Social Media tab → Review + Designs sub-tabs.
+- v1 renders ONE static image per brief (hook/body/story). Carousels (multi-slide) + reels (motion) are a follow-on.
+
 ## Required Environment Variables
 Set all of these in Netlify → Site configuration → Environment variables:
 

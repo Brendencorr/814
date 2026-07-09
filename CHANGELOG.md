@@ -12,6 +12,29 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Grounds design engine wired into the live Content Engine - approve → design → review → publish
+- **Why:** CONTENT_ENGINE_v3 was live (briefs → approval_queue → publishing) but the design step was empty
+  (`content_creative_assets` = 0 rows): the only engine was Canva (`content-atlas.js`), gated off, so approving a
+  post scheduled it to FeedHive as TEXT-ONLY with no image and no review gate. The operator wanted designs in the
+  Social Media tab and a two-step: approve copy → system assigns a design → review → final approval.
+- **What:** New `netlify/functions/content-design.js` - a SERVER-SIDE render engine (`render_engine='riley-grounds'`)
+  using `@napi-rs/canvas` (a Node port of the kit's Pillow layouts). Reads grounds+fonts off disk, assigns a ground
+  via `template-rotation.js` (Veil for heavy content), renders the PNG, uploads to the public `content-assets`
+  Supabase bucket, inserts a `content_creative_assets` row. Pluggable alongside Canva; runs in the pipeline too.
+- **Lifecycle (`content-queue.js`):** split approve into two steps. `approve` (from `pending`) now auto-assigns +
+  renders a design and moves the item to **`designed`** (Review) - it no longer schedules. New `swap_design` action
+  re-renders on a chosen ground. New `publish` action (from Review) runs the Echo→publishing_jobs→FeedHive path and
+  **attaches the rendered image as media** (the previously-missing piece). Added `view=review` + a review count.
+- **Operator UI (`operator.html` Social Media tab):** new **Review** sub-tab (rendered post + swap-ground buttons +
+  Final approve / Reject) and **Designs** sub-tab (the six grounds gallery with mode + use-for + layouts).
+- **DB:** migration `083` adds the `designed` value to the `review_status` enum (additive). The `content-assets`
+  bucket already existed (public). Packaging: `@napi-rs/canvas` added to package.json; `netlify.toml` bundles the
+  grounds/fonts via `included_files` + keeps the native binary in `external_node_modules`; content-design +
+  content-queue get 26s timeouts. `/brand/*` stays force-404'd.
+- **Scope:** v1 renders one static image per brief (hook/body/story). Carousels (multi-slide) + reels (motion) are a
+  follow-on. Files: `content-design.js`, `content-queue.js`, `operator.html`, `netlify.toml`, `package.json`,
+  `supabase/migrations/083_social_design_review.sql`, `CLAUDE.md`.
+
 ### Retire the old full-page chat (/talk = riley-auth.html) - it is now a pure OAuth router
 - **Why:** After a live checkout, a paying member landed on the OLD in-page chat onboarding on
   `riley-auth.html` instead of the app. Brenden: "i do not want anyone to ever land on this page...

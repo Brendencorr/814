@@ -141,6 +141,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .stories{text-align:center;max-width:640px;margin:0 auto}
 .stories .quote{font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(22px,3.4vw,30px);line-height:1.4;color:var(--parchment);margin-bottom:24px}
 .stories .invite{font-size:15px;color:var(--smoke);line-height:1.8;margin-bottom:28px}
+.testimonial{max-width:600px;margin:0 auto 30px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.22);border-left:3px solid var(--gold,#c9a84c);border-radius:10px;padding:24px 28px;text-align:left}
+.testimonial .t-quote{font-family:'DM Serif Display',serif;font-style:italic;font-size:16.5px;line-height:1.85;color:var(--parchment)}
+.testimonial .t-author{margin-top:16px;font-family:'DM Mono',monospace;font-size:12.5px;color:var(--gold,#c9a84c);letter-spacing:0.04em}
 
 /* ── FINAL CTA ── */
 .finalcta{text-align:center;padding:120px 0}
@@ -352,7 +355,11 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   <div class="wrap stories reveal">
     <div class="eyebrow mt-e" data-cms-text="stories_eyebrow" data-cms-label="Stories eyebrow">Real Stories</div>
     <div class="quote" data-cms-text="stories_quote" data-cms-label="Stories quote">"I know. Me too."</div>
-    <p class="invite" data-cms-text="stories_invite" data-cms-label="Stories invite">Real stories are coming — from real people walking this road. Be the first to share yours, and help the next person feel a little less alone.</p>
+    <div class="testimonial reveal">
+      <div class="t-quote" data-cms-text="testimonial_casey" data-cms-label="Testimonial · quote">"I was honestly surprised by how much this app helped me in such a short amount of time. Within 10 minutes, it completely shifted my perspective, helped calm my stress, and stopped me from further catastrophizing an issue with a client. It asked me a few thoughtful questions, offered thoughtful, supportive insights, and guided me through a simple breathing exercise. It was exactly what I needed. It felt like talking to someone who genuinely understood what I was going through. I walked away feeling lighter, calmer, and much more grounded. Highly, highly recommend."</div>
+      <div class="t-author" data-cms-text="testimonial_casey_author" data-cms-label="Testimonial · author">&mdash; Casey K.</div>
+    </div>
+    <p class="invite" data-cms-text="stories_invite" data-cms-label="Stories invite">More stories like this are coming, from real people walking this road. Share yours, and help the next person feel a little less alone.</p>
     <button type="button" class="btn btn-ghost btn-lg" onclick="storyOpen()" style="cursor:pointer">Share your story</button>
   </div>
 </section>

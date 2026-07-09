@@ -305,6 +305,13 @@
   to = "/404.html"
   status = 404
   force = true
+# Internal brand toolkit (design system source, render engines, ~40MB of PSD/PNG
+# assets) lives in the repo but must never be publicly served. Force-404 the whole tree.
+[[redirects]]
+  from = "/brand/*"
+  to = "/404.html"
+  status = 404
+  force = true
 # Member "What Riley knows" page (Spec §6) — clean URL.
 [[redirects]]
   from = "https://riley.meetriley.us/memory"

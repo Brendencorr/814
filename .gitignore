@@ -7,3 +7,9 @@ riley-auth-patch.html
 814-agent-prompts.js
 node_modules/
 .DS_Store
+
+# Regenerable social-template render output (run brand/template-kit/make_*.py to
+# rebuild). The kit SOURCE (grounds, engines, fonts, spec) IS committed; the
+# ~120MB rendered library is not - it bloats history and is fully reproducible.
+brand/template-kit/library/
+brand/template-kit/__pycache__/

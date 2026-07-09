@@ -105,8 +105,30 @@ var msgs = []; // [{role:"user"|"assistant", content:"..."}]
 var sending = false;
 var lastSendTime = 0;
 var DEBOUNCE_MS = 1000; // 1 second between sends
-var SESSION_CAP = 10;   // anonymous visitors get 10 messages per session
+// Client-side cap for snappy UX (same as server-side ANON_PRODUCT_CAP = 20/day).
+// The server is the real enforcement - this only prevents the round-trip when
+// the client already knows they're at the limit.
+var SESSION_CAP = 20;   // matches server-side ANON_PRODUCT_CAP
 var sessionMsgCount = 0;
+
+// anon_id: a stable UUID identifying this browser for the server-side daily cap.
+// Stored in localStorage so it persists across page loads and new sessions within
+// the same day. The server uses this to enforce the per-visitor product cap.
+var anonId = (function() {
+  try {
+    var stored = localStorage.getItem('riley_anon_id');
+    if (stored && stored.length > 8) return stored;
+    // Generate a v4-style UUID
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+    localStorage.setItem('riley_anon_id', uuid);
+    return uuid;
+  } catch(e) {
+    return 'fallback-' + Math.random().toString(36).slice(2);
+  }
+})();
 
 // Try to restore session count from sessionStorage so page refreshes
 // within the session don't reset the counter.
@@ -181,6 +203,19 @@ function clearRateNotice() {
   rateEl.innerHTML = '';
 }
 
+// Warm, on-brand upgrade nudge shown when the server-side daily cap is hit.
+// Riley's voice: no urgency, no guilt, just a genuine invitation to continue.
+function showUpgradeNudge() {
+  showRateNotice(
+    "That's your free chat with me for today - and I'm glad we got to talk. "
+    + '<span class="snlink" onclick="requestSignin()">Riley Companion</span> '
+    + 'is unlimited - we can pick up right where we left off. '
+    + '<span class="snlink" onclick="requestSignin()">Sign in or create a free account</span> to continue.'
+  );
+  // Also show the sign-in nudge in case it was hidden
+  nudgeEl.style.display = 'block';
+}
+
 // ── Riley's opening message ──────────────────────────────────────────────────
 window.addEventListener('load', function() {
   // Display opening greeting without calling the API to save cost/latency
@@ -200,12 +235,10 @@ function send() {
   if (now - lastSendTime < DEBOUNCE_MS) return;
   lastSendTime = now;
 
-  // Session cap
+  // Client-side cap - snappy UX guard (server enforces the real limit)
   if (sessionMsgCount >= SESSION_CAP) {
-    showRateNotice(
-      'You\'ve reached the preview limit for this session. '
-      + '<span class="snlink" onclick="requestSignin()">Sign in free</span> to continue with Riley.'
-    );
+    showUpgradeNudge();
+    setInputState(true);
     return;
   }
 
@@ -218,10 +251,10 @@ function send() {
     nudgeEl.style.display = 'block';
   }
 
-  // Show warning at 8 messages (2 left)
-  if (sessionMsgCount === SESSION_CAP - 2) {
+  // Show gentle notice when getting close (3 left) - server headers also trigger this
+  if (sessionMsgCount === SESSION_CAP - 3) {
     showRateNotice(
-      'You have 2 preview messages left. <span class="snlink" onclick="requestSignin()">Sign in free</span> for unlimited access.'
+      'You have 3 free messages left today. <span class="snlink" onclick="requestSignin()">Sign in free</span> for unlimited access.'
     );
   }
 
@@ -233,16 +266,20 @@ function send() {
   setInputState(true);
   showTyping();
 
-  // Call riley-chat - anonymous, no user_id, no token
+  // Call riley-chat - anonymous, no user_id, no token.
+  // anon_id is sent so the server can enforce the per-visitor daily cap.
+  var fetchRes = null; // capture response for header inspection after body is read
   fetch('/.netlify/functions/riley-chat', {
     method: 'POST',
     headers: {'Content-Type': 'application/json', 'Accept': 'text/plain, application/json'},
     body: JSON.stringify({
       message: text,
-      messages: msgs.slice(-20) // cap history at 20 messages
+      messages: msgs.slice(-20), // cap history at 20 messages
+      anon_id: anonId
     })
   })
   .then(function(res) {
+    fetchRes = res;
     if (!res.ok) {
       return res.text().then(function(body) {
         throw new Error('HTTP ' + res.status + ': ' + body.slice(0, 100));
@@ -262,9 +299,31 @@ function send() {
         if (done) {
           // Finalize
           msgs.push({role:'assistant', content:fullText});
+
+          // Check server-side cap headers after the full reply is received.
+          // X-Chat-Atlimit: "true" means this was (or now is) the last allowed message.
+          // X-Chat-Remaining: how many are left after this reply.
+          if (fetchRes) {
+            var atLimit = fetchRes.headers.get('X-Chat-Atlimit') === 'true';
+            var remaining = parseInt(fetchRes.headers.get('X-Chat-Remaining') || '-1', 10);
+            if (atLimit) {
+              // Server says we're at the cap - show the upgrade nudge and lock input.
+              showUpgradeNudge();
+              setInputState(true); // keep disabled until sign-in
+            } else if (remaining >= 0 && remaining <= 3) {
+              // Getting close - surface a gentle notice
+              showRateNotice(
+                'You have ' + remaining + ' free message' + (remaining === 1 ? '' : 's') + ' left today. '
+                + '<span class="snlink" onclick="requestSignin()">Sign in free</span> for more.'
+              );
+            }
+          }
+
           sending = false;
-          setInputState(false);
-          inputEl.focus();
+          if (!fetchRes || fetchRes.headers.get('X-Chat-Atlimit') !== 'true') {
+            setInputState(false);
+            inputEl.focus();
+          }
           return;
         }
         fullText += decoder.decode(value, {stream: true});

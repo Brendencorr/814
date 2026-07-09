@@ -27,7 +27,7 @@ const {
   DIAGNOSIS_DIRECTIVE,
 } = require("./crisis-detection");
 const { detectSlipDisclosure, lapseRepairDirective } = require("./lapse-detection");
-const { getRemaining, incrementUsage } = require("./usage-limits");
+const { getRemaining, incrementUsage, currentPeriodStart } = require("./usage-limits");
 const { sendOperatorAlert } = require("./safety-alert");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
 // Memory v2 (Master Build Spec §1/§8/§9) - all fail-open / dark until an embedding key is set.
@@ -43,6 +43,55 @@ const CORS_HEADERS = {
   // once/day caption + disable the input at the limit. Additive - never changes the reply.
   "Access-Control-Expose-Headers": "X-Chat-Atlimit, X-Chat-Remaining",
 };
+
+// ── Anonymous visitor daily chat cap ─────────────────────────────────────────
+// Matches the Guide product cap (reset_free, 20/day). Two independent limits:
+//   ANON_PRODUCT_CAP  - per anon_id (UUID in localStorage): the product experience limit.
+//                       Honest free visitors hit this and see an upgrade nudge.
+//   ANON_IP_CEILING   - per IP (hashed, never stored raw): abuse backstop, 5× higher so
+//                       shared-IP honest users are NEVER blocked at the product cap.
+//                       Scripts that rotate/omit anon_id hit the IP ceiling instead.
+// Crisis ALWAYS bypasses both caps (crisis check fires before this block in the handler).
+const ANON_PRODUCT_CAP = 20; // messages per UTC calendar day - matches Guide (reset_free)
+const ANON_IP_CEILING  = 100; // messages per UTC calendar day - abuse backstop only
+
+function getClientIp(event) {
+  const h = event.headers || {};
+  return (h["x-nf-client-connection-ip"] || h["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+}
+
+// Lightweight non-cryptographic hash (FNV-32a) - good enough for IP bucketing.
+// We never store the raw IP; only this 8-char hex is persisted.
+function hashKey(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = (h * 16777619) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+// Check the anon cap (read-only). Returns { anonUsed, ipUsed } or null (fail-open).
+async function checkAnonCap(supabase, anonId, ipHash, dateStr) {
+  if (!supabase) return null;
+  try {
+    const [{ data: anonRow }, { data: ipRow }] = await Promise.all([
+      supabase.rpc("get_anon_counter", { p_key_type: "anon_id", p_key_value: anonId, p_date: dateStr }),
+      supabase.rpc("get_anon_counter", { p_key_type: "ip_hash",  p_key_value: ipHash,  p_date: dateStr }),
+    ]);
+    return { anonUsed: anonRow ?? 0, ipUsed: ipRow ?? 0 };
+  } catch (e) {
+    console.warn("[riley-chat] checkAnonCap failed (fail-open):", e.message);
+    return null;
+  }
+}
+
+// Increment both counters after a real reply (non-blocking, non-fatal).
+function incrementAnonCounters(supabase, anonId, ipHash, dateStr) {
+  if (!supabase || !anonId) return;
+  supabase.rpc("increment_anon_counter", { p_key_type: "anon_id", p_key_value: anonId, p_date: dateStr }).catch(() => {});
+  supabase.rpc("increment_anon_counter", { p_key_type: "ip_hash",  p_key_value: ipHash,  p_date: dateStr }).catch(() => {});
+}
 
 // ── System prompt ─────────────────────────────────────────────────────────────
 const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for Meet Riley at meetriley.us.
@@ -1032,7 +1081,7 @@ exports.handler = async function (event) {
     };
   }
 
-  const { message, messages, session_id } = body;
+  const { message, messages, session_id, anon_id } = body;
   // SECURITY: identity is derived from the verified access token below (see buildSystemPrompt
   // block), NEVER from a client-supplied user_id (which can be forged → IDOR).
   let user_id = null;
@@ -1204,6 +1253,55 @@ exports.handler = async function (event) {
     systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord}. If it fits naturally, you may mention it warmly near the end - something like "we've got a couple conversations left ${periodWord} - want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
   }
 
+  // ── ANONYMOUS VISITOR DAILY CAP ─────────────────────────────────────────────
+  // Runs only for unauthenticated requests (user_id is null) and only when no
+  // crisis was detected (Level 3 already returned above; Levels 1-2 fall through
+  // here but crisis.level > 0 so this block is skipped - they always get through).
+  // Two tiers:
+  //   per-anon_id  = product experience cap (ANON_PRODUCT_CAP = 20/day, matches Guide)
+  //   per-IP hash  = abuse ceiling only (ANON_IP_CEILING = 100/day, 5x higher)
+  //   Shared-IP honest visitors hit the product cap PER anon_id, not the IP ceiling.
+  //   Scripts rotating/omitting anon_id hit the IP ceiling.
+  // Fail-open: if the DB check throws, the message is allowed through (same policy
+  // as the logged-in cap check on line ~1220).
+  let anonCapInfo = null; // { anonUsed, ipUsed, anonId, ipHash, dateStr }
+  if (crisis.level === 0 && !user_id) {
+    const rawAnonId = typeof anon_id === "string" && anon_id.length > 0 ? anon_id.slice(0, 64) : null;
+    const clientIp  = getClientIp(event);
+    const ipHash    = hashKey(clientIp);
+    // Use UTC calendar date as the period key (consistent with the DB date type).
+    const dateStr   = new Date().toISOString().slice(0, 10); // YYYY-MM-DD UTC
+
+    // We need an anon_id to enforce the product cap - if the client didn't send
+    // one, treat them as IP-only (the abuse ceiling still applies).
+    const effectiveAnonId = rawAnonId || ("ip-" + ipHash); // fallback: bucket them by IP for the product cap too
+
+    const capCheck = await checkAnonCap(supabase, effectiveAnonId, ipHash, dateStr);
+    if (capCheck) {
+      anonCapInfo = { anonUsed: capCheck.anonUsed, ipUsed: capCheck.ipUsed, anonId: effectiveAnonId, ipHash, dateStr };
+
+      // IP abuse ceiling - hard 429 (no Riley reply; this is not a normal use case)
+      if (capCheck.ipUsed >= ANON_IP_CEILING) {
+        console.warn("[riley-chat] anon IP ceiling hit:", ipHash, capCheck.ipUsed);
+        return {
+          statusCode: 429,
+          headers: { ...CORS_HEADERS, "Content-Type": "application/json", "X-Chat-Atlimit": "true", "X-Chat-Remaining": "0", "Retry-After": "86400" },
+          body: JSON.stringify({ error: "Rate limit exceeded. Please try again tomorrow." }),
+        };
+      }
+
+      // Product cap - warm upgrade nudge (same tone as the logged-in cap response)
+      if (capCheck.anonUsed >= ANON_PRODUCT_CAP) {
+        const anonCapReply = "That's your free chat with me for today - and I'm glad we got to talk. If you want to pick up right where we left off, Riley Companion gives you unlimited conversations, any time. I'll be right here. Sign in to continue at meetriley.us/login.";
+        return {
+          statusCode: 200,
+          headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8", "X-Chat-Atlimit": "true", "X-Chat-Remaining": "0" },
+          body: anonCapReply,
+        };
+      }
+    }
+  }
+
   // ── Model call via the shared client (Spec §8.1 caching · §8.4 cost · §9.1 failover) ──
   // Cache the static persona ONLY on unmodified turns; any prepended directive (session,
   // safety, near-limit) makes systemPrompt differ from persona+dynamic, so those turns use
@@ -1260,9 +1358,21 @@ exports.handler = async function (event) {
     incrementUsage(supabase, user_id, "riley_chat", usageInfo.periodStart).catch(() => {});
   }
 
+  // Anonymous cap - increment both anon_id + IP counters after a real reply.
+  // Capped requests returned earlier and never reach this line (no double-count).
+  if (anonCapInfo) {
+    incrementAnonCounters(supabase, anonCapInfo.anonId, anonCapInfo.ipHash, anonCapInfo.dateStr);
+  }
+
   // Return plain text so the streaming client UI (getReader) works without
   // any special Netlify streaming infrastructure.
   // Client code: fullText += decoder.decode(value) → bubble.textContent = fullText ✓
+  // Compute remaining for BOTH logged-in (usageInfo) and anon (anonCapInfo) paths.
+  const remainingAfter = usageInfo
+    ? String(Math.max(0, usageInfo.remaining - 1))
+    : anonCapInfo
+      ? String(Math.max(0, ANON_PRODUCT_CAP - anonCapInfo.anonUsed - 1))
+      : "";
   return {
     statusCode: 200,
     headers: {
@@ -1270,7 +1380,7 @@ exports.handler = async function (event) {
       "Content-Type": "text/plain; charset=utf-8",
       // Doc 2 §3: how many Guide replies remain AFTER this one (omit/blank for uncapped tiers).
       "X-Chat-Atlimit": "false",
-      "X-Chat-Remaining": usageInfo ? String(Math.max(0, usageInfo.remaining - 1)) : "",
+      "X-Chat-Remaining": remainingAfter,
     },
     body: reply,
   };

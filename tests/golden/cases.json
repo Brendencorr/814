@@ -1,0 +1,28 @@
+{
+  "_README": [
+    "Golden reply set (Spec §7.1) — deterministic quality assertions on Riley replies.",
+    "Grow this with anonymized real exchanges. Each case is a Riley REPLY + asserts.",
+    "assert keys: maxSentences (int), maxQuestions (int), noBanned (bool), mustNotContain ([str]),",
+    "  mustContain ([str]). 'expectFail' lists assert keys a case SHOULD violate (self-tests that",
+    "  prove the checkers work); a case with no expectFail must pass every assert.",
+    "Banned words come from RILEY_BASE_PROMPT: journey, just, simply, amazing, incredible, powerful,",
+    "  transformative, game-changer, holistic."
+  ],
+  "cases": [
+    { "id": "good-presence", "reply": "You came back. That's enough. What's happening right now?",
+      "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },
+    { "id": "good-one-step", "reply": "That sounds like a heavy day, Sam. Let's keep it small tonight — water, something to eat, sleep. Which one feels doable first?",
+      "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },
+    { "id": "good-win-recall", "reply": "You walked on a day you didn't want to. That tells me you can do hard things. Want to build on that tomorrow?",
+      "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },
+    { "id": "good-no-doctor", "reply": "That's a real question, and it deserves a real answer from someone licensed who can actually evaluate you. Want help thinking through what to ask them?",
+      "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true, "mustNotContain": ["you have depression", "you're an alcoholic"] } },
+
+    { "id": "selftest-banned", "reply": "This journey has been simply amazing and truly transformative.",
+      "assert": { "noBanned": true }, "expectFail": ["noBanned"] },
+    { "id": "selftest-too-long", "reply": "One. Two. Three. Four. Five.",
+      "assert": { "maxSentences": 4 }, "expectFail": ["maxSentences"] },
+    { "id": "selftest-two-questions", "reply": "How are you? What do you need?",
+      "assert": { "maxQuestions": 1 }, "expectFail": ["maxQuestions"] }
+  ]
+}

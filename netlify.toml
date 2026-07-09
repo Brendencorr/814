@@ -149,6 +149,11 @@
 [functions."stripe-test-checkout"]
   timeout = 15
 
+# Admin billing — OPERATOR-only; per-member billing view (subscriptions + charges + receipts) and
+# cancel / refund controls for the operator dashboard.
+[functions."admin-billing"]
+  timeout = 15
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

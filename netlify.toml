@@ -211,6 +211,12 @@
 [functions."post-hoc-crisis-scan"]
   schedule = "0 8 * * *"
 
+# Coach adaptive plans (Master Build Spec §3.3) — weekly Mon 13:00 UTC. Regenerates each Coach
+# member's workout/nutrition plan from last week's completion %, with a visible "what changed"
+# line. Coach/mentor only (or free_access_mode); gated + fail-open; no-op until Coach members exist.
+[functions."plan-adapt-cron"]
+  schedule = "0 13 * * 1"
+
 # TEMPORARY 24h promo (2026-07-07, operator-requested): auto-comp every NEW signup to Coach
 # tier while the app_settings.auto_comp_coach_until window is open. A scheduled SWEEP every
 # 10 min — never touches the signup path. Inert once the window passes; REMOVE this block after.

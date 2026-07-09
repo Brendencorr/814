@@ -471,6 +471,15 @@ function buildUserContext(profile, clientData) {
       });
     }
 
+    // ── RECENT CONVERSATIONS (Spec §2 episodic memory) — pick up where you left off ──
+    if (clientData.sessionSummaries && clientData.sessionSummaries.length) {
+      lines.push("\nRECENT CONVERSATIONS (from past sessions — reference naturally when it fits, like a friend who remembers; never announce that you read a summary):");
+      clientData.sessionSummaries.forEach((s) => {
+        const threads = Array.isArray(s.open_threads) && s.open_threads.length ? ` · left open: ${s.open_threads.slice(0, 3).join("; ")}` : "";
+        lines.push(`  - ${s.summary}${s.emotional_tone ? ` (tone: ${s.emotional_tone})` : ""}${threads}`);
+      });
+    }
+
     // ── ACTIVE LIFE EVENTS - shape Riley's whole approach ──
     if (clientData.lifeEvents && clientData.lifeEvents.length) {
       lines.push("\nACTIVE LIFE EVENTS - hold these with care:");
@@ -561,7 +570,7 @@ async function getClientData(supabase, userId, queryText) {
     const sevenAgo = new Date(); sevenAgo.setDate(sevenAgo.getDate() - 7);
     const sevenISO = sevenAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
@@ -577,6 +586,8 @@ async function getClientData(supabase, userId, queryText) {
       supabase.from("wellness_profile").select("workout_goal,fitness_level,nutrition_goal,foods_love,foods_hate,workout_intake_done,nutrition_intake_done").eq("user_id", userId).maybeSingle(),
       supabase.from("wellness_plans").select("plan_type,plan").eq("user_id", userId).eq("is_active", true),
       supabase.from("life_map").select("facet,content").eq("user_id", userId).eq("is_active", true).order("created_at", { ascending: false }).limit(60),
+      // Episodic memory (Spec §2): recent cross-session summaries so Riley can pick up where they left off.
+      supabase.from("session_summaries").select("summary,open_threads,emotional_tone,session_end").eq("user_id", userId).order("created_at", { ascending: false }).limit(3),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -657,6 +668,7 @@ async function getClientData(supabase, userId, queryText) {
       wellnessPlans: plansRes.value?.data || [],
       lifeMap,
       interactivePrograms,
+      sessionSummaries: summariesRes.value?.data || [],
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);
@@ -865,6 +877,53 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
       try { await supabase.from(table).insert(baseRow); } catch (_) {}
     }
   } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
+}
+
+// ── Session summaries (Spec §2 — episodic memory) ─────────────────────────────
+// Lazy + bounded: called only at the START of a session (short history). Summarizes the most
+// recent PRIOR session that has no summary yet — so the next time they open Riley, she can pick
+// up where they left off. Non-blocking, fail-open, Haiku via the shared client.
+async function maybeSummarizePriorSession(supabase, userId, currentSessionId) {
+  if (!supabase || !userId) return;
+  try {
+    const { data: recent } = await supabase.from("riley_conversations")
+      .select("session_id, created_at").eq("user_id", userId).neq("session_id", currentSessionId || "")
+      .order("created_at", { ascending: false }).limit(60);
+    if (!recent || !recent.length) return;
+    const priorSessions = [];
+    const seen = new Set();
+    for (const r of recent) { if (r.session_id && !seen.has(r.session_id)) { seen.add(r.session_id); priorSessions.push(r.session_id); } }
+    if (!priorSessions.length) return;
+    const cand = priorSessions.slice(0, 10);
+    const { data: done } = await supabase.from("session_summaries").select("session_id").eq("user_id", userId).in("session_id", cand);
+    const doneSet = new Set((done || []).map((s) => s.session_id));
+    const target = cand.find((sid) => !doneSet.has(sid));
+    if (!target) return;
+
+    const { data: msgs } = await supabase.from("riley_conversations")
+      .select("role,content,created_at").eq("user_id", userId).eq("session_id", target).order("created_at", { ascending: true }).limit(40);
+    if (!msgs || msgs.length < 2) return;
+    const transcript = msgs.map((m) => `${m.role === "user" ? "Person" : "Riley"}: ${m.content}`).join("\n").slice(0, 6000);
+
+    const sys = `Summarize this wellness conversation for Riley's own private memory. Return ONLY JSON: {"summary":"~70 words, plain and warm: what was discussed and where it ended","open_threads":["an unresolved thing to follow up on", ...up to 3],"emotional_tone":"one or two words"}. No preamble, no markdown.`;
+    let raw;
+    try {
+      const r = await callClaude({ system: sys, messages: [{ role: "user", content: transcript }], max_tokens: 300, model: MODELS.summary, functionName: "session-summary", userId, supabase });
+      raw = r.text || "{}";
+    } catch (_) { return; }
+    raw = String(raw).replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    const a = raw.indexOf("{"), b = raw.lastIndexOf("}");
+    if (a >= 0 && b > a) raw = raw.slice(a, b + 1);
+    let o; try { o = JSON.parse(raw); } catch (_) { return; }
+    if (!o || !o.summary) return;
+    await supabase.from("session_summaries").insert({
+      user_id: userId, session_id: target,
+      session_start: msgs[0].created_at, session_end: msgs[msgs.length - 1].created_at,
+      summary: String(o.summary).slice(0, 600),
+      open_threads: Array.isArray(o.open_threads) ? o.open_threads.slice(0, 5).map((t) => String(t).slice(0, 140)) : [],
+      emotional_tone: String(o.emotional_tone || "").slice(0, 40),
+    });
+  } catch (e) { console.warn("maybeSummarizePriorSession failed (non-fatal):", e.message); }
 }
 
 // ── Conversation history builder ──────────────────────────────────────────────
@@ -1183,6 +1242,13 @@ exports.handler = async function (event) {
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
     if (fullConvo.length >= 6 && fullConvo.length % 6 === 0) {
       extractMemories(supabase, user_id, fullConvo);
+    }
+
+    // Session summaries (Spec §2): at the START of a session, lazily summarize the most recent
+    // PRIOR session that has no summary yet, so next time Riley picks up where they left off.
+    // Non-blocking; bounded to one prior session per trigger.
+    if (fullConvo.length <= 3 && session_id) {
+      maybeSummarizePriorSession(supabase, user_id, session_id);
     }
   }
 

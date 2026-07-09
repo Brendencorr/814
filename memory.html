@@ -37,7 +37,7 @@
 <div class="wrap">
   <a class="back" href="/settings">← Back to settings</a>
   <h1>What Riley knows</h1>
-  <p class="lede">This is what Riley carries for you — built from your conversations and check-ins. Fix anything that's wrong. Remove anything you'd rather Riley let go. Nothing here is ever shared.</p>
+  <p class="lede">This is what Riley carries for you - built from your conversations and check-ins. Fix anything that's wrong. Remove anything you'd rather Riley let go. Nothing here is ever shared.</p>
   <div id="content"><div class="spinner">Loading…</div></div>
 </div>
 <div id="status"></div>
@@ -106,7 +106,7 @@ document.addEventListener('click', async e => {
       const val = box.querySelector('.edit').value.trim();
       if (val.length < 2) return;
       const r = await api({ action:'correct', id, table, content: val });
-      if (r && r.ok){ item.querySelector('.content').textContent = val; box.remove(); toast('Fixed — thank you.'); }
+      if (r && r.ok){ item.querySelector('.content').textContent = val; box.remove(); toast('Fixed - thank you.'); }
       else toast('Couldn’t save that.');
     });
   }

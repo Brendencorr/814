@@ -1,12 +1,12 @@
 -- 079_memory_learning_v2.sql
--- Riley Master Build Spec v2 — Part 1 foundation.
+-- Riley Master Build Spec v2 - Part 1 foundation.
 -- Adds: pgvector; embedding + reconciliation columns on riley_memory & life_map;
 -- HNSW cosine indexes; the unified hybrid-rank recall RPC; and the supporting
 -- tables for session memory, response-effectiveness signals, cost observability,
 -- and reliability incidents.
 --
 -- 100% ADDITIVE + IDEMPOTENT. No existing column/row/behavior is changed. Nothing
--- here activates until an embedding key is set (see embeddings.js) — this is the
+-- here activates until an embedding key is set (see embeddings.js) - this is the
 -- schema so the dark-shipped code has a home to write to.
 
 -- ── pgvector ────────────────────────────────────────────────────────────────
@@ -41,7 +41,7 @@ create index if not exists life_map_embed_idx on public.life_map
 -- ── Unified hybrid-rank recall across BOTH memory tables ──────────────────────
 -- Rank = 0.6·cosine + 0.25·freshness + 0.15·confidence.
 -- The member's WHY + VISION facets are ALWAYS returned (is_anchor=true) regardless
--- of score or even embedding presence — the north star never drops out of context.
+-- of score or even embedding presence - the north star never drops out of context.
 -- STABLE + service-role invoked; identity is passed in (the caller derives it from
 -- the verified token, never the client).
 create or replace function public.match_member_memory(
@@ -103,7 +103,7 @@ as $$
   select source_table, id, kind, content, conf, hybrid, sim, false from top_pool;
 $$;
 
--- ── session_summaries (Phase 2 — episodic memory) ─────────────────────────────
+-- ── session_summaries (Phase 2 - episodic memory) ─────────────────────────────
 create table if not exists public.session_summaries (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null,
@@ -124,7 +124,7 @@ do $$ begin
   end if;
 end $$;
 
--- ── chat_turn_signals (Phase 4 — response-effectiveness loop) ─────────────────
+-- ── chat_turn_signals (Phase 4 - response-effectiveness loop) ─────────────────
 create table if not exists public.chat_turn_signals (
   id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null,
@@ -140,7 +140,7 @@ create index if not exists chat_turn_signals_user_idx on public.chat_turn_signal
 alter table public.chat_turn_signals enable row level security;
 -- Internal analytics: no anon/member read policy → service-role only.
 
--- ── api_cost_log (Phase 8.4 — cost observability) ─────────────────────────────
+-- ── api_cost_log (Phase 8.4 - cost observability) ─────────────────────────────
 create table if not exists public.api_cost_log (
   id            uuid primary key default gen_random_uuid(),
   function_name text,
@@ -158,7 +158,7 @@ create index if not exists api_cost_log_fn_idx on public.api_cost_log (function_
 alter table public.api_cost_log enable row level security;
 -- Operator-only via service key; no anon/member policy.
 
--- ── system_incidents (Phase 9.1 — reliability) ────────────────────────────────
+-- ── system_incidents (Phase 9.1 - reliability) ────────────────────────────────
 create table if not exists public.system_incidents (
   id            uuid primary key default gen_random_uuid(),
   kind          text,        -- model_fallback | api_failure | timeout | maintenance_run | plan_adapt

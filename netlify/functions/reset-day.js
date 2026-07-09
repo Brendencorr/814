@@ -64,7 +64,7 @@ exports.handler = async (event) => {
       const sentence = (body.day1_sentence || "").toString().trim().slice(0, 600);
       // SAFETY BACKSTOP: the Day-1 sentence is real member free-text ("the heaviest thing you're
       // carrying"). Run the deterministic crisis check so a disclosure at ONBOARDING is logged to the
-      // restricted crisis_log and the operator is alerted — the same guarantee the chat path gives.
+      // restricted crisis_log and the operator is alerted - the same guarantee the chat path gives.
       // Level 3 additionally surfaces 988 to the member so onboarding can show it. Fully fail-open.
       let crisisLevel = 0;
       if (sentence) {

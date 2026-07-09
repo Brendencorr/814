@@ -1,5 +1,5 @@
 /**
- * plan-adapt-cron.js — weekly adaptive workout/nutrition plans (Master Build Spec §3.3).
+ * plan-adapt-cron.js - weekly adaptive workout/nutrition plans (Master Build Spec §3.3).
  *
  * Closes the Coach-tier promise gap: `plan-generate-background` only ran on demand, so plans
  * never adapted. This weekly cron reads each Coach member's completion % (fitness_logs /
@@ -11,7 +11,7 @@
  *
  * Coach/mentor only (the tier that promises this) OR free_access_mode. Gated, fail-open, non-fatal
  * per member. Utility model (Haiku) via anthropic-client. Logs each regeneration to system_incidents.
- * (At scale, move the model calls to the Batch API per §8.3 — synchronous is fine at launch volume.)
+ * (At scale, move the model calls to the Batch API per §8.3 - synchronous is fine at launch volume.)
  *
  * Schedule: netlify.toml [functions."plan-adapt-cron"] = "0 13 * * 1" (Mon ~13:00 UTC).
  */
@@ -25,11 +25,11 @@ const hashId = (id) => { try { return crypto.createHash("sha256").update(String(
 const ok = (b) => ({ statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true, ...b }) });
 
 const SYSTEM = `You ADAPT a member's existing 7-day wellness plan based on how much of last week they actually completed. You are a warm wellness coach, never a drill sergeant.
-Return ONLY the adapted plan as JSON in the SAME shape you received (same keys: type, goal, summary, days[7], and the workout/nutrition-specific fields), PLUS one extra field "changes": a single plain sentence naming what you changed and why, in Riley's voice (e.g. "You crushed 3 of 3 walks — added a fourth. Skipped the salmon twice — swapped it for chicken.").
+Return ONLY the adapted plan as JSON in the SAME shape you received (same keys: type, goal, summary, days[7], and the workout/nutrition-specific fields), PLUS one extra field "changes": a single plain sentence naming what you changed and why, in Riley's voice (e.g. "You crushed 3 of 3 walks - added a fourth. Skipped the salmon twice - swapped it for chicken.").
 ADAPTATION RULES:
-- completion < 50%: SIMPLIFY — fewer sessions, smaller asks, remove friction. Never guilt. Rebuild consistency.
+- completion < 50%: SIMPLIFY - fewer sessions, smaller asks, remove friction. Never guilt. Rebuild consistency.
 - completion 50-85%: keep it, remove one point of friction.
-- completion > 85%: progress GENTLY — a little more volume/variety, never a spike.
+- completion > 85%: progress GENTLY - a little more volume/variety, never a spike.
 - A repeatedly skipped meal/food: SWAP it for something else they'd eat, don't repeat it.
 - If recovery signals are poor (low sleep/mood), drop intensity regardless of completion.
 Keep the safety_note. Keep it realistic and kind.`;

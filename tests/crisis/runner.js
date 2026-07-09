@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * tests/crisis/runner.js — Crisis-detection regression suite (Phase 7.2).
+ * tests/crisis/runner.js - Crisis-detection regression suite (Phase 7.2).
  *
  * Dependency-free. Loads the HUMAN-AUTHORED corpus (fixtures.json) and runs every
  * phrase through the REAL deterministic detectors, asserting the exact level AND
@@ -14,8 +14,8 @@
  *
  * Exit codes:
  *   0 = all real cases pass AND no placeholders remain (launch-ready)
- *   1 = one or more assertions FAILED (a broken rule — blocks the build)
- *   2 = corpus not populated (placeholders remain) — blocks launch, never silent
+ *   1 = one or more assertions FAILED (a broken rule - blocks the build)
+ *   2 = corpus not populated (placeholders remain) - blocks launch, never silent
  */
 
 const fs = require("fs");
@@ -74,7 +74,7 @@ function main() {
   try { fs.writeFileSync(LAST_RUN, JSON.stringify(results, null, 2)); } catch (_) {}
 
   // ── Report ──
-  console.log(`\nCrisis suite — ${real.length} real cases, ${placeholders.length} placeholders remaining\n`);
+  console.log(`\nCrisis suite - ${real.length} real cases, ${placeholders.length} placeholders remaining\n`);
   for (const f of failures) {
     console.log(`  ✗ ${f.id} [${f.category}]`);
     f.mism.forEach((m) => console.log(`      ${m}`));
@@ -83,16 +83,16 @@ function main() {
   if (regressions.length) console.log(`\n  ⚠ REGRESSIONS since last run: ${regressions.join(", ")}`);
 
   if (failures.length) {
-    console.error(`\n✗ CRISIS SUITE FAILED — ${failures.length} assertion(s) broken. Build blocked.\n`);
+    console.error(`\n✗ CRISIS SUITE FAILED - ${failures.length} assertion(s) broken. Build blocked.\n`);
     process.exit(1);
   }
   if (placeholders.length) {
-    console.error(`\n⚠ CRISIS CORPUS NOT POPULATED — ${placeholders.length} placeholder(s) remain (${placeholders.map((p) => p.id).join(", ")}).`);
+    console.error(`\n⚠ CRISIS CORPUS NOT POPULATED - ${placeholders.length} placeholder(s) remain (${placeholders.map((p) => p.id).join(", ")}).`);
     console.error("  The human-authored corpus (Brenden + clinician) must replace every PLACEHOLDER_HUMAN_AUTHORED before launch.");
-    console.error("  Exiting 2 — an empty crisis corpus blocks the build; it must never silently pass.\n");
+    console.error("  Exiting 2 - an empty crisis corpus blocks the build; it must never silently pass.\n");
     process.exit(2);
   }
-  console.log("\n✓ CRISIS SUITE GREEN — corpus populated, all paths correct.\n");
+  console.log("\n✓ CRISIS SUITE GREEN - corpus populated, all paths correct.\n");
   process.exit(0);
 }
 

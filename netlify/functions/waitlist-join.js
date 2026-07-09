@@ -33,11 +33,11 @@ exports.handler = async (event) => {
 
   try {
     const sb = getSupabaseClient();
-    // Flood guard: cap total joins per minute — bounds the email-bomb / write-amplification vector.
+    // Flood guard: cap total joins per minute - bounds the email-bomb / write-amplification vector.
     try {
       const since = new Date(Date.now() - 60 * 1000).toISOString();
       const { count } = await sb.from("waitlist").select("email", { count: "exact", head: true }).gte("updated_at", since);
-      if ((count || 0) > 30) return json(429, { error: "We're a bit busy right now — please try again in a minute." });
+      if ((count || 0) > 30) return json(429, { error: "We're a bit busy right now - please try again in a minute." });
     } catch (_) {}
     // Only email + log a NEW address once; re-submits just update the plan intent (no re-send = no email-bomb).
     let isNew = true;

@@ -1,9 +1,9 @@
 /**
- * health-chat.js — synthetic health endpoint for uptime monitoring (Master Build Spec §10).
+ * health-chat.js - synthetic health endpoint for uptime monitoring (Master Build Spec §10).
  *
  * Checks the chat path's DEPENDENCIES are reachable WITHOUT a model call (so a monitor can ping
  * it every minute at zero cost) and WITHOUT touching any real member data. `?deep=1` adds a tiny
- * Haiku ping for a true end-to-end check (use sparingly). Public — returns only booleans.
+ * Haiku ping for a true end-to-end check (use sparingly). Public - returns only booleans.
  *
  * Point BetterStack/UptimeRobot at: /api/health-chat  (200 = healthy, 503 = degraded).
  */

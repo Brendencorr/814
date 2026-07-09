@@ -471,9 +471,9 @@ function buildUserContext(profile, clientData) {
       });
     }
 
-    // ── RECENT CONVERSATIONS (Spec §2 episodic memory) — pick up where you left off ──
+    // ── RECENT CONVERSATIONS (Spec §2 episodic memory) - pick up where you left off ──
     if (clientData.sessionSummaries && clientData.sessionSummaries.length) {
-      lines.push("\nRECENT CONVERSATIONS (from past sessions — reference naturally when it fits, like a friend who remembers; never announce that you read a summary):");
+      lines.push("\nRECENT CONVERSATIONS (from past sessions - reference naturally when it fits, like a friend who remembers; never announce that you read a summary):");
       clientData.sessionSummaries.forEach((s) => {
         const threads = Array.isArray(s.open_threads) && s.open_threads.length ? ` · left open: ${s.open_threads.slice(0, 3).join("; ")}` : "";
         lines.push(`  - ${s.summary}${s.emotional_tone ? ` (tone: ${s.emotional_tone})` : ""}${threads}`);
@@ -601,7 +601,7 @@ async function getClientData(supabase, userId, queryText) {
     };
 
     const ownedProducts = (entRes.value?.data || []).map(r => r.product_key);
-    // Bridge (mirrors entitlements.js §5 / program-content.js): an ACTIVE subscription — comp or paid —
+    // Bridge (mirrors entitlements.js §5 / program-content.js): an ACTIVE subscription - comp or paid -
     // grants its plan even without an entitlements row. Every grant is written to `subscriptions`, but
     // user_active_products reads only `entitlements`; without this a paying member resolves to "guide"
     // here and gets metered + upsold their own tier the moment free_access_mode is off. Fail-open / inert.
@@ -879,9 +879,9 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
   } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
 }
 
-// ── Session summaries (Spec §2 — episodic memory) ─────────────────────────────
+// ── Session summaries (Spec §2 - episodic memory) ─────────────────────────────
 // Lazy + bounded: called only at the START of a session (short history). Summarizes the most
-// recent PRIOR session that has no summary yet — so the next time they open Riley, she can pick
+// recent PRIOR session that has no summary yet - so the next time they open Riley, she can pick
 // up where they left off. Non-blocking, fail-open, Haiku via the shared client.
 async function maybeSummarizePriorSession(supabase, userId, currentSessionId) {
   if (!supabase || !userId) return;
@@ -1097,7 +1097,7 @@ exports.handler = async function (event) {
   // ── CRISIS OVERRIDE - deterministic, runs BEFORE any LLM call, top priority ──
   // Detection is rules-based (no LLM) for speed + reliability. Level 3 short-
   // circuits with a fully controlled response - we never let the model improvise
-  // the highest-risk case. Levels 1–2 and diagnosis questions steer the model
+  // the highest-risk case. Levels 1-2 and diagnosis questions steer the model
   // with hard directives prepended to the system prompt (override priority).
   const lastUserTurn  = [...conversationHistory].reverse().find((m) => m.role === "user");
   const latestUserText = lastUserTurn ? lastUserTurn.content : (message || "");
@@ -1130,7 +1130,7 @@ exports.handler = async function (event) {
     };
   }
 
-  // Levels 1–2 + diagnosis guardrail: prepend hard directives so they win over
+  // Levels 1-2 + diagnosis guardrail: prepend hard directives so they win over
   // every standing instruction in the base prompt for THIS reply.
   let safetyDirective = "";
   // Disclosed slip (already happened) → lapse-repair: founder canon first, Fast Re-entry, no shame,

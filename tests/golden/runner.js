@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * tests/golden/runner.js — Riley voice/rules quality gate (Spec §7.1).
+ * tests/golden/runner.js - Riley voice/rules quality gate (Spec §7.1).
  *
  * Dependency-free. Scores Riley replies against deterministic assertions drawn from
  * RILEY_BASE_PROMPT: length, one-question-or-step, banned words, and per-case content
@@ -8,7 +8,7 @@
  * suite validates its own machinery while staying green.
  *
  * Grow tests/golden/cases.json with anonymized real exchanges over time. A live mode
- * (call the deployed function, score the real reply) is a future add — the checkers here
+ * (call the deployed function, score the real reply) is a future add - the checkers here
  * are the reusable core.
  *
  * Exit 0 = all cases behave as expected; exit 1 = a real regression.
@@ -65,12 +65,12 @@ function main() {
   } catch (_) {}
   try { fs.writeFileSync(LAST_RUN, JSON.stringify(results, null, 2)); } catch (_) {}
 
-  console.log(`\nGolden suite — ${cases.length} cases\n`);
+  console.log(`\nGolden suite - ${cases.length} cases\n`);
   for (const f of failures) console.log(`  ✗ ${f.id}  expected-fail=[${f.expected}] got=[${f.got}]`);
   if (!failures.length) console.log("  ✓ all cases behaved as expected");
   if (regressions.length) console.log(`\n  ⚠ REGRESSIONS since last run: ${regressions.join(", ")}`);
 
-  if (failures.length) { console.error(`\n✗ GOLDEN SUITE FAILED — ${failures.length} case(s). Build blocked.\n`); process.exit(1); }
+  if (failures.length) { console.error(`\n✗ GOLDEN SUITE FAILED - ${failures.length} case(s). Build blocked.\n`); process.exit(1); }
   console.log("\n✓ GOLDEN SUITE GREEN\n");
   process.exit(0);
 }

@@ -176,13 +176,13 @@ exports.handler = async (event) => {
     // paying member as free - hiding their paid modules AND upselling them a tier they already own.
     const _owned = new Set(((activeProductsR.status === "fulfilled" && activeProductsR.value?.data) || []).map(r => r.product_key));
     // Bridge (mirrors entitlements.js §5): an active subscription grants its plan even without an
-    // entitlements row — else a paying member shows as "guide" on Home (paid modules hidden + upsold).
+    // entitlements row - else a paying member shows as "guide" on Home (paid modules hidden + upsold).
     try {
       const { data: _subs } = await supabase.from("subscriptions").select("plan_id, expires_at").eq("user_id", user_id).eq("status", "active");
       const _now = Date.now();
       (_subs || []).forEach((s) => { const live = !s.expires_at || new Date(s.expires_at).getTime() > _now; if (live && ["companion", "coach", "mentor"].includes(s.plan_id)) _owned.add(s.plan_id); });
     } catch (_) {}
-    const tier = currentTier(_owned) || "guide"; // shared resolver (tier-utils.js) — single source
+    const tier = currentTier(_owned) || "guide"; // shared resolver (tier-utils.js) - single source
 
     const entitled = (m) => {
       if (!m.entitlement_required) return true;

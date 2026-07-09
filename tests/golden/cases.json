@@ -1,6 +1,6 @@
 {
   "_README": [
-    "Golden reply set (Spec §7.1) — deterministic quality assertions on Riley replies.",
+    "Golden reply set (Spec §7.1) - deterministic quality assertions on Riley replies.",
     "Grow this with anonymized real exchanges. Each case is a Riley REPLY + asserts.",
     "assert keys: maxSentences (int), maxQuestions (int), noBanned (bool), mustNotContain ([str]),",
     "  mustContain ([str]). 'expectFail' lists assert keys a case SHOULD violate (self-tests that",
@@ -11,7 +11,7 @@
   "cases": [
     { "id": "good-presence", "reply": "You came back. That's enough. What's happening right now?",
       "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },
-    { "id": "good-one-step", "reply": "That sounds like a heavy day, Sam. Let's keep it small tonight — water, something to eat, sleep. Which one feels doable first?",
+    { "id": "good-one-step", "reply": "That sounds like a heavy day, Sam. Let's keep it small tonight - water, something to eat, sleep. Which one feels doable first?",
       "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },
     { "id": "good-win-recall", "reply": "You walked on a day you didn't want to. That tells me you can do hard things. Want to build on that tomorrow?",
       "assert": { "maxSentences": 4, "maxQuestions": 1, "noBanned": true } },

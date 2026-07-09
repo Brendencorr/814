@@ -1,5 +1,5 @@
 /**
- * member-memory.js — "What Riley knows" (Master Build Spec §6).
+ * member-memory.js - "What Riley knows" (Master Build Spec §6).
  *
  * The member's own view of the durable memory Riley carries (riley_memory + life_map),
  * with Correct and Delete. This is a trust surface: "Fix anything wrong. Remove anything

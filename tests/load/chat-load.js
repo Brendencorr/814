@@ -1,6 +1,6 @@
-// tests/load/chat-load.js — k6 load test for the chat path (Master Build Spec §9.4).
+// tests/load/chat-load.js - k6 load test for the chat path (Master Build Spec §9.4).
 //
-// ⚠️ RUN AGAINST STAGING, NOT PRODUCTION — this drives real model calls (cost + load).
+// ⚠️ RUN AGAINST STAGING, NOT PRODUCTION - this drives real model calls (cost + load).
 //   k6 run -e BASE=https://staging.meetriley.us tests/load/chat-load.js
 //
 // Ramps to 200 concurrent sessions; assert p95 < 10s and <2% failures. Re-run at each scale

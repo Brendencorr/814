@@ -1,6 +1,6 @@
 -- 081_memory_maintenance_rpcs.sql
 -- Weekly memory-maintenance primitives (Spec §1.2). Called by memory-maintenance-cron.
--- Additive + idempotent. Never deletes — retires via status so everything is auditable.
+-- Additive + idempotent. Never deletes - retires via status so everything is auditable.
 
 -- Decay: low-confidence memories that were never reinforced in 90 days go dormant.
 create or replace function public.decay_memories()
@@ -20,7 +20,7 @@ begin
 end $$;
 
 -- Merge: within a member, retire the weaker of any near-duplicate pair (cosine > threshold).
--- Conservative — riley_memory only (general facts are where bloat lives); keeps the higher
+-- Conservative - riley_memory only (general facts are where bloat lives); keeps the higher
 -- confidence, tie-broken by newer. superseded_by preserves the trail.
 create or replace function public.merge_duplicate_memories(p_threshold float default 0.92)
 returns int language plpgsql as $$

@@ -203,6 +203,11 @@ body{font-family:'DM Sans',sans-serif;background:#0a0908;color:var(--parchment);
 body.embed .sidebar{display:none}
 body.embed main{height:100vh}
 body.embed .topbar-actions{display:none}
+/* Daily check-in polish: typing beat + the "one thing back" gift card */
+.rc-dot{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:var(--gold);opacity:.4;animation:rcDot 1.2s infinite ease-in-out}
+.rc-dot:nth-child(2){animation-delay:.18s}.rc-dot:nth-child(3){animation-delay:.36s}
+@keyframes rcDot{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+@keyframes rcCardIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 </head>
 <body>
@@ -610,9 +615,8 @@ async function rcFinish(){
   if(crisisLevel>=3){ appendMsg('riley', crisisResp || "I'm really glad you told me. You don't have to carry this alone - if it gets heavy, you can call or text 988 any time, day or night. I'm right here too."); rcHandoff(true); return; }
   if(crisisLevel>=2){ appendMsg('riley', "Thank you for being honest with me. That pull is real, and you don't have to face it by yourself. If it gets heavy, you can call or text 988 any time. I'm right here too."); rcHandoff(true); return; }
   try{ window.trackEvent && window.trackEvent('give_one_thing_shown',{}); }catch(e){}
-  appendMsg('riley', card.title + "\n" + card.body);
-  if(card.cta) rcCardCta(card.cta);
-  rcAfter();
+  // A brief considering-beat, then Riley hands back one thing as a gift card, then opens the floor.
+  rcTypingBeat(900, function(){ rcGiftCard(card); rcAfter(); });
 }
 function rcCardCta(cta){
   const box = document.getElementById('messages');
@@ -622,6 +626,54 @@ function rcCardCta(cta){
   a.href = cta.href; a.textContent = cta.label;
   a.style.cssText = 'display:inline-block;padding:9px 16px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
   wrap.appendChild(a); box.appendChild(wrap); box.scrollTop = 999999;
+}
+// A short "Riley is considering" beat (animated dots) before the reward card, so the one thing back reads
+// as chosen for them, not auto-generated. NEVER used on the crisis path - that must be immediate.
+function rcTypingBeat(ms, done){
+  const box = document.getElementById('messages');
+  const w = document.createElement('div');
+  w.style.cssText = 'display:flex;justify-content:flex-start;margin:2px 0';
+  const b = document.createElement('div');
+  b.style.cssText = 'padding:12px 15px;border-radius:12px;border-bottom-left-radius:4px;background:#16130f;border:1px solid rgba(201,168,76,0.16);line-height:0';
+  b.innerHTML = '<span class="rc-dot"></span><span class="rc-dot"></span><span class="rc-dot"></span>';
+  w.appendChild(b); box.appendChild(w); box.scrollTop = 999999;
+  setTimeout(function(){ w.remove(); if(done) done(); }, ms);
+}
+// The one thing Riley gives back, as a distinct gift card (breathing sun + serif title). Celebratory
+// variant warms the border/glow; any CTA folds inside. Replaces the old plain-bubble reward line.
+function rcGiftCard(card){
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;justify-content:flex-start;margin:4px 0 6px';
+  const cel = !!card.celebratory;
+  const el = document.createElement('div');
+  el.style.cssText = 'max-width:86%;border-radius:14px;padding:17px 19px;'
+    + 'background:linear-gradient(180deg,rgba(201,168,76,0.13),rgba(22,19,15,0.72));'
+    + 'border:1px solid rgba(201,168,76,' + (cel?'0.42':'0.24') + ');'
+    + 'box-shadow:0 6px 30px rgba(201,168,76,' + (cel?'0.15':'0.07') + ');'
+    + 'animation:rcCardIn .6s cubic-bezier(.2,.7,.2,1) both';
+  const head = document.createElement('div');
+  head.style.cssText = 'display:flex;align-items:center;gap:9px;margin-bottom:10px';
+  const sun = document.createElement('span');
+  sun.style.cssText = 'width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 12px rgba(201,168,76,0.45);animation:sbSunBreathe 5s ease-in-out infinite;flex-shrink:0';
+  const lab = document.createElement('span');
+  lab.textContent = cel ? 'One thing to protect' : 'One thing, from Riley';
+  lab.style.cssText = "font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:var(--gold)";
+  head.appendChild(sun); head.appendChild(lab);
+  const title = document.createElement('div');
+  title.textContent = card.title;
+  title.style.cssText = "font-family:'DM Serif Display','DM Serif Text',Georgia,serif;font-size:19px;line-height:1.35;color:var(--parchment);margin-bottom:7px";
+  const body = document.createElement('div');
+  body.textContent = card.body;
+  body.style.cssText = 'font-size:14px;line-height:1.65;color:var(--parchment);opacity:0.92;white-space:pre-wrap';
+  el.appendChild(head); el.appendChild(title); el.appendChild(body);
+  if(card.cta){
+    const a = document.createElement('a');
+    a.href = card.cta.href; a.textContent = card.cta.label;
+    a.style.cssText = 'display:inline-block;margin-top:14px;padding:9px 16px;border-radius:999px;background:var(--gold);color:var(--ink);font-size:13px;font-weight:600;text-decoration:none';
+    el.appendChild(a);
+  }
+  wrap.appendChild(el); box.appendChild(wrap); box.scrollTop = 999999;
 }
 // Warm, mood-aware handoff into conversation, then offer to resume (24h) or start new.
 async function rcAfter(){

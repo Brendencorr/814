@@ -12,6 +12,38 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Typography: NO EM-DASHES anywhere - plain hyphen only (`f092040`, `126140f`, `8cd8d98` + DB)
+- **Why:** Brenden - the em-dash "-" reads too large. Standing rule now: plain hyphen `-` everywhere, never
+  em/en-dashes. (Logged in Claude memory MEMORY.md standing directives + working-preferences.)
+- **What:** replaced `—`/`&mdash;` with `-` across ALL 37 HTML pages (`f092040`), ALL 110 netlify functions +
+  root JS incl. email templates & UI copy (`126140f`), and the LLM prompts of the social/program generators
+  (sage, scout, atlas, plan-generate, daily-brief, journey-step, member-doc, week-one-letter - int-session uses
+  riley-chat) (`8cd8d98`). Riley's chat prompt (riley-chat.js VOICE) now instructs "use a plain hyphen, never
+  em/en-dashes." Updated the DB `content_prompt_versions` (all 7 active agents: sage/scout/sage_morning/atlas/
+  sentinel/echo/library_scout) - em-dashes stripped + rule appended.
+- **🔴 CODE PRESERVED:** the regex char classes `[—-]` in weekly-pipeline / manual-pipeline / week-one-letter
+  (match either dash) were restored after the sweep; crisis-detection patterns have no em-dashes; no em-dash
+  string delimiters/comparisons exist; all modified .js pass `node --check`. Any NEW copy/prompt must use hyphens.
+
+### Homepage first testimonial + About copy edits (`44d419b`, `f0fa6f5`, `126140f`, `8cd8d98`)
+- **Home:** first customer testimonial (Casey K.) added to the Stories section as a gold-accented card,
+  instrumented for Customize Website. 🔴 Brenden wants 2 more before launch (1/3 - see pre-launch-checklist).
+- **About:** revised "Built the hard way" opener; revised "Meet Riley" (+ "not here to replace professional
+  care..."); full "Why 8:14" story rewrite with gold colon/period in the title + an italic DM-Serif dedication.
+  All new copy instrumented for Customize Website.
+
+### Operator "Customize Website" - live marketing-site editor (`c7c2d9e` → `c23008f`)
+- **Why:** the marketing pages were hardcoded HTML; Brenden wanted to edit copy + layout himself, no redeploy.
+- **What:** new operator tab with a live click-to-edit preview of home/about/pillars/resources. Edit text;
+  show/hide/reorder/recolor sections; swap/remove logos (brand-image picker from cardinal assets + upload/URL);
+  **per-element layout** (drag the ⛶ handle to move, width/height/spacing/align, text colour + bold/italic);
+  **responsive** (separate Desktop/Mobile - desktop edits never touch mobile, via a media-queried stylesheet;
+  a Desktop/Mobile toggle drives the edit bucket). Save publishes instantly. Runtime-override model: pages carry
+  `data-cms-*` slots; `site-cms.js` applies overrides + is the in-iframe editor (posts changes to the parent
+  operator, which holds the OPERATOR_KEY and saves via `admin-site-content.js`). `site_content` table + public
+  `site-media` bucket (**migration 072**, RUN). RLS blocks anon writes so edit mode can never persist without
+  the key; resources' 988 crisis section is deliberately not instrumented. Full record: `customize-website-2026-07.md`.
+
 ### Memory v2 completeness pass (punch-list 8–14) + launch-audit fixes — SHIPPED
 - **Audit fixes (P0/P1):** subscriptions bridge in riley-chat + riley-brain (paying members were
   metered as Guide once free_access_mode off); onboarding Day-1 free-text now runs the crisis check

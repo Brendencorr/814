@@ -1,5 +1,5 @@
 /**
- * admin-comms.js — operator CRUD for the lifecycle email templates ("Client Onboarding
+ * admin-comms.js - operator CRUD for the lifecycle email templates ("Client Onboarding
  * Communication" tab). OPERATOR_KEY-gated.
  *
  * GET  → all 17 templates grouped into the 4 flows (guide, gone_quiet, paid, addon), each with the
@@ -9,7 +9,7 @@
  *        trigger_days?, body_text?, button_label?, button_url?, enabled? }.
  * POST { action:"reset", template_key } → delete the override (revert to the verbatim code copy).
  *
- * comms-templates.js stays the verbatim fallback — a row only overrides the fields the operator
+ * comms-templates.js stays the verbatim fallback - a row only overrides the fields the operator
  * changed. Edits here change what evaluate-comms sends (it reads these overrides), but NOTHING
  * sends while COMMS_ENABLED is unset (dark). Model: n/a.
  */
@@ -24,10 +24,10 @@ const CORS = {
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
 
 const FLOWS = [
-  { key: "guide",      title: "Guide Flow",       blurb: "Free onboarding — the first two weeks after signup." },
+  { key: "guide",      title: "Guide Flow",       blurb: "Free onboarding - the first two weeks after signup." },
   { key: "gone_quiet", title: "Gone Quiet Flow",  blurb: "Gentle win-back for members who drift, in escalating steps." },
   { key: "paid",       title: "Paid Member Flow", blurb: "Receipt, memory welcome, and a founder check-in for subscribers." },
-  { key: "addon",      title: "Add-on Flow",      blurb: "One-time $8.14 program purchases — receipt + a nudge to open." },
+  { key: "addon",      title: "Add-on Flow",      blurb: "One-time $8.14 program purchases - receipt + a nudge to open." },
 ];
 
 // Realistic sample vars so {placeholders} render in the preview.

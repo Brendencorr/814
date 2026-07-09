@@ -1,5 +1,5 @@
 /**
- * evaluate-comms.js — hourly lifecycle-comms evaluator (handoff Task 4). Scheduled via netlify.toml.
+ * evaluate-comms.js - hourly lifecycle-comms evaluator (handoff Task 4). Scheduled via netlify.toml.
  *
  * ── DARK BY DESIGN ──────────────────────────────────────────────────────────────────────────────
  * Nothing reaches a real inbox unless COMMS_ENABLED === 'true'. Otherwise every decision is still
@@ -90,7 +90,7 @@ exports.handler = async (event) => {
     sb.from("comms_templates").select("*"),  // operator overrides (copy/timing/enabled)
   ]);
   // Surface query failures instead of masking them as "no users": a bad column name makes
-  // PostgREST reject the whole query (fulfilled promise, but value.error set) — record it.
+  // PostgREST reject the whole query (fulfilled promise, but value.error set) - record it.
   const loadErrors = {};
   const g = (r, label) => {
     if (r.status !== "fulfilled") { loadErrors[label] = String(r.reason).slice(0, 200); return []; }
@@ -110,8 +110,8 @@ exports.handler = async (event) => {
   const planByUser = {}; subs.forEach((s) => { const t = String(s.plan_id || "").toLowerCase(); planByUser[s.user_id] = t.indexOf("coach") >= 0 || t.indexOf("concierge") >= 0 ? "coach" : t.indexOf("companion") >= 0 ? "companion" : planByUser[s.user_id] || "guide"; });
   const lastMsgByUser = {}; convs.forEach((c) => { if (!lastMsgByUser[c.user_id]) lastMsgByUser[c.user_id] = c.created_at; });
   const lastCiByUser = {}; cis.forEach((c) => { if (!lastCiByUser[c.user_id]) lastCiByUser[c.user_id] = c.checkin_date; });
-  // sentKeys = templates ACTUALLY sent (suppressed=false) — the once-per-template-ever dedup.
-  // loggedKeys = any decision row incl. suppressed — used only to avoid re-logging the same
+  // sentKeys = templates ACTUALLY sent (suppressed=false) - the once-per-template-ever dedup.
+  // loggedKeys = any decision row incl. suppressed - used only to avoid re-logging the same
   // suppressed decision every hour while dark. A suppressed (never-sent) decision must NOT
   // block the real send at go-live, or the dark period would silently burn every template.
   const sentKeys = {}; const loggedKeys = {}; const sentTodayNonTx = {}; const lastEmailByUser = {};
@@ -161,7 +161,7 @@ exports.handler = async (event) => {
     const everMessaged = !!lastMsg;
     // "Last touch" = the later of the member's own activity and the last email WE sent them. Gone-Quiet
     // is keyed on QUIET_GAP days of NO touch (default 14, editable via quiet_1.trigger_days). Because the
-    // onboarding series keeps emailing, each email refreshes the touch — so win-back can never start
+    // onboarding series keeps emailing, each email refreshes the touch - so win-back can never start
     // mid-onboarding, and the ladder auto-spaces (each quiet email is itself a touch).
     const lastTouch = Math.max(lastActive, lastEmailByUser[uid] || 0);
     const daysSinceTouch = Math.floor((now - lastTouch) / DAY);
@@ -172,7 +172,7 @@ exports.handler = async (event) => {
     const vars = { first_name: firstName(prof), session_count: (convs.filter((c) => c.user_id === uid).length) || 0, plan };
     const urls = { unsub: unsubUrl(uid), pref: prefUrl(uid) };
 
-    // Refresh the derived snapshot (upsert) — this is the Task-5 state, server-derived.
+    // Refresh the derived snapshot (upsert) - this is the Task-5 state, server-derived.
     const snap = {
       user_id: uid, signup_at: new Date(signupAt).toISOString(),
       last_login_at: st.last_login_at || null,
@@ -214,7 +214,7 @@ exports.handler = async (event) => {
       if (fired) continue;
     }
 
-    // 3) GUIDE FLOW (runs while still "in touch" — i.e., not yet in win-back). The onboarding series
+    // 3) GUIDE FLOW (runs while still "in touch" - i.e., not yet in win-back). The onboarding series
     // keeps refreshing the touch, so it completes on its calendar before Gone-Quiet can start.
     if (!fired && daysSinceTouch < QUIET_GAP) {
       if (daysSinceSignup >= dayFor("guide_7", 30)) await send("guide_7");

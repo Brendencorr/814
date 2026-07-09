@@ -1,7 +1,7 @@
 /**
- * brief-delivery-cron.js — Netlify Scheduled Function (hourly)
+ * brief-delivery-cron.js - Netlify Scheduled Function (hourly)
  *
- * Riley shows up — without the person having to log in first. Each person chose
+ * Riley shows up - without the person having to log in first. Each person chose
  * a check-in time in onboarding (morning/lunch/afternoon/evening/on_demand).
  * This runs every hour and emails their brief when it's that hour in THEIR
  * timezone.
@@ -34,7 +34,7 @@ function localDate(tz) {
 }
 
 function buildEmail(name, brief, schedule) {
-  // Greeting moves with the delivery slot — a user on evening briefs never gets "Good morning" at 7pm.
+  // Greeting moves with the delivery slot - a user on evening briefs never gets "Good morning" at 7pm.
   const GREET = { morning: "Good morning", lunch: "Good afternoon", afternoon: "Good afternoon", evening: "Good evening" };
   const greet = GREET[schedule] || "Good morning";
   const focus = brief?.modules?.focus || null;
@@ -46,7 +46,7 @@ function buildEmail(name, brief, schedule) {
     focus ? `Today's focus: ${focus}` : `Your brief is ready whenever you are.`,
     ``,
     `It takes about 45 seconds. ${APP_URL}/brief`, ``,
-    `— Riley`,
+    `- Riley`,
   ].join("\n");
   const html = shell(
     p(esc(greet) + ", " + esc(name) + ".") +
@@ -54,10 +54,10 @@ function buildEmail(name, brief, schedule) {
     (focus ? '<p style="margin:0 0 14px;padding:12px 16px;background:#f7f3ea;border-left:3px solid #c9a84c;border-radius:0 3px 3px 0"><strong>Today\'s focus:</strong> ' + esc(focus) + "</p>" : "") +
     btn("Open today's brief →", APP_URL + "/brief") +
     '<p style="color:#8a8578;font-size:13px;margin:2px 0 0">About 45 seconds. I\'ll be here.</p>' +
-    '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>',
+    '<p style="margin:16px 0 0;color:#6b655b">- Riley</p>',
     { preview: focus ? ("Today's focus: " + focus) : "Your brief is ready whenever you are." }
   );
-  return { subject: `${greet}, ${name} — your brief is ready`, text, html };
+  return { subject: `${greet}, ${name} - your brief is ready`, text, html };
 }
 
 async function sendEmail(to, email, userId) {
@@ -106,7 +106,7 @@ exports.handler = async function (event) {
       result.due++;
 
       try {
-        // Today's brief (in their local date) if it exists — for the focus line. No generation.
+        // Today's brief (in their local date) if it exists - for the focus line. No generation.
         const { data: brief } = await supabase
           .from("daily_briefs").select("modules").eq("user_id", u.id).eq("brief_date", localToday).maybeSingle();
         const name = (u.preferred_name || u.full_name || "").split(" ")[0] || "friend";

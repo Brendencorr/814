@@ -1,20 +1,20 @@
 /**
- * state-engine.js — Dashboard State Engine v1.0, Section 6 (the core mechanism)
+ * state-engine.js - Dashboard State Engine v1.0, Section 6 (the core mechanism)
  *
  * Every Tier 1 (state-changing) event fires this exact sequence:
- *   Step 0 — Crisis Check (ALWAYS first; inherits Trust & Crisis Architecture)
- *   Step 1 — Save Event
- *   Step 2 — Update user_daily_state
- *   Step 3 — Recalculate Clarity Score (+ "why did this change" explainer)
+ *   Step 0 - Crisis Check (ALWAYS first; inherits Trust & Crisis Architecture)
+ *   Step 1 - Save Event
+ *   Step 2 - Update user_daily_state
+ *   Step 3 - Recalculate Clarity Score (+ "why did this change" explainer)
  *   Steps 4-7 (module re-rank, Riley message, recommendations, brief) READ the
- *     state this engine persists — they live in riley-brain.js / daily-brief.js
+ *     state this engine persists - they live in riley-brain.js / daily-brief.js
  *     and are layered on in the next phase.
  *
  * If Step 0 detects a Level 2/3 trigger, clarity/recommendation/re-rank are
  * SUSPENDED for this cycle (suspended:true) and the response routes the client
- * to the Crisis Support Workflow instead of content — exactly as §5.1 specifies.
+ * to the Crisis Support Workflow instead of content - exactly as §5.1 specifies.
  *
- * Tier 2 (engagement) events are logged and return immediately — no recompute.
+ * Tier 2 (engagement) events are logged and return immediately - no recompute.
  * That split is the 5,000-user scaling fix (§2).
  *
  * Request (POST JSON): { user_id, token?, event_type, event_data?, text? }
@@ -34,7 +34,7 @@ const CORS = {
 const json = (statusCode, data) => ({ statusCode, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(data) });
 const todayUTC = () => new Date().toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
-// "App day" = the member's LOCAL date with a 4am rollover — matches the client so user_daily_state
+// "App day" = the member's LOCAL date with a 4am rollover - matches the client so user_daily_state
 // lines up with the dashboard's clarity read (was UTC, which drifted a day for evening users).
 const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
 
@@ -121,7 +121,7 @@ exports.handler = async function (event) {
   let supabase;
   try { supabase = getSupabaseClient(); } catch (e) { return json(500, { error: "Server configuration error" }); }
 
-  // SECURITY: identity comes ONLY from the verified token — never a client-supplied user_id. The
+  // SECURITY: identity comes ONLY from the verified token - never a client-supplied user_id. The
   // service key bypasses RLS, so trusting body.user_id would let anyone forge another user's state/crisis.
   let userId = null;
   try { const { data } = await supabase.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
@@ -129,12 +129,12 @@ exports.handler = async function (event) {
 
   const tier = isTier1(event_type) ? 1 : 2;
 
-  // Step 1 — Save Event (always logged, tier tagged).
+  // Step 1 - Save Event (always logged, tier tagged).
   try {
     await supabase.from("engagement_events").insert({ user_id: userId, event_type, event_data: { ...(event_data || {}), tier } });
   } catch (e) { console.warn("state-engine save event failed (non-fatal):", e.message); }
 
-  // Tier 2 — log only, no recompute. This is the scaling fix.
+  // Tier 2 - log only, no recompute. This is the scaling fix.
   if (tier === 2) return json(200, { tier: 2, recompute: false });
 
   let _tz = "America/Denver";
@@ -147,7 +147,7 @@ exports.handler = async function (event) {
   const prev = (prevRes && prevRes.data && prevRes.data[0]) || null;
   const flaggedToday = !!(prev && prev.date === today && prev.crisis_flag);
 
-  // ── Step 0 — Crisis Check (always first) ──────────────────────────────────
+  // ── Step 0 - Crisis Check (always first) ──────────────────────────────────
   let crisis = { flag: false, level: 0, source: null, matches: null };
   if (text) {
     let c = { level: 0, matches: [] };
@@ -160,7 +160,7 @@ exports.handler = async function (event) {
     const lowestInLast5 = sig.recentMoods.slice(0, 5).filter(m => m === 1).length;
     if (currentMood === 1 && lowestInLast5 >= 3) crisis = { flag: true, level: 2, source: "mood-pattern", matches: ["repeated-lowest-mood"] };
   }
-  // Handle a fresh crisis — log + alert the operator, deduped to once per day.
+  // Handle a fresh crisis - log + alert the operator, deduped to once per day.
   if (crisis.flag && !flaggedToday) {
     await logCrisis(supabase, userId, crisis.level, crisis.matches, text || "Repeated lowest-mood selection", "state-engine");
     if (supabase && userId) {
@@ -171,10 +171,10 @@ exports.handler = async function (event) {
     }
   }
 
-  // ── Step 2 — Update user_daily_state ──────────────────────────────────────
+  // ── Step 2 - Update user_daily_state ──────────────────────────────────────
   const dims = computeDimensions(sig);
 
-  // ── Step 3 — Recalculate Clarity (+ explainer, unless suspended by crisis) ─
+  // ── Step 3 - Recalculate Clarity (+ explainer, unless suspended by crisis) ─
   const clarity = computeClarity(dims);
   const prevClarity = prev ? prev.clarity_score : null;
   const explainer = crisis.flag ? null : explainChange(dimsFromRow(prev), dims, prevClarity, clarity, { checkpoint: !!body.checkpoint });
@@ -197,7 +197,7 @@ exports.handler = async function (event) {
     tier: 1,
     recompute: true,
     crisis: { flag: crisis.flag, level: crisis.level, source: crisis.source },
-    suspended: crisis.flag,                 // §5.1 — content/clarity narration suspended this cycle
+    suspended: crisis.flag,                 // §5.1 - content/clarity narration suspended this cycle
     state: { clarity_score: clarity, crisis_flag: crisisFlag, ...dims },
     clarity_delta: (clarity != null && prevClarity != null) ? clarity - prevClarity : null,
     explainer,

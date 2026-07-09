@@ -1,10 +1,10 @@
 /**
- * member-doc-background.js — generates Riley-authored documents about a member.
+ * member-doc-background.js - generates Riley-authored documents about a member.
  *
  * BACKGROUND function (generation is slow → -background = up to 15 min). The
  * client fires it and polls member_docs for the result.
  *
- *   doc_type "manual" → the Personal Operating Manual ("My User Manual") — the
+ *   doc_type "manual" → the Personal Operating Manual ("My User Manual") - the
  *     doc the member never wrote: I work best when… I get overwhelmed when… my
  *     warning signs… recharge by… encourage me by… don't…
  *   doc_type "story"  → the annual Story ("This is who you became").
@@ -61,10 +61,10 @@ function contextBlock(ctx) {
   return L.join("\n");
 }
 
-const MANUAL_SYS = `You are Riley, writing a "Personal Operating Manual" FOR a member of Meet Riley — the document they've never written about themselves, in a warm, affirming second-person voice ("You…"). Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context. Ground EVERY line in what you actually know about them below; never invent. If you lack signal for a section, give one gentle, honest placeholder line inviting them to tell you.
+const MANUAL_SYS = `You are Riley, writing a "Personal Operating Manual" FOR a member of Meet Riley - the document they've never written about themselves, in a warm, affirming second-person voice ("You…"). Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context. Ground EVERY line in what you actually know about them below; never invent. If you lack signal for a section, give one gentle, honest placeholder line inviting them to tell you.
 Return ONLY JSON: {"summary":"2-3 warm sentences on who they are at their best","sections":[{"title":"You work best when","items":["…"]},{"title":"You get overwhelmed when","items":[…]},{"title":"Your warning signs","items":[…]},{"title":"You recharge by","items":[…]},{"title":"When you're low, you tend to","items":[…]},{"title":"Encourage you by","items":[…]},{"title":"Please don't","items":[…]},{"title":"Your coping strategies that work","items":[…]},{"title":"The people who matter","items":[…]}]}. Keep items short and specific. No preamble, JSON only.`;
 
-const STORY_SYS = `You are Riley, writing a member of Meet Riley their personal Story — "This is who you became." Warm, honest, second-person ("You…"), never saccharine. Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context. Ground it ONLY in what you know below (wins, changes, events, moods over time, their why and vision). It's a chapter of a life, not only recovery. If there's little to go on yet, write a short, hopeful "beginning of the story" instead of inventing.
+const STORY_SYS = `You are Riley, writing a member of Meet Riley their personal Story - "This is who you became." Warm, honest, second-person ("You…"), never saccharine. Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context. Ground it ONLY in what you know below (wins, changes, events, moods over time, their why and vision). It's a chapter of a life, not only recovery. If there's little to go on yet, write a short, hopeful "beginning of the story" instead of inventing.
 Return ONLY JSON: {"title":"a title for this chapter of their story","sections":[{"heading":"short heading","body":"a paragraph"}, … 3-6 sections covering what they overcame, how they changed, their wins, relationships, and who they're becoming]}. JSON only.`;
 
 exports.handler = async function (event) {
@@ -75,7 +75,7 @@ exports.handler = async function (event) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return json(500, { error: "Server configuration error" });
   let sb; try { sb = getSupabaseClient(); } catch { return json(500, { error: "Server configuration error" }); }
-  // SECURITY: identity from the verified token only — never body.user_id (this reads a member's
+  // SECURITY: identity from the verified token only - never body.user_id (this reads a member's
   // deepest personal data + overwrites their doc; a forged user_id would expose/clobber anyone's).
   let userId = null;
   try { const { data } = await sb.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}
@@ -85,7 +85,7 @@ exports.handler = async function (event) {
   const nm = (ctx.profile.preferred_name || ctx.profile.full_name || "").split(" ")[0] || "friend";
   const sys = docType === "story" ? STORY_SYS : MANUAL_SYS;
   const period = docType === "story" ? (body.period || String(new Date().getUTCFullYear())) : null;
-  const userMsg = `Member first name: ${nm}${period ? `\nStory period: ${period}` : ""}\n\nWhat you know about them:\n${contextBlock(ctx) || "(very little yet — write a warm beginning)"}`;
+  const userMsg = `Member first name: ${nm}${period ? `\nStory period: ${period}` : ""}\n\nWhat you know about them:\n${contextBlock(ctx) || "(very little yet - write a warm beginning)"}`;
 
   let doc;
   try {

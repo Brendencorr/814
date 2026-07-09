@@ -1,7 +1,7 @@
 /**
- * stripe-checkout.js — creates a Stripe Checkout Session for a signed-in member. Member-facing.
+ * stripe-checkout.js - creates a Stripe Checkout Session for a signed-in member. Member-facing.
  *
- * The app POSTs { token, lookup_key } — token = the member's Supabase access token, lookup_key =
+ * The app POSTs { token, lookup_key } - token = the member's Supabase access token, lookup_key =
  * a catalog key ("coach_annual", "companion_monthly", or a program key like "prog_body").
  * We resolve the member, reuse/create their Stripe Customer (stored as user_profiles.stripe_customer_id),
  * resolve the Price by lookup_key, and open a Checkout Session carrying the metadata the webhook grants
@@ -38,7 +38,7 @@ exports.handler = async (event) => {
   if (!sub && !program) return json(400, { error: "unknown_product", lookup_key: lookup });
 
   try {
-    // Resolve the Price by PRODUCT id (riley_<key> — fixed + unambiguous), NOT by lookup_key. Programs
+    // Resolve the Price by PRODUCT id (riley_<key> - fixed + unambiguous), NOT by lookup_key. Programs
     // are one product = one price; subscriptions are one product with two prices, disambiguated by interval.
     // This is deterministic and immune to any lookup_key crossing in the catalog.
     const productId = sub ? ("riley_" + sub.plan) : ("riley_" + lookup);
@@ -46,7 +46,7 @@ exports.handler = async (event) => {
     const pr = await sGet("prices?product=" + encodeURIComponent(productId) + "&active=true&limit=10");
     const prices = (pr && pr.data) || [];
     const price = sub ? prices.find((p) => p.recurring && p.recurring.interval === want) : prices[0];
-    if (!price || !price.id) return json(400, { error: "price_not_found", detail: "no active price for " + productId + " — run stripe-setup" });
+    if (!price || !price.id) return json(400, { error: "price_not_found", detail: "no active price for " + productId + " - run stripe-setup" });
 
     // Reuse or create the member's Stripe Customer.
     const { data: prof } = await sb.from("user_profiles").select("email,full_name,stripe_customer_id").eq("id", uid).maybeSingle();

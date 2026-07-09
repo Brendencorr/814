@@ -1,5 +1,5 @@
 /**
- * link-health-check.js — nightly link health for the live content library.
+ * link-health-check.js - nightly link health for the live content library.
  *
  * Scheduled (netlify.toml: 09:00 UTC = 3am MT); a schedule makes it a background fn
  * (no synchronous timeout). HEADs every approved+active content_url; only a DEFINITIVE
@@ -14,7 +14,7 @@ const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-cl
 const TIMEOUT_MS = 8000;
 const CONCURRENCY = 10;
 
-// Returns 'ok' | 'broken'. Defaults to OK on anything ambiguous — never false-reject a live link.
+// Returns 'ok' | 'broken'. Defaults to OK on anything ambiguous - never false-reject a live link.
 async function checkOne(url) {
   if (!url || !/^https?:\/\//i.test(url)) return "broken";
   const dead = (s) => s === 404 || s === 410;

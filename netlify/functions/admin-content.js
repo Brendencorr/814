@@ -1,5 +1,5 @@
 /**
- * admin-content.js — Admin Content Manager (§8). Team-only.
+ * admin-content.js - Admin Content Manager (§8). Team-only.
  *
  * Internal CRUD over content_library so the team can add/edit/retire content
  * (podcasts, videos, books, journal prompts, breathwork, recipes, meditations,
@@ -7,7 +7,7 @@
  *
  * Protected by the same server-side secret as the safety queue (OPERATOR_KEY,
  * sent as the x-operator-key header). FAILS CLOSED if OPERATOR_KEY is unset.
- * Retire is a soft delete (is_active=false / approval_status=retired) — content
+ * Retire is a soft delete (is_active=false / approval_status=retired) - content
  * is never hard-deleted, so recommendation history stays intact.
  *
  * POST { action: "list" }                        // library + agent suggestions + counts
@@ -27,7 +27,7 @@ const CORS = {
 };
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
 
-// Curation vocabulary + shared validator (pure, tested) — one definition, reused by Scout too.
+// Curation vocabulary + shared validator (pure, tested) - one definition, reused by Scout too.
 const { CONTENT_TYPES, arr, num, normalizeItem, validateItem } = require("./content-curation");
 
 // Friendly nouns + icons for client-facing alert copy ("New 5-minute meditation added").
@@ -99,7 +99,7 @@ async function upsertContent(supabase, item) {
     updated_at: new Date().toISOString(),
   };
 
-  // Curation fields — only override when explicitly provided, so a partial edit
+  // Curation fields - only override when explicitly provided, so a partial edit
   // never clobbers persona/pillar/tone/tier the operator didn't touch.
   if (item.personas    !== undefined) row.personas    = arr(item.personas).map((s) => String(s).trim().toLowerCase());
   if (item.pillars     !== undefined) row.pillars     = arr(item.pillars).map((s) => String(s).trim().toLowerCase());
@@ -183,7 +183,7 @@ async function rejectSuggestion(supabase, id) {
   return json(200, { ok: true });
 }
 
-// ── bulk_suggest — import a sourcing-pass batch through the shared validator ──
+// ── bulk_suggest - import a sourcing-pass batch through the shared validator ──
 // The vocabulary + normalizeItem/validateItem live in ./content-curation (pure, tested).
 async function getActiveTags(supabase) {
   const { data } = await supabase.from("tag_registry").select("tag").eq("is_active", true);
@@ -194,7 +194,7 @@ async function getLibraryTitleSet(supabase) {
   return new Set((data || []).map((r) => String(r.title || "").trim().toLowerCase()));
 }
 // bulk_suggest: import a JSON batch from a Claude sourcing pass. Same validation as
-// Scout; everything lands pending + inactive — operator approval stays the only gate.
+// Scout; everything lands pending + inactive - operator approval stays the only gate.
 // Note: URL *shape* is validated here; true liveness is the nightly link-health job
 // (which handles HEAD→GET + redirects, and won't false-reject bot-blocking hosts).
 async function bulkSuggest(supabase, items) {

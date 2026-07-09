@@ -1,5 +1,5 @@
 /**
- * stripe-setup.js — the "seamless push". OPERATOR_KEY-gated.
+ * stripe-setup.js - the "seamless push". OPERATOR_KEY-gated.
  *
  * Reads STRIPE_SECRET_KEY from env and creates/updates every Product + Price from stripe-catalog.js
  * in Stripe (idempotent). Products use fixed ids (riley_<key>) so re-runs reuse them; Prices are
@@ -74,7 +74,7 @@ exports.handler = async (event) => {
       if (price.id) out.prices[pg.product_key] = price.id;
       else out.errors.push({ price: pg.product_key, error: price.error });
     }
-    // Create the webhook endpoint (idempotent by url). We deliberately DON'T return the signing secret —
+    // Create the webhook endpoint (idempotent by url). We deliberately DON'T return the signing secret -
     // reveal it in Stripe (Developers → Webhooks → this endpoint → Signing secret) → Netlify STRIPE_WEBHOOK_SECRET.
     try {
       const whUrl = "https://www.meetriley.us/.netlify/functions/stripe-webhook";
@@ -87,9 +87,9 @@ exports.handler = async (event) => {
       out.webhook = w.id ? { id: w.id, url: whUrl, events: evs.length, action: existing ? "updated" : "created", next: existing ? undefined : "reveal the signing secret in Stripe → Webhooks → Netlify STRIPE_WEBHOOK_SECRET" } : { error: (w.error && w.error.message) || "failed" };
     } catch (e) { out.webhook = { error: String((e && e.message) || e) }; }
 
-    // Customer Portal configuration — required (in live) for stripe-portal sessions to open. Enables
+    // Customer Portal configuration - required (in live) for stripe-portal sessions to open. Enables
     // update-card / cancel / view+download invoices / update email+address. (Plan-switching left to the
-    // dashboard — it needs per-product config.) Idempotent: only create if none exists yet.
+    // dashboard - it needs per-product config.) Idempotent: only create if none exists yet.
     try {
       const have = await sGet("billing_portal/configurations?limit=1");
       if (have && have.data && have.data[0]) {

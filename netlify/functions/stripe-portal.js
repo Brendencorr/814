@@ -1,9 +1,9 @@
 /**
- * stripe-portal.js — opens Stripe's hosted Customer Portal for a signed-in member.
+ * stripe-portal.js - opens Stripe's hosted Customer Portal for a signed-in member.
  *
  * The app POSTs { token } (the member's Supabase access token). We find their stripe_customer_id and
  * create a Billing Portal session; the member manages cards, cancels, switches plans, and views/downloads
- * invoices — all hosted by Stripe (what actions are allowed is configured in the Stripe dashboard).
+ * invoices - all hosted by Stripe (what actions are allowed is configured in the Stripe dashboard).
  * Returns { url } to redirect to. DORMANT until STRIPE_SECRET_KEY is set.
  */
 const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
@@ -40,13 +40,13 @@ exports.handler = async (event) => {
     const session = await r.json();
     if (!session.url) {
       const err = session.error || {};
-      // The stored customer doesn't exist in THIS Stripe mode — e.g. a test-mode id lingering after go-live, or
+      // The stored customer doesn't exist in THIS Stripe mode - e.g. a test-mode id lingering after go-live, or
       // a customer deleted in Stripe. Self-heal: drop the stale id (so the billing card hides on next load) and
       // report the friendly "no billing account" state instead of a scary "Could not open billing" error.
       const missing = err.code === "resource_missing" || /no such customer/i.test(err.message || "");
       if (missing) {
         try { await sb.from("user_profiles").update({ stripe_customer_id: null }).eq("id", uid); } catch (_) {}
-        return json(400, { error: "no_billing_account", detail: "stored customer not found — cleared stale id" });
+        return json(400, { error: "no_billing_account", detail: "stored customer not found - cleared stale id" });
       }
       return json(502, { error: "portal_create_failed", detail: err.message || err });
     }

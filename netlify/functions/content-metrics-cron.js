@@ -1,5 +1,5 @@
 /**
- * content-metrics-cron.js — Phase 3 learning loop (scheduled nightly 23:30 MT).
+ * content-metrics-cron.js - Phase 3 learning loop (scheduled nightly 23:30 MT).
  *
  * 1. For each published publishing_job with a buffer_post_id, pull Buffer's
  *    per-post statistics -> content_performance_metrics.
@@ -55,7 +55,7 @@ async function pullBufferMetrics(db) {
   return { pulled };
 }
 
-// Weekly digest — runs only on Sundays. Summarizes recent performance so Sage learns.
+// Weekly digest - runs only on Sundays. Summarizes recent performance so Sage learns.
 async function weeklyDigest(db) {
   const today = new Date();
   if (today.getUTCDay() !== 0) return { skipped: "not Sunday" };

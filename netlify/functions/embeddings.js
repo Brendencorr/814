@@ -1,5 +1,5 @@
 /**
- * embeddings.js — provider-swappable text embedding (Spec §1.2).
+ * embeddings.js - provider-swappable text embedding (Spec §1.2).
  *
  * Returns a 1024-dim vector, or NULL on ANY error / missing key. It NEVER throws
  * into the chat path. Ships DARK: with no key configured, every caller falls back

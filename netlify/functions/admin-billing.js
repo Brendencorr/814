@@ -1,7 +1,7 @@
 /**
- * admin-billing.js — OPERATOR-gated. Per-member billing visibility + controls for the operator dashboard.
+ * admin-billing.js - OPERATOR-gated. Per-member billing visibility + controls for the operator dashboard.
  * "See the payment + receipt in each member's account, and cancel or refund yourself." No banking details
- * ever leave Stripe — we only surface non-sensitive summaries (amount, status, date, card brand+last4) plus
+ * ever leave Stripe - we only surface non-sensitive summaries (amount, status, date, card brand+last4) plus
  * Stripe's own hosted receipt/invoice links. The stripe-webhook then revokes/updates access on the resulting
  * Stripe events (charge.refunded, customer.subscription.deleted/updated), so access stays in lockstep.
  *

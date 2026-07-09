@@ -1,5 +1,5 @@
 /**
- * rpc-introspect.js — TEMPORARY discovery tool. OPERATOR_KEY-gated.
+ * rpc-introspect.js - TEMPORARY discovery tool. OPERATOR_KEY-gated.
  *
  * Reads RPC_API_KEY from env (never returns it) and runs a focused GraphQL introspection against
  * https://api.app.rockpapercoin.com/graphql to discover the available queries + mutations, so we can

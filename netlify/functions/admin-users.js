@@ -1,8 +1,8 @@
 /**
- * admin-users.js — Operator-only user management endpoint
+ * admin-users.js - Operator-only user management endpoint
  *
  * Uses SUPABASE_SERVICE_KEY to bypass RLS so the admin can read all user data.
- * This endpoint is NOT for public use — it should only be called from
+ * This endpoint is NOT for public use - it should only be called from
  * the operator dashboard (admin.meetriley.us) which is password-protected.
  *
  * GET /.netlify/functions/admin-users
@@ -38,7 +38,7 @@ exports.handler = async function (event) {
   if (provided !== expected) return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: "Unauthorized" }) };
 
   try {
-    const supabase = getSupabaseClient(); // SERVICE_KEY — bypasses RLS
+    const supabase = getSupabaseClient(); // SERVICE_KEY - bypasses RLS
     const params   = event.queryStringParameters || {};
     const userId   = params.user_id;
     // Strip PostgREST filter metacharacters so `search` can't alter the .or() filter logic (injection).
@@ -59,7 +59,7 @@ exports.handler = async function (event) {
         supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).gte("checkin_date", thirtyAgoDay).not("mood", "is", null).order("checkin_date", { ascending: true }).limit(400),
       ]);
 
-      // Session METADATA ONLY — the operator must NEVER see members' conversation content.
+      // Session METADATA ONLY - the operator must NEVER see members' conversation content.
       // (Hard rule: "these are people's lives and secrets." Counts/timestamps only, never text.)
       const convsBySession = {};
       (convsRes.data || []).forEach((msg) => {
@@ -97,7 +97,7 @@ exports.handler = async function (event) {
       const days = la ? (now - new Date(la)) / 86400000 : 999;
       const state = !la ? "new" : days <= 2 ? "active" : days <= 7 ? "cooling" : "dormant";
 
-      // Redact personal, journal-like reflective fields — the operator gets operational data only,
+      // Redact personal, journal-like reflective fields - the operator gets operational data only,
       // never the member's private onboarding reflections / Human OS. (Same hard rule as above.)
       const _pfull = profileRes.data || null;
       const safeProfile = _pfull

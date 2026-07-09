@@ -1,5 +1,5 @@
 /**
- * admin-engagement.js — Operator-only engagement analytics
+ * admin-engagement.js - Operator-only engagement analytics
  *
  * Uses SUPABASE_SERVICE_KEY to read across all users. Operator dashboard only
  * (admin.meetriley.us, password-gated). Built for 5,000-user scale: reads the
@@ -12,12 +12,12 @@
  *   users: [ {id, name, email, state, last_active_at, brief_open_count,
  *             riley_msg_count, session_count, sober_days, recent_mood,
  *             tier, products, active_program, last_crisis_level} ],
- *   needs_attention: [ same shape — dormant/cooling or low recent mood ]
+ *   needs_attention: [ same shape - dormant/cooling or low recent mood ]
  * }
  *
  * tier/products ties each client's engagement directly back to what they've
  * actually purchased (reads user_active_products, same expansion entitlements.js
- * uses — Guide/Companion/Coach imply every program). active_program pulls their
+ * uses - Guide/Companion/Coach imply every program). active_program pulls their
  * current curriculum enrollment + days completed from user_program_progress.
  */
 
@@ -63,7 +63,7 @@ exports.handler = async function (event) {
         .not("mood", "is", null)
         .order("checkin_date", { ascending: false })
         .limit(50000),
-      // tier/products config — same tables entitlements.js reads
+      // tier/products config - same tables entitlements.js reads
       supabase.from("products").select("product_key,display_name,tier_level,status"),
       supabase.from("user_active_products").select("user_id,product_key").limit(50000),
       // current curriculum enrollment, most-recently-active first
@@ -72,7 +72,7 @@ exports.handler = async function (event) {
         .eq("status", "active")
         .order("last_activity", { ascending: false })
         .limit(20000),
-      // latest client email per user — one indexed scan of recent email_log rows
+      // latest client email per user - one indexed scan of recent email_log rows
       // (created_at DESC), grouped in JS. Fixed-size window → scales without a giant
       // .in(5000 ids) URL. Users beyond the window show no chip (their panel has full history).
       supabase.from("email_log")
@@ -103,7 +103,7 @@ exports.handler = async function (event) {
     for (const c of checkins) { if (latestMood[c.user_id] === undefined) latestMood[c.user_id] = c.mood; }
 
     // Owned products per user (user_active_products already expands
-    // implies_all_programs — same resolved view entitlements.js uses).
+    // implies_all_programs - same resolved view entitlements.js uses).
     const prodByKey = {};
     prodDefs.forEach(p => { prodByKey[p.product_key] = p; });
     const ownedByUser = {};
@@ -172,7 +172,7 @@ exports.handler = async function (event) {
         tier: currentTier(owned),
         // Exclude reset_free (implied for everyone, not worth listing) and
         // retired products (Coach/Companion's implies_all_programs expansion
-        // technically includes them, but they're dead SKUs — noisy to show).
+        // technically includes them, but they're dead SKUs - noisy to show).
         products: owned.filter(k => k !== "reset_free" && (prodByKey[k] || {}).status !== "retired").map(k => (prodByKey[k] || {}).display_name || k),
         active_program: activeProgramByUser[u.id] || null,
         last_crisis_level: u.last_crisis_level || null,
@@ -181,7 +181,7 @@ exports.handler = async function (event) {
       };
     });
 
-    // Needs attention — cooling/dormant, or recent mood is low (1-2)
+    // Needs attention - cooling/dormant, or recent mood is low (1-2)
     const needs_attention = rows
       .filter(r => r.state === "dormant" || r.state === "cooling" || (r.recent_mood !== null && r.recent_mood <= 2))
       .sort((a, b) => {

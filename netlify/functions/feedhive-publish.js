@@ -12,7 +12,7 @@
  * env FEEDHIVE_AUTOSCHEDULE=true to let the pipeline auto-schedule (status "scheduled"
  * with the given scheduled_at). A caller can also force status explicitly in the body.
  *
- * Returns: { success, update_id, status } or { error } — same shape callers expect.
+ * Returns: { success, update_id, status } or { error } - same shape callers expect.
  */
 
 const FEEDHIVE_API = "https://api.feedhive.com";
@@ -44,7 +44,7 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
 
-  // SECURITY: operator-only. This publishes to REAL Instagram/Facebook — it must never be reachable
+  // SECURITY: operator-only. This publishes to REAL Instagram/Facebook - it must never be reachable
   // unauthenticated (a public POST could post spam/abuse to the recovery brand + drain the FeedHive
   // quota). Called server-to-server by the pipeline + content-queue, which send x-operator-key.
   const _opk = process.env.OPERATOR_KEY;
@@ -64,11 +64,11 @@ exports.handler = async function (event) {
     if (!accounts.length) return json(400, { error: "no target FeedHive accounts (set FEEDHIVE_ACCOUNT_IDS or connect an account)" });
 
     // Safety default = draft (CODE_SPEC §A7: FEEDHIVE_MODE=draft|live, default draft). Draft means
-    // nothing auto-publishes — a human approves/schedules in FeedHive. "live" only schedules items the
+    // nothing auto-publishes - a human approves/schedules in FeedHive. "live" only schedules items the
     // pipeline already routed here (approval still gates upstream). Phase A will move this to a
     // DB-stored setting (admin toggle, no redeploy); the env var is the bootstrap default.
     const mode = (process.env.FEEDHIVE_MODE || "draft").toLowerCase();
-    // Mode gates draft-vs-live — NO client override (a forged body.status could bypass draft-safety).
+    // Mode gates draft-vs-live - NO client override (a forged body.status could bypass draft-safety).
     const status = (mode === "live" && scheduled_at) ? "scheduled" : "draft";
 
     const payload = { text, accounts, status };

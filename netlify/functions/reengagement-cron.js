@@ -1,9 +1,9 @@
 /**
- * reengagement-cron.js — Netlify Scheduled Function
+ * reengagement-cron.js - Netlify Scheduled Function
  *
  * Runs daily. Finds people who logged in, then went quiet for about a week,
  * and sends them one gentle win-back email in Riley's voice:
- * "Welcome back. We saved your place." — never guilt, never pressure.
+ * "Welcome back. We saved your place." - never guilt, never pressure.
  *
  * Trigger logic (matches the product intent: "a week after first login, only
  * if they haven't signed back in"):
@@ -13,11 +13,11 @@
  *     log_engagement clears the flag on any activity, re-arming the win-back)
  *
  * Email is sent via Resend (RESEND_API_KEY). If the key isn't set yet, the
- * function logs who WOULD have been emailed and exits cleanly — so it never
+ * function logs who WOULD have been emailed and exits cleanly - so it never
  * crashes before the provider is configured.
  *
  * Schedule: netlify.toml [functions."reengagement-cron"] schedule = "0 16 * * *"
- *   (16:00 UTC = 10am Mountain — a kind hour to land in someone's inbox)
+ *   (16:00 UTC = 10am Mountain - a kind hour to land in someone's inbox)
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
@@ -27,7 +27,7 @@ const { shell, p, btn, esc } = require("./comms-templates");
 const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const APP_URL    = "https://riley.meetriley.us";
 
-// ── Compose the email — warm, specific, never guilt ──────────────────────────
+// ── Compose the email - warm, specific, never guilt ──────────────────────────
 function buildEmail(u) {
   const name = (u.preferred_name || u.full_name || "").split(" ")[0] || "friend";
   const why  = u.why_here ? String(u.why_here).split(";")[0].trim() : null;
@@ -38,11 +38,11 @@ function buildEmail(u) {
     ``,
     `It's Riley.`,
     ``,
-    `It's been about a week since we first talked, and I noticed you haven't been back. I'm not writing to nudge you or make you feel behind — there's none of that here.`,
+    `It's been about a week since we first talked, and I noticed you haven't been back. I'm not writing to nudge you or make you feel behind - there's none of that here.`,
     ``,
     `I just wanted you to know your place is exactly where you left it. We saved it. Nothing expired. Nothing reset.`,
   ];
-  if (vision) lines.push(``, `What you told me you're reaching for — "${vision}" — is still worth it. And you don't have to do it all at once. Just the next small step.`);
+  if (vision) lines.push(``, `What you told me you're reaching for - "${vision}" - is still worth it. And you don't have to do it all at once. Just the next small step.`);
   else if (why) lines.push(``, `You came here for a reason that mattered to you. That reason is still valid. So are you.`);
   lines.push(
     ``,
@@ -50,9 +50,9 @@ function buildEmail(u) {
     ``,
     `${APP_URL}`,
     ``,
-    `— Riley`,
+    `- Riley`,
     ``,
-    `(If you'd rather not hear from me, just reply and say so — no hard feelings, ever.)`
+    `(If you'd rather not hear from me, just reply and say so - no hard feelings, ever.)`
   );
   const text = lines.join("\n");
 
@@ -60,13 +60,13 @@ function buildEmail(u) {
   const html = shell(
     p("Hi " + esc(name) + ",") +
     p("It's Riley.") +
-    p("It's been about a week since we first talked, and I noticed you haven't been back. I'm not writing to nudge you or make you feel behind — there's none of that here.") +
+    p("It's been about a week since we first talked, and I noticed you haven't been back. I'm not writing to nudge you or make you feel behind - there's none of that here.") +
     p("I just wanted you to know your place is exactly where you left it. We saved it. Nothing expired. Nothing reset.") +
-    (safeVision ? p('What you told me you\'re reaching for — <em>"' + safeVision + '"</em> — is still worth it. And you don\'t have to do it all at once. Just the next small step.') : (why ? p("You came here for a reason that mattered to you. That reason is still valid. So are you.") : "")) +
+    (safeVision ? p('What you told me you\'re reaching for - <em>"' + safeVision + '"</em> - is still worth it. And you don\'t have to do it all at once. Just the next small step.') : (why ? p("You came here for a reason that mattered to you. That reason is still valid. So are you.") : "")) +
     p("Whenever you're ready, I'm right here.") +
     btn("Come back home →", APP_URL) +
-    '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>',
-    { preview: "Your place is exactly where you left it — nothing expired." }
+    '<p style="margin:16px 0 0;color:#6b655b">- Riley</p>',
+    { preview: "Your place is exactly where you left it - nothing expired." }
   );
 
   return { subject: `${name}, your place is still here`, text, html };
@@ -85,7 +85,7 @@ exports.handler = async function (event) {
 
   // Win-back ownership handoff: while the lifecycle comms system is DARK this cron is the only
   // active win-back. The moment COMMS_ENABLED=true, the lifecycle Gone-Quiet ladder (quiet_1/2/3
-  // in evaluate-comms) owns lapsed-member outreach — so this cron stands down automatically to
+  // in evaluate-comms) owns lapsed-member outreach - so this cron stands down automatically to
   // avoid double-emailing. No coverage gap (it runs until the flip), no overlap (it stops at it).
   if (String(process.env.COMMS_ENABLED || "").toLowerCase() === "true") {
     return { statusCode: 200, body: JSON.stringify({ ok: true, skipped: "comms_enabled_owns_winback" }) };

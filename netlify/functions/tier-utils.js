@@ -1,8 +1,8 @@
 /**
- * tier-utils.js — the ONE place a member's tier is derived from what they own.
+ * tier-utils.js - the ONE place a member's tier is derived from what they own.
  *
  * Before this, the mentor>coach>companion>guide logic was copy-pasted in
- * entitlements.js, riley-brain.js, riley-chat.js and admin-engagement.js — four
+ * entitlements.js, riley-brain.js, riley-chat.js and admin-engagement.js - four
  * chances to drift. Everything now imports currentTier() from here.
  *
  * Canonical inputs = the resolved set of owned product_keys (from user_active_products
@@ -22,7 +22,7 @@ function currentTier(owned) {
   return size ? "alacarte" : null; // owns à-la-carte program(s) but no membership tier
 }
 
-// Engagement state from a member's last_active_at — the ONE definition, shared by
+// Engagement state from a member's last_active_at - the ONE definition, shared by
 // admin-engagement (full list) + admin-home (recent signups) so both stay in lockstep.
 function stateFromLastActive(lastActive) {
   if (!lastActive) return "new";

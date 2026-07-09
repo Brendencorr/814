@@ -1,11 +1,11 @@
 /**
- * checkin-scan.js — Standard Netlify Serverless Function
+ * checkin-scan.js - Standard Netlify Serverless Function
  *
  * Closes the gap where the Daily Check-In's free-text fields (what's on your
  * mind, dinner) save straight to Supabase and never pass through Riley's crisis
  * detection. The dashboard POSTs the free-text here after a check-in; this runs
  * the SAME deterministic detector (crisis-detection.js) and, on a Level 2/3
- * signal, logs to the restricted crisis_log + flags the profile — so the
+ * signal, logs to the restricted crisis_log + flags the profile - so the
  * follow-up cron and operator safety queue catch it just like a chat message.
  *
  * Request (POST JSON): { user_id, token?, text }
@@ -28,7 +28,7 @@ const json = (statusCode, data) => ({
   statusCode, headers: { ...CORS_HEADERS, "Content-Type": "application/json" }, body: JSON.stringify(data),
 });
 
-// Mirror of riley-chat's logCrisis — restricted safety write, non-fatal.
+// Mirror of riley-chat's logCrisis - restricted safety write, non-fatal.
 async function logCrisis(supabase, userId, level, matches, snippet) {
   if (!supabase || !userId) return;
   try {
@@ -57,7 +57,7 @@ exports.handler = async function (event) {
   let supabase = null;
   try { supabase = getSupabaseClient(); } catch (e) { console.warn("supabase init failed:", e.message); }
 
-  // SECURITY: identity comes ONLY from the verified token — never body.user_id (else anyone could
+  // SECURITY: identity comes ONLY from the verified token - never body.user_id (else anyone could
   // forge a crisis_log / operator alert about another member). No valid token → no user attribution.
   let userId = null;
   if (supabase && body.token) {

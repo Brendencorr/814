@@ -1,8 +1,8 @@
 /**
- * usage-limits.js — shared usage-cap helpers (Riley Guide's caps, v4 pricing)
+ * usage-limits.js - shared usage-cap helpers (Riley Guide's caps, v4 pricing)
  *
  * The one place `currentPeriodStart()` is defined. Any function that checks OR
- * increments a usage counter must use THIS implementation — if the check and
+ * increments a usage counter must use THIS implementation - if the check and
  * the increment ever disagreed on what "this week" means, a cap could leak or
  * a member could get locked out early. Used by entitlements.js (display) and
  * riley-chat.js (actual enforcement).
@@ -44,7 +44,7 @@ async function incrementUsage(sb, userId, featureKey, periodStart) {
   try {
     await sb.rpc('increment_usage_counter', { p_user_id: userId, p_feature_key: featureKey, p_period_start: periodStart.toISOString() });
   } catch (e) {
-    // Fallback if the RPC isn't installed yet — read-then-write (rare race, acceptable for a soft cap).
+    // Fallback if the RPC isn't installed yet - read-then-write (rare race, acceptable for a soft cap).
     try {
       const { data: row } = await sb.from('usage_counters').select('id, count_used')
         .eq('user_id', userId).eq('feature_key', featureKey).eq('period_start', periodStart.toISOString()).maybeSingle();

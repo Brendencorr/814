@@ -1,5 +1,5 @@
 /**
- * content-event.js — State Engine Phase 3 (§7 + §7.1)
+ * content-event.js - State Engine Phase 3 (§7 + §7.1)
  *
  * Records a content interaction (status) and/or structured feedback, then feeds
  * the learning loop so future recommendations actually improve:
@@ -7,12 +7,12 @@
  *   - maps feedback → recommendation_history.reaction (riley-brain reads this
  *     for novelty + preference)
  *   - "dont_show" adds the content_type to user_profiles.do_not_recommend
- *   - logs the Tier 2 engagement event (no full recompute — §2 scaling split)
+ *   - logs the Tier 2 engagement event (no full recompute - §2 scaling split)
  *
  * Request (POST JSON): { user_id, token?, content_id, content_type, status?, feedback? }
  * Response: { ok: true }
  *
- * Tier 2 by definition — content interaction is interest, not a wellbeing-state
+ * Tier 2 by definition - content interaction is interest, not a wellbeing-state
  * change, so it never triggers the State Engine's full recalculation chain.
  */
 
@@ -41,7 +41,7 @@ exports.handler = async function (event) {
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }
 
-  let userId = null;   // SECURITY: set from the verified token below — never body.user_id
+  let userId = null;   // SECURITY: set from the verified token below - never body.user_id
   const { content_id, content_type } = body;
   const status   = STATUSES.includes(body.status) ? body.status : null;
   const feedback = FEEDBACKS.includes(body.feedback) ? body.feedback : null;
@@ -83,7 +83,7 @@ exports.handler = async function (event) {
     } catch (e) { /* non-fatal */ }
   }
 
-  // 4) Tier 2 engagement event — logged, never a full recompute.
+  // 4) Tier 2 engagement event - logged, never a full recompute.
   const evt = status ? ("content_" + (status === "started" ? "started" : status))
             : feedback ? "content_feedback" : "content_clicked";
   try {

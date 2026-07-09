@@ -1,12 +1,12 @@
 /**
- * post-hoc-crisis-scan.js — safety BACKSTOP (Master Build Spec §7.3).
+ * post-hoc-crisis-scan.js - safety BACKSTOP (Master Build Spec §7.3).
  *
- * Nightly, STANDARD Haiku (NEVER batched — its purpose is speed-to-operator; the safety
+ * Nightly, STANDARD Haiku (NEVER batched - its purpose is speed-to-operator; the safety
  * layer is never optimized for cost). It re-reads the last day of member messages that the
  * deterministic detector did NOT flag, and asks a model whether any indirect / metaphorical /
  * misspelled phrasing MIGHT be crisis language a keyword rule could miss.
  *
- * It NEVER blocks, alters, delays, or substitutes the deterministic path — that already ran
+ * It NEVER blocks, alters, delays, or substitutes the deterministic path - that already ran
  * live. Flags land in a review queue (system_incidents kind='possible_missed_crisis', operator-
  * only, service-role). Confirmed misses become new deterministic rules + new crisis test cases.
  *
@@ -24,8 +24,8 @@ const crypto = require("crypto");
 const hashId = (id) => { try { return crypto.createHash("sha256").update(String(id)).digest("hex").slice(0, 16); } catch (_) { return null; } };
 const ok = (body) => ({ statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ok: true, ...body }) });
 
-const SYS = `You are a SAFETY BACKSTOP for a recovery/wellness app. A deterministic keyword detector ALREADY ran on these member messages and did NOT flag them. Your ONLY job is to catch language that MIGHT indicate an active crisis a keyword rule could miss: suicidal ideation, self-harm, or imminent danger — expressed indirectly, metaphorically, with slang, or misspelled.
-Flag when genuinely ambiguous toward risk. Do NOT flag ordinary sadness, stress, grief, venting, or normal recovery talk. Precision matters — this goes to a human, not the member.
+const SYS = `You are a SAFETY BACKSTOP for a recovery/wellness app. A deterministic keyword detector ALREADY ran on these member messages and did NOT flag them. Your ONLY job is to catch language that MIGHT indicate an active crisis a keyword rule could miss: suicidal ideation, self-harm, or imminent danger - expressed indirectly, metaphorically, with slang, or misspelled.
+Flag when genuinely ambiguous toward risk. Do NOT flag ordinary sadness, stress, grief, venting, or normal recovery talk. Precision matters - this goes to a human, not the member.
 Return ONLY a JSON array (possibly empty) of {"i": <index number>, "reason": "<=8 words"}. Nothing else.`;
 
 exports.handler = async function (event) {

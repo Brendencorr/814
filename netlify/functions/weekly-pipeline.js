@@ -49,16 +49,16 @@ async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 2000) {
 }
 
 // ─── System prompts (concise versions for pipeline) ─────────────────────────
-const ECHO_PIPELINE_PROMPT = `You are Echo — analytics agent for Meet Riley.
+const ECHO_PIPELINE_PROMPT = `You are Echo - analytics agent for Meet Riley.
 Read last week's performance data from Supabase and produce a brief:
 - Best performing pillar (most email signups)
-- Format winner (carousel / quote / caption — most saves)
+- Format winner (carousel / quote / caption - most saves)
 - Worst performing pillar (avoid this week)
 - One key insight for Scout and Sage
 
 Output as JSON: { "best_pillar": "", "format_winner": "", "worst_pillar": "", "insight": "" }`;
 
-const SCOUT_PIPELINE_PROMPT = `You are Scout — content research agent for Meet Riley (meetriley.us).
+const SCOUT_PIPELINE_PROMPT = `You are Scout - content research agent for Meet Riley (meetriley.us).
 Find 5 trending topics in sobriety, recovery, mental health, fitness, nutrition.
 Focus on the best_pillar and avoid topics listed as recent.
 Output exactly:
@@ -70,10 +70,10 @@ Pillar: [pillar name]
 HIGH-VALUE SEARCH TERMS:
 [10 search phrases, one per line]`;
 
-const SAGE_PIPELINE_PROMPT = `You are Sage — content writer for Meet Riley (meetriley.us).
+const SAGE_PIPELINE_PROMPT = `You are Sage - content writer for Meet Riley (meetriley.us).
 Write 3 complete posts from Scout's research.
 For each post output:
-POST [N] — [TYPE]
+POST [N] - [TYPE]
 Platform: [platform]
 Day/Time: [day and time MT]
 CAPTION:
@@ -83,7 +83,7 @@ HASHTAGS:
 ---
 Produce exactly 3 posts. Make captions publish-ready in Riley's voice: warm, direct, honest.`;
 
-const ATLAS_PIPELINE_PROMPT = `You are Atlas — publishing agent for Meet Riley (meetriley.us).
+const ATLAS_PIPELINE_PROMPT = `You are Atlas - publishing agent for Meet Riley (meetriley.us).
 Take Sage's posts and output a Buffer-ready schedule.
 For each post output exactly:
 POST: [number]
@@ -167,7 +167,7 @@ exports.handler = async function (event) {
   const _gate = requireOperator(event); if (_gate) return _gate;
   // Allow GET/POST for manual trigger; scheduled invocations come with no httpMethod
   const isManual = event.httpMethod === "POST" || event.httpMethod === "GET";
-  console.log(`[weekly-pipeline] Starting — ${isManual ? "manual" : "scheduled"} run`);
+  console.log(`[weekly-pipeline] Starting - ${isManual ? "manual" : "scheduled"} run`);
 
   const apiKey    = process.env.ANTHROPIC_API_KEY;
   const siteUrl   = process.env.URL || "";
@@ -253,7 +253,7 @@ exports.handler = async function (event) {
         const pillars = data.flatMap((r) => r.pillars_covered || []);
         const themes  = data.map((r) => r.top_theme).filter(Boolean);
         recentTopics =
-          "\n\nRECENT TOPICS — DO NOT REPEAT:\n" + topics.map((t) => `- ${t}`).join("\n") +
+          "\n\nRECENT TOPICS - DO NOT REPEAT:\n" + topics.map((t) => `- ${t}`).join("\n") +
           (pillars.length ? "\n\nRECENT PILLARS (rotate):\n" + [...new Set(pillars)].map((p) => `- ${p}`).join("\n") : "") +
           (themes.length  ? "\n\nRECENT THEMES:\n" + themes.map((t) => `- ${t}`).join("\n") : "");
       }
@@ -306,7 +306,7 @@ exports.handler = async function (event) {
   try {
     const sageMessage =
       `Here is Scout's research:\n\n${scoutReply}` +
-      (echoBrief.format_winner ? `\n\nFORMAT WINNER LAST WEEK: ${echoBrief.format_winner} — produce more of this type.` : "") +
+      (echoBrief.format_winner ? `\n\nFORMAT WINNER LAST WEEK: ${echoBrief.format_winner} - produce more of this type.` : "") +
       (echoBrief.best_pillar   ? `\nPILLAR TO WEIGHT TOWARD: ${echoBrief.best_pillar}` : "") +
       (echoBrief.worst_pillar  ? `\nPILLAR TO REDUCE: ${echoBrief.worst_pillar}` : "") +
       (echoBrief.insight       ? `\nKEY INSIGHT FROM LAST WEEK: ${echoBrief.insight}` : "");
@@ -391,6 +391,6 @@ exports.handler = async function (event) {
     };
   }
 
-  // Scheduled function — Netlify ignores the return value
+  // Scheduled function - Netlify ignores the return value
   return { statusCode: 200, body: "Pipeline complete" };
 };

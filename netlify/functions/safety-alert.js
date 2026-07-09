@@ -1,19 +1,19 @@
 /**
- * safety-alert.js — Operator crisis notification (safety workflow only)
+ * safety-alert.js - Operator crisis notification (safety workflow only)
  *
  * When a Level 2/3 flag fires (riley-chat or checkin-scan), this emails the
  * operator a copy of the client info + recent conversation so a human can
  * follow up. This IS the safety workflow the Trust architecture §1.4 carves
- * out — it is the ONLY place crisis content leaves the system, and it goes to
+ * out - it is the ONLY place crisis content leaves the system, and it goes to
  * one controlled address (SAFETY_ALERT_EMAIL), never to analytics or marketing.
  *
  * Config (Netlify env):
- *   SAFETY_ALERT_EMAIL — where alerts go (the operator's inbox). Required.
- *   RESEND_API_KEY     — email provider. Required to actually send.
- *   SAFETY_ALERT_FROM  — optional From (defaults to Riley <riley@meetriley.us>).
+ *   SAFETY_ALERT_EMAIL - where alerts go (the operator's inbox). Required.
+ *   RESEND_API_KEY     - email provider. Required to actually send.
+ *   SAFETY_ALERT_FROM  - optional From (defaults to Riley <riley@meetriley.us>).
  *
  * If either required var is missing, it logs who WOULD be alerted and returns
- * cleanly — never throws, never blocks the member's crisis response.
+ * cleanly - never throws, never blocks the member's crisis response.
  *
  * Export: sendOperatorAlert(supabase, { userId, level, matches, excerpt, source })
  */
@@ -32,7 +32,7 @@ async function sendOperatorAlert(supabase, opts) {
   const key = process.env.RESEND_API_KEY;
 
   if (!to || !key) {
-    console.log(`[safety-alert] would alert operator — level ${level}, user ${userId}, source ${source} (SAFETY_ALERT_EMAIL/RESEND_API_KEY not set)`);
+    console.log(`[safety-alert] would alert operator - level ${level}, user ${userId}, source ${source} (SAFETY_ALERT_EMAIL/RESEND_API_KEY not set)`);
     return { skipped: true };
   }
   if (!supabase || !userId) return { skipped: true };
@@ -58,12 +58,12 @@ async function sendOperatorAlert(supabase, opts) {
 
     const infoLines = [
       `Client: ${name}`,
-      `Email: ${p.email || "—"}`,
+      `Email: ${p.email || "-"}`,
       soberDays != null ? `Sobriety: ${soberDays} days` : null,
-      `Last active: ${p.last_active_at ? new Date(p.last_active_at).toISOString() : "—"}`,
-      `Flagged via: ${source || "—"}`,
+      `Last active: ${p.last_active_at ? new Date(p.last_active_at).toISOString() : "-"}`,
+      `Flagged via: ${source || "-"}`,
       `What triggered it: ${(excerpt || "").slice(0, 400)}`,
-      `Detected by rules: ${Array.isArray(matches) ? matches.join(" · ") : "—"}`,
+      `Detected by rules: ${Array.isArray(matches) ? matches.join(" · ") : "-"}`,
     ].filter(Boolean);
 
     const convoText = convo.length
@@ -71,15 +71,15 @@ async function sendOperatorAlert(supabase, opts) {
       : "(no recent Riley conversation on file)";
 
     const text =
-`${urgent ? "⚠ URGENT — " : ""}Safety flag: ${label}
+`${urgent ? "⚠ URGENT - " : ""}Safety flag: ${label}
 
 ${infoLines.join("\n")}
 
-— Recent conversation —
+- Recent conversation -
 ${convoText}
 
 This is a safety notification for follow-up only. It contains sensitive personal
-information — handle confidentially and do not forward. Open the operator
+information - handle confidentially and do not forward. Open the operator
 dashboard → Safety to mark this handled.`;
 
     const convoHtml = convo.length
@@ -88,18 +88,18 @@ dashboard → Safety to mark this handled.`;
 
     const html =
 `<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:620px;margin:0 auto;color:#1a1a1a;line-height:1.6;font-size:14px">
-  <div style="background:${urgent ? "#7a2e2e" : "#8a6d2f"};color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;font-weight:700;font-size:15px">${urgent ? "⚠ URGENT — " : ""}Safety flag: ${esc(label)}</div>
+  <div style="background:${urgent ? "#7a2e2e" : "#8a6d2f"};color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;font-weight:700;font-size:15px">${urgent ? "⚠ URGENT - " : ""}Safety flag: ${esc(label)}</div>
   <div style="border:1px solid #e3ddd4;border-top:none;border-radius:0 0 8px 8px;padding:18px">
     <table style="font-size:13.5px;border-collapse:collapse;margin-bottom:14px">
       <tr><td style="color:#888;padding:2px 12px 2px 0">Client</td><td>${esc(name)}</td></tr>
-      <tr><td style="color:#888;padding:2px 12px 2px 0">Email</td><td>${esc(p.email || "—")}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Email</td><td>${esc(p.email || "-")}</td></tr>
       ${soberDays != null ? `<tr><td style="color:#888;padding:2px 12px 2px 0">Sobriety</td><td>${soberDays} days</td></tr>` : ""}
-      <tr><td style="color:#888;padding:2px 12px 2px 0">Flagged via</td><td>${esc(source || "—")}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Flagged via</td><td>${esc(source || "-")}</td></tr>
       <tr><td style="color:#888;padding:2px 12px 2px 0;vertical-align:top">Triggered by</td><td>${esc((excerpt || "").slice(0, 400))}</td></tr>
     </table>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#999;margin:14px 0 8px">Recent conversation</div>
     <div style="background:#faf8f4;border:1px solid #eee;border-radius:6px;padding:12px;font-size:13px">${convoHtml}</div>
-    <div style="color:#999;font-size:11.5px;margin-top:16px">Safety notification for follow-up only. Sensitive — handle confidentially, do not forward. Mark handled in the operator dashboard → Safety.</div>
+    <div style="color:#999;font-size:11.5px;margin-top:16px">Safety notification for follow-up only. Sensitive - handle confidentially, do not forward. Mark handled in the operator dashboard → Safety.</div>
   </div>
 </div>`;
 
@@ -111,7 +111,7 @@ dashboard → Safety to mark this handled.`;
         headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: FROM_EMAIL, to: [to],
-          subject: `${urgent ? "⚠ URGENT " : ""}Safety flag — ${name} (${label})`,
+          subject: `${urgent ? "⚠ URGENT " : ""}Safety flag - ${name} (${label})`,
           html, text,
         }),
         signal: controller.signal,

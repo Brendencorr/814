@@ -1,20 +1,20 @@
 /*
- * posthog.js — Riley business-attribution layer (drop-in, zero per-page setup).
+ * posthog.js - Riley business-attribution layer (drop-in, zero per-page setup).
  * Include on every marketing + app page:  <script src="/posthog.js"></script>
  *
- * ROLE (one job): attribution funnel — utm → signup → reset_completed → upgrade.
+ * ROLE (one job): attribution funnel - utm → signup → reset_completed → upgrade.
  * PostHog is the *lens*; Supabase stays canonical. This never blocks the UI and
  * fully no-ops when POSTHOG_PROJECT_KEY isn't configured, so it is always safe to ship.
  *
- * Autocaptures (via posthog-js): $pageview, autocapture clicks, and — critically —
+ * Autocaptures (via posthog-js): $pageview, autocapture clicks, and - critically -
  * first-touch UTM params, which posthog-js persists across the whole session so a
  * signup days later still carries the social post that drove it.
  *
  * Config (key + host) is fetched from /.netlify/functions/site-config so nothing
  * is hardcoded and no key lands in static source (clean secret-scan, one source of truth).
  *
- * Identity is read from the Supabase session in localStorage — same convention as
- * track.js — so identified members are stitched to their pre-signup anonymous events.
+ * Identity is read from the Supabase session in localStorage - same convention as
+ * track.js - so identified members are stitched to their pre-signup anonymous events.
  *
  * Public API (all no-op until PostHog is live):
  *   window.RileyPH.track(event, props)      → posthog.capture

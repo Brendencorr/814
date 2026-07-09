@@ -1,17 +1,17 @@
 /**
- * int-proactive-cron.js — the in-app proactive layer for the interactive programs (Phase 3, in-app channel).
+ * int-proactive-cron.js - the in-app proactive layer for the interactive programs (Phase 3, in-app channel).
  *
  * Once a day, generates gentle IN-APP nudges (client_alerts) for:
- *   1. approaching dates (int_dates) — T-2 / day-of / T+1, care-toned for grief/risk, celebration for milestone
- *   2. past-due unconfirmed commitments (int_commitments) — "even partly counts"
- * Enforces max 1 nudge/enrollment/day via int_nudges (dates take priority — they're time-sensitive). Suspended
+ *   1. approaching dates (int_dates) - T-2 / day-of / T+1, care-toned for grief/risk, celebration for milestone
+ *   2. past-due unconfirmed commitments (int_commitments) - "even partly counts"
+ * Enforces max 1 nudge/enrollment/day via int_nudges (dates take priority - they're time-sensitive). Suspended
  * for a Staying Free enrollment while lapse_state='lapse_active' (the ladder pauses; only care touches fire, later).
  *
- * SAFETY: in-app only (no push/email yet — that infra is a later step). Copy is deliberately generic and never
- * names the loss / substance / commitment text — the alert just warmly points back into the program.
+ * SAFETY: in-app only (no push/email yet - that infra is a later step). Copy is deliberately generic and never
+ * names the loss / substance / commitment text - the alert just warmly points back into the program.
  *
  * NOT scheduled yet. Test first: POST { dry_run:true } returns the planned nudges WITHOUT writing. When verified,
- * add a schedule in netlify.toml (e.g. "0 15 * * *" = ~9am MT) — no -background suffix (the schedule makes it bg).
+ * add a schedule in netlify.toml (e.g. "0 15 * * *" = ~9am MT) - no -background suffix (the schedule makes it bg).
  * Uses the service key (scans all users; bypasses RLS by design).
  * Model: n/a
  */
@@ -61,13 +61,13 @@ function dateAlert(enr, dt, touch) {
   if (celebration) {
     title = "A day worth marking";
     body = touch === "t_minus_2" ? "Something you're building toward is coming up in a couple of days. Riley wants to mark it with you."
-         : touch === "day_of" ? "Today's the day. Riley remembered — want to mark it together?"
+         : touch === "day_of" ? "Today's the day. Riley remembered - want to mark it together?"
          : "That milestone was yesterday. However it went, it counts. Riley's here.";
   } else {
     title = "Riley's thinking of you";
-    body = touch === "t_minus_2" ? "There's a date coming up that Riley knows can be heavy. No pressure — just know you won't face it unannounced."
+    body = touch === "t_minus_2" ? "There's a date coming up that Riley knows can be heavy. No pressure - just know you won't face it unannounced."
          : touch === "day_of" ? "Riley knows what today is. Want to look at the plan together, or just know I'm here?"
-         : "Yesterday was a hard one to hold. Riley's checking in — no agenda, just here.";
+         : "Yesterday was a hard one to hold. Riley's checking in - no agenda, just here.";
   }
   return { audience: "user", user_id: enr.user_id, kind: "program", title, body, url, icon, ref_table: "int_dates", ref_id: dt.id };
 }
@@ -75,13 +75,13 @@ function dateAlert(enr, dt, touch) {
 function commitmentAlert(enr) {
   return {
     audience: "user", user_id: enr.user_id, kind: "program",
-    title: "A gentle check-in", body: "No pressure at all — how did it go? Even partly counts. Riley's here whenever you're ready.",
+    title: "A gentle check-in", body: "No pressure at all - how did it go? Even partly counts. Riley's here whenever you're ready.",
     url: "/int-program?p=" + encodeURIComponent(enr.program_key), icon: "🌙", ref_table: "int_enrollments", ref_id: enr.id,
   };
 }
 
 // Decide the single nudge (if any) for one enrollment, from PRE-FETCHED data (no per-enrollment queries
-// — the reads are batched once in the handler). Dates first (time-sensitive), then a past-due commitment.
+// - the reads are batched once in the handler). Dates first (time-sensitive), then a past-due commitment.
 function planForEnrollment(enr, datesByEnr, pastDueCommit, todayDate, todayStr) {
   const dates = datesByEnr.get(enr.id) || [];
   for (const dt of dates) {
@@ -93,26 +93,26 @@ function planForEnrollment(enr, datesByEnr, pastDueCommit, todayDate, todayStr) 
   return null;
 }
 
-// A single next-day care check-in after a slip — gentle, no inventory, no agenda.
+// A single next-day care check-in after a slip - gentle, no inventory, no agenda.
 function lapseFollowupAlert(enr) {
   return {
     audience: "user", user_id: enr.user_id, kind: "program",
-    title: "Good morning", body: "No agenda and no inventory — just checking in. However today feels, Riley's here. Water, something to eat, and we go from there.",
+    title: "Good morning", body: "No agenda and no inventory - just checking in. However today feels, Riley's here. Water, something to eat, and we go from there.",
     url: "/int-program?p=" + encodeURIComponent(enr.program_key), icon: "🤍", ref_table: "int_enrollments", ref_id: enr.id,
   };
 }
 
 // Send one program nudge as email via Resend (same pattern as the other email functions). Generic copy
-// only — the subject is the alert title, which never names the loss / substance / commitment. True on 2xx.
+// only - the subject is the alert title, which never names the loss / substance / commitment. True on 2xx.
 async function sendProgramEmail(key, to, alert, userId) {
   try {
     const url = "https://www.meetriley.us" + (alert.url || "/dashboard");
     const body = String(alert.body || "").replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;"));
     const footer = '<tr><td style="padding:22px 32px 28px;border-top:1px solid #e5ded0">'
       + '<div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#8a8578">'
-      + 'You get these because email is on for your Riley program — change it anytime in Settings.</div></td></tr>';
+      + 'You get these because email is on for your Riley program - change it anytime in Settings.</div></td></tr>';
     const html = shell(
-      p(body) + btn("Open Riley →", url) + '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>',
+      p(body) + btn("Open Riley →", url) + '<p style="margin:16px 0 0;color:#6b655b">- Riley</p>',
       { preview: String(alert.body || "").slice(0, 90), footerHtml: footer }
     );
     const r = await sendClientEmail({ to, subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url, kind: "program_nudge", userId });
@@ -131,7 +131,7 @@ exports.handler = async (event) => {
   const nowMs = now.getTime();
   const todayStr = ymd(now);
 
-  // Resilient select — lapse_at lands with migration 065; fall back gracefully if it isn't applied yet.
+  // Resilient select - lapse_at lands with migration 065; fall back gracefully if it isn't applied yet.
   let enrolls = [];
   const withLapseAt = await sb.from("int_enrollments").select("id, user_id, program_key, state, lapse_state, lapse_at, nudge_channels").neq("state", "paused");
   if (withLapseAt.error) {
@@ -144,7 +144,7 @@ exports.handler = async (event) => {
   const nudgedToday = new Set((todays || []).map((r) => r.enrollment_id));
 
   // Batch the per-enrollment reads ONCE (was an N+1 of 2 queries per enrollment). Both are naturally
-  // bounded — int_dates is small, and past-due unconfirmed commitments ride the partial index
+  // bounded - int_dates is small, and past-due unconfirmed commitments ride the partial index
   // idx_int_commit_due. Group in memory so the loop below does zero queries.
   const datesByEnr = new Map();
   {
@@ -167,7 +167,7 @@ exports.handler = async (event) => {
       const ageDays = isNaN(lapseMs) ? null : (nowMs - lapseMs) / DAY;
       if (ageDays != null && ageDays >= 3) { clears.push(enr.id); continue; }        // backstop exit
       if (nudgedToday.has(enr.id)) continue;                                          // 1/day cap
-      if (ageDays != null && ageDays >= 1 && ageDays < 2) {                           // the day after — one gentle care touch
+      if (ageDays != null && ageDays >= 1 && ageDays < 2) {                           // the day after - one gentle care touch
         plans.push({ enr, alert: lapseFollowupAlert(enr), step: "lapse_followup", dateId: null });
       }
       continue;                                                                        // no normal nudges while lapse-active
@@ -200,7 +200,7 @@ exports.handler = async (event) => {
         await sb.from("int_nudges").insert({ enrollment_id: p.enr.id, ladder_step: p.step, channel: "popup", sent_date: todayStr });
         if (p.dateId) await sb.from("int_dates").update({ last_touch: todayStr }).eq("id", p.dateId);
         sent++;
-        // Email — only if the member opted this program into email AND hasn't globally turned email off.
+        // Email - only if the member opted this program into email AND hasn't globally turned email off.
         if (resendKey && (p.enr.nudge_channels || []).includes("email")) {
           const prof = profileById[p.enr.user_id];
           if (prof && prof.email && prof.email_notifications !== false) {

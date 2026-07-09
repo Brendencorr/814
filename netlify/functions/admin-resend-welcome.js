@@ -1,8 +1,8 @@
 /**
- * admin-resend-welcome.js — operator re-sends the welcome email to an EXISTING member.
+ * admin-resend-welcome.js - operator re-sends the welcome email to an EXISTING member.
  *
  * Separate from admin-create-user (which 409s on an existing member). Looks up the member's
- * email + name, sends the same welcome via sendWelcomeEmail() — which routes through
+ * email + name, sends the same welcome via sendWelcomeEmail() - which routes through
  * sendClientEmail(), so the send is LOGGED to email_log and shows up in the operator
  * correspondence views. Returns the real send result so the UI can show sent ✓ / failed + reason.
  *

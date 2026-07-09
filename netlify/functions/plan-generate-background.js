@@ -1,5 +1,5 @@
 /**
- * plan-generate.js — Workout & Nutrition plan generator (Custom Plan Logic)
+ * plan-generate.js - Workout & Nutrition plan generator (Custom Plan Logic)
  *
  * Reads the member's saved intake (wellness_profile) + live recovery signals
  * (sleep, mood, cravings, sobriety) + last week's check-in (wellness_weekly),
@@ -61,11 +61,11 @@ function computeDifficulty(profile, lastWeekly) {
   return Math.max(1, Math.min(5, d));
 }
 
-const SYSTEM = `You are Riley, wellness coach for Meet Riley — warm, grounded, never preachy, recovery-aware. You build a personalized 7-day plan and return it as STRICT JSON only (no prose, no markdown fences). Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context.
+const SYSTEM = `You are Riley, wellness coach for Meet Riley - warm, grounded, never preachy, recovery-aware. You build a personalized 7-day plan and return it as STRICT JSON only (no prose, no markdown fences). Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context.
 
 RULES YOU FOLLOW:
 - One primary goal drives the plan. Personalize to the member's time, equipment, fitness level, and recovery state.
-- RECOVERY & CRAVING OVERRIDE (highest priority): if sleep is poor (<6h) or stress/mood is low or cravings are elevated, drop intensity — walking, mobility, light strength, breathwork, hydration — and never push. If cravings are elevated, weave in: protein, hydration, a walk, reaching a support person, avoiding isolation, grounding, community.
+- RECOVERY & CRAVING OVERRIDE (highest priority): if sleep is poor (<6h) or stress/mood is low or cravings are elevated, drop intensity - walking, mobility, light strength, breathwork, hydration - and never push. If cravings are elevated, weave in: protein, hydration, a walk, reaching a support person, avoiding isolation, grounding, community.
 - Workout goals shape the split: weight loss → ~3 strength + 2-3 cardio + daily walking; muscle gain → 4-5 strength, progressive overload, moderate cardio; strength → compound lifts, progressive overload, ample rest; stress reduction/recovery → walking, mobility, yoga, light strength, breathwork, avoid overtraining; general health/mobility/athletic → balance to fit.
 - Nutrition goals shape meals: fat loss → high protein, high fiber, whole foods, calorie awareness without obsession, stable timing; muscle gain → protein every meal, slight surplus, carbs around training; reduced cravings/sobriety support → blood-sugar stability, protein every 3-5h, magnesium-rich foods, omega-3s, hydration, lower added sugar, evening routine.
 - Beginners get simple routines; advanced get progressive overload. Match difficulty (1 easiest … 5 hardest) to the value provided.
@@ -107,7 +107,7 @@ function buildUserPrompt(planType, ctx, difficulty) {
   if (rec.length) lines.push(`Recovery signals right now (APPLY THE OVERRIDE if sleep is low, mood is low, or cravings seem elevated): ${rec.join("; ")}.`);
   if (ctx.lastWeekly) {
     const w = ctx.lastWeekly;
-    lines.push(`Last week's feedback — completed ${w.completed_pct ?? "?"}%${w.too_hard ? ", too hard: " + w.too_hard : ""}${w.too_easy ? ", too easy: " + w.too_easy : ""}${w.pain ? ", pain: " + w.pain : ""}${w.energy ? ", energy: " + w.energy : ""}. Adapt accordingly.`);
+    lines.push(`Last week's feedback - completed ${w.completed_pct ?? "?"}%${w.too_hard ? ", too hard: " + w.too_hard : ""}${w.too_easy ? ", too easy: " + w.too_easy : ""}${w.pain ? ", pain: " + w.pain : ""}${w.energy ? ", energy: " + w.energy : ""}. Adapt accordingly.`);
   }
   return lines.join("\n");
 }
@@ -125,7 +125,7 @@ exports.handler = async function (event) {
 
   let sb;
   try { sb = getSupabaseClient(); } catch { return json(500, { error: "Server configuration error" }); }
-  // SECURITY: identity from the verified token only — never body.user_id (reads a member's data +
+  // SECURITY: identity from the verified token only - never body.user_id (reads a member's data +
   // overwrites their plan; a forged user_id would expose/clobber anyone's).
   let userId = null;
   try { const { data } = await sb.auth.getUser(body.token); userId = data?.user?.id || null; } catch (_) {}

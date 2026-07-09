@@ -1,5 +1,5 @@
 /**
- * admin-home.js — powers the operator Home dashboard.
+ * admin-home.js - powers the operator Home dashboard.
  *   GET                       → full analytics blob (admin_home_analytics)
  *   GET ?detail=<kind>&val=.. → drill-down rows (admin_home_detail)
  *
@@ -52,7 +52,7 @@ exports.handler = async function (event) {
           });
         } catch (_) {}
       }
-      // Latest mood + latest email per recent signup (small .in on ~25 ids — no scale concern).
+      // Latest mood + latest email per recent signup (small .in on ~25 ids - no scale concern).
       const moodById = {}, lastEmailById = {}, emailKindsById = {};
       if (ids.length) {
         try {
@@ -71,7 +71,7 @@ exports.handler = async function (event) {
           });
         } catch (_) {}
       }
-      // 7-day activity — reuse the analytics blob's last_active (already computed) rather than re-querying.
+      // 7-day activity - reuse the analytics blob's last_active (already computed) rather than re-querying.
       const eventsById = {};
       (Array.isArray(blob.last_active) ? blob.last_active : []).forEach((u) => { if (u && u.user_id) eventsById[u.user_id] = u.events_7d || 0; });
       // Enriched to the engRow shape so the Home "Clients" widget renders the SAME rich row as

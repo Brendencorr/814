@@ -1,8 +1,8 @@
 /**
- * library-suggest-background.js — Netlify Background Function (no timeout)
+ * library-suggest-background.js - Netlify Background Function (no timeout)
  *
  * The Content Library's research agent. Uses Claude + the Anthropic native
- * web_search tool to recommend NEW, on-brand resources for the member library —
+ * web_search tool to recommend NEW, on-brand resources for the member library -
  * every one carrying a REAL, live, verified URL (members open items via a link).
  *
  * Suggestions are written to content_library as:
@@ -19,7 +19,7 @@
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
-// Shared, tested curation validator (same rules as bulk_suggest) — single source of truth.
+// Shared, tested curation validator (same rules as bulk_suggest) - single source of truth.
 const { normalizeItem, validateItem } = require("./content-curation");
 
 const clampInt = (v, lo, hi, dflt) => {
@@ -33,7 +33,7 @@ const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
 async function runSuggest({ count = 6, focus = "" } = {}) {
   const db = contentDb();
 
-  // 1. What's already in the library — so we never re-suggest a dupe.
+  // 1. What's already in the library - so we never re-suggest a dupe.
   const { data: existing, error: exErr } = await db
     .from("content_library")
     .select("title, content_type")
@@ -45,7 +45,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
     .map((r) => `- ${r.title} (${r.content_type})`)
     .join("\n");
 
-  // 1b. The canonical tag vocabulary — Scout's tags must be a subset (no freeform).
+  // 1b. The canonical tag vocabulary - Scout's tags must be a subset (no freeform).
   const { data: _reg } = await db.from("tag_registry").select("tag").eq("is_active", true);
   const registry = new Set((_reg || []).map((r) => r.tag));
 
@@ -56,14 +56,14 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
   const n = clampInt(count, 1, 10, 6);
   const focusLine = focus && focus.trim()
     ? `Operator focus for this batch: "${focus.trim()}". Bias suggestions toward this, but every item still needs a live link.`
-    : `No specific focus — spread suggestions across several content types and topics.`;
+    : `No specific focus - spread suggestions across several content types and topics.`;
   const allowedTags = [...registry].sort().join(", ");
   const user =
     `Suggest ${n} new resources for the library.\n\n` +
     `${focusLine}\n\n` +
     `Do NOT suggest anything already in the library. Existing items:\n` +
     `${inventory || "(library is currently empty)"}\n\n` +
-    `ALLOWED TAGS — use ONLY tags from this list (lowercase, exact). An item whose tags aren't in this list is DROPPED:\n${allowedTags}\n\n` +
+    `ALLOWED TAGS - use ONLY tags from this list (lowercase, exact). An item whose tags aren't in this list is DROPPED:\n${allowedTags}\n\n` +
     `Remember: verify every URL is real and live with web search. Drop any item you cannot confirm. Return ONLY the JSON object.`;
 
   // 4. Call Claude with live web search.
@@ -73,7 +73,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
 
   // 5. Validate + de-dupe with the SHARED curation validator (identical rules to bulk import):
   //    live http(s) URL, valid type, tags ⊆ registry, valid persona/tone/tier, no dupe,
-  //    and the guardrail — manifestation content never targets griever/drinker personas.
+  //    and the guardrail - manifestation content never targets griever/drinker personas.
   const rows = [];
   const dropped = [];
   const batch = new Set();
@@ -104,7 +104,7 @@ async function runSuggest({ count = 6, focus = "" } = {}) {
 
   await notify(
     `Library Scout: ${inserted} new suggestion${inserted === 1 ? "" : "s"} added to the approval queue` +
-    (dropped.length ? ` (${dropped.length} dropped — no live link / dupe)` : "") +
+    (dropped.length ? ` (${dropped.length} dropped - no live link / dupe)` : "") +
     `. Review at admin.meetriley.us → Content Library → Suggestions.`
   );
 

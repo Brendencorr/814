@@ -1,18 +1,18 @@
 /**
- * weekly-pipeline-background.js — Netlify Background Function
+ * weekly-pipeline-background.js - Netlify Background Function
  *
  * Runs automatically every Sunday at 6am Mountain Time (12:00 UTC).
- * Background functions have no response timeout — runs until complete.
+ * Background functions have no response timeout - runs until complete.
  * All status is logged to Supabase pipeline_runs table.
  *
  * Schedule: netlify.toml [functions."weekly-pipeline-background"] schedule = "0 12 * * 0"
  *
  * Sequence:
  *   1. Read Echo performance data from Supabase
- *   2. Scout — research trending topics (informed by Echo data)
- *   3. Sage — write 3 posts (informed by Scout + Echo)
- *   4. Atlas — build publishing schedule
- *   5. Buffer — schedule each post
+ *   2. Scout - research trending topics (informed by Echo data)
+ *   3. Sage - write 3 posts (informed by Scout + Echo)
+ *   4. Atlas - build publishing schedule
+ *   5. Buffer - schedule each post
  *   6. Log completion to pipeline_runs
  *
  * Error recovery: each step is individually fault-tolerant.
@@ -49,7 +49,7 @@ async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 4000) {
 }
 
 // ── Concise pipeline system prompts ──────────────────────────────────────────
-const SCOUT_PROMPT = `You are Scout — content research agent for Meet Riley (meetriley.us).
+const SCOUT_PROMPT = `You are Scout - content research agent for Meet Riley (meetriley.us).
 Find 5 trending topics in sobriety, recovery, mental health, fitness, nutrition.
 Focus on the best_pillar. Avoid any topics listed as recently covered.
 Output exactly:
@@ -61,10 +61,10 @@ Pillar: [pillar name]
 HIGH-VALUE SEARCH TERMS:
 [10 search phrases, one per line]`;
 
-const SAGE_PROMPT = `You are Sage — content writer for Meet Riley (meetriley.us).
+const SAGE_PROMPT = `You are Sage - content writer for Meet Riley (meetriley.us).
 Write 3 complete publish-ready posts from Scout's research. Riley's voice: warm, direct, honest, short sentences.
 For each post output:
-POST [N] — [TYPE]
+POST [N] - [TYPE]
 Platform: [platform]
 Day/Time: [day and time MT]
 CAPTION:
@@ -74,7 +74,7 @@ HASHTAGS:
 ---
 Produce exactly 3 posts. No placeholders.`;
 
-const ATLAS_PROMPT = `You are Atlas — publishing agent for Meet Riley (meetriley.us).
+const ATLAS_PROMPT = `You are Atlas - publishing agent for Meet Riley (meetriley.us).
 Take Sage's posts and output a Buffer-ready schedule for the coming week.
 For each post output exactly:
 POST: [number]
@@ -136,7 +136,7 @@ async function publishToFeedHive(siteUrl, post, scheduledAt) {
   }
 }
 
-// ── Main handler (background function — no response needed) ───────────────────
+// ── Main handler (background function - no response needed) ───────────────────
 exports.handler = async function (event) {
   const _g = requireScheduledOrOperator(event); if (_g) return _g;
   const startTime = Date.now();
@@ -147,7 +147,7 @@ exports.handler = async function (event) {
   const bufferIds = (process.env.FEEDHIVE_ACCOUNT_IDS || "").split(",").map((s) => s.trim()).filter(Boolean);
 
   if (!apiKey) {
-    console.error("[pipeline-bg] ANTHROPIC_API_KEY not set — aborting");
+    console.error("[pipeline-bg] ANTHROPIC_API_KEY not set - aborting");
     return { statusCode: 500, body: "" };
   }
 
@@ -208,7 +208,7 @@ exports.handler = async function (event) {
         const pillars = data.flatMap((r) => r.pillars_covered || []);
         const themes  = data.map((r) => r.top_theme).filter(Boolean);
         historyContext =
-          "\n\nRECENT TOPICS — DO NOT REPEAT:\n" + topics.map((t) => `- ${t}`).join("\n") +
+          "\n\nRECENT TOPICS - DO NOT REPEAT:\n" + topics.map((t) => `- ${t}`).join("\n") +
           (pillars.length ? "\n\nRECENT PILLARS (rotate):\n" + [...new Set(pillars)].map((p) => `- ${p}`).join("\n") : "") +
           (themes.length  ? "\n\nRECENT THEMES:\n" + themes.map((t) => `- ${t}`).join("\n") : "");
       }
@@ -223,7 +223,7 @@ exports.handler = async function (event) {
     scoutReply  = await callClaude(apiKey, SCOUT_PROMPT, scoutMessage);
     const parsed = parseScoutTopics(scoutReply);
     scoutTopics  = parsed.topics;
-    console.log(`[pipeline-bg] Scout complete — ${scoutTopics.length} topics`);
+    console.log(`[pipeline-bg] Scout complete - ${scoutTopics.length} topics`);
 
     await logStep({ scout_topics_count: scoutTopics.length });
 
@@ -240,7 +240,7 @@ exports.handler = async function (event) {
     const msg = "Scout step failed: " + e.message;
     console.error("[pipeline-bg]", msg);
     await logStep({ status: "partial", error_message: msg });
-    // Continue with empty scoutReply — Sage will do its best
+    // Continue with empty scoutReply - Sage will do its best
   }
 
   // ── STEP 3: Sage ──────────────────────────────────────────────────────────
@@ -249,19 +249,19 @@ exports.handler = async function (event) {
   try {
     const sageMessage =
       (scoutReply ? `Here is Scout's research:\n\n${scoutReply}` : "Write 3 posts about trending sobriety and wellness topics.") +
-      (echoBrief.format_winner ? `\n\nFORMAT WINNER: ${echoBrief.format_winner} — produce more of this type.` : "") +
+      (echoBrief.format_winner ? `\n\nFORMAT WINNER: ${echoBrief.format_winner} - produce more of this type.` : "") +
       (echoBrief.best_pillar   ? `\nPILLAR FOCUS: ${echoBrief.best_pillar}` : "") +
       (echoBrief.worst_pillar  ? `\nPILLAR TO REDUCE: ${echoBrief.worst_pillar}` : "");
 
     sageReply = await callClaude(apiKey, SAGE_PROMPT, sageMessage);
     sagePosts = parseSagePosts(sageReply);
-    console.log(`[pipeline-bg] Sage complete — ${sagePosts.length} posts`);
+    console.log(`[pipeline-bg] Sage complete - ${sagePosts.length} posts`);
     await logStep({ sage_posts_count: sagePosts.length });
   } catch (e) {
     const msg = "Sage step failed: " + e.message;
     console.error("[pipeline-bg]", msg);
     await logStep({ status: "partial", error_message: msg });
-    // Continue with empty sagePosts — Atlas and Buffer will be skipped gracefully
+    // Continue with empty sagePosts - Atlas and Buffer will be skipped gracefully
   }
 
   // ── STEP 4: Atlas ─────────────────────────────────────────────────────────
@@ -271,7 +271,7 @@ exports.handler = async function (event) {
       await callClaude(apiKey, ATLAS_PROMPT, atlasMessage);
       console.log("[pipeline-bg] Atlas complete");
     } else {
-      console.warn("[pipeline-bg] Atlas skipped — no Sage output");
+      console.warn("[pipeline-bg] Atlas skipped - no Sage output");
     }
   } catch (e) {
     console.warn("[pipeline-bg] Atlas step failed (non-fatal):", e.message);
@@ -307,7 +307,7 @@ exports.handler = async function (event) {
     error_message:           sagePosts.length === 0 ? "Scout ran but Sage produced no posts" : null,
   });
 
-  console.log(`[pipeline-bg] Complete in ${elapsed}s — posts: ${sagePosts.length}, buffered: ${bufferedCount}`);
+  console.log(`[pipeline-bg] Complete in ${elapsed}s - posts: ${sagePosts.length}, buffered: ${bufferedCount}`);
 
   // Background functions: return value is ignored by Netlify
   return { statusCode: 200, body: "" };

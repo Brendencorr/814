@@ -1,10 +1,10 @@
 /**
- * posthog-conversion-cron.js — nightly attribution pull (scheduled 07:10 UTC).
+ * posthog-conversion-cron.js - nightly attribution pull (scheduled 07:10 UTC).
  *
  * Pulls yesterday's funnel counts from PostHog (grouped by first-touch UTM) via
  * the HogQL Query API and mirrors them into Supabase (posthog_daily_conversions),
  * so the operator dashboard + weekly learnings digest can read "which campaign
- * drove signups" straight from the canonical DB — without hitting PostHog live.
+ * drove signups" straight from the canonical DB - without hitting PostHog live.
  *
  * PostHog stays the collection lens; Supabase stays the source of truth.
  *

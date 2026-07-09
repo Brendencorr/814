@@ -1,5 +1,5 @@
 /**
- * memory-maintenance-cron.js — weekly memory hygiene (Master Build Spec §1.2).
+ * memory-maintenance-cron.js - weekly memory hygiene (Master Build Spec §1.2).
  *
  * Three jobs, all non-fatal / fail-open:
  *   1. Backfill embeddings for memories written before the semantic layer was live
@@ -8,7 +8,7 @@
  *   3. Decay: low-confidence memories never reinforced in 90 days go dormant.
  *
  * Gated with requireScheduledOrOperator (only the scheduler or the operator key run it).
- * Does nothing meaningful until an embedding key is set — safe to ship dark.
+ * Does nothing meaningful until an embedding key is set - safe to ship dark.
  *
  * Schedule: netlify.toml [functions."memory-maintenance-cron"] = "0 9 * * 1" (Mon 09:00 UTC).
  */
@@ -40,7 +40,7 @@ exports.handler = async function (event) {
 
   const result = { embeddings_enabled: embeddingsEnabled(), backfilled: 0, merged: 0, decayed: 0 };
 
-  // 1. Backfill — only meaningful when the semantic layer is live.
+  // 1. Backfill - only meaningful when the semantic layer is live.
   if (embeddingsEnabled()) {
     result.backfilled += await backfillTable(supabase, "riley_memory");
     result.backfilled += await backfillTable(supabase, "life_map");
@@ -54,7 +54,7 @@ exports.handler = async function (event) {
   try { const { data } = await supabase.rpc("decay_memories"); result.decayed = typeof data === "number" ? data : (data || 0); }
   catch (e) { console.warn("[memory-maintenance] decay failed (non-fatal):", e.message); }
 
-  // Log the run (system_incidents — operator-visible; never member content).
+  // Log the run (system_incidents - operator-visible; never member content).
   try { await supabase.from("system_incidents").insert({ kind: "maintenance_run", function_name: "memory-maintenance-cron", detail: result }); } catch (_) {}
 
   console.log("[memory-maintenance] done:", JSON.stringify(result));

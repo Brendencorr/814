@@ -1,7 +1,7 @@
 /**
- * int-session.js — the interactive Riley-led session ENGINE (data-driven, content-agnostic).
+ * int-session.js - the interactive Riley-led session ENGINE (data-driven, content-agnostic).
  *
- * Runs ANY of the four interactive programs from `int_sessions` rows — no program logic is hardcoded
+ * Runs ANY of the four interactive programs from `int_sessions` rows - no program logic is hardcoded
  * here; content is data (doc 00 §3 session loop OPEN/LEARN/WORK/COMMIT/CONFIRM). Entitlement-gated:
  * a member reaches a program only if they OWN it (Coach includes all four via the entitlement view;
  * Guide/Companion via a direct purchase). Ownership reuses resolveAccess so there is ONE truth,
@@ -63,7 +63,7 @@ async function buildState(sb, enr) {
     sb.from("int_session_progress").select("session_number, completed_at").eq("enrollment_id", enr.id),
     sb.from("int_artifacts").select("id, session_number, name, body, version, pinned, updated_at").eq("enrollment_id", enr.id).order("updated_at", { ascending: false }),
     sb.from("int_commitments").select("id, session_number, text, due_at, confirmed_state, confirmed_at, note").eq("enrollment_id", enr.id).order("session_number", { ascending: false }),
-    // The session catalog (titles/phases only — safe for owners) so the client can render the 14-node map in one call.
+    // The session catalog (titles/phases only - safe for owners) so the client can render the 14-node map in one call.
     sb.from("int_sessions").select("session_number, phase, title, is_milestone").eq("program_key", enr.program_key).eq("is_active", true).order("session_number", { ascending: true }),
   ]);
   const done = (prog || []).map((p) => p.session_number);
@@ -165,7 +165,7 @@ exports.handler = async (event) => {
     if (!enr) return json(409, { error: "not-enrolled" });
     const n = parseInt(body.session_number, 10);
     if (isNaN(n) || n < 0 || n > MAX_SESSION) return json(400, { error: "session_number 0..14 required" });
-    if (n > (enr.current_session || 0)) return json(423, { error: "locked", note: "Finish the prior session first — the work builds." });
+    if (n > (enr.current_session || 0)) return json(423, { error: "locked", note: "Finish the prior session first - the work builds." });
 
     const { data: s } = await sb.from("int_sessions")
       .select("session_number, phase, title, open_template, learn_body, work_spec, commit_options, is_milestone")
@@ -221,7 +221,7 @@ exports.handler = async (event) => {
     const next = Math.min(MAX_SESSION, Math.max(enr.current_session || 0, n + 1));
     const patch = { current_session: next, updated_at: new Date().toISOString() };
     if (n >= MAX_SESSION) { patch.state = "maintenance"; patch.graduated_at = new Date().toISOString(); }
-    // Resume-not-restart (doc 05 §5 exit): a new commitment on Staying Free clears an armed lapse —
+    // Resume-not-restart (doc 05 §5 exit): a new commitment on Staying Free clears an armed lapse -
     // the member is moving forward again, so nudges resume and the tone flag lifts.
     if (enr.program_key === "prog_int_staying_free" && enr.lapse_state === "lapse_active") patch.lapse_state = null;
     await sb.from("int_enrollments").update(patch).eq("id", enr.id);

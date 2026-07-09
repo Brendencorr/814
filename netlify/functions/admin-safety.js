@@ -1,14 +1,14 @@
 /**
- * admin-safety.js — Operator safety queue (RESTRICTED)
+ * admin-safety.js - Operator safety queue (RESTRICTED)
  *
  * Reads crisis_log (which is RLS-locked to service-key only) and joins minimal
  * client info for the operator's safety queue + pop-up. Because this exposes
- * who-is-in-crisis — among the most sensitive data in the product — it is NOT
+ * who-is-in-crisis - among the most sensitive data in the product - it is NOT
  * open like the other admin endpoints. It requires a real server-side secret:
  *
- *   OPERATOR_KEY — set in Netlify env. The operator dashboard sends it as the
+ *   OPERATOR_KEY - set in Netlify env. The operator dashboard sends it as the
  *                  `x-operator-key` header. If OPERATOR_KEY is unset, this
- *                  endpoint FAILS CLOSED (503) — crisis data is never served
+ *                  endpoint FAILS CLOSED (503) - crisis data is never served
  *                  without protection.
  *
  * POST { action: "list" }            → { open_count, flags: [...] }

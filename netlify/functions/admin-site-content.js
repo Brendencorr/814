@@ -1,10 +1,10 @@
 /**
- * admin-site-content.js — operator write path for the "Customize Website" editor.
+ * admin-site-content.js - operator write path for the "Customize Website" editor.
  *
  * OPERATOR_KEY-gated (x-operator-key header). Persists per-slot overrides for the
  * public marketing pages into the `site_content` table (migration 070) and uploads
  * logos/images to the public `site-media` storage bucket. Uses the Supabase SERVICE
- * key (bypasses RLS) — the ONLY write path to that table, so the public pages stay
+ * key (bypasses RLS) - the ONLY write path to that table, so the public pages stay
  * read-only from the browser.
  *
  * POST actions:

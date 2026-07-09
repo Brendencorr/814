@@ -1,16 +1,16 @@
 /**
- * clarity.js — Dashboard State Engine v1.0, Section 3 (shared, pure functions)
+ * clarity.js - Dashboard State Engine v1.0, Section 3 (shared, pure functions)
  *
  * One definition of the Clarity Score + the Tier 1/Tier 2 event split, used by
  * the State Engine (server) and readable by the dashboard/brief. No Supabase, no
- * I/O — the caller gathers raw signals and passes them in.
+ * I/O - the caller gathers raw signals and passes them in.
  *
  * Dimensions are each 0-100. Clarity is their weighted composite, renormalized
- * over the dimensions we actually have data for — so a new member with only a
+ * over the dimensions we actually have data for - so a new member with only a
  * mood + sobriety signal isn't pushed to near-zero for not having logged meals.
  */
 
-// ── Section 2 — the two-tier event split (the 5,000-user scaling fix) ─────────
+// ── Section 2 - the two-tier event split (the 5,000-user scaling fix) ─────────
 // Only Tier 1 events fire the full recalculation chain. Tier 2 events log for
 // recommendation/completion learning but never force a recompute.
 const TIER1_EVENTS = [
@@ -71,7 +71,7 @@ function computeClarity(dims) {
 }
 
 /**
- * Section 3.1 — "Why did this change?" Riley explains emotionally, never shows
+ * Section 3.1 - "Why did this change?" Riley explains emotionally, never shows
  * math, and only at meaningful moments: a clarity delta of 5+ OR a checkpoint
  * (end-of-day / weekly recap, signalled by opts.checkpoint). Returns null when
  * the move isn't worth narrating.
@@ -94,11 +94,11 @@ function explainChange(prevDims, nextDims, prevClarity, nextClarity, opts) {
 
   if (delta >= 5) {
     const verb = up.length === 1 ? "moved" : up.length === 2 ? "both moved" : "all moved";
-    const because = up.length ? ` — ${listPhrase(up)} ${verb} in the right direction` : "";
+    const because = up.length ? ` - ${listPhrase(up)} ${verb} in the right direction` : "";
     return `Your clarity lifted today${because}. That's you showing up.`;
   }
   if (delta <= -5) {
-    const because = down.length ? ` — ${listPhrase(down)} got harder` : "";
+    const because = down.length ? ` - ${listPhrase(down)} got harder` : "";
     return `Clarity dipped a little today${because}. That happens. Tomorrow's a clean slate.`;
   }
   // checkpoint with small delta

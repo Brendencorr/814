@@ -1,9 +1,9 @@
-/* Riley PWA — service worker + mobile nav + install affordances.
+/* Riley PWA - service worker + mobile nav + install affordances.
  * Loaded on every app page. Handles: (1) SW registration, (2) a mobile
  * hamburger + slide-in drawer for the sidebar (which is hidden on phones),
  * (3) an "Install Riley App" pill, (4) a download popup at login on phones. */
 (function () {
-  // Inside the embedded chat popup (iframe /chat?embed=1) we want a bare chat —
+  // Inside the embedded chat popup (iframe /chat?embed=1) we want a bare chat -
   // no hamburger, no pills, no account menu. Skip all of pwa.js there.
   if (/[?&]embed=1/.test(location.search)) return;
   var ua = navigator.userAgent || '';
@@ -11,7 +11,7 @@
   var isIOS = /iphone|ipad|ipod/i.test(ua);
   var isSafari = /safari/i.test(ua) && !/crios|fxios|chrome|android/i.test(ua);
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone;
-  // On the full chat page (/chat) the member IS already chatting — never show the floating
+  // On the full chat page (/chat) the member IS already chatting - never show the floating
   // "Chat with Riley" pill or hijack /chat links there. (The embed iframe already returns above.)
   var onChatPage = /(^|\/)chat(\.html)?\/?$/.test(location.pathname.toLowerCase());
   var deferredPrompt = null;
@@ -41,7 +41,7 @@
     var st = document.createElement('style'); st.id = id; st.textContent = css; document.head.appendChild(st);
   }
 
-  // ── 2) Mobile sidebar nav — hamburger + slide-in drawer ──────────────────
+  // ── 2) Mobile sidebar nav - hamburger + slide-in drawer ──────────────────
   function mobileNav() {
     var sb = document.querySelector('.sidebar');
     if (!sb) return;                                  // only pages with a sidebar
@@ -110,7 +110,7 @@
     ov.innerHTML = '<div style="background:linear-gradient(160deg,#16130f,#0f0d0b);border:1px solid rgba(201,168,76,0.25);border-radius:20px 20px 0 0;padding:28px 24px 32px;max-width:440px;width:100%;text-align:center;box-shadow:0 -12px 44px rgba(0,0,0,0.55);animation:rlUp .4s cubic-bezier(.2,.7,.2,1)">'
       + '<div style="width:66px;height:66px;margin:0 auto 14px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 44px rgba(201,168,76,0.45)"></div>'
       + '<div style="font-family:\'DM Serif Display\',serif;font-size:23px;color:#f5f0e8;margin-bottom:8px">Get the Riley app</div>'
-      + '<div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>'
+      + '<div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Add Riley to your home screen for one-tap access - always with you, like a real app.</div>'
       + '<button id="rli-go" style="width:100%;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;border:none;padding:15px;font-size:15px;font-weight:600;border-radius:9px;cursor:pointer;margin-bottom:10px">Install Riley App<span style="color:#fff">.</span></button>'
       + '<button id="rli-skip" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:4px">Maybe later</button>'
       + '</div>';
@@ -137,7 +137,7 @@
   function flashLockHint(){
     if (!_cov || document.getElementById('riley-lock-hint')) return;
     var t = document.createElement('div'); t.id = 'riley-lock-hint';
-    t.textContent = "Let's finish your check-in first — it only takes a moment.";
+    t.textContent = "Let's finish your check-in first - it only takes a moment.";
     t.style.cssText = 'position:absolute;left:50%;bottom:16px;transform:translateX(-50%);z-index:5;max-width:280px;background:#141210;border:1px solid rgba(201,168,76,0.3);color:#f5f0e8;padding:10px 14px;border-radius:10px;font-family:"DM Sans",sans-serif;font-size:12.5px;line-height:1.5;box-shadow:0 8px 30px rgba(0,0,0,0.5);text-align:center';
     var panel = _cfr && _cfr.parentNode;
     (panel || _cov).appendChild(t);
@@ -173,13 +173,13 @@
   }
   function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
   // Minimize/close = hide the panel + bring back the pill. The iframe stays mounted, so
-  // re-opening resumes the SAME conversation. Never locks the page — dashboard stays usable.
+  // re-opening resumes the SAME conversation. Never locks the page - dashboard stays usable.
   function closeChat() {
     if (_checkinLock) { flashLockHint(); return; }   // mandatory check-in in progress → can't dismiss
     if (_cov) _cov.style.display = 'none'; document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex';
   }
   // Once per LOCAL day, on the app home, auto-open the chat so Riley greets with the
-  // day-aware daily check-in. Strictly one auto-open per day — non-naggy by design.
+  // day-aware daily check-in. Strictly one auto-open per day - non-naggy by design.
   function autoOpenDaily() {
     try {
       var p = location.pathname.replace(/\/+$/, '').toLowerCase();
@@ -199,17 +199,17 @@
     b.addEventListener('click', openChat);
     document.body.appendChild(b);
   }
-  // Any existing "/chat" link opens the popup instead of navigating — except on the chat page itself.
+  // Any existing "/chat" link opens the popup instead of navigating - except on the chat page itself.
   if (!onChatPage) document.addEventListener('click', function (e) {
     var a = e.target.closest ? e.target.closest('a[href]') : null;
     if (a && /^\/chat(\?|$)/.test(a.getAttribute('href') || '')) { e.preventDefault(); openChat(); }
   });
 
-  // ── Install offer — FIRST LOGIN ONLY (afterwards it lives in Settings) ────
+  // ── Install offer - FIRST LOGIN ONLY (afterwards it lives in Settings) ────
   function showInstallNote() {
     var t = document.createElement('div');
     t.style.cssText = 'position:fixed;right:18px;bottom:76px;z-index:9991;max-width:250px;background:#141210;border:1px solid rgba(201,168,76,0.3);color:#e8e4de;padding:12px 14px;border-radius:12px;font-family:"DM Sans",sans-serif;font-size:12.5px;line-height:1.55;box-shadow:0 8px 30px rgba(0,0,0,0.5)';
-    t.textContent = 'No problem — you can install Riley anytime from Settings.';
+    t.textContent = 'No problem - you can install Riley anytime from Settings.';
     document.body.appendChild(t);
     setTimeout(function () { t.style.transition = 'opacity .5s'; t.style.opacity = '0'; setTimeout(function () { t.remove(); }, 500); }, 4500);
   }
@@ -234,7 +234,7 @@
 
   window.addEventListener('load', function () {
     setTimeout(function () {
-      if (!onChatPage) chatPill();                         // Chat pill — but NOT on the chat page itself
+      if (!onChatPage) chatPill();                         // Chat pill - but NOT on the chat page itself
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)
@@ -243,7 +243,7 @@
   });
 })();
 
-/* ── Account menu — click the sidebar user (bottom-left) to open Profile / Settings /
+/* ── Account menu - click the sidebar user (bottom-left) to open Profile / Settings /
  * Your Data / Sign out. Injected here so every app page's sidebar gets it consistently. */
 (function () {
   if (/[?&]embed=1/.test(location.search)) return;   // no account menu inside the chat popup
@@ -314,7 +314,7 @@
   else document.addEventListener('DOMContentLoaded', init);
 })();
 
-/* ── Canonical member-day — ONE source of truth for "what day is it" ────────────────
+/* ── Canonical member-day - ONE source of truth for "what day is it" ────────────────
  * A member's day rolls at 4am LOCAL (a 1am check-in still counts as yesterday). Every
  * check-in date-key, streak, and the sober-day count must go through these so no two
  * screens ever disagree about the day. See DATA_CONTRACT.md. */

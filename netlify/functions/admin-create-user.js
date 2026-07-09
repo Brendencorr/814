@@ -1,9 +1,9 @@
 /**
- * admin-create-user.js — operator manual member creation. OPERATOR_KEY gated.
+ * admin-create-user.js - operator manual member creation. OPERATOR_KEY gated.
  *
- * Creates the Supabase auth user (email_confirm:true — so they can sign in with
+ * Creates the Supabase auth user (email_confirm:true - so they can sign in with
  * Google using the same email; Supabase links by confirmed email), seeds their
- * user_profiles row, and — for Companion/Coach — comps the tier by inserting a
+ * user_profiles row, and - for Companion/Coach - comps the tier by inserting a
  * `subscriptions` row (the single-source entitlement, same mechanism as admin-comp,
  * so the client app unlocks within one refresh). Writes an append-only admin_audit row.
  *
@@ -27,7 +27,7 @@ const CORS = {
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
 
-// Conservative email shape check — the real gate is Supabase; this just catches typos early.
+// Conservative email shape check - the real gate is Supabase; this just catches typos early.
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TIERS = ["guide", "companion", "coach"];
 
@@ -88,7 +88,7 @@ exports.handler = async (event) => {
       preferred_name: first,
       onboarding_completed: false,    // they still see Riley's onboarding on first sign-in
     };
-    // Tier is NOT stored on the profile — it's derived from the subscriptions/entitlements
+    // Tier is NOT stored on the profile - it's derived from the subscriptions/entitlements
     // resolution (tier-utils.currentTier). The dead subscription_tier column was dropped in
     // migration 055. The comp row below is the actual entitlement.
     try {
@@ -109,7 +109,7 @@ exports.handler = async (event) => {
       }
     }
 
-    // 4. Comp the tier for paid plans — a subscriptions row IS the entitlement (single source).
+    // 4. Comp the tier for paid plans - a subscriptions row IS the entitlement (single source).
     if (tier !== "guide") {
       try {
         await sb.from("subscriptions").insert({
@@ -129,7 +129,7 @@ exports.handler = async (event) => {
       });
     } catch (_) {}
 
-    // 6. Optional welcome email — Resend-ready, no-ops until RESEND_API_KEY is set.
+    // 6. Optional welcome email - Resend-ready, no-ops until RESEND_API_KEY is set.
     let emailed = { sent: false, reason: "not_requested" };
     if (send_email) {
       try { emailed = await sendWelcomeEmail({ email, name, tier, userId: uid }); }

@@ -1,5 +1,5 @@
 /**
- * site-content.js — PUBLIC read path for marketing-page overrides.
+ * site-content.js - PUBLIC read path for marketing-page overrides.
  *
  * GET /.netlify/functions/site-content?page=home
  *   → { page, overrides: { <key>: { kind, props } } }
@@ -37,7 +37,7 @@ exports.handler = async function (event) {
     };
   } catch (err) {
     console.error("site-content error:", err.message);
-    // Never break the marketing page — fall back to shipped content.
+    // Never break the marketing page - fall back to shipped content.
     return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ page, overrides: {} }) };
   }
 };

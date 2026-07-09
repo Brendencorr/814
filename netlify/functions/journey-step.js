@@ -1,9 +1,9 @@
 /**
- * journey-step.js — Journey daily content (generate + cache)
+ * journey-step.js - Journey daily content (generate + cache)
  *
  * Returns the step for (program_slug, day_number). If it's hand-written in
  * journey_steps (e.g. the 8:14 Reset), returns that. Otherwise generates it
- * from the journey's emotional arc via Claude — ONCE — and caches it into
+ * from the journey's emotional arc via Claude - ONCE - and caches it into
  * journey_steps so it's shared and consistent for every client thereafter.
  *
  * This is how the paid journeys (90/30/30 days) deliver real daily content
@@ -30,16 +30,16 @@ const ARCS = {
     phases: [
       { days: [1, 14],  theme: "Stabilize",              focus: "Getting through the early days. Physical recovery, basic safety, one hour at a time. The goal is simply to make it through and stay." },
       { days: [15, 30], theme: "Rebuild the Foundation", focus: "Sleep, food, movement, routine. The quiet scaffolding of a steady life. Small consistent habits that hold a person up." },
-      { days: [31, 60], theme: "The Emotional Work",      focus: "Feelings returning after the numbness. Triggers, shame, identity without the substance. The deeper, harder layer — held gently." },
-      { days: [61, 90], theme: "Becoming",               focus: "Who they are now. Integration, forward motion, relationships, purpose — building the life that makes staying worth it." },
+      { days: [31, 60], theme: "The Emotional Work",      focus: "Feelings returning after the numbness. Triggers, shame, identity without the substance. The deeper, harder layer - held gently." },
+      { days: [61, 90], theme: "Becoming",               focus: "Who they are now. Integration, forward motion, relationships, purpose - building the life that makes staying worth it." },
     ],
   },
   "move-and-nourish": {
     title: "Move & Nourish", tagline: "Move & Nourish", duration: 30,
     phases: [
-      { days: [1, 7],   theme: "Begin Gently",       focus: "The first movements and meals. Not performance — just showing up for the body. Ten minutes, one good meal, no shame." },
+      { days: [1, 7],   theme: "Begin Gently",       focus: "The first movements and meals. Not performance - just showing up for the body. Ten minutes, one good meal, no shame." },
       { days: [8, 15],  theme: "Build Consistency",  focus: "Turning single actions into a rhythm. Movement most days, protein and greens, hydration. Momentum over intensity." },
-      { days: [16, 23], theme: "Strength & Gut",     focus: "Progressive strength from zero. The gut-brain connection deepening — how food steadies mood. Feeling the difference." },
+      { days: [16, 23], theme: "Strength & Gut",     focus: "Progressive strength from zero. The gut-brain connection deepening - how food steadies mood. Feeling the difference." },
       { days: [24, 30], theme: "Make It a Life",     focus: "Moving from a program to a way of living. What they keep, how they keep it, the body as an ally not a project." },
     ],
   },
@@ -47,9 +47,9 @@ const ARCS = {
     title: "Carry Both", tagline: "Carry Both", duration: 30,
     phases: [
       { days: [1, 7],   theme: "Name the Grief",        focus: "Letting the loss be real. Naming it, feeling it, not rushing past it. Grief and recovery sitting in the same room." },
-      { days: [8, 15],  theme: "Carry Both Together",   focus: "Holding grief and rebuilding at once — without using one to escape the other. How to grieve sober. How to stay while it hurts." },
+      { days: [8, 15],  theme: "Carry Both Together",   focus: "Holding grief and rebuilding at once - without using one to escape the other. How to grieve sober. How to stay while it hurts." },
       { days: [16, 23], theme: "Honor What Was Lost",   focus: "Ritual, memory, meaning. Letting the person or the life that was lost be honored rather than buried. Love that continues." },
-      { days: [24, 30], theme: "Live Forward, Holding", focus: "Carrying the loss into a life still worth living. Not moving on — moving forward, with them still part of you." },
+      { days: [24, 30], theme: "Live Forward, Holding", focus: "Carrying the loss into a life still worth living. Not moving on - moving forward, with them still part of you." },
     ],
   },
 };
@@ -68,7 +68,7 @@ exports.handler = async (event) => {
     if (!program_slug || !day_number) return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "program_slug and day_number required" }) };
 
     const supabase = getSupabaseClient();
-    // SECURITY: require a verified member token — a cache-miss triggers a Claude generation, so this
+    // SECURITY: require a verified member token - a cache-miss triggers a Claude generation, so this
     // must not be an unauthenticated cost-drain lever. (Journey content is shared/cached; abuse-prevention.)
     const _uid = await getUserIdFromToken(supabase, body.token);
     if (!_uid) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
@@ -89,10 +89,10 @@ exports.handler = async (event) => {
 
     const sys = `You are Riley, the wellness guide for Meet Riley. Write Day ${day_number} of ${arc.duration} of the "${arc.title}" journey. Never assume the member's gender or pronouns; address them as "you", use singular "they" for any third-person reference, and use their stated pronouns only if given in the context.
 
-CURRENT PHASE: ${phase.theme} — ${phase.focus}
-${isMilestone ? "This is a MILESTONE day — mark it with quiet weight, acknowledge how far they've come. No fireworks; presence." : ""}
+CURRENT PHASE: ${phase.theme} - ${phase.focus}
+${isMilestone ? "This is a MILESTONE day - mark it with quiet weight, acknowledge how far they've come. No fireworks; presence." : ""}
 
-VOICE: Warm, direct, honest. Never preachy, never clinical, never motivational-poster. Short sentences. Hope is quiet. This is recovery/grief/rebuilding — hold it with care. Never shame.
+VOICE: Warm, direct, honest. Never preachy, never clinical, never motivational-poster. Short sentences. Hope is quiet. This is recovery/grief/rebuilding - hold it with care. Never shame.
 
 Each day has ONE small action (doable today), a reflection prompt, a short lesson, and a personal message from Riley.
 

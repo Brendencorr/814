@@ -1,5 +1,5 @@
 /**
- * push-subscribe.js — The 8:14 Reset web-push consent + subscription.
+ * push-subscribe.js - The 8:14 Reset web-push consent + subscription.
  *
  * POST { action, token?, ... }:
  *   'key'         → { publicKey }               (VAPID public key for pushManager.subscribe)
@@ -29,7 +29,7 @@ exports.handler = async (event) => {
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Bad JSON" }); }
   const action = body.action;
 
-  // The public key is safe to expose — the client needs it to subscribe.
+  // The public key is safe to expose - the client needs it to subscribe.
   if (action === "key") { const { publicKey } = await getVapidConfig(); return json(200, { publicKey: publicKey || null }); }
 
   const supabase = getSupabaseClient();
@@ -65,7 +65,7 @@ exports.handler = async (event) => {
     return json(200, { ok: true });
   }
 
-  // Send a real web push to the caller's own device right now — confirms push works
+  // Send a real web push to the caller's own device right now - confirms push works
   // without waiting for the 8:14am/8pm cron.
   if (action === "test") {
     const { publicKey, privateKey, subject } = await getVapidConfig();
@@ -76,7 +76,7 @@ exports.handler = async (event) => {
     webpush.setVapidDetails(subject, publicKey, privateKey);
     try {
       await webpush.sendNotification(c.push_subscription, JSON.stringify({
-        title: "Riley — test nudge",
+        title: "Riley - test nudge",
         body: "Web push is working. This is exactly how your morning and evening nudges will arrive.",
         url: "/reset", tag: "reset-test",
       }));

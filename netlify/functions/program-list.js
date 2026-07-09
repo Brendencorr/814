@@ -1,9 +1,9 @@
 /**
- * program-list.js — the member's programs split into INCLUDED (owned) vs ADD-ONS (buyable).
+ * program-list.js - the member's programs split into INCLUDED (owned) vs ADD-ONS (buyable).
  * Drives the "Included Programs" + "Program Add-ons" surfaces. POST { token } ->
  *   { tier, included:[{key,name,blurb,kind}], available:[{key,name,blurb,price_cents,status,kind}] }
  *
- * "included" reflects REAL entitlements (Companion → the 3 self-guided; Coach → all programs) —
+ * "included" reflects REAL entitlements (Companion → the 3 self-guided; Coach → all programs) -
  * free_access_mode / admin only unlock the reader, NOT the buy-list, so Add-ons is honest about
  * what still costs money. Expansion mirrors user_active_products + the products.implies model.
  * Model: n/a
@@ -20,7 +20,7 @@ const json = (code, obj) => ({ statusCode: code, headers: { ...CORS, "Content-Ty
 const SELF_GUIDED = ["prog_sobriety", "prog_grief", "prog_body"];
 function kindOf(p) {
   if (p.type === "bundle") return "bundle";
-  if (p.type === "program_interactive") return "interactive";   // Riley-led — routes to /int-program
+  if (p.type === "program_interactive") return "interactive";   // Riley-led - routes to /int-program
   return SELF_GUIDED.includes(p.product_key) ? "self_guided" : "guided";
 }
 

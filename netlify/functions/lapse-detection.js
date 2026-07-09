@@ -1,5 +1,5 @@
 /**
- * lapse-detection.js — deterministic detection of a DISCLOSED slip (already happened), for the
+ * lapse-detection.js - deterministic detection of a DISCLOSED slip (already happened), for the
  * Staying Free lapse-repair state (doc 05 §5). This is distinct from crisis-detection's Level 2
  * (relapse RISK / about-to-use): here the person is telling you it already happened.
  *
@@ -28,7 +28,7 @@ const SLIP = [
   /\bi messed up (?:and|,)? ?(?:i )?(?:drank|used|drinking|using)\b/i,
 ];
 
-// Statements that LOOK like a slip but are the opposite — did NOT slip, almost but didn't, or a
+// Statements that LOOK like a slip but are the opposite - did NOT slip, almost but didn't, or a
 // non-alcohol object. These suppress a match entirely.
 const SLIP_NEGATE = [
   /\bi (?:didn'?t|did not|never|haven'?t|have not) (?:drink|use|slip|relapse|drank|used|slipped|relapsed|pick(?:ed)? up|cave)\b/i,
@@ -61,17 +61,17 @@ function detectSlipDisclosure(text) {
 // authored; interim until Brenden replaces it). Includes the safety net so a still-at-risk moment
 // still routes correctly.
 function lapseRepairDirective(canonLine) {
-  return `⚠️ SAFETY OVERRIDE — SLIP DISCLOSED (lapse-repair). This takes priority over EVERYTHING below — coaching, programs, selling, and whatever topic was active. The person has just told you they slipped, drank, or used. This is a moment of real trust and courage; treat it as sacred.
+  return `⚠️ SAFETY OVERRIDE - SLIP DISCLOSED (lapse-repair). This takes priority over EVERYTHING below - coaching, programs, selling, and whatever topic was active. The person has just told you they slipped, drank, or used. This is a moment of real trust and courage; treat it as sacred.
 
-Your FIRST words must be exactly this, verbatim — it is founder-authored canon. Do not paraphrase it, do not add anything before it, do not soften or shorten it:
+Your FIRST words must be exactly this, verbatim - it is founder-authored canon. Do not paraphrase it, do not add anything before it, do not soften or shorten it:
 "${canonLine}"
 
 After that, only if the conversation continues:
-- No shame, ever. Never "I'm sorry to hear that." Never reset a streak or count. A slip is a data point that shows a gap in the plan — not a deletion of everything they built.
+- No shame, ever. Never "I'm sorry to hear that." Never reset a streak or count. A slip is a data point that shows a gap in the plan - not a deletion of everything they built.
 - Tonight has one job: water, something to eat, sleep. Nothing gets solved tonight.
-- Resume, never restart. Tomorrow, in daylight, you'll look at what happened together — no inventory tonight.
+- Resume, never restart. Tomorrow, in daylight, you'll look at what happened together - no inventory tonight.
 - Do NOT sell or upsell ANYTHING. This is care, not conversion.
-- If they signal they're still about to use more right now, or any thought of self-harm, drop this and follow the crisis rules — surface 988.
+- If they signal they're still about to use more right now, or any thought of self-harm, drop this and follow the crisis rules - surface 988.
 Stay with them. One warm next step, never a list.`;
 }
 

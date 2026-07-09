@@ -1,5 +1,5 @@
 /**
- * content-curation.js — pure, dependency-free curation vocabulary + validation.
+ * content-curation.js - pure, dependency-free curation vocabulary + validation.
  *
  * Shared by admin-content.js (bulk_suggest) and reusable by the Library Scout, so
  * "what is a valid, safe, non-duplicate library item" has ONE definition. No

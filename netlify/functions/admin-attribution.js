@@ -1,9 +1,9 @@
 /**
- * admin-attribution.js — Operator-only PostHog attribution view.
+ * admin-attribution.js - Operator-only PostHog attribution view.
  *
  * Reads posthog_daily_conversions (mirrored nightly by posthog-conversion-cron.js)
  * and aggregates "which campaign drove signups" for the operator dashboard.
- * OPERATOR_KEY gated, SERVICE_KEY read — same pattern as admin-engagement.js.
+ * OPERATOR_KEY gated, SERVICE_KEY read - same pattern as admin-engagement.js.
  *
  * GET /.netlify/functions/admin-attribution?days=30 → {
  *   window_days,

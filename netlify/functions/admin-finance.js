@@ -1,5 +1,5 @@
 /**
- * admin-finance.js — operator finance: live revenue (from subscriptions) + editable
+ * admin-finance.js - operator finance: live revenue (from subscriptions) + editable
  * operating expenses (operating_expenses table). OPERATOR_KEY gated. Powers the Riley
  * Overview tab + the Home revenue/expense snapshot. Read-only on member data.
  *
@@ -41,7 +41,7 @@ async function summary(sb) {
     if (breakdown[s.plan_id] != null) breakdown[s.plan_id] += 1;
   });
 
-  // Program purchases — one-time (à la carte). Lifetime count + total.
+  // Program purchases - one-time (à la carte). Lifetime count + total.
   let programs = { count: 0, total: 0 };
   try {
     const { data: purch } = await sb.from("purchases").select("amount_cents");

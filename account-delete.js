@@ -1,18 +1,18 @@
 /**
- * account-delete.js — reusable "Delete account & data" flow (type-to-confirm modal).
+ * account-delete.js - reusable "Delete account & data" flow (type-to-confirm modal).
  *
  * Drop-in for any authenticated page:
  *   <script src="/account-delete.js"></script>
  *   <button onclick="RileyDeleteAccount.open({ supabase: SB })">Delete account</button>
  *
  * open(opts):
- *   supabase   — the page's Supabase client (reads the session token + signs out).
+ *   supabase   - the page's Supabase client (reads the session token + signs out).
  *                Falls back to window.SB / window.sb if omitted.
- *   redirectTo — where to send the member after deletion. Default: the marketing home.
+ *   redirectTo - where to send the member after deletion. Default: the marketing home.
  *
  * Talks to auth-handler.js action:'delete_account' (token-verified, service-key delete).
  * The account + all personal data + the login are erased. Crisis-support records are
- * retained DE-IDENTIFIED for a bounded window for safety — disclosed here, in plain sight.
+ * retained DE-IDENTIFIED for a bounded window for safety - disclosed here, in plain sight.
  */
 (function () {
   var CONFIRM_PHRASE = "Delete my account";
@@ -47,7 +47,7 @@
         'border:none;color:#8a8578;font-size:22px;line-height:1;cursor:pointer">&times;</button>' +
       '<div style="font-family:\'DM Serif Display\',Georgia,serif;font-size:27px;margin:2px 0 12px">Delete account</div>' +
       '<div style="font-size:14px;color:#b8b2a6;line-height:1.6">Are you sure? This permanently deletes your account and ' +
-        'everything Riley keeps for you — your profile, check-ins, reflections, conversations, and progress. ' +
+        'everything Riley keeps for you - your profile, check-ins, reflections, conversations, and progress. ' +
         'If you have an active subscription, it’s canceled immediately. <strong style="color:#e8d5a3">This can’t be undone.</strong></div>' +
       '<div style="font-size:12.5px;color:#8a8578;line-height:1.55;margin:14px 0 18px;padding:11px 13px;' +
         'background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.16);border-radius:10px;text-align:left">' +

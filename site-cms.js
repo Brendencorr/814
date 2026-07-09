@@ -1,8 +1,8 @@
-/* site-cms.js — runtime overrides for the marketing site + the in-page live editor.
+/* site-cms.js - runtime overrides for the marketing site + the in-page live editor.
  *
  * TWO MODES:
  *  1) Apply (always): fetch /.netlify/functions/site-content?page=<page> and apply overrides on top of
- *     the page's hardcoded defaults — text, images, section state (hidden/order/colors), a per-element
+ *     the page's hardcoded defaults - text, images, section state (hidden/order/colors), a per-element
  *     universal style (color / bold / italic), AND per-element RESPONSIVE layout: desktop layout only
  *     >768px and mobile only ≤768px, injected as a media-queried <style>. So unless the operator edits
  *     mobile, phones keep the page's original responsive design.
@@ -10,7 +10,7 @@
  *     a logo to swap it, use each section's toolbar (hide·reorder·colors), and the "⛶ Layout" handle on
  *     ANY element to move it (DRAG the handle, or nudge/size/space via its panel) + recolor/bold/italic
  *     text. When previewing at phone width the layout edits the MOBILE bucket; at full width, DESKTOP.
- *     The editor NEVER writes to Supabase — it posts each change to window.parent (which saves).
+ *     The editor NEVER writes to Supabase - it posts each change to window.parent (which saves).
  *
  * Override props by kind (all may carry `css`=desktop layout, `cssMobile`=≤768px layout, `cssBase`=universal):
  *   text    → {text, css, cssMobile, cssBase}
@@ -61,7 +61,7 @@
       if (EDIT) { var bk = st[_editVp] || {}; if (nonEmpty(bk)) { var aa = cssDecl(bk); if (aa) act += sel + "{" + aa + "}"; } }
     });
     // In the editor, render the SELECTED viewport's layout UNCONDITIONALLY (so the operator's
-    // desktop edits are visible even when the preview iframe is narrower than the breakpoint —
+    // desktop edits are visible even when the preview iframe is narrower than the breakpoint -
     // the edit bucket follows the Desktop/Mobile toggle, not the iframe width). The PUBLIC site
     // uses real media queries so each visitor gets the right one by their actual screen width.
     var css = EDIT
@@ -342,10 +342,10 @@
       '<div class="row"><label>Width</label><button data-a="w-">−</button><span class="val" id="lp-w">auto</span><button data-a="w+">+</button><button data-a="w0" title="Auto">auto</button></div>' +
       '<div class="row"><label>Height</label><button data-a="h-">−</button><span class="val" id="lp-h">auto</span><button data-a="h+">+</button></div>' +
       '<div class="row"><label>Padding</label><button data-a="p-">−</button><span class="val" id="lp-p">0</span><button data-a="p+">+</button></div>' +
-      (kind === "text" ? '<div class="row"><label>Text</label><button data-a="t-">−</button><span class="val" id="lp-t">—</span><button data-a="t+">+</button></div>' : '') +
+      (kind === "text" ? '<div class="row"><label>Text</label><button data-a="t-">−</button><span class="val" id="lp-t">-</span><button data-a="t+">+</button></div>' : '') +
       '<div class="row al"><label>Align</label><button data-a="al" data-v="left">L</button><button data-a="al" data-v="center">C</button><button data-a="al" data-v="right">R</button></div>' +
       (kind === "text"
-        ? '<div class="row"><label>Color</label><input type="color" data-a="color" value="' + toHex(base["color"], computedHex(el, "color", "#e8e4de")) + '"><button data-a="colorclear" title="Clear colour">—</button></div>' +
+        ? '<div class="row"><label>Color</label><input type="color" data-a="color" value="' + toHex(base["color"], computedHex(el, "color", "#e8e4de")) + '"><button data-a="colorclear" title="Clear colour">-</button></div>' +
           '<div class="row st"><label>Style</label><button data-a="bold" class="' + (base["font-weight"] === "700" ? "on" : "") + '">B</button><button data-a="italic" class="' + (base["font-style"] === "italic" ? "on" : "") + '">I</button></div>'
         : '') +
       '<div class="lp-foot"><button data-a="reset" class="reset">Reset ' + (vp === "m" ? "mobile" : "desktop") + '</button><button data-a="close">Done</button></div>';

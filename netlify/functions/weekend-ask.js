@@ -1,8 +1,8 @@
 /**
- * weekend-ask.js — Doc 2 §5.3: the SINGLE ask after the Companion Weekend ends.
+ * weekend-ask.js - Doc 2 §5.3: the SINGLE ask after the Companion Weekend ends.
  *
  * The Week One Letter has zero selling; the 48h Companion Weekend is a gift; THIS is the one and
- * only upgrade moment — shown once, warm, after the weekend expires and the member is back on Guide.
+ * only upgrade moment - shown once, warm, after the weekend expires and the member is back on Guide.
  * Never shown if they upgraded, and never twice (gated on the upgrade_prompt_shown event). No migration.
  *
  * POST { token, action }:

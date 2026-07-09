@@ -1,10 +1,10 @@
 /**
- * companion-weekend.js — Doc 2 §5.2: the 48-hour Companion gift after the Week One Letter.
+ * companion-weekend.js - Doc 2 §5.2: the 48-hour Companion gift after the Week One Letter.
  *
  * Grants full Companion access for 48 hours by inserting a subscription
  * (plan_id='companion', term='weekend', expires_at = now + 48h). entitlements.js's bridge then
  * unlocks Companion across the app; it reverts cleanly to Guide the moment it expires (no cron
- * needed — the bridge only counts non-expired subs). Idempotent: ONE Companion Weekend per user,
+ * needed - the bridge only counts non-expired subs). Idempotent: ONE Companion Weekend per user,
  * ever. Token-verified. Emits companion_weekend_started.
  *
  * POST { token } → { granted, expires_at } | { already, expires_at }.
@@ -28,7 +28,7 @@ exports.handler = async (event) => {
   if (!userId) return json(401, { error: "Unauthorized" });
 
   try {
-    // Idempotent — one Companion Weekend ever per user (Doc 2 §5.2).
+    // Idempotent - one Companion Weekend ever per user (Doc 2 §5.2).
     const { data: existing } = await supabase.from("subscriptions")
       .select("expires_at").eq("user_id", userId).eq("term", "weekend").maybeSingle();
     if (existing) return json(200, { already: true, expires_at: existing.expires_at });

@@ -1,9 +1,9 @@
 /**
- * admin-int-sessions.js — Operator editor for the interactive Riley-led programs.
+ * admin-int-sessions.js - Operator editor for the interactive Riley-led programs.
  *
  * Lets the operator review + refine the authored session content (int_sessions), flip a program
  * Live/draft, and replace the interim founder canon copy (the lapse_first_response "FOUNDER COPY
- * PENDING" workflow) — all without touching SQL. OPERATOR_KEY-gated (dashboard sends x-operator-key).
+ * PENDING" workflow) - all without touching SQL. OPERATOR_KEY-gated (dashboard sends x-operator-key).
  *
  *   POST { action:'list' }
  *     → { programs:[{ program_key, name, status, sessions }] }   (the 4 interactive programs)

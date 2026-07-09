@@ -1,5 +1,5 @@
 /**
- * admin-program-modules.js — Operator editor for self-guided program CONTENT (program_modules).
+ * admin-program-modules.js - Operator editor for self-guided program CONTENT (program_modules).
  *
  * Lets the operator fix/adjust module copy without touching SQL. OPERATOR_KEY-gated
  * (same as the other admin tools; the dashboard's fetch injector sends x-operator-key).

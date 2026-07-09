@@ -1,6 +1,6 @@
-/* Riley PWA service worker — NETWORK-FIRST.
+/* Riley PWA service worker - NETWORK-FIRST.
  * Live data must never go stale, so we always try the network first and only fall
- * back to cache when offline. We only ever touch same-origin GET requests — never
+ * back to cache when offline. We only ever touch same-origin GET requests - never
  * POSTs, never the Supabase API or CDN fonts (those are cross-origin and pass
  * straight through untouched). This gives installability + an offline shell
  * without any risk of serving stale user data. */

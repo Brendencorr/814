@@ -1,9 +1,9 @@
 /**
- * match-content.js — pure Riley-Brain rules for surfacing library content.
+ * match-content.js - pure Riley-Brain rules for surfacing library content.
  *
  * No LLM, no I/O → deterministic + unit-testable. Two modes:
- *   'curated' = what Riley PUSHES ("Curated for you") — full guardrails incl. the tone block.
- *   'search'  = what a member PULLS (manual search/browse) — tone block LIFTED; TIER still enforced.
+ *   'curated' = what Riley PUSHES ("Curated for you") - full guardrails incl. the tone block.
+ *   'search'  = what a member PULLS (manual search/browse) - tone block LIFTED; TIER still enforced.
  * Principle (Brenden 2026-07-05): guardrails gate the push; tier gates the pull.
  * Crisis hard-overrides everything.
  *
@@ -36,7 +36,7 @@ function matchContent(items, client, ctx) {
   items  = Array.isArray(items) ? items : [];
   client = client || {};
   ctx    = ctx || {};
-  if (ctx.crisisActive) return []; // crisis flow owns the screen — hard override
+  if (ctx.crisisActive) return []; // crisis flow owns the screen - hard override
 
   const mode           = ctx.mode === "search" ? "search" : "curated";
   const tier           = client.tier || "guide";
@@ -49,17 +49,17 @@ function matchContent(items, client, ctx) {
     if (!it) return false;
     if (it.approval_status !== "approved" || !it.is_active || it.link_status !== "ok") return false;
 
-    // Tier gate — ALWAYS enforced. Search unlocks tone, NEVER tier.
+    // Tier gate - ALWAYS enforced. Search unlocks tone, NEVER tier.
     if (tier === "guide") { if (!it.guide_starter) return false; }
     else if ((TIER_RANK[tier] ?? 0) < (TIER_RANK[it.tier_access] ?? 0)) return false;
 
-    // Tone gate — PUSH-only. In search mode the member is deliberately pulling, so it's lifted.
+    // Tone gate - PUSH-only. In search mode the member is deliberately pulling, so it's lifted.
     if (mode === "curated" && it.tone && it.tone !== "grounded") {
       if (blockedClient) return false;                                  // never push manifestation at grief/recovery
       if (!ctx.exploreMode && !(requiredTag && hasTag(it, requiredTag))) return false; // others: only if asked/explore
     }
 
-    // Explicit tag filter (tapped tag / tag search) — required when present.
+    // Explicit tag filter (tapped tag / tag search) - required when present.
     if (requiredTag && !hasTag(it, requiredTag)) return false;
     // Free-text search filter (search mode only).
     if (mode === "search" && ctx.query && !textMatch(it, ctx.query)) return false;

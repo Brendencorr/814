@@ -1,5 +1,5 @@
 /**
- * admin-programs.js — Operator Program Manager. Team-only.
+ * admin-programs.js - Operator Program Manager. Team-only.
  *
  * Full CRUD over the `programs` table (the program catalog the client app +
  * storefront draw from), plus the free-access master switch. Toggling a program
@@ -11,7 +11,7 @@
  * tools. Fails closed if OPERATOR_KEY is unset.
  *
  * POST { action: "list" }                          → { programs, free_access_mode }
- *   each program also carries stage_counts — {active, completed, ...} tallied
+ *   each program also carries stage_counts - {active, completed, ...} tallied
  *   from user_program_progress, for the operator's enrollment-at-a-glance view.
  * POST { action: "upsert", program: {...} }        → { program }   (id → update, else insert)
  * POST { action: "set_active", id, is_active }     → { ok }        (toggle / freeze)
@@ -42,7 +42,7 @@ async function getFreeAccess(sb) {
 async function listPrograms(sb) {
   const [progRes, stageRes] = await Promise.all([
     sb.from("programs").select("id,slug,title,description,emoji,duration_days,price_cents,tagline,is_active,sort_order").order("sort_order", { ascending: true }),
-    // One pass over all enrollments, tallied per (program_id, status) — avoids
+    // One pass over all enrollments, tallied per (program_id, status) - avoids
     // an N+1 count query per program row.
     sb.from("user_program_progress").select("program_id,status"),
   ]);
@@ -118,7 +118,7 @@ async function deleteProgram(sb, id) {
   try {
     const { count } = await sb.from("user_program_progress").select("*", { count: "exact", head: true }).eq("program_id", id);
     if (count && count > 0) {
-      return json(409, { error: `Can't delete — ${count} member(s) are enrolled. Freeze it instead (it'll hide from the app but keep their progress).` });
+      return json(409, { error: `Can't delete - ${count} member(s) are enrolled. Freeze it instead (it'll hide from the app but keep their progress).` });
     }
   } catch (_) { /* if the check fails, fall through to attempt delete */ }
   const { error } = await sb.from("programs").delete().eq("id", id);

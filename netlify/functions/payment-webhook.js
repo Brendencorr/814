@@ -1,5 +1,5 @@
 /**
- * payment-webhook.js — grants Riley access when a payment succeeds.
+ * payment-webhook.js - grants Riley access when a payment succeeds.
  *
  * Flow: member pays via a RockPaperCoin hosted invoice (charged through your Stripe) → a Zap
  * (trigger: Rock Paper Coin "Invoice Paid" OR Stripe "Charge Succeeded") → "Webhooks by Zapier: POST"
@@ -8,15 +8,15 @@
  *
  * SAFE BY DESIGN:
  *  - DORMANT until PAYMENTS_WEBHOOK_SECRET is set in Netlify (no secret → 503, grants nothing).
- *  - Idempotent: external_id (the Stripe/RPC invoice id) is unique in `payments` — a replayed event
+ *  - Idempotent: external_id (the Stripe/RPC invoice id) is unique in `payments` - a replayed event
  *    logs `duplicate` and grants nothing.
  *  - Fail-closed: an email we can't match, or an amount/product we can't resolve, is LOGGED
- *    (`unmatched` / `needs_review`) and grants NOTHING — it never guesses a tier.
+ *    (`unmatched` / `needs_review`) and grants NOTHING - it never guesses a tier.
  *  - Every event (granted or not) is written to `payments` for the operator to audit.
  *
  * Contract (map RockPaperCoin/Stripe trigger fields to these in the Zap's POST step):
  *   email        (required)  payer email
- *   external_id  (required)  the invoice/charge id  — idempotency key
+ *   external_id  (required)  the invoice/charge id  - idempotency key
  *   amount_cents  OR amount   e.g. 3400  or  "34.00"
  *   plan         (optional)  explicit tier: "companion" | "coach"
  *   term         (optional)  "monthly" | "annual"
@@ -37,7 +37,7 @@ const TIER_BY_CENTS = {
   3400:  { plan: "coach",     term: "monthly" },
   35000: { plan: "coach",     term: "annual" },
 };
-const PROGRAM_CENTS = 814; // every $8.14 program shares this price — needs an explicit program key.
+const PROGRAM_CENTS = 814; // every $8.14 program shares this price - needs an explicit program key.
 const DAY = 86400000;
 
 function toCents(body) {
@@ -53,9 +53,9 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "method_not_allowed" });
 
-  // Dormant until configured — no secret means no live payments wired yet.
+  // Dormant until configured - no secret means no live payments wired yet.
   const SECRET = process.env.PAYMENTS_WEBHOOK_SECRET;
-  if (!SECRET) return json(503, { error: "not_configured", detail: "PAYMENTS_WEBHOOK_SECRET is not set — webhook is dormant." });
+  if (!SECRET) return json(503, { error: "not_configured", detail: "PAYMENTS_WEBHOOK_SECRET is not set - webhook is dormant." });
 
   let body = {};
   try { body = JSON.parse(event.body || "{}"); } catch (_) { return json(400, { error: "bad_json" }); }
@@ -70,7 +70,7 @@ exports.handler = async (event) => {
   const product = String(body.product || body.description || body.title || "").trim() || null;
   const raw = body;
 
-  // Log helper — records EVERY event, granted or not.
+  // Log helper - records EVERY event, granted or not.
   async function log(status, extra) {
     const row = { external_id: externalId || null, email: email || null, amount_cents: cents, product, status, raw, ...extra };
     try { await sb.from("payments").insert(row); } catch (e) { /* non-fatal: never block the response */ }
@@ -98,7 +98,7 @@ exports.handler = async (event) => {
   // Nothing resolvable → surface for the operator, grant nothing.
   if (!plan && !program) {
     await log("needs_review", { detail: "could not resolve tier/program from amount (" + cents + ") or fields" });
-    return json(200, { ok: true, status: "needs_review", note: "logged for operator review — nothing granted" });
+    return json(200, { ok: true, status: "needs_review", note: "logged for operator review - nothing granted" });
   }
 
   // Match the member by email. No match → log + grant nothing (operator reconciles manually).
@@ -106,7 +106,7 @@ exports.handler = async (event) => {
   if (email) { try { const { data: u } = await sb.from("user_profiles").select("id").ilike("email", email).maybeSingle(); if (u) userId = u.id; } catch (_) {} }
   if (!userId) {
     await log("unmatched", { plan_id: plan || null, program_id: program || null, term: term || null, detail: "no Riley member with email " + email });
-    return json(200, { ok: true, status: "unmatched", note: "no member matched — logged for operator; nothing granted" });
+    return json(200, { ok: true, status: "unmatched", note: "no member matched - logged for operator; nothing granted" });
   }
 
   // GRANT.

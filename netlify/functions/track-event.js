@@ -1,7 +1,7 @@
 /**
- * track-event.js — lightweight client engagement ingest.
+ * track-event.js - lightweight client engagement ingest.
  * Called from track.js on every client page. Writes to client_events with the
- * service key (bypasses RLS). Analytics only — always non-fatal, never blocks UI.
+ * service key (bypasses RLS). Analytics only - always non-fatal, never blocks UI.
  *
  * POST { events: [ {user_id?, session_id, event_type, page, target, meta} ] }
  * Accepts a batch to keep requests cheap. Silently drops malformed rows.
@@ -21,7 +21,7 @@ exports.handler = async function (event) {
   try {
     const body = JSON.parse(event.body || "{}");
     const db = getSupabaseClient();
-    // SECURITY: attribute to the VERIFIED token's user only — never a client-supplied user_id.
+    // SECURITY: attribute to the VERIFIED token's user only - never a client-supplied user_id.
     // Anonymous events (no token) are still accepted as user_id null; they just can't be forged.
     let uid = null;
     if (body.token) { try { const { data } = await db.auth.getUser(body.token); uid = data?.user?.id || null; } catch (_) {} }

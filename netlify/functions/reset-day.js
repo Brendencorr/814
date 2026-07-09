@@ -1,5 +1,5 @@
 /**
- * reset-day.js — THE 8:14 RESET: daily content + two-touch progress + persona voice.
+ * reset-day.js - THE 8:14 RESET: daily content + two-touch progress + persona voice.
  *
  * POST { action, token?, ... }:
  *   'day'      { day }            → day content (+ persona variant + progress + Day-1 sentence if authed)
@@ -26,7 +26,7 @@ async function classifyPersona(text) {
   try {
     const sys = `Classify what this person is carrying into one or more of EXACTLY these five keys:
 griever (loss, death, grief), drinker (alcohol, drugs, sobriety, recovery), burnt_out (work, exhaustion, burnout), stretched (family, caregiving, marriage, overwhelmed by obligations), body_first (health, weight, energy, not recognizing their body).
-Many people are two or three at once — include all that clearly fit. Return ONLY a JSON array of the matching keys, e.g. ["burnt_out","stretched"]. If nothing is clear, return [].`;
+Many people are two or three at once - include all that clearly fit. Return ONLY a JSON array of the matching keys, e.g. ["burnt_out","stretched"]. If nothing is clear, return [].`;
     const r = await fetch(ANTHROPIC_API_URL, {
       method: "POST",
       headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },

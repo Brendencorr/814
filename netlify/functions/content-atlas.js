@@ -1,5 +1,5 @@
 /**
- * content-atlas.js — Phase 2 automated design (Canva Connect Autofill).
+ * content-atlas.js - Phase 2 automated design (Canva Connect Autofill).
  *
  * Turns a Sage brief into rendered creative:
  *   Atlas prompt -> render payload -> Canva Autofill API -> poll -> export ->
@@ -11,7 +11,7 @@
  *     Developer integration; Autofill API requires an eligible Canva plan).
  *   - Needs the chosen template family to have a REAL engine_template_id
  *     (content_template_library.engine_template_id != 'TBD').
- *   If either is missing, Atlas does NOT fake it — it returns
+ *   If either is missing, Atlas does NOT fake it - it returns
  *   {designed:false, reason} and the brief stays a text item for review.
  *
  * Engine is pluggable (schema supports canva|creatomate|bannerbear|placid).

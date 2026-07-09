@@ -1,5 +1,5 @@
 /**
- * operator-push.js — register admin DEVICES to receive new-member push alerts.
+ * operator-push.js - register admin DEVICES to receive new-member push alerts.
  *
  * Separate from member push (notification_consents). OPERATOR_KEY-gated on every
  * action (the operator dashboard's fetch injector sends x-operator-key on all calls).
@@ -29,7 +29,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
 
-  // Operator-only — same gate as the rest of the dashboard. Sits AFTER OPTIONS so the
+  // Operator-only - same gate as the rest of the dashboard. Sits AFTER OPTIONS so the
   // CORS preflight isn't blocked.
   const gate = requireOperator(event); if (gate) return gate;
 
@@ -71,14 +71,14 @@ exports.handler = async (event) => {
       active: d.active,
       created_at: d.created_at,
       last_sent_at: d.last_sent_at,
-      tail: (d.endpoint || "").slice(-10),   // last chars only — never expose the full endpoint token
+      tail: (d.endpoint || "").slice(-10),   // last chars only - never expose the full endpoint token
     }));
     return json(200, { devices });
   }
 
   if (action === "test") {
     const r = await sendToAllOperators(supabase, {
-      title: "Riley — operator test",
+      title: "Riley - operator test",
       body: "Operator alerts are working on this device.",
       url: "/operator",
       tag: "op-test",

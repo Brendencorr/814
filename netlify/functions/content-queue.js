@@ -1,5 +1,5 @@
 /**
- * content-queue.js — admin API for the content Review screen.
+ * content-queue.js - admin API for the content Review screen.
  * Called by the operator dashboard (password-gated, server-side service key).
  *
  * GET  ?view=pending|scheduled|published|counts   → list queue / jobs
@@ -80,7 +80,7 @@ exports.handler = async function (event) {
         });
       }
 
-      // pending queue (default) — include brief caption + assets
+      // pending queue (default) - include brief caption + assets
       const { data: queue } = await db.from("content_approval_queue").select("*")
         .eq("status", "pending").order("created_at", { ascending: false }).limit(60);
       return json(200, { queue: queue || [] });
@@ -103,7 +103,7 @@ exports.handler = async function (event) {
     // REVISE
     if (action === "revise") {
       await db.from("content_approval_queue").update({ status: "revise", reviewer_note: note || null, reviewed_at: new Date().toISOString() }).eq("id", id);
-      await notify(`Content item sent back for revision: ${item.preview_caption?.slice(0, 80) || item.id}${note ? " — " + note : ""}`);
+      await notify(`Content item sent back for revision: ${item.preview_caption?.slice(0, 80) || item.id}${note ? " - " + note : ""}`);
       return json(200, { ok: true, status: "revise" });
     }
 
@@ -181,7 +181,7 @@ exports.handler = async function (event) {
             await db.from("content_publishing_jobs").update({ state: "failed", error_detail: e.message }).eq("id", job.id);
           }
         } else {
-          scheduledCount++; // no Buffer configured — job stays queued for manual handling
+          scheduledCount++; // no Buffer configured - job stays queued for manual handling
         }
       }
 

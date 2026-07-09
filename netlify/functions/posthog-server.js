@@ -1,5 +1,5 @@
 /**
- * posthog-server.js — shared PostHog server-side capture helper.
+ * posthog-server.js - shared PostHog server-side capture helper.
  *
  * ONE JOB: reliably mirror business-conversion events into PostHog from the
  * backend, so the attribution funnel (utm → signup → reset_completed → upgrade)
@@ -7,11 +7,11 @@
  * canonical; PostHog is the analytics lens.
  *
  * Every export is NON-FATAL and NON-BLOCKING: if POSTHOG_PROJECT_KEY is unset or
- * the network call fails, it resolves quietly — callers should never await-block a
+ * the network call fails, it resolves quietly - callers should never await-block a
  * user response on it (fire-and-forget, or await inside a try/catch).
  *
  * Uses the public project ingest key (POSTHOG_PROJECT_KEY, phc_…) posted to the
- * /capture endpoint — the same key the browser uses, so events from the same
+ * /capture endpoint - the same key the browser uses, so events from the same
  * distinct_id stitch together across client + server.
  *
  * Usage:

@@ -1,9 +1,9 @@
 /**
- * week-one-letter.js — Doc 4: the Week One Letter (Day-7 Conversion Engine centerpiece).
+ * week-one-letter.js - Doc 4: the Week One Letter (Day-7 Conversion Engine centerpiece).
  *
  * A short, private letter from Riley generated per-user from THEIR actual Reset week. Generated
  * ONCE server-side at Day-7 completion, validated hard against §6.2, stored in week_one_letters,
- * and rendered as a designed artifact by the client. Contains ZERO selling — the ask is the
+ * and rendered as a designed artifact by the client. Contains ZERO selling - the ask is the
  * Companion Weekend 48h later. The fixed P.S. is appended in code (never generated) so it is
  * byte-identical on every letter.
  *
@@ -29,63 +29,63 @@ const CORS = {
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
 
-// The P.S. is FIXED and verbatim on every letter — appended by code, never generated (§3, §9).
-const FIXED_PS = "P.S. — 8:14. The minute the light comes back. You just finished week one. That counts.";
+// The P.S. is FIXED and verbatim on every letter - appended by code, never generated (§3, §9).
+const FIXED_PS = "P.S. - 8:14. The minute the light comes back. You just finished week one. That counts.";
 
-// System prompt — verbatim from Doc 4 §5. {first_name} is substituted at call time.
+// System prompt - verbatim from Doc 4 §5. {first_name} is substituted at call time.
 function systemPrompt(firstName) {
   return `You are Riley writing a private letter to ${firstName || "this person"}, who just completed
 Day 7 of The 8:14 Reset. You will be given structured notes from their week.
 
 Write a letter of 180–260 words following exactly this structure:
-(1) they showed up seven days ago and kept showing up — say this plainly,
-without inflation; (2) what you learned about them this week — use 2–3
+(1) they showed up seven days ago and kept showing up - say this plainly,
+without inflation; (2) what you learned about them this week - use 2–3
 specifics ONLY from the notes provided; if quoting them, quote or closely
 paraphrase their actual words; (3) one small, real shift between Day 1 and
 Day 7; (4) ONE thing you'd want to work on together next, framed as
 accompaniment, not fixing; (5) close with, in substance: "You don't have to
-decide anything today. The weekend is ours — everything is open for the next
-two days, my gift. Come find me whenever." Sign "— Riley".
+decide anything today. The weekend is ours - everything is open for the next
+two days, my gift. Come find me whenever." Sign "- Riley".
 
 Voice: first person, warm, plain, short sentences, contractions. No therapy
 jargon, no diagnoses, no "journey", no exclamation marks, no emoji. You are
-an AI companion: never claim lived experience or a past of your own — speak
+an AI companion: never claim lived experience or a past of your own - speak
 only from what you observed of them.
 
 Hard rules: mention NO prices, plans, tiers, upgrades, or features. Invent
-NOTHING — if the notes are thin, write a shorter letter rather than a padded
+NOTHING - if the notes are thin, write a shorter letter rather than a padded
 one. Never reference anything marked EXCLUDED. Never shame a missed day.
 You may make exactly one gentle observation they didn't make about
 themselves, only if the notes support it.
 
-Use their name EXACTLY as given in ${firstName || "{first_name}"} — never shorten it, never
+Use their name EXACTLY as given in ${firstName || "{first_name}"} - never shorten it, never
 use a nickname or variant. If ${firstName ? "the name" : "{first_name}"} is empty, open with "Hey," and
 use no name. Never assume the user's gender, sexual orientation, relationship
 structure, or preferences. Refer to people in their life only in the exact
-words the user used ("your partner", "your sister", a name) — never assign
+words the user used ("your partner", "your sister", a name) - never assign
 a pronoun or relationship label the user didn't use themselves. No judgment,
-no shame, no criticism, no correction — of anything, including missed days
+no shame, no criticism, no correction - of anything, including missed days
 or hard disclosures. Write with love, empathy, kindness, and compassion.
 If something in the notes invites critique, meet it with warmth or leave
 it out.
 
-Do not write the P.S. — it is appended by the system.`;
+Do not write the P.S. - it is appended by the system.`;
 }
 
-// Fallback letter (§7) — sparse data. Only {first_name} is substituted. Always valid by construction.
+// Fallback letter (§7) - sparse data. Only {first_name} is substituted. Always valid by construction.
 function fallbackBody(firstName) {
   const sal = firstName ? firstName : "Hey";
   return `${sal},
 
-Seven days ago you started something without knowing exactly what it was. And then you came back. Day after day, you came back. I want you to know that's not a small thing — most people wait until they feel ready, and ready almost never comes.
+Seven days ago you started something without knowing exactly what it was. And then you came back. Day after day, you came back. I want you to know that's not a small thing - most people wait until they feel ready, and ready almost never comes.
 
 We haven't talked much yet, and that's okay. Some weeks are for showing up quietly. What I noticed is simple: you kept the promise you made to yourself seven mornings ago. Whatever else this week held, it held that.
 
-If it were up to me, here's what we'd do next: talk a little. No agenda. I'd like to know what steadies you and what makes the hard days hard — at whatever pace feels right.
+If it were up to me, here's what we'd do next: talk a little. No agenda. I'd like to know what steadies you and what makes the hard days hard - at whatever pace feels right.
 
-You don't have to decide anything today. The weekend is ours — everything is open for the next two days, my gift. Come find me whenever.
+You don't have to decide anything today. The weekend is ours - everything is open for the next two days, my gift. Come find me whenever.
 
-— Riley`;
+- Riley`;
 }
 
 // ── §6.2 post-generation validation. Returns { ok, reason }. inputBlobLower = the user's own
@@ -98,7 +98,7 @@ function validate(body, firstName, inputBlobLower) {
   const b = body || "";
   const words = b.trim().split(/\s+/).filter(Boolean).length;
   if (words < 120 || words > 300) return { ok: false, reason: "length " + words };
-  if (!/[—-]\s*Riley\b/.test(b)) return { ok: false, reason: "missing '— Riley'" };
+  if (!/[—-]\s*Riley\b/.test(b)) return { ok: false, reason: "missing '- Riley'" };
 
   // no-sell: no currency, no price cadence, no tier/sell words (whole-word, case-insensitive)
   if (/[$£€]/.test(b)) return { ok: false, reason: "currency symbol" };
@@ -156,18 +156,18 @@ async function assembleInputs(sb, userId) {
   // crisis EXCLUSION set: session_ids from crisis flags (their content is stripped, §6.1)
   const crisisSessions = new Set((crisisRes.data || []).map((c) => c.session_id).filter(Boolean));
 
-  // days completed (a missed day is NEVER shamed — we only pass the set that WAS completed)
+  // days completed (a missed day is NEVER shamed - we only pass the set that WAS completed)
   const daysDone = (progRes.data || [])
     .filter((r) => r.morning_done_at || r.evening_done_at)
     .map((r) => r.day_number).sort((a, b) => a - b);
 
-  // check-in moods (mood — note per day); notes from crisis days are not session-tagged, so keep mood only, drop notes if it reads like distress is handled by crisis-log day match is imperfect — keep mood + short note
+  // check-in moods (mood - note per day); notes from crisis days are not session-tagged, so keep mood only, drop notes if it reads like distress is handled by crisis-log day match is imperfect - keep mood + short note
   const moods = (checkRes.data || []).map((c) => {
     const note = (c.notes || "").toString().trim().slice(0, 140);
     return { mood: (c.mood || "").toString().trim(), note };
   }).filter((x) => x.mood || x.note);
 
-  // memory: their own words (things_they_said) + summaries — EXCLUDE sensitive type + crisis sessions
+  // memory: their own words (things_they_said) + summaries - EXCLUDE sensitive type + crisis sessions
   const mem = (memRes.data || []).filter((r) =>
     r.memory_type !== "sensitive" && !(r.context_ref && crisisSessions.has(r.context_ref))
   );
@@ -178,11 +178,11 @@ async function assembleInputs(sb, userId) {
 
   // Build the notes block the model sees (ONLY this; EXCLUDED content already stripped).
   const lines = [];
-  lines.push("NAME: " + (firstName || "(none — open with \"Hey,\" and use no name)"));
+  lines.push("NAME: " + (firstName || "(none - open with \"Hey,\" and use no name)"));
   lines.push("DAYS OF THE RESET THEY COMPLETED: " + (daysDone.length ? daysDone.join(", ") : "(none recorded)") + " (never mention or imply a missed day)");
   if (moods.length) {
     lines.push("DAILY CHECK-INS (their mood, and a note if they left one):");
-    moods.forEach((m) => lines.push("  - " + [m.mood, m.note].filter(Boolean).join(" — ")));
+    moods.forEach((m) => lines.push("  - " + [m.mood, m.note].filter(Boolean).join(" - ")));
   }
   if (theirWords.length) {
     lines.push("THINGS THEY SAID, IN THEIR OWN WORDS (quote or closely paraphrase; use their exact relationship words):");
@@ -194,7 +194,7 @@ async function assembleInputs(sb, userId) {
   }
   const notes = lines.join("\n");
 
-  // blob of the user's own words — the ONLY place a gendered pronoun/label is permitted to echo from
+  // blob of the user's own words - the ONLY place a gendered pronoun/label is permitted to echo from
   const blobLower = (theirWords.join(" ") + " " + moods.map((m) => m.note).join(" ")).toLowerCase();
 
   return { notes, blobLower, hasData, firstName };
@@ -254,7 +254,7 @@ exports.handler = async (event) => {
   const sb = getSupabaseClient();
 
   try {
-    // ── ADMIN regenerate (Doc 3 override, audit-logged; §6.4/§10 — regenerate only, never edit) ──
+    // ── ADMIN regenerate (Doc 3 override, audit-logged; §6.4/§10 - regenerate only, never edit) ──
     if (action === "regenerate") {
       const op = process.env.OPERATOR_KEY;
       if (!op) return json(503, { error: "Not configured" });
@@ -297,7 +297,7 @@ exports.handler = async (event) => {
       return json(200, { ready: true, body: existing.body, ps: FIXED_PS, is_fallback: existing.is_fallback, saved: !!existing.saved_at });
     }
 
-    // Not generated yet — only exists at Day-7 completion, and not during an active crisis.
+    // Not generated yet - only exists at Day-7 completion, and not during an active crisis.
     if (!(await day7Complete(sb, userId))) return json(200, { ready: false });
     if (await activeCrisis(sb, userId)) return json(200, { ready: false, delayed: true }); // §6.1
 
@@ -308,7 +308,7 @@ exports.handler = async (event) => {
     await sb.from("week_one_letters").insert({
       user_id: userId, body: gen.body, is_fallback: gen.is_fallback, model: gen.is_fallback ? null : MODEL,
       input_hash, viewed_at: new Date().toISOString(),
-    }); // if a race lost, the row already exists — fall through to re-read
+    }); // if a race lost, the row already exists - fall through to re-read
     const { data: stored } = await sb.from("week_one_letters").select("body, is_fallback, saved_at").eq("user_id", userId).maybeSingle();
     emitEvent(sb, userId, "week_one_letter_viewed", {});
     const out = stored || { body: gen.body, is_fallback: gen.is_fallback, saved_at: null };

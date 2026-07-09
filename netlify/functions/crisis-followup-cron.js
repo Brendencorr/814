@@ -1,26 +1,26 @@
 /**
- * crisis-followup-cron.js — Netlify Scheduled Function
+ * crisis-followup-cron.js - Netlify Scheduled Function
  *
- * Trust architecture §2.4 — Crisis Follow-Up. After any Level 2 or Level 3
+ * Trust architecture §2.4 - Crisis Follow-Up. After any Level 2 or Level 3
  * interaction, Riley follows up at defined intervals: later that same day, the
  * next morning, 3 days later, 7 days later. Follow-up is supportive, NEVER
  * punitive, and never references the moment in a clinical or alarming tone.
  *
  * Stage gating (hours since the logged event):
- *   stage 1 — same day      ≥ 6h
- *   stage 2 — next morning   ≥ 20h
- *   stage 3 — 3 days         ≥ 72h
- *   stage 4 — 7 days         ≥ 168h   → then resolved
+ *   stage 1 - same day      ≥ 6h
+ *   stage 2 - next morning   ≥ 20h
+ *   stage 3 - 3 days         ≥ 72h
+ *   stage 4 - 7 days         ≥ 168h   → then resolved
  *
  * Consent (§2.4): a member can decline future check-ins for a moment
  * (crisis_log.declined_followup) or all of them (user_profiles.crisis_followup_opt_out).
- * Both are honored here — declining is respected, never read as giving up on them.
+ * Both are honored here - declining is respected, never read as giving up on them.
  *
- * Crisis data stays OUT of the analytics stream — no engagement_events writes
+ * Crisis data stays OUT of the analytics stream - no engagement_events writes
  * here. Only crisis_log is touched. (§1.4 restricted access.)
  *
  * Email via Resend (RESEND_API_KEY). If the key isn't set, the function logs who
- * WOULD be checked in on and exits cleanly — never crashes pre-provider.
+ * WOULD be checked in on and exits cleanly - never crashes pre-provider.
  *
  * Schedule (netlify.toml): a few times a day so the same-day + next-morning
  * stages land at humane hours. schedule = "0 1,15,21 * * *"
@@ -34,27 +34,27 @@ const APP_URL    = "https://riley.meetriley.us";
 
 const THRESHOLD_HOURS = { 1: 6, 2: 20, 3: 72, 4: 168 };
 
-// ── Gentle, non-clinical check-ins — one per stage. Never mentions the moment. ─
+// ── Gentle, non-clinical check-ins - one per stage. Never mentions the moment. ─
 function buildFollowup(stage, u) {
   const name = (u.preferred_name || u.full_name || "").split(" ")[0] || "friend";
   const M = {
     1: {
       subject: `Just checking in, ${name}`,
-      body: `It's Riley. I've been thinking about you since we talked. No agenda here — I just wanted to see how you're doing right now. I'm here whenever you want to talk, even if it's just to sit for a minute.`,
+      body: `It's Riley. I've been thinking about you since we talked. No agenda here - I just wanted to see how you're doing right now. I'm here whenever you want to talk, even if it's just to sit for a minute.`,
     },
     2: {
-      // Stage 2 is the "next day" restart. Copy stays time-neutral — this cron fires at
+      // Stage 2 is the "next day" restart. Copy stays time-neutral - this cron fires at
       // several UTC hours, so it must never assert "morning" when it's someone's evening.
       subject: `A new day, ${name}`,
       body: `It's Riley. A new day. I just wanted you to know I'm still here, and I'm really glad you are too. However today feels, you don't have to carry it on your own.`,
     },
     3: {
       subject: `Thinking of you, ${name}`,
-      body: `It's Riley. A few days have gone by and you've been on my mind. There's no pressure to reply — I only wanted you to know the door's open whenever you want it.`,
+      body: `It's Riley. A few days have gone by and you've been on my mind. There's no pressure to reply - I only wanted you to know the door's open whenever you want it.`,
     },
     4: {
       subject: `Still here, ${name}`,
-      body: `It's Riley. It's been about a week. I'm not going anywhere. Whenever you're ready — today, next week, whenever — I'm right here.`,
+      body: `It's Riley. It's been about a week. I'm not going anywhere. Whenever you're ready - today, next week, whenever - I'm right here.`,
     },
   };
   const m = M[stage] || M[1];
@@ -62,22 +62,22 @@ function buildFollowup(stage, u) {
   const text = [
     `Hi ${name},`, ``, m.body, ``,
     `Whenever you want, I'm right here:`, APP_URL, ``,
-    `— Riley`, ``,
-    `(If you'd rather I didn't check in like this, just reply and say so — I'll always respect that.)`,
+    `- Riley`, ``,
+    `(If you'd rather I didn't check in like this, just reply and say so - I'll always respect that.)`,
   ].join("\n");
 
-  // Unified house shell: Ink header + Riley. wordmark, serif body, signed "— Riley". Crisis emails
-  // are sensitive (§1.4) — a custom footer (reply-to-opt-out + 988), NOT the marketing unsubscribe.
+  // Unified house shell: Ink header + Riley. wordmark, serif body, signed "- Riley". Crisis emails
+  // are sensitive (§1.4) - a custom footer (reply-to-opt-out + 988), NOT the marketing unsubscribe.
   const bodyHtml =
     p("Hi " + esc(name) + ",") +
     p(esc(m.body)) +
     p("Whenever you want, I'm right here.") +
     btn("Talk with Riley →", APP_URL) +
-    '<p style="margin:16px 0 0;color:#6b655b">— Riley</p>';
+    '<p style="margin:16px 0 0;color:#6b655b">- Riley</p>';
   const crisisFooter =
     '<tr><td style="padding:22px 32px 28px;border-top:1px solid #e5ded0">' +
     '<div style="font-family:Helvetica,Arial,sans-serif;font-size:11px;line-height:1.6;color:#8a8578">' +
-    "If you'd rather I didn't check in like this, just reply and say so — I'll always respect that." +
+    "If you'd rather I didn't check in like this, just reply and say so - I'll always respect that." +
     "<br>In crisis? Call or text 988, anytime." +
     "</div></td></tr>";
   const html = shell(bodyHtml, { preview: String(m.body).slice(0, 90), footerHtml: crisisFooter });
@@ -132,7 +132,7 @@ exports.handler = async function (event) {
       try {
         const hours = (now - new Date(row.created_at).getTime()) / 3600000;
 
-        // Stop following up after ~15 days — close the loop quietly.
+        // Stop following up after ~15 days - close the loop quietly.
         if (hours > 360) {
           await supabase.from("crisis_log").update({ resolved: true }).eq("id", row.id);
           result.resolved++;
@@ -159,7 +159,7 @@ exports.handler = async function (event) {
         if (!prof || !prof.email) { result.skipped++; continue; }
 
         const email = buildFollowup(nextStage, prof);
-        if (!process.env.RESEND_API_KEY) { result.skipped++; continue; } // no provider — don't advance; retry when configured
+        if (!process.env.RESEND_API_KEY) { result.skipped++; continue; } // no provider - don't advance; retry when configured
         // Advance the stage FIRST, conditional on the stage we read. This makes the follow-up
         // idempotent: a crash/timeout after sending never re-sends the same stage, and two
         // overlapping runs can't both send. A rare missed send is far kinder than a duplicate
@@ -169,7 +169,7 @@ exports.handler = async function (event) {
           last_followup_at: new Date().toISOString(),
           resolved:         nextStage >= 4,
         }).eq("id", row.id).eq("followup_stage", row.followup_stage || 0).select("id");
-        if (!adv || !adv.length) continue; // another run already advanced this row — don't re-send
+        if (!adv || !adv.length) continue; // another run already advanced this row - don't re-send
         await sendEmail(prof.email, email);
         result.sent++;
       } catch (e) {

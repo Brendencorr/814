@@ -1,7 +1,7 @@
 /**
- * admin-comp.js — Doc 3 Phase 2: operator override tools. OPERATOR_KEY gated. Every action writes
+ * admin-comp.js - Doc 3 Phase 2: operator override tools. OPERATOR_KEY gated. Every action writes
  * an append-only `admin_audit` row (before/after where relevant). Leverages the entitlements
- * bridge — a comp is just a `subscriptions` row, so it unlocks the client app within one refresh
+ * bridge - a comp is just a `subscriptions` row, so it unlocks the client app within one refresh
  * (proves the Doc 0 §7 single-source design). NEVER touches conversation content.
  *
  * POST { action, user_id, ... } with header x-operator-key:
@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   const now = new Date().toISOString();
 
   try {
-    // ── Read-only member lookup (email or user id) — identity + entitlement state ONLY.
+    // ── Read-only member lookup (email or user id) - identity + entitlement state ONLY.
     // Never returns conversation content (Doc 3 privacy). Resolves the user_id the override
     // actions below need, and shows the operator exactly who they're about to modify.
     if (action === "lookup") {

@@ -1,12 +1,12 @@
 /**
- * riley-brain.js — The Decision Engine
+ * riley-brain.js - The Decision Engine
  *
  * The central rules + intelligence layer. Evaluates every signal about a user
  * and returns the assembled Home experience for today: tone, priority state,
  * which modules to show/suppress, a Riley message, and matched content.
  *
  * This is RULES-BASED, not LLM-based. No Claude call. That keeps it fast and
- * cheap at 5,000-user scale — a Home load shouldn't cost an API round-trip.
+ * cheap at 5,000-user scale - a Home load shouldn't cost an API round-trip.
  * (The brief's prose generation stays in daily-brief.js.)
  *
  * POST { user_id }
@@ -35,11 +35,11 @@ const MOOD_TO_STATE = { 1: "struggling", 2: "sad", 3: "okay", 4: "good", 5: "gre
 // ── Riley message templates by priority state ──
 const MESSAGES = {
   emotional_support: [
-    "I'm really glad you checked in today. This has been a heavier stretch — want to talk, or should we keep today simple?",
+    "I'm really glad you checked in today. This has been a heavier stretch - want to talk, or should we keep today simple?",
     "Thank you for showing up. You don't have to carry today alone. I'm here whenever you're ready.",
   ],
   grief_support: [
-    "I'm here. There's nothing to fix today — just be, and let me sit with you in it.",
+    "I'm here. There's nothing to fix today - just be, and let me sit with you in it.",
     "Grief doesn't follow a schedule. However today lands, you don't have to hold it by yourself.",
   ],
   restoration: [
@@ -47,12 +47,12 @@ const MESSAGES = {
     "Tired is information, not failure. Today we restore. Everything else can wait.",
   ],
   growth: [
-    "You've got real momentum right now. Let's use it — today's a good day to push a little.",
+    "You've got real momentum right now. Let's use it - today's a good day to push a little.",
     "You're in a strong stretch. Let's build on it while the energy's here.",
   ],
   steady: [
     "Another day, and you're here for it. Let's take the next right step together.",
-    "Steady is underrated. Show up as you are today — that's always enough.",
+    "Steady is underrated. Show up as you are today - that's always enough.",
   ],
   emotional_date: [
     "Today might carry some weight. However it feels, I'm here. No pressure to be anything but honest.",
@@ -80,7 +80,7 @@ exports.handler = async (event) => {
     const user_id = await getUserIdFromToken(supabase, body.token);
     if (!user_id) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
     const today    = new Date();
-    // Member-local 4am "app day" (was UTC — anniversaries fired a day off; the check-in/dormancy read drifted).
+    // Member-local 4am "app day" (was UTC - anniversaries fired a day off; the check-in/dormancy read drifted).
     const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
     let _tz = "America/Denver";
     try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", user_id).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
@@ -90,7 +90,7 @@ exports.handler = async (event) => {
     const fourteenAgo = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
     const sevenAgo    = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-    // ── Pull every signal in parallel — all non-fatal ──
+    // ── Pull every signal in parallel - all non-fatal ──
     const [
       profileR, checkinsR, soberR, programsR, memoryR,
       lifeEventsR, importantDatesR, emotionalCalR, modulesR, recentRecsR, lastVisitR, activeProductsR,
@@ -105,9 +105,9 @@ exports.handler = async (event) => {
       supabase.from("emotional_calendar").select("label,is_sensitive,riley_strategy").eq("event_month", month).eq("event_day", day),
       supabase.from("module_registry").select("*").eq("is_active", true),
       supabase.from("recommendation_history").select("content_id,reaction").eq("user_id", user_id).gte("recommended_on", fourteenAgo),
-      // Last app open BEFORE today — robust dormancy signal (today's open is already logged)
+      // Last app open BEFORE today - robust dormancy signal (today's open is already logged)
       supabase.from("engagement_events").select("created_at").eq("user_id", user_id).eq("event_type", "app_open").lt("created_at", todayISO).order("created_at", { ascending: false }).limit(1),
-      // Tier from the CANONICAL source (user_active_products) — NOT the dead subscription_tier column.
+      // Tier from the CANONICAL source (user_active_products) - NOT the dead subscription_tier column.
       supabase.from("user_active_products").select("product_key").eq("user_id", user_id),
     ]);
 
@@ -124,7 +124,7 @@ exports.handler = async (event) => {
     const recentRecs     = get(recentRecsR) || [];
     const lastVisitRow   = get(lastVisitR) || [];
 
-    // Days since their previous visit (not counting today) — the re-engagement signal
+    // Days since their previous visit (not counting today) - the re-engagement signal
     const lastVisitAt = lastVisitRow[0]?.created_at ? new Date(lastVisitRow[0].created_at) : null;
     const daysSinceVisit = lastVisitAt ? Math.floor((Date.now() - lastVisitAt) / 86400000) : null;
     const returningFromAway = daysSinceVisit !== null && daysSinceVisit >= 7;
@@ -173,9 +173,9 @@ exports.handler = async (event) => {
     // AND our state isn't in its suppress list AND the user is entitled.
     // Tier from the CANONICAL entitlements source (user_active_products), mirroring entitlements.js
     // currentTier(). The dead `subscription_tier` column was never written, so this used to treat EVERY
-    // paying member as free — hiding their paid modules AND upselling them a tier they already own.
+    // paying member as free - hiding their paid modules AND upselling them a tier they already own.
     const _owned = new Set(((activeProductsR.status === "fulfilled" && activeProductsR.value?.data) || []).map(r => r.product_key));
-    const tier = currentTier(_owned) || "guide"; // shared resolver (tier-utils.js) — single source
+    const tier = currentTier(_owned) || "guide"; // shared resolver (tier-utils.js) - single source
 
     const entitled = (m) => {
       if (!m.entitlement_required) return true;
@@ -184,7 +184,7 @@ exports.handler = async (event) => {
     };
     const stateForMatch = griefActive ? "grieving" : priorityState === "emotional_support" ? "struggling" : moodState;
 
-    // §4.2 — pull today's persisted state so risk_level reflects the State Engine.
+    // §4.2 - pull today's persisted state so risk_level reflects the State Engine.
     let stateCrisis = false, activeJourney = null;
     try {
       const { data: uds } = await supabase.from("user_daily_state")
@@ -195,7 +195,7 @@ exports.handler = async (event) => {
       || ["grief_support", "emotional_support"].includes(priorityState)
       || ["struggling", "grieving", "sad"].includes(stateForMatch);
 
-    // ── §4.2 Module Priority System — priority_score, risk_level dominant ──
+    // ── §4.2 Module Priority System - priority_score, risk_level dominant ──
     // In any risk state, supportive content outranks everything regardless of
     // journey relevance or freshness; upbeat/content is pushed down.
     const SUPPORT_MODULES = new Set(["recovery_support","grief_support","breathwork","journal_prompt","meditation","riley_message","community_prompt","mood_check","important_date"]);
@@ -228,7 +228,7 @@ exports.handler = async (event) => {
       .filter(m => (m.suppress_in_states || []).includes(stateForMatch))
       .map(m => m.module_key);
 
-    // ── §9 Entitlement states — surface gated modules as LOCKED PREVIEWS rather
+    // ── §9 Entitlement states - surface gated modules as LOCKED PREVIEWS rather
     // than hiding them, so a Guide member sees what's behind the next tier with
     // an upgrade prompt (instead of never knowing it exists). companion/coach
     // unlock adaptive features; everything gated points to the upgrade path.
@@ -279,16 +279,16 @@ exports.handler = async (event) => {
     }
     // Front-load the name occasionally, like a friend would
     if (firstName !== "there" && seed % 2 === 0) {
-      riley_message = `${firstName} — ${riley_message.charAt(0).toLowerCase()}${riley_message.slice(1)}`;
+      riley_message = `${firstName} - ${riley_message.charAt(0).toLowerCase()}${riley_message.slice(1)}`;
     }
 
-    // ── THE RETURN MOMENT — reference something specific, never generic ──
-    // Spec: every return login, Riley references something real. No LLM needed —
+    // ── THE RETURN MOMENT - reference something specific, never generic ──
+    // Spec: every return login, Riley references something real. No LLM needed -
     // pull from signals, memory, and the Human OS captured in onboarding.
     const returnRefs = [];
     if (latestMood && latestMood <= 2) returnRefs.push("You mentioned energy has been low. How are you feeling right now?");
     if (recentSleep && recentSleep < 6) returnRefs.push(`You logged ${recentSleep} hours of sleep. Let's build today around that.`);
-    if (recentSleep && recentSleep >= 8) returnRefs.push(`${recentSleep} hours of sleep — your body got what it needed. Let's use it.`);
+    if (recentSleep && recentSleep >= 8) returnRefs.push(`${recentSleep} hours of sleep - your body got what it needed. Let's use it.`);
     const dreamMem = memory.find(m => /dream/i.test(m.content));
     if (dreamMem) returnRefs.push(`Last time, you shared something you've never given up on. I've been thinking about that. Ready to talk about it?`);
     if (profile.one_year_vision) returnRefs.push(`You told me where you want to be a year from now. Every day like today is part of getting there.`);
@@ -297,11 +297,11 @@ exports.handler = async (event) => {
     // Surface a specific return reference as its own field (the dashboard can lead with it)
     let return_moment = returnRefs.length ? returnRefs[seed % returnRefs.length] : null;
 
-    // RE-ENGAGEMENT — they've been away. Lead with the brand's return language,
+    // RE-ENGAGEMENT - they've been away. Lead with the brand's return language,
     // never guilt ("we missed you"), and pair it with something specific they left behind.
     if (returningFromAway) {
       const back = daysSinceVisit >= 30
-        ? "Welcome back. It's been a little while — and that's completely okay. We saved your place."
+        ? "Welcome back. It's been a little while - and that's completely okay. We saved your place."
         : "Welcome back. We saved your place.";
       const specific = profile.one_year_vision
         ? " What you're working toward is still right here, waiting."

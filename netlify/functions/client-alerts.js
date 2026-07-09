@@ -1,5 +1,5 @@
 /**
- * client-alerts.js — member-facing notifications feed for the client dashboard.
+ * client-alerts.js - member-facing notifications feed for the client dashboard.
  *
  * Surfaces client_alerts (broadcast audience='all' + rows targeted to the user)
  * with per-user read state from client_alert_reads. Powers the dashboard bell.
@@ -22,7 +22,7 @@ const isUuid = (v) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f
 const LIMIT = 40;
 const TIER_RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
 
-// Member's tier rank — mirrors entitlements.js: everyone ≥ guide; the highest active
+// Member's tier rank - mirrors entitlements.js: everyone ≥ guide; the highest active
 // (non-expired) subscription plan wins. Used to gate tier-scoped library alerts.
 async function memberTierRank(db, userId) {
   let rank = TIER_RANK.guide;
@@ -100,7 +100,7 @@ exports.handler = async function (event) {
   try {
     const db = getSupabaseClient();
 
-    // SECURITY: identity from the verified Supabase token only — never a client-supplied user_id.
+    // SECURITY: identity from the verified Supabase token only - never a client-supplied user_id.
     const verify = async (tok) => { try { const { data } = await db.auth.getUser(tok); return data?.user?.id || null; } catch (_) { return null; } };
 
     if (event.httpMethod === "GET") {

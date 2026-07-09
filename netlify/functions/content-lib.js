@@ -1,5 +1,5 @@
 /**
- * content-lib.js — shared helpers for the 8:14 automated content engine.
+ * content-lib.js - shared helpers for the 8:14 automated content engine.
  * All content-engine tables live in public with a content_ prefix
  * (PostgREST only serves the public schema). Prompts load at runtime from content_prompt_versions
  * (never hardcoded) so prompts can be versioned without a redeploy.
@@ -8,7 +8,7 @@
 const { getSupabaseClient, requireOperator, requireScheduledOrOperator } = require("./supabase-client");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-6"; // repo standard — do not change
+const MODEL = "claude-sonnet-4-6"; // repo standard - do not change
 
 // Service-role Supabase client (public schema; bypasses RLS). content_* tables.
 function contentDb() {

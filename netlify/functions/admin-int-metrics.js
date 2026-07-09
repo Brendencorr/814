@@ -1,5 +1,5 @@
 /**
- * admin-int-metrics.js — Operator metrics for the interactive Riley-led programs (Phase 5).
+ * admin-int-metrics.js - Operator metrics for the interactive Riley-led programs (Phase 5).
  *
  * OPERATOR_KEY-gated. Aggregates the health of each program from the int_* tables:
  *   enrolled · Session-Zero completion · Session-4 retention · graduations · confirmation rate ·
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
 
   const sb = getSupabaseClient();
 
-  // Aggregation happens in Postgres (int_program_metrics, migration 068) — one GROUP BY instead of
+  // Aggregation happens in Postgres (int_program_metrics, migration 068) - one GROUP BY instead of
   // pulling every int_* row into the Lambda. Products query supplies names/status + zero-fills programs
   // with no enrollments yet. (If 068 isn't applied, the rpc errors → the metrics panel just hides.)
   const [prodsR, mR] = await Promise.all([

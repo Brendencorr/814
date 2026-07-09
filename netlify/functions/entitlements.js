@@ -1,9 +1,9 @@
 /**
- * entitlements.js — Server-side source of truth for what a user can access.
+ * entitlements.js - Server-side source of truth for what a user can access.
  *
- * v4 — Riley Guide (free, persistent) / Companion ($19) / Coach ($34) /
+ * v4 - Riley Guide (free, persistent) / Companion ($19) / Coach ($34) /
  * Mentor (future, draft) + à la carte ($8.14, content-only). No domain-locking,
- * ever — every active tier unlocks every domain; tiers differ in platform
+ * ever - every active tier unlocks every domain; tiers differ in platform
  * depth, and Guide's depth is CAPPED (has access, limited quantity) rather
  * than absent. See supabase/migrations/033_pricing_v4.sql + the
  * Program&Pricing updateV4 build package for the full spec.
@@ -24,7 +24,7 @@
  *
  * Reads the user_active_products view (implies_all_programs already expanded,
  * reset_free added to everyone with any row), feature_map, and usage_limits/
- * usage_counters for any 'capped' feature. Uses SUPABASE_SERVICE_KEY — server
+ * usage_counters for any 'capped' feature. Uses SUPABASE_SERVICE_KEY - server
  * side only.
  */
 
@@ -46,7 +46,7 @@ exports.handler = async function (event) {
   try {
     const sb = getSupabaseClient();
 
-    // SECURITY: identity from the VERIFIED token ONLY — never an unauthenticated body/query user_id
+    // SECURITY: identity from the VERIFIED token ONLY - never an unauthenticated body/query user_id
     // (this used to return ANY user's plan/tier/features to an unauthenticated caller who passed a UUID).
     // The token may arrive in the JSON body (token) or an Authorization: Bearer header. preview_tier is
     // still read from the body but is honored only when the VERIFIED user is an admin (below).
@@ -68,18 +68,18 @@ exports.handler = async function (event) {
       .eq('user_id', userId);
     if (prodErr) throw prodErr;
     const owned = new Set((prodRows || []).map(r => r.product_key));
-    // Defensive default: Riley Guide is meant to be automatic and universal —
+    // Defensive default: Riley Guide is meant to be automatic and universal -
     // "everyone gets a capped version of everything, forever." The app has more
     // than one place a profile can first get created (auth-handler.js's
     // get_session, onboarding.html's own upsert, etc.); rather than chase every
     // signup path, any known user_id is treated as at least Guide-tier here,
     // with or without an explicit entitlements row. (An explicit row is still
-    // written where we can — see auth-handler.js get_session — for clean audit
+    // written where we can - see auth-handler.js get_session - for clean audit
     // history; this is the guarantee, not a substitute for that.)
     owned.add('reset_free');
 
-    // Bridge (Doc 2 §5 / Doc 0 §7): an active new-system subscription — a comp, a Companion
-    // Weekend gift, or a real paid plan — grants that plan's access in the LEGACY feature gating
+    // Bridge (Doc 2 §5 / Doc 0 §7): an active new-system subscription - a comp, a Companion
+    // Weekend gift, or a real paid plan - grants that plan's access in the LEGACY feature gating
     // too, by adding its product to `owned`. So `features` (sidebar/wall) and `entitlements`
     // (plan_entitlements) agree, and a grant actually unlocks the app + reverts cleanly at expiry.
     // Inert until any subscription rows exist; fail-open (never blocks).
@@ -133,10 +133,10 @@ exports.handler = async function (event) {
         }
         (allProds || []).forEach(p => owned.add(p.product_key));
       }
-    } catch (_) { /* settings table optional — fall back to real entitlements */ }
+    } catch (_) { /* settings table optional - fall back to real entitlements */ }
 
     // 2. Feature map + usage limits config. unentitled_state / usage_limits
-    // need migration 033 — degrade to pre-v4 columns (gate_mode only, no caps)
+    // need migration 033 - degrade to pre-v4 columns (gate_mode only, no caps)
     // rather than hard-failing the whole endpoint if it hasn't run yet.
     let featRows = [], limitRows = [];
     try {
@@ -175,7 +175,7 @@ exports.handler = async function (event) {
       if (cappedForUser) cappedFeatureKeys.push(f.feature_key);
     }
 
-    // 4. Live remaining-count for every currently-capped feature — via the SAME
+    // 4. Live remaining-count for every currently-capped feature - via the SAME
     // shared helper riley-chat.js uses to enforce the cap, so display and
     // enforcement can never disagree on what "this week" means.
     const ownedList = [...owned];
@@ -185,7 +185,7 @@ exports.handler = async function (event) {
     }));
 
     // 5. NEW (Doc 0 §7): resolve the user's PLAN + its entitlements from plan_entitlements.
-    //    Backward-compatible — {} until migration 042 seeds the tables; the existing `features`
+    //    Backward-compatible - {} until migration 042 seeds the tables; the existing `features`
     //    gating is untouched. New surfaces (chat limit, DB-driven pricing) read these keys.
     let plan = currentTier(owned) || 'guide';
     let planEntitlements = {};

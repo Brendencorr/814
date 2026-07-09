@@ -1,11 +1,11 @@
 /**
- * email-send.js — the SINGLE choke point for every client email.
+ * email-send.js - the SINGLE choke point for every client email.
  *
  * sendClientEmail() sends via Resend AND writes one row to email_log, so all
- * correspondence is captured by construction — no sender can forget to log. Logging is
+ * correspondence is captured by construction - no sender can forget to log. Logging is
  * best-effort and NEVER blocks or breaks a send (a logging failure is swallowed).
  *
- * Metadata only is logged (to, subject, kind, status, provider id / error) — never the
+ * Metadata only is logged (to, subject, kind, status, provider id / error) - never the
  * email body, matching the operator trust boundary.
  *
  * @param {{to:string, subject?:string, html?:string, text?:string, kind?:string,

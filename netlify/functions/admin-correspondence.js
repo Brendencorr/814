@@ -1,13 +1,13 @@
 /**
- * admin-correspondence.js — operator view of every client email we've sent (email_log).
+ * admin-correspondence.js - operator view of every client email we've sent (email_log).
  *
  * OPERATOR_KEY-gated GET. Returns metadata only (recipient, subject, kind, status, provider
- * id, error, time) — never email bodies. Crisis follow-ups are intentionally NOT in email_log
+ * id, error, time) - never email bodies. Crisis follow-ups are intentionally NOT in email_log
  * (crisis stays out of any operator-visible stream, §1.4), so they never appear here.
  *
- * GET /admin-correspondence?user_id=<uuid>   — this member's email history
- *     /admin-correspondence?email=<addr>     — by recipient (covers prospects with no user_id)
- *     /admin-correspondence                   — recent across everyone
+ * GET /admin-correspondence?user_id=<uuid>   - this member's email history
+ *     /admin-correspondence?email=<addr>     - by recipient (covers prospects with no user_id)
+ *     /admin-correspondence                   - recent across everyone
  *   header x-operator-key
  * → { items: [ { id, user_id, to_email, kind, subject, status, provider_id, error, created_at } ] }
  * Model: n/a

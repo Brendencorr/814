@@ -1,5 +1,5 @@
 /**
- * daily-brief.js — Netlify Serverless Function
+ * daily-brief.js - Netlify Serverless Function
  *
  * Generates a personalized 60-second morning brief using Claude.
  * Reads user's check-in history, sobriety streak, habits, goals, and programs.
@@ -9,7 +9,7 @@
  * Response: { brief: {...}, cached: bool }
  *
  * Model: claude-sonnet-4-6
- * max_tokens: 400 — brief is short by design
+ * max_tokens: 400 - brief is short by design
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -31,7 +31,7 @@ exports.handler = async (event) => {
     // SECURITY: identity from the verified token, never the client-supplied user_id.
     const user_id = await getUserIdFromToken(supabase, body.token);
     if (!user_id) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
-    // Member-local 4am "app day" (was UTC — the brief key + crisis-state read drifted a day for evening users).
+    // Member-local 4am "app day" (was UTC - the brief key + crisis-state read drifted a day for evening users).
     const appDay = (tz) => { const s = new Date(Date.now() - 4 * 3600 * 1000); try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz || "America/Denver" }).format(s); } catch (e) { return s.toISOString().slice(0, 10); } };
     let _tz = "America/Denver";
     try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", user_id).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
@@ -39,9 +39,9 @@ exports.handler = async (event) => {
     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     const sevenAgo  = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-    // ── §5.1 CRISIS INTERRUPT — Priority Zero ──────────────────────────────
+    // ── §5.1 CRISIS INTERRUPT - Priority Zero ──────────────────────────────
     // Checked before the cache and before any content. If today's state is
-    // crisis-flagged, the brief reflects the Crisis Support Workflow — never
+    // crisis-flagged, the brief reflects the Crisis Support Workflow - never
     // motivational content, never a "challenge." Deterministic, no LLM. Not
     // cached, so it clears the moment the flag resolves.
     try {
@@ -53,13 +53,13 @@ exports.handler = async (event) => {
         const crisisBrief = {
           user_id, brief_date: today,
           greeting: nm ? `Hi ${nm}. I'm really glad you're here.` : "I'm really glad you're here.",
-          mood_note: "Today, the most important thing isn't getting things done — it's that you're safe, and that you're not alone.",
+          mood_note: "Today, the most important thing isn't getting things done - it's that you're safe, and that you're not alone.",
           focus: "Staying safe, one moment at a time.",
           challenge: "", reflection_prompt: "", music_mood: "",
-          action: "If things feel heavy, call or text 988 — the Suicide & Crisis Lifeline, any time. I'm here too.",
+          action: "If things feel heavy, call or text 988 - the Suicide & Crisis Lifeline, any time. I'm here too.",
           crisis: true,
           crisis_resources: [
-            "Call or text 988 — the Suicide & Crisis Lifeline, any time",
+            "Call or text 988 - the Suicide & Crisis Lifeline, any time",
             "Call 911 if you may be in immediate danger",
             "Reach out to someone you trust, right now",
           ],
@@ -67,7 +67,7 @@ exports.handler = async (event) => {
         };
         return { statusCode: 200, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ brief: crisisBrief, cached: false, crisis: true }) };
       }
-    } catch (e) { /* non-fatal — fall through to the normal brief */ }
+    } catch (e) { /* non-fatal - fall through to the normal brief */ }
 
     // Return cached brief if it exists and has content
     const { data: existing } = await supabase
@@ -84,7 +84,7 @@ exports.handler = async (event) => {
     const briefMonth = parseInt(today.slice(5, 7), 10);   // member-local month/day → correct anniversary matching
     const briefDay   = parseInt(today.slice(8, 10), 10);
 
-    // Gather user context in parallel — all non-fatal
+    // Gather user context in parallel - all non-fatal
     const [profileRes, checkinRes, soberRes, habitsRes, habitsCompRes, goalsRes, programsRes, lifeEventsRes, importantRes, calRes, memoryRes] = await Promise.allSettled([
       supabase.from("user_profiles").select("full_name,preferred_name,why_here,one_year_vision,human_os,primary_goals,communication_style,preferred_encouragement").eq("id", user_id).single(),
       supabase.from("daily_checkins").select("checkin_date,mood,sleep_hours,notes,water_oz").eq("user_id", user_id)
@@ -128,7 +128,7 @@ exports.handler = async (event) => {
     // Season detection
     const mo = new Date().getMonth();
     const season = mo>=2&&mo<=4?'Spring':mo>=5&&mo<=7?'Summer':mo>=8&&mo<=10?'Fall':'Winter';
-    const seasonTheme = {Spring:'Build — new starts, momentum, growth.',Summer:'Explore — energy, adventure, expand.',Fall:'Reflect — slow down, harvest, deepen.',Winter:'Restore — rest, quiet, renew.'};
+    const seasonTheme = {Spring:'Build - new starts, momentum, growth.',Summer:'Explore - energy, adventure, expand.',Fall:'Reflect - slow down, harvest, deepen.',Winter:'Restore - rest, quiet, renew.'};
 
     // Mood pattern check
     const recentLowMoods = checkins.filter(c => c.mood && c.mood <= 2).length;
@@ -137,19 +137,19 @@ exports.handler = async (event) => {
                     : checkins.filter(c => c.mood && c.mood >= 4).length >= 4 ? 'strong (many good days recently)'
                     : 'mixed';
 
-    // Onboarding context — who this person told us they are (Phase 1)
+    // Onboarding context - who this person told us they are (Phase 1)
     const hos = profile?.human_os || {};
     const ctx = [
       `Name: ${firstName}`,
       profile?.why_here        ? `Why they came to 8:14: ${profile.why_here}` : "",
-      profile?.one_year_vision ? `Their one-year vision (use this — it's what they're reaching for): ${profile.one_year_vision}` : "",
+      profile?.one_year_vision ? `Their one-year vision (use this - it's what they're reaching for): ${profile.one_year_vision}` : "",
       (profile?.primary_goals && profile.primary_goals.length) ? `Focus areas they chose: ${profile.primary_goals.join(", ")}` : "",
       hos.energy  ? `What gives them energy: ${hos.energy}` : "",
       hos.drains  ? `What drains them: ${hos.drains}` : "",
       hos.proud   ? `What they're most proud of: ${hos.proud}` : "",
       hos.change  ? `What they want to change: ${hos.change}` : "",
       hos.dream   ? `A dream they've never given up on: ${hos.dream}` : "",
-      profile?.preferred_encouragement ? `How they like to be encouraged: ${profile.preferred_encouragement} — match this tone` : "",
+      profile?.preferred_encouragement ? `How they like to be encouraged: ${profile.preferred_encouragement} - match this tone` : "",
       memory.length ? `What Riley remembers about them: ${memory.slice(0, 8).map(m => m.content).join(" | ")}` : "",
       soberDays !== null ? `Sobriety: ${soberDays} days sober` : "",
       prevCheckin?.mood        ? `Recent mood: ${moodLabels[prevCheckin.mood]}` : "",
@@ -157,12 +157,12 @@ exports.handler = async (event) => {
       avgSleep                 ? `7-day sleep average: ${avgSleep}h` : "",
       prevCheckin?.notes       ? `What they wrote: "${prevCheckin.notes.slice(0, 120)}"` : "",
       habitTotal               ? `Habits today: ${habitsCompletedToday}/${habitTotal} done` : "",
-      goals.length             ? `Goals: ${goals.slice(0, 3).map(g => `${g.title} — ${g.current_value}/${g.target_value} ${g.unit || ""}`).join("; ")}` : "",
+      goals.length             ? `Goals: ${goals.slice(0, 3).map(g => `${g.title} - ${g.current_value}/${g.target_value} ${g.unit || ""}`).join("; ")}` : "",
       programs.length          ? `Active programs: ${programs.map(p => `${p.programs?.title || "Program"} (day ${p.days_completed})`).join(", ")}` : "",
-      `Season: ${season} — theme: ${seasonTheme[season]}`,
+      `Season: ${season} - theme: ${seasonTheme[season]}`,
       `Recent mood trend: ${moodTrend}`,
-      lifeEvents.length ? `ACTIVE LIFE EVENT — hold with care: ${lifeEvents.map(e => `${e.event_type}${e.riley_strategy ? " (" + e.riley_strategy + ")" : ""}`).join("; ")}` : "",
-      todaysDates.length ? `TODAY CARRIES WEIGHT: ${todaysDates.map(d => `${d.label}${d.riley_strategy ? " — " + d.riley_strategy : ""}`).join("; ")}. Soften celebratory language. Lead with presence.` : "",
+      lifeEvents.length ? `ACTIVE LIFE EVENT - hold with care: ${lifeEvents.map(e => `${e.event_type}${e.riley_strategy ? " (" + e.riley_strategy + ")" : ""}`).join("; ")}` : "",
+      todaysDates.length ? `TODAY CARRIES WEIGHT: ${todaysDates.map(d => `${d.label}${d.riley_strategy ? " - " + d.riley_strategy : ""}`).join("; ")}. Soften celebratory language. Lead with presence.` : "",
     ].filter(Boolean).join("\n");
 
     // Generate brief with Claude
@@ -170,21 +170,21 @@ exports.handler = async (event) => {
 
 The entire brief must be readable in under 45 seconds. Every field: short, warm, honest, specific.
 Never preachy. Never corporate. Never generic. No motivational poster energy.
-Always hopeful. Reference their actual data — sobriety days, sleep, mood, habits, programs.
+Always hopeful. Reference their actual data - sobriety days, sleep, mood, habits, programs.
 Numbers support. Stories inspire.
 
-Return ONLY valid JSON with exactly these 11 keys — no other text:
+Return ONLY valid JSON with exactly these 11 keys - no other text:
 {
-  "riley_note": "Riley's specific observation from their data. Start with 'I noticed...' or 'You've...' — something concrete. 1 sentence.",
+  "riley_note": "Riley's specific observation from their data. Start with 'I noticed...' or 'You've...' - something concrete. 1 sentence.",
   "mood_note": "One sentence acknowledging where they are right now. Warm. Real. Informed by their mood trend.",
   "encouragement": "One sentence of genuine encouragement tied to something specific. Not generic. Not preachy.",
-  "focus": "Today's single focus area — shaped by their season and mood trend. One short phrase.",
-  "quote": "One short quote under 15 words — true for their journey right now. No attribution needed.",
-  "challenge": "One small challenge. Specific. Doable in the next few hours. Calibrated to their mood — gentle if struggling, ambitious if thriving. Under 15 words.",
+  "focus": "Today's single focus area - shaped by their season and mood trend. One short phrase.",
+  "quote": "One short quote under 15 words - true for their journey right now. No attribution needed.",
+  "challenge": "One small challenge. Specific. Doable in the next few hours. Calibrated to their mood - gentle if struggling, ambitious if thriving. Under 15 words.",
   "reflection_prompt": "One question to sit with. Invites quiet thought. Never pressuring. Informed by recent mood and season. Under 15 words.",
   "nutrition_tip": "One practical nutrition note for recovery. 1 short sentence. Relevant to time of day and season.",
-  "action": "The single most important action today. Concrete. Calibrated to their mood — if struggling, make it tiny. Under 15 words.",
-  "book_rec": "One book title and a single-sentence reason it fits them right now. Format: 'Title — reason.'",
+  "action": "The single most important action today. Concrete. Calibrated to their mood - if struggling, make it tiny. Under 15 words.",
+  "book_rec": "One book title and a single-sentence reason it fits them right now. Format: 'Title - reason.'",
   "music_mood": "One music mood or playlist type for today. 4 words max. (e.g. 'Gentle acoustic for quiet mornings', 'Upbeat for building momentum')"
 }`;
 
@@ -225,7 +225,7 @@ Return ONLY valid JSON with exactly these 11 keys — no other text:
         reflection_prompt: "What would make today feel worth it?",
         nutrition_tip:     "Eat something with protein in the first hour of your morning.",
         action:            "Drink a glass of water and take three slow breaths.",
-        book_rec:          "The Body Keeps the Score — a clear-eyed look at how recovery lives in the body.",
+        book_rec:          "The Body Keeps the Score - a clear-eyed look at how recovery lives in the body.",
         music_mood:        "Quiet instrumental for a focused morning",
       };
     }

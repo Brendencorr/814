@@ -1,5 +1,5 @@
 /**
- * content-templates.js — manage the design template library from the dashboard.
+ * content-templates.js - manage the design template library from the dashboard.
  * GET  → list all template families (slug, family, engine, engine_template_id, active)
  * POST {slug, engine_template_id}      → set a family's Canva/engine template id
  * POST {slug, active}                  → toggle a family on/off

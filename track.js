@@ -1,5 +1,5 @@
 /*
- * track.js — 8:14 client engagement tracker (drop-in, zero per-page setup).
+ * track.js - 8:14 client engagement tracker (drop-in, zero per-page setup).
  * Include on every authenticated client page:  <script src="/track.js"></script>
  *
  * Auto-captures, batched, fully non-blocking:
@@ -7,7 +7,7 @@
  *   - page_view   on load (page derived from the URL path)
  *   - click       on any element (records nearest label / [data-track] / nav text)
  *   - read        dwell time on the page when it's hidden/closed
- * User is attributed from the Supabase session in localStorage — no page changes
+ * User is attributed from the Supabase session in localStorage - no page changes
  * needed. Falls back to an anonymous persistent visitor id.
  */
 (function () {
@@ -65,7 +65,7 @@
   // window.trackEvent(name, meta): emit a named product event through the same
   // batched, token-verified pipe. Sent as event_type "feature_use" (server
   // whitelist) with the milestone name in `target`.
-  // HARD RULE: pass ONLY booleans / categories / counts in meta — never free-text
+  // HARD RULE: pass ONLY booleans / categories / counts in meta - never free-text
   // content or sensitive tag values (no notes, no reason/influence labels).
   window.trackEvent = function (name, meta) {
     try { enqueue("feature_use", String(name || "").slice(0, 60), (meta && typeof meta === "object") ? meta : {}); } catch (e) {}

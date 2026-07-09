@@ -1,10 +1,10 @@
 /**
- * library.js — the member-facing Content Library surface (curated + search).
+ * library.js - the member-facing Content Library surface (curated + search).
  *
  * Service-key function (mirrors client-alerts.js / entitlements.js): resolves the
  * member's tier, personas, and onboarding focus from their VERIFIED token, fetches
  * the live (approved + active) library, and runs the PURE match-content rules
- * server-side — so tier/persona/tone logic never reaches the client and can't be forged.
+ * server-side - so tier/persona/tone logic never reaches the client and can't be forged.
  *
  * Principle: curated = what Riley PUSHES (full guardrails incl. tone block);
  * search = what the member PULLS (tone lifted, TIER still enforced).

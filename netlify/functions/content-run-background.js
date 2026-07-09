@@ -1,5 +1,5 @@
 /**
- * content-run-background.js — Netlify Background Function (no timeout)
+ * content-run-background.js - Netlify Background Function (no timeout)
  *
  * The daily content pipeline for Meet Riley, adapted from the n8n spec
  * to run natively on Netlify + Supabase (everything lives in the admin dash).
@@ -16,9 +16,9 @@
  *   - content-daily-cron.js (scheduled 6am MT) which calls runDaily()
  *
  * HARD RULES (from BUILD_SPEC):
- *   - Every queue insert carries a Sentinel verdict — reposts included.
+ *   - Every queue insert carries a Sentinel verdict - reposts included.
  *   - Nothing publishes without a human approval click (that's a separate function).
- *   - Reposts are native shares/quotes with attribution — never re-uploaded media.
+ *   - Reposts are native shares/quotes with attribution - never re-uploaded media.
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS, requireOperator } = require("./content-lib");
@@ -56,7 +56,7 @@ async function runDaily(trigger = "cron") {
     const scoutPrompt = await loadPrompt("scout");
     const scoutRaw = await callClaude({
       system: scoutPrompt,
-      user: `Today is ${today}. Search the live web for what is trending and underserved right now across grief/loss, addiction & habit change, burnout & overwhelm, and movement/body-first wellbeing — plus which content formats are trending this week. Return your opportunities JSON.`,
+      user: `Today is ${today}. Search the live web for what is trending and underserved right now across grief/loss, addiction & habit change, burnout & overwhelm, and movement/body-first wellbeing - plus which content formats are trending this week. Return your opportunities JSON.`,
       maxTokens: 4000,
       webSearch: true,
     });
@@ -156,7 +156,7 @@ async function runDaily(trigger = "cron") {
           kind: "repost",
           candidate_id: c.id,
           platforms: [c.source_platform === "web_search" ? "instagram" : c.source_platform].filter(Boolean),
-          preview_caption: `Repost: ${c.topic}\nvia ${c.original_creator || "creator"} — ${c.why_it_matters || ""}`,
+          preview_caption: `Repost: ${c.topic}\nvia ${c.original_creator || "creator"} - ${c.why_it_matters || ""}`,
           original_url: c.original_url,
           original_creator: c.original_creator,
           safety_verdict: verdict.verdict,
@@ -205,7 +205,7 @@ async function runDaily(trigger = "cron") {
 
       // Phase 2: attempt automated design (gated + non-fatal). If no Canva token
       // or the template has no engine_template_id yet, this returns designed:false
-      // and the brief stays a text item for review — never fakes a design.
+      // and the brief stays a text item for review - never fakes a design.
       let assetIds = [];
       try {
         const design = await renderBrief(briefRow.id);
@@ -240,7 +240,7 @@ async function runDaily(trigger = "cron") {
       finished_at: new Date().toISOString(),
     });
 
-    await notify(`Content run complete (${trigger}) — ${stats.candidates} candidates, ${stats.fast_tracked} reposts fast-tracked, ${stats.briefs} briefs. Review at admin.meetriley.us → Social Media → Review.`);
+    await notify(`Content run complete (${trigger}) - ${stats.candidates} candidates, ${stats.fast_tracked} reposts fast-tracked, ${stats.briefs} briefs. Review at admin.meetriley.us → Social Media → Review.`);
     return { ok: true, stats };
 
   } catch (err) {
@@ -251,7 +251,7 @@ async function runDaily(trigger = "cron") {
   }
 }
 
-// Sentinel gate — always returns a verdict object {verdict, flags}
+// Sentinel gate - always returns a verdict object {verdict, flags}
 async function runSentinel(sentinelPrompt, payload) {
   try {
     const raw = await callClaude({

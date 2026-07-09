@@ -3,9 +3,9 @@
  * Handles user authentication and Riley conversation persistence.
  *
  * Actions:
- *   get_session    — verify JWT, return user profile + recent conversation
- *   save_message   — persist a single message to riley_conversations
- *   update_profile — update fields in user_profiles
+ *   get_session    - verify JWT, return user profile + recent conversation
+ *   save_message   - persist a single message to riley_conversations
+ *   update_profile - update fields in user_profiles
  *
  * Uses SERVICE_KEY to bypass RLS after verifying the user's JWT.
  */
@@ -55,8 +55,8 @@ async function getSession(supabase, body) {
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     };
     await supabase.from("user_profiles").upsert(newProfile);
-    emitEvent(supabase, user.id, "signup_guide", {});   // Doc 0 §9 — a new Guide account
-    // v4 pricing — grantGuideOnSignup(): every new account gets Riley Guide
+    emitEvent(supabase, user.id, "signup_guide", {});   // Doc 0 §9 - a new Guide account
+    // v4 pricing - grantGuideOnSignup(): every new account gets Riley Guide
     // immediately, no purchase needed. (entitlements.js also defends against
     // any signup path that doesn't reach this function, so this is belt-and-
     // suspenders for a clean audit row, not the only guarantee.)
@@ -65,7 +65,7 @@ async function getSession(supabase, body) {
         .upsert({ user_id: user.id, product_key: "reset_free", status: "active", source: "implied" }, { onConflict: "user_id,product_key" });
     } catch (e) { console.warn("grantGuideOnSignup failed (non-fatal):", e.message); }
     // Operator alert: web-push every registered admin device that a new member joined.
-    // Awaited (so the Lambda stays alive to actually send) but fully fault-tolerant —
+    // Awaited (so the Lambda stays alive to actually send) but fully fault-tolerant -
     // sendToAllOperators never throws, so this can't delay or break signup. Identity
     // metadata only (name + email); never conversation content.
     try {
@@ -84,7 +84,7 @@ async function getSession(supabase, body) {
 
   // Load recent conversation. Also return the session id + last-activity time so
   // the chat can smart-resume (auto-continue < 24h, else ask). This is the reliable
-  // path — the browser's own RLS read was coming back empty inside the popup iframe.
+  // path - the browser's own RLS read was coming back empty inside the popup iframe.
   let messages = [];
   let lastSessionId = session_id || null;
   let lastAt = null;
@@ -128,7 +128,7 @@ async function getSession(supabase, body) {
 async function saveMessage(supabase, body) {
   const { token, user_id, session_id, role, content } = body;
 
-  // SECURITY: identity MUST match a verified JWT — an untokened call could inject forged messages into
+  // SECURITY: identity MUST match a verified JWT - an untokened call could inject forged messages into
   // any user's chat history (Riley reads them back as context). Token required (like the other actions).
   if (!token) return json(401, { error: "Unauthorized: token required" });
   const user = await verifyToken(supabase, token);
@@ -191,7 +191,7 @@ async function updateProfile(supabase, body) {
 }
 
 // Tables holding a member's personal / journal data, keyed by user_id.
-// crisis_log is intentionally EXCLUDED — it's restricted safety data handled
+// crisis_log is intentionally EXCLUDED - it's restricted safety data handled
 // only inside the safety workflow (Trust architecture §1.4), not self-service.
 const USER_DATA_TABLES = [
   "daily_checkins", "riley_conversations", "riley_memory", "user_goals",
@@ -209,7 +209,7 @@ const PROFILE_CLEAR = {
   onboarding_completed: false, onboarding_step: 0, phase2_progress: null,
 };
 
-// ── Action: export_data — give the member everything stored about them ────────
+// ── Action: export_data - give the member everything stored about them ────────
 async function exportData(supabase, body) {
   const user = await verifyToken(supabase, body.token);
   const out = { exported_at: new Date().toISOString(), account: { id: user.id, email: user.email } };
@@ -229,7 +229,7 @@ async function exportData(supabase, body) {
   return json(200, out);
 }
 
-// ── Action: delete_data — wipe the member's personal/journal data ─────────────
+// ── Action: delete_data - wipe the member's personal/journal data ─────────────
 async function deleteData(supabase, body) {
   const user = await verifyToken(supabase, body.token);
   if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete data" });
@@ -258,12 +258,12 @@ async function deleteData(supabase, body) {
 }
 
 // Tables wiped on a FULL account deletion (self-service, irreversible). Superset of
-// USER_DATA_TABLES — everything keyed to the member's user_id, incl. billing
+// USER_DATA_TABLES - everything keyed to the member's user_id, incl. billing
 // (subscriptions/purchases/entitlements/credits) so any subscription is terminated.
 //
 // DELIBERATELY RETAINED: crisis_log. Per clinical/therapeutic norms and GDPR's
 // vital-interests / safety carve-out to the right-to-erasure, crisis-safety records
-// are kept as a DE-IDENTIFIED safety record — once the auth user + user_profiles
+// are kept as a DE-IDENTIFIED safety record - once the auth user + user_profiles
 // (name/email) are gone, and with no cascade FKs, the remaining rows are no longer
 // linked to an identifiable person. This is disclosed to the member at delete time
 // (bounded ~12-month retention; a purge cron can enforce the window later).
@@ -282,7 +282,7 @@ const ACCOUNT_DELETE_TABLES = [
   "wellness_weekly",
 ];
 
-// ── Action: delete_account — permanently close the account + erase all data ────
+// ── Action: delete_account - permanently close the account + erase all data ────
 // Wipes every member-owned row, the profile, and the auth login itself (the member
 // cannot sign back in). crisis_log is retained, de-identified (see note above).
 async function deleteAccount(supabase, body) {
@@ -309,11 +309,11 @@ async function deleteAccount(supabase, body) {
   }
   if (failed.length) console.error("delete_account residual table failures:", failed.join(", "));
 
-  // Delete the profile row entirely — this de-identifies any retained crisis_log.
+  // Delete the profile row entirely - this de-identifies any retained crisis_log.
   try { await supabase.from("user_profiles").delete().eq("id", user.id); }
   catch (e) { console.error("delete_account profile delete failed:", e.message); failed.push("user_profiles"); }
 
-  // Remove the auth login — the account is now truly closed.
+  // Remove the auth login - the account is now truly closed.
   let authDeleted = false;
   try {
     const { error } = await supabase.auth.admin.deleteUser(user.id);

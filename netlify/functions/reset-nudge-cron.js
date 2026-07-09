@@ -1,16 +1,16 @@
 /**
- * reset-nudge-cron.js — sends the AM (~8:14am) / PM (~8pm) 8:14 Reset nudges via web push.
+ * reset-nudge-cron.js - sends the AM (~8:14am) / PM (~8pm) 8:14 Reset nudges via web push.
  *
  * Scheduled every 15 min (see netlify.toml). For each active push consent it checks the
  * user's LOCAL time + once-per-local-day dedup, then sends. Consent auto-expires at
- * ends_at (7 program days + 3 grace). Payloads are generic + warm — never crisis-sensitive
+ * ends_at (7 program days + 3 grace). Payloads are generic + warm - never crisis-sensitive
  * on a lock screen (per the Reset's crisis architecture).
  * Model: n/a
  */
 const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig } = require("./supabase-client");
 const webpush = require("web-push");
 
-const AM_H = 8, AM_M = 14;   // 8:14am — the send time IS the brand
+const AM_H = 8, AM_M = 14;   // 8:14am - the send time IS the brand
 const PM_H = 20, PM_M = 0;   // 8:00pm
 const WINDOW_MIN = 20;       // fire within 20 min after the target (cron runs every 15)
 

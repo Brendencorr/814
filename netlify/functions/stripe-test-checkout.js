@@ -1,11 +1,11 @@
 /**
- * stripe-test-checkout.js — OPERATOR-gated. Mints a real LIVE Checkout Session for a specific member so the
+ * stripe-test-checkout.js - OPERATOR-gated. Mints a real LIVE Checkout Session for a specific member so the
  * operator can smoke-test the whole money loop (checkout → webhook grant → portal → refund) WITHOUT opening
  * the public buy buttons (payments_live can stay false). It builds the SAME session shape as the member-facing
  * stripe-checkout.js (client_reference_id + metadata), so the webhook grants exactly as it would for a real
  * customer, and the member's stripe_customer_id gets stored → the Customer Portal then works for them too.
  *
- * POST { user_id, lookup_key? }  — lookup_key defaults to "prog_sobriety" ($8.14, the cheapest item).
+ * POST { user_id, lookup_key? }  - lookup_key defaults to "prog_sobriety" ($8.14, the cheapest item).
  * Returns { url } to open. Operator-only; safe to keep for future member testing or remove after launch.
  */
 const { requireOperator, getSupabaseClient } = require("./supabase-client");
@@ -32,13 +32,13 @@ exports.handler = async (event) => {
 
   try {
     const sb = getSupabaseClient();
-    // Resolve the Price by PRODUCT id (riley_<key>) — deterministic, same as stripe-checkout.
+    // Resolve the Price by PRODUCT id (riley_<key>) - deterministic, same as stripe-checkout.
     const productId = sub ? ("riley_" + sub.plan) : ("riley_" + lookup);
     const want = sub ? (sub.term === "annual" ? "year" : "month") : null;
     const pr = await sGet("prices?product=" + encodeURIComponent(productId) + "&active=true&limit=10");
     const prices = (pr && pr.data) || [];
     const price = sub ? prices.find((p) => p.recurring && p.recurring.interval === want) : prices[0];
-    if (!price || !price.id) return json(400, { error: "price_not_found", detail: productId + " — run stripe-setup" });
+    if (!price || !price.id) return json(400, { error: "price_not_found", detail: productId + " - run stripe-setup" });
 
     // Reuse or create the member's Stripe Customer (stored on their profile so the portal works).
     const { data: prof } = await sb.from("user_profiles").select("email,stripe_customer_id").eq("id", uid).maybeSingle();

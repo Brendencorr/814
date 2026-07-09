@@ -1,7 +1,7 @@
 /**
- * admin-membership.js — Grant/revoke a member's entitlements. Team-only.
+ * admin-membership.js - Grant/revoke a member's entitlements. Team-only.
  *
- * Merges into the existing operator Users tab (per the v4 admin portal spec —
+ * Merges into the existing operator Users tab (per the v4 admin portal spec -
  * "UserEntitlementsPanel.jsx + GrantsLogPanel.jsx, unchanged from v3, generic
  * to any catalog"). Every grant/revoke is written to `grants_log` for audit.
  *

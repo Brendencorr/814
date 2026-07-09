@@ -1,10 +1,10 @@
 /**
- * admin-metrics.js — Doc 3 Phase 1: the investor dashboard's data source.
+ * admin-metrics.js - Doc 3 Phase 1: the investor dashboard's data source.
  *
  * The funnel + north-star metrics, computed ONLY from the canonical `events` table (no shadow
- * counting — Doc 3 do-not) plus `subscriptions` for the churn denominator. OPERATOR_KEY gated,
+ * counting - Doc 3 do-not) plus `subscriptions` for the churn denominator. OPERATOR_KEY gated,
  * read-only (service key). Structurally private: this function only ever reads `events` and
- * `subscriptions` — never a message body, never conversation content.
+ * `subscriptions` - never a message body, never conversation content.
  *
  * POST { days? } with header x-operator-key → { range, northStars, rows, funnel, counts }.
  */
@@ -42,7 +42,7 @@ exports.handler = async (event) => {
     const distinct = (n) => new Set(E.filter((e) => e.name === n && e.user_id).map((e) => e.user_id)).size;
     const annualUpg = E.filter((e) => e.name === "upgrade_completed" && e.props && e.props.term === "annual").length;
 
-    // Active monthly subs — the churn denominator (from subscriptions, no content).
+    // Active monthly subs - the churn denominator (from subscriptions, no content).
     let activeMonthly = 0;
     try { const { data: subs } = await sb.from("subscriptions").select("id").eq("status", "active").eq("term", "monthly"); activeMonthly = (subs || []).length; } catch (_) {}
 

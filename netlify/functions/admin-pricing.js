@@ -1,20 +1,20 @@
 /**
- * admin-pricing.js — Membership & Pricing manager (v4). Team-only.
+ * admin-pricing.js - Membership & Pricing manager (v4). Team-only.
  *
  * Manages the `products` catalog (Riley Guide/Companion/Coach/Mentor + à la
- * carte) and `usage_limits` (Riley Guide's caps — chat/week, library items,
- * etc.) — the two tables the Program&Pricing updateV4 admin spec calls the
+ * carte) and `usage_limits` (Riley Guide's caps - chat/week, library items,
+ * etc.) - the two tables the Program&Pricing updateV4 admin spec calls the
  * "Programs & Pricing" tab + its "Usage Limits" sub-section.
  *
  * Distinct from admin-programs.js, which manages the CONTENT curriculum table
- * (`programs` — 8:14 Reset, Recovery Journey, etc.) — a different table for a
+ * (`programs` - 8:14 Reset, Recovery Journey, etc.) - a different table for a
  * different purpose that happens to share the word "program."
  *
  * Protected by the same OPERATOR_KEY as Safety/Content/Programs. Fails closed
  * (503) if OPERATOR_KEY is unset.
  *
  * POST { action: "list" }                                → { products, usage_limits }
- *   each product also carries active_count — how many members currently hold
+ *   each product also carries active_count - how many members currently hold
  *   an active entitlement for it, for the operator's at-a-glance ladder view.
  * POST { action: "update_product", key, patch }          → { ok }  (status/price_cents/blurb/visible_on_menu/sort_order)
  * POST { action: "update_usage_limit", id, patch }       → { ok }  (limit_amount/limit_period)
@@ -37,7 +37,7 @@ async function listAll(sb) {
     sb.from("products").select("product_key,display_name,type,price_cents,recurring,status,blurb,sort_order,visible_on_menu,implies_all_programs,tier_level").order("sort_order"),
     sb.from("usage_limits").select("id,product_key,feature_key,limit_amount,limit_period").order("product_key"),
     sb.from("app_settings").select("value").eq("key", "free_access_mode").maybeSingle(),
-    // Active-holder counts — one pass over entitlements, tallied client-side
+    // Active-holder counts - one pass over entitlements, tallied client-side
     // rather than N per-product queries. expires_at is checked in JS since
     // PostgREST can't express "IS NULL OR > now()" in a single filter easily.
     sb.from("entitlements").select("product_key,expires_at").eq("status", "active"),

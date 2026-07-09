@@ -1,12 +1,12 @@
 /**
- * stripe-webhook.js — Stripe → Riley. The grant/renew/revoke engine. "Stripe for money, Supabase for access."
+ * stripe-webhook.js - Stripe → Riley. The grant/renew/revoke engine. "Stripe for money, Supabase for access."
  *
  * SAFE BY DESIGN:
  *  - DORMANT until STRIPE_WEBHOOK_SECRET is set (no secret → 503).
  *  - Verifies Stripe's signature (HMAC-SHA256 over `${t}.${rawBody}`) before trusting anything.
- *  - Idempotent: each Stripe event.id is logged once in `payments` — a replay is a no-op.
+ *  - Idempotent: each Stripe event.id is logged once in `payments` - a replay is a no-op.
  *  - Grants from Checkout Session METADATA (user_id, product_type, plan, term, program) that
- *    stripe-checkout.js sets — no price-guessing. Later events (renew/cancel/refund) map the Stripe
+ *    stripe-checkout.js sets - no price-guessing. Later events (renew/cancel/refund) map the Stripe
  *    customer back to the member via user_profiles.stripe_customer_id.
  *  - Never throws to Stripe: internal errors are logged and answered 200 (so Stripe doesn't retry-storm),
  *    only a bad signature is rejected (400).
@@ -82,7 +82,7 @@ exports.handler = async (event) => {
         } else { await log("needs_review", { user_id: uid, email, detail: "session had no plan/program metadata" }); }
         break;
       }
-      case "invoice.paid": { // renewal — extend the active sub
+      case "invoice.paid": { // renewal - extend the active sub
         const uid = await uidByCustomer(sb, obj.customer);
         const line = obj.lines && obj.lines.data && obj.lines.data[0];
         const lk = lookupOf(line);
@@ -112,10 +112,10 @@ exports.handler = async (event) => {
         await log(uid ? "revoked" : "unmatched", { user_id: uid, detail: "refunded" });
         break;
       }
-      case "invoice.payment_failed": { // renewal card declined — KEEP access during Stripe's automatic
+      case "invoice.payment_failed": { // renewal card declined - KEEP access during Stripe's automatic
         // retries (dunning). If they ultimately fail, customer.subscription.deleted revokes. Just log now.
         const uid = await uidByCustomer(sb, obj.customer);
-        await log(uid ? "payment_failed" : "unmatched", { user_id: uid, detail: "renewal payment failed — in Stripe retry window" });
+        await log(uid ? "payment_failed" : "unmatched", { user_id: uid, detail: "renewal payment failed - in Stripe retry window" });
         break;
       }
       case "charge.dispute.created": { // chargeback → revoke (and it's flagged in payments for you to review)

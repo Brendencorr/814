@@ -1,6 +1,6 @@
 /**
  * riley-chat.js
- * Manages Riley AI conversations — saves every turn to riley_conversations in Supabase.
+ * Manages Riley AI conversations - saves every turn to riley_conversations in Supabase.
  * Include this before riley-dashboard.html's closing </body> tag.
  *
  * Tables used:
@@ -104,7 +104,7 @@ window.RileyChat = (function () {
   // with the full reply if it returns JSON.
   // Returns the full assistant reply string.
   async function send(sessionId, userText, onToken) {
-    if (!_db || !_userId) throw new Error('RileyChat not initialised — call init() first');
+    if (!_db || !_userId) throw new Error('RileyChat not initialised - call init() first');
 
     // 1. Persist user message immediately
     await _saveMessage(sessionId, 'user', userText);

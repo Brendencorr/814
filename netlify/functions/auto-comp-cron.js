@@ -1,11 +1,11 @@
 /**
- * auto-comp-cron.js — TEMPORARY 24-hour promo (operator-requested 2026-07-07).
+ * auto-comp-cron.js - TEMPORARY 24-hour promo (operator-requested 2026-07-07).
  *
  * Auto-enrolls EVERY new signup to Riley Coach tier while the promo window is open.
- * A scheduled SWEEP (every 10 min), NOT a signup-path trigger — so it can never break
+ * A scheduled SWEEP (every 10 min), NOT a signup-path trigger - so it can never break
  * or slow down account creation. Reads the window from app_settings:
- *   auto_comp_coach_start  (ISO)  — only members who signed up AFTER this get comped
- *   auto_comp_coach_until  (ISO)  — the sweep no-ops once now() passes this
+ *   auto_comp_coach_start  (ISO)  - only members who signed up AFTER this get comped
+ *   auto_comp_coach_until  (ISO)  - the sweep no-ops once now() passes this
  * Comps by inserting a comped 'coach' subscriptions row (identical to admin-create-user),
  * which is the single entitlement source the app already resolves. Idempotent: skips anyone
  * who already has an active coach/mentor subscription. Writes an admin_audit row per comp so

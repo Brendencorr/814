@@ -1,10 +1,10 @@
 /**
- * story-submit.js — Task 6 / Decision #14: public "Share your story" form (no auth).
+ * story-submit.js - Task 6 / Decision #14: public "Share your story" form (no auth).
  *
  * Anonymous inserts are blocked by RLS on `user_stories`, so this service-role path records
  * the submission. Rate-limited (per-email window). On success it emails Brenden the full
  * submission AND sends the submitter a warm confirmation (Resend; no-ops if RESEND_API_KEY unset).
- * Nothing publishes without review — status workflow: submitted -> reviewed -> consented -> published.
+ * Nothing publishes without review - status workflow: submitted -> reviewed -> consented -> published.
  *
  * POST { name?, email, story, consent } -> { ok }
  */
@@ -43,16 +43,16 @@ exports.handler = async (event) => {
     const { count } = await sb.from("user_stories")
       .select("id", { count: "exact", head: true })
       .eq("email", email).gte("created_at", since);
-    if ((count || 0) >= 3) return json(429, { error: "You've submitted a few already — give it a little while." });
+    if ((count || 0) >= 3) return json(429, { error: "You've submitted a few already - give it a little while." });
 
     await sb.from("user_stories").insert({ name, email, story, consent, status: "submitted", source: "home" });
 
     const first = name ? esc(name.split(" ")[0]) : "";
     await Promise.allSettled([
       // Notify the operator with the full submission. Recipient comes from the
-      // SAFETY_ALERT_EMAIL env var (already configured to Brenden) — NEVER hardcoded,
+      // SAFETY_ALERT_EMAIL env var (already configured to Brenden) - NEVER hardcoded,
       // so the address can't trip Netlify's secret scanner. No-ops if the var is unset.
-      sendEmail(process.env.SAFETY_ALERT_EMAIL, "New story submission — Meet Riley",
+      sendEmail(process.env.SAFETY_ALERT_EMAIL, "New story submission - Meet Riley",
         `<div style="font-family:sans-serif;line-height:1.6;color:#222">
           <h2 style="color:#111">New story submission</h2>
           <p><b>Name:</b> ${esc(name) || "(not given)"}<br>
@@ -66,8 +66,8 @@ exports.handler = async (event) => {
       sendEmail(email, "Thank you for sharing your story",
         `<div style="font-family:sans-serif;line-height:1.7;color:#222">
           <p>${first ? first + "," : "Hi,"}</p>
-          <p>Thank you for trusting us with your story. It matters more than you know — this is exactly how the next person feels a little less alone.</p>
-          <p><b>Nothing is ever published without your written OK.</b> If we'd love to share yours, we'll reach out to you first — always.</p>
+          <p>Thank you for trusting us with your story. It matters more than you know - this is exactly how the next person feels a little less alone.</p>
+          <p><b>Nothing is ever published without your written OK.</b> If we'd love to share yours, we'll reach out to you first - always.</p>
           <p>With care,<br>Brenden &amp; Riley</p>
         </div>`, "story"),
     ]);
@@ -75,6 +75,6 @@ exports.handler = async (event) => {
     return json(200, { ok: true });
   } catch (e) {
     console.error("story-submit:", e.message);
-    return json(500, { error: "Could not submit — please try again." });
+    return json(500, { error: "Could not submit - please try again." });
   }
 };

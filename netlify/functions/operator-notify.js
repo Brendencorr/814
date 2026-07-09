@@ -1,10 +1,10 @@
 /**
- * operator-notify.js — shared web-push sender for OPERATOR/ADMIN devices.
+ * operator-notify.js - shared web-push sender for OPERATOR/ADMIN devices.
  *
  * Reads operator_push_subscriptions (service-key only) and pushes to every ACTIVE
- * device. FULLY fault-tolerant: never throws (must not break the caller — e.g. the
+ * device. FULLY fault-tolerant: never throws (must not break the caller - e.g. the
  * signup flow in auth-handler). Dead subscriptions (404/410) are auto-deactivated.
- * Payloads carry identity metadata only (member name + email) — NEVER conversation
+ * Payloads carry identity metadata only (member name + email) - NEVER conversation
  * content, matching the operator trust boundary.
  * Model: n/a
  */
@@ -21,7 +21,7 @@ async function vapidReady() {
 }
 
 // Send `payload` ({ title, body, url, tag }) to every ACTIVE operator device.
-// Returns { ok, sent, devices, pruned }. Swallows every error — safe to await in a
+// Returns { ok, sent, devices, pruned }. Swallows every error - safe to await in a
 // user-facing flow.
 async function sendToAllOperators(supabase, payload) {
   try {
@@ -42,7 +42,7 @@ async function sendToAllOperators(supabase, payload) {
       } catch (e) {
         // 404/410 = the browser dropped the subscription → stop sending to it.
         if (e && (e.statusCode === 404 || e.statusCode === 410)) dead.push(d.endpoint);
-        // other codes (429/5xx) are transient — leave the device active for next time.
+        // other codes (429/5xx) are transient - leave the device active for next time.
       }
     }));
 

@@ -1,10 +1,10 @@
 /**
- * program-content.js — serve an OWNED program's content, entitlement-gated.
+ * program-content.js - serve an OWNED program's content, entitlement-gated.
  *
  * POST { action:'get', token, program_key }
  *   -> { program, modules[], tier, progress[], footer }
  *   riley_layer is included ONLY for Companion/Coach (or admin / free-access testers).
- *   Standalone + Guide buyers get pure content (the brief's promise). Non-owners get 403 —
+ *   Standalone + Guide buyers get pure content (the brief's promise). Non-owners get 403 -
  *   paid content never leaks to someone who doesn't own it.
  * POST { action:'complete', token, program_key, module_number, done }
  *   -> toggle the per-module checklist (no streaks; the brief's "no tracking" promise).

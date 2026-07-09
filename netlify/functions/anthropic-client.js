@@ -1,14 +1,14 @@
 /**
- * anthropic-client.js — one wrapper for every Claude call (Spec §8.1 / 8.4 / 9.1).
+ * anthropic-client.js - one wrapper for every Claude call (Spec §8.1 / 8.4 / 9.1).
  *
- *  • Prompt caching — pass { cachedSystem, dynamicSystem }; the static persona gets
+ *  • Prompt caching - pass { cachedSystem, dynamicSystem }; the static persona gets
  *    cache_control:ephemeral so repeat turns read it at ~10% cost. Cache the STABLE
  *    prefix only; never interleave dynamic content into it.
- *  • Cost observability — writes api_cost_log non-blocking on every call (tokens,
- *    cached tokens, computed cost, hashed user id — never content).
- *  • Reliability — on 5xx / 429 / network, one backoff retry on the primary model;
+ *  • Cost observability - writes api_cost_log non-blocking on every call (tokens,
+ *    cached tokens, computed cost, hashed user id - never content).
+ *  • Reliability - on 5xx / 429 / network, one backoff retry on the primary model;
  *    then (allowFallback) a Haiku attempt with a brevity directive; logs fallbacks to
- *    system_incidents. On total failure it THROWS — the caller returns its own
+ *    system_incidents. On total failure it THROWS - the caller returns its own
  *    graceful line. Crisis Level 3 never reaches here (it's deterministic).
  *
  * Returns { text, usage, model, fellBack, cacheReadTokens }.
@@ -44,7 +44,7 @@ function withBrevity(system) {
   return note + "\n\n----\n\n" + (system || "");
 }
 
-// Single HTTP attempt. Never throws on an HTTP error — returns {ok,status,data}.
+// Single HTTP attempt. Never throws on an HTTP error - returns {ok,status,data}.
 async function rawCall(model, system, messages, max_tokens, temperature, timeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs || 30000);
@@ -121,7 +121,7 @@ async function callClaude(opts) {
 
   let usedModel = primary, fellBack = false;
 
-  // Haiku fallback (opt-in) — keep it brief + warm.
+  // Haiku fallback (opt-in) - keep it brief + warm.
   if (!res.ok && allowFallback) {
     const alt = await rawCall(MODELS.fallback, withBrevity(sys), messages, Math.min(max_tokens, 600), temperature, timeoutMs);
     logIncident(supabase, "model_fallback", functionName, { from: primary, to: MODELS.fallback, status: res.status });

@@ -6,10 +6,10 @@
  * GET /.netlify/functions/site-config
  * Returns: { supabaseUrl, supabaseAnonKey, posthogKey, posthogHost }
  *
- * Note: SUPABASE_ANON_KEY is safe to expose in browser responses —
+ * Note: SUPABASE_ANON_KEY is safe to expose in browser responses -
  * it is the public key and all data access is protected by Supabase RLS.
  * POSTHOG_PROJECT_KEY (phc_…) is likewise a public, write-only ingest key
- * designed for client-side use — safe to serve to the browser.
+ * designed for client-side use - safe to serve to the browser.
  */
 
 exports.handler = async function (event) {
@@ -30,11 +30,11 @@ exports.handler = async function (event) {
     return {
       statusCode: 500,
       headers: { ...CORS, "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "Server configuration error — Supabase env vars not set" }),
+      body: JSON.stringify({ error: "Server configuration error - Supabase env vars not set" }),
     };
   }
 
-  // PostHog is optional — absent env vars just leave the client analytics as a no-op.
+  // PostHog is optional - absent env vars just leave the client analytics as a no-op.
   const posthogKey  = process.env.POSTHOG_PROJECT_KEY || "";
   const posthogHost = process.env.POSTHOG_HOST || "https://us.i.posthog.com";
 
@@ -43,7 +43,7 @@ exports.handler = async function (event) {
     headers: {
       ...CORS,
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=300", // cache for 5 min — values rarely change
+      "Cache-Control": "public, max-age=300", // cache for 5 min - values rarely change
     },
     body: JSON.stringify({ supabaseUrl, supabaseAnonKey, posthogKey, posthogHost }),
   };

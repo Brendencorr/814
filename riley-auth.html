@@ -510,6 +510,28 @@ async function handlePostAuth(session) {
   if (!session || !session.user) return;
   currentUser = session.user;
   try { await onSignedIn(session); } catch (e) {}
+
+  // ── BUY INTENT → Stripe checkout FIRST, before onboarding ──────────────────────────────────
+  // Someone who chose a paid plan on the marketing site came here to PAY. Send them straight to
+  // Stripe Checkout now (they onboard as a paid member after payment). This is why a new buyer was
+  // getting dumped into the onboarding chat instead of checkout: the trigger only lived on /dashboard,
+  // which a brand-new user never reaches (onboarding → /chat). Only fires when payments are live; any
+  // hiccup (unknown product, price not set up, network) falls through to normal onboarding so nobody is trapped.
+  try {
+    var _buy = sessionStorage.getItem('riley_buy_intent');
+    if (_buy) {
+      sessionStorage.removeItem('riley_buy_intent');
+      const { data: _pl } = await sb.from('app_settings').select('value').eq('key', 'payments_live').maybeSingle();
+      if (_pl && String(_pl.value).toLowerCase() === 'true') {
+        const _tok = session.access_token || (await sb.auth.getSession()).data.session?.access_token || null;
+        const _cr = await fetch('/.netlify/functions/stripe-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _tok, lookup_key: _buy }) });
+        const _cj = await _cr.json();
+        if (_cj && _cj.url) { window.location.href = _cj.url; return; }
+        console.warn('buy-intent checkout did not open:', _cj && _cj.error);
+      }
+    }
+  } catch (e) { console.warn('buy-intent checkout error (falling through to onboarding):', e && e.message); }
+
   let onboarded = false, consentAt = null;
   try {
     const { data } = await sb.from('user_profiles')

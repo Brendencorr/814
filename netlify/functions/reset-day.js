@@ -11,6 +11,9 @@
  * Model: claude-sonnet-4-6
  */
 const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
+// Safety backstop for the Day-1 free-text disclosure (mirrors the chat crisis path).
+const { detectCrisis, LEVEL3_RESPONSE } = require("./crisis-detection");
+const { sendOperatorAlert } = require("./safety-alert");
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 
 const CORS = {
@@ -59,12 +62,25 @@ exports.handler = async (event) => {
     if (action === "enroll") {
       if (!userId) return json(401, { error: "Unauthorized" });
       const sentence = (body.day1_sentence || "").toString().trim().slice(0, 600);
+      // SAFETY BACKSTOP: the Day-1 sentence is real member free-text ("the heaviest thing you're
+      // carrying"). Run the deterministic crisis check so a disclosure at ONBOARDING is logged to the
+      // restricted crisis_log and the operator is alerted — the same guarantee the chat path gives.
+      // Level 3 additionally surfaces 988 to the member so onboarding can show it. Fully fail-open.
+      let crisisLevel = 0;
+      if (sentence) {
+        try { crisisLevel = (detectCrisis(sentence) || {}).level || 0; } catch (_) {}
+        if (crisisLevel >= 2) {
+          try { await supabase.from("crisis_log").insert({ user_id: userId, level: crisisLevel, matched_rules: ["reset-day1"], message_excerpt: sentence.slice(0, 500), followup_stage: 0, resolved: false }); } catch (_) {}
+          supabase.from("user_profiles").update({ last_crisis_at: new Date().toISOString(), last_crisis_level: crisisLevel }).eq("id", userId).then(() => {}, () => {});
+          try { await sendOperatorAlert(supabase, { userId, level: crisisLevel, matches: ["reset-day1"], excerpt: sentence, source: "reset-day-enroll" }); } catch (_) {}
+        }
+      }
       const personas = sentence ? await classifyPersona(sentence) : [];
       await supabase.from("reset_enrollment").upsert(
         { user_id: userId, persona_keys: personas.length ? personas : null, day1_sentence: sentence || null },
         { onConflict: "user_id" }
       );
-      return json(200, { personas });
+      return json(200, crisisLevel >= 3 ? { personas, crisis: true, crisis_message: LEVEL3_RESPONSE } : { personas });
     }
 
     // ── Two-touch completion (action completes the day; evening is bonus) ──

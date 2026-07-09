@@ -590,6 +590,15 @@ async function getClientData(supabase, userId, queryText) {
     };
 
     const ownedProducts = (entRes.value?.data || []).map(r => r.product_key);
+    // Bridge (mirrors entitlements.js §5 / program-content.js): an ACTIVE subscription — comp or paid —
+    // grants its plan even without an entitlements row. Every grant is written to `subscriptions`, but
+    // user_active_products reads only `entitlements`; without this a paying member resolves to "guide"
+    // here and gets metered + upsold their own tier the moment free_access_mode is off. Fail-open / inert.
+    try {
+      const { data: _subs } = await supabase.from("subscriptions").select("plan_id, expires_at").eq("user_id", userId).eq("status", "active");
+      const _now = Date.now();
+      (_subs || []).forEach((s) => { const live = !s.expires_at || new Date(s.expires_at).getTime() > _now; if (live && ["companion", "coach", "mentor"].includes(s.plan_id) && !ownedProducts.includes(s.plan_id)) ownedProducts.push(s.plan_id); });
+    } catch (_) {}
     // v4 tiers: mentor > coach > companion > guide (Riley Guide is free but
     // real and persistent - everyone who's holding ANY entitlement row, or
     // reset_free specifically, is "guide" at minimum). "alacarte" = content

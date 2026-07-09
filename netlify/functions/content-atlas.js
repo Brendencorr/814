@@ -22,6 +22,7 @@
  */
 
 const { contentDb, loadPrompt, callClaude, extractJson, notify, CORS } = require("./content-lib");
+const { requireOperator } = require("./supabase-client"); // gate the manual HTTP handler (model-cost/tamper)
 
 const CANVA_API = "https://api.canva.com/rest/v1";
 const BUCKET = "content-assets";
@@ -146,6 +147,7 @@ async function renderBrief(briefId) {
 // HTTP: manual design/retry for one brief from the Review screen.
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
+  const gate = requireOperator(event); if (gate) return gate;   // was ungated → anon model-cost/tamper vector
   try {
     const body = JSON.parse(event.body || "{}");
     if (!body.brief_id) return { statusCode: 400, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify({ error: "brief_id required" }) };

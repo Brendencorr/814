@@ -528,11 +528,14 @@ function storySubmit(){
   };
   // Buy-intent routing: when payments are live, a paid CTA carries its plan to sign-in → checkout (login stashes
   // ?buy → dashboard fires stripe-checkout). Subscriptions default to monthly. Free/no-plan CTAs just hit /login.
-  var LKMAP={companion:'companion_monthly',coach:'coach_monthly'};
+  // Subscriptions (companion/coach) carry the CURRENTLY-SELECTED billing period (`mode`; annual is the
+  // default). Programs have a single price. This is what makes the Annual toggle actually check out at the
+  // annual price instead of always defaulting to monthly.
+  var SUBS={companion:1,coach:1};
   document.querySelectorAll('a[data-cta]').forEach(function(a){
     a.addEventListener('click',function(e){
       var plan=a.getAttribute('data-plan-id')||'';
-      if(LIVE){ if(plan){ e.preventDefault(); location.href='https://riley.meetriley.us/login?buy='+encodeURIComponent(LKMAP[plan]||plan); } return; }
+      if(LIVE){ if(plan){ e.preventDefault(); var lk=SUBS[plan]?(plan+'_'+(mode==='monthly'?'monthly':'annual')):plan; location.href='https://riley.meetriley.us/login?buy='+encodeURIComponent(lk); } return; }
       e.preventDefault(); wlPlan=plan; var em=document.getElementById('wl-email'); if(em)em.value=''; var mm=document.getElementById('wl-msg'); if(mm)mm.textContent=''; var m=document.getElementById('wl-modal'); if(m)m.style.display='flex';
     });
   });

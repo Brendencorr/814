@@ -405,6 +405,9 @@ let savePromptDismissed = false;
 // ── Boot ──────────────────────────────────────────────────────────────────────
 // Load immediately - chat is open to everyone. Auth is optional.
 async function boot() {
+  // If the member came to BUY, cover the chat IMMEDIATELY with a redirect screen so they never see the
+  // chat flash before Stripe opens. The actual checkout fires in handlePostAuth (fail-open: hidden on error).
+  try { if (sessionStorage.getItem('riley_buy_intent')) showCheckoutRedirect(); } catch (e) {}
   // Restore conversation from sessionStorage if user is returning from OAuth redirect
   const savedHistory = sessionStorage.getItem('riley_pre_auth_history');
   if (savedHistory) {
@@ -506,31 +509,43 @@ async function onSignedIn(session) {
 let onboarding = { active: false, resolveInput: null };
 function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
+// Full-screen "redirecting to checkout" cover so a buyer never sees the chat flash before Stripe opens.
+function showCheckoutRedirect() {
+  if (document.getElementById('rz-checkout-ov')) return;
+  var o = document.createElement('div');
+  o.id = 'rz-checkout-ov';
+  o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#06090e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:DM Sans,system-ui,sans-serif';
+  o.innerHTML = '<div style="width:34px;height:34px;border:3px solid rgba(201,168,76,.25);border-top-color:#c9a84c;border-radius:50%;animation:rzspin 1s linear infinite"></div><div style="font-size:15px;color:#c9a84c">Taking you to secure checkout…</div><style>@keyframes rzspin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(o);
+}
+function hideCheckoutRedirect() { var o = document.getElementById('rz-checkout-ov'); if (o) o.remove(); }
+
 async function handlePostAuth(session) {
   if (!session || !session.user) return;
   currentUser = session.user;
-  try { await onSignedIn(session); } catch (e) {}
 
-  // ── BUY INTENT → Stripe checkout FIRST, before onboarding ──────────────────────────────────
-  // Someone who chose a paid plan on the marketing site came here to PAY. Send them straight to
-  // Stripe Checkout now (they onboard as a paid member after payment). This is why a new buyer was
-  // getting dumped into the onboarding chat instead of checkout: the trigger only lived on /dashboard,
-  // which a brand-new user never reaches (onboarding → /chat). Only fires when payments are live; any
-  // hiccup (unknown product, price not set up, network) falls through to normal onboarding so nobody is trapped.
+  // ── BUY INTENT → Stripe checkout FIRST (before onSignedIn/onboarding) ───────────────────────
+  // Someone who chose a paid plan came here to PAY, not onboard. Fire checkout immediately (the boot
+  // overlay already hides the chat). Only when payments are live; any hiccup (unknown product, price
+  // not set up, network) hides the overlay and falls through to normal onboarding so nobody is trapped.
   try {
     var _buy = sessionStorage.getItem('riley_buy_intent');
     if (_buy) {
-      sessionStorage.removeItem('riley_buy_intent');
+      showCheckoutRedirect();
       const { data: _pl } = await sb.from('app_settings').select('value').eq('key', 'payments_live').maybeSingle();
       if (_pl && String(_pl.value).toLowerCase() === 'true') {
+        sessionStorage.removeItem('riley_buy_intent');
         const _tok = session.access_token || (await sb.auth.getSession()).data.session?.access_token || null;
         const _cr = await fetch('/.netlify/functions/stripe-checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: _tok, lookup_key: _buy }) });
         const _cj = await _cr.json();
         if (_cj && _cj.url) { window.location.href = _cj.url; return; }
         console.warn('buy-intent checkout did not open:', _cj && _cj.error);
       }
+      hideCheckoutRedirect();
     }
-  } catch (e) { console.warn('buy-intent checkout error (falling through to onboarding):', e && e.message); }
+  } catch (e) { hideCheckoutRedirect(); console.warn('buy-intent checkout error (falling through to onboarding):', e && e.message); }
+
+  try { await onSignedIn(session); } catch (e) {}
 
   let onboarded = false, consentAt = null;
   try {

@@ -44,6 +44,11 @@ exports.handler = async (event) => {
       .select("id", { count: "exact", head: true })
       .eq("email", email).gte("created_at", since);
     if ((count || 0) >= 3) return json(429, { error: "You've submitted a few already - give it a little while." });
+    // Global flood cap — per-email alone is bypassable by rotating the address; bound total volume too.
+    try {
+      const { count: total } = await sb.from("user_stories").select("id", { count: "exact", head: true }).gte("created_at", since);
+      if ((total || 0) >= 30) return json(429, { error: "We're getting a lot of submissions right now - please try again shortly." });
+    } catch (_) {}
 
     await sb.from("user_stories").insert({ name, email, story, consent, status: "submitted", source: "home" });
 

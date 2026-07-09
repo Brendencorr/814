@@ -33,21 +33,32 @@ exports.handler = async (event) => {
 
   try {
     const sb = getSupabaseClient();
+    // Flood guard: cap total joins per minute — bounds the email-bomb / write-amplification vector.
+    try {
+      const since = new Date(Date.now() - 60 * 1000).toISOString();
+      const { count } = await sb.from("waitlist").select("email", { count: "exact", head: true }).gte("updated_at", since);
+      if ((count || 0) > 30) return json(429, { error: "We're a bit busy right now — please try again in a minute." });
+    } catch (_) {}
+    // Only email + log a NEW address once; re-submits just update the plan intent (no re-send = no email-bomb).
+    let isNew = true;
+    try { const { data: existing } = await sb.from("waitlist").select("email").eq("email", email).maybeSingle(); isNew = !existing; } catch (_) {}
     // Durable, deduped list (latest plan intent wins).
     await sb.from("waitlist").upsert(
       { email, plan_intent: plan, updated_at: new Date().toISOString() },
       { onConflict: "email" }
     );
-    // Canonical analytics event (Echo Phase-2 counter reads these).
-    await sb.from("events").insert({ user_id: null, name: "waitlist_joined", props: { email, plan } });
-    // Warm confirmation - from the founder's voice.
-    await sendEmail(email, "You're on the list - Meet Riley",
-      `<div style="font-family:sans-serif;line-height:1.7;color:#222">
-        <p>You're on the list.</p>
-        <p>Memberships aren't open yet, but you'll be the first to know the moment they are - no charge, no spam, just a quiet note when it's time.</p>
-        <p>In the meantime, Riley is already here whenever you want to talk. Come say hello anytime.</p>
-        <p>With care,<br>Brenden &amp; Riley</p>
-      </div>`);
+    if (isNew) {
+      // Canonical analytics event (Echo Phase-2 counter reads these).
+      await sb.from("events").insert({ user_id: null, name: "waitlist_joined", props: { email, plan } });
+      // Warm confirmation - from the founder's voice.
+      await sendEmail(email, "You're on the list - Meet Riley",
+        `<div style="font-family:sans-serif;line-height:1.7;color:#222">
+          <p>You're on the list.</p>
+          <p>Memberships aren't open yet, but you'll be the first to know the moment they are - no charge, no spam, just a quiet note when it's time.</p>
+          <p>In the meantime, Riley is already here whenever you want to talk. Come say hello anytime.</p>
+          <p>With care,<br>Brenden &amp; Riley</p>
+        </div>`);
+    }
     return json(200, { ok: true });
   } catch (e) {
     console.error("waitlist-join:", e.message);

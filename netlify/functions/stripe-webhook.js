@@ -58,10 +58,15 @@ exports.handler = async (event) => {
   if (!evt) return json(400, { error: "bad_signature" });
 
   const sb = getSupabaseClient();
-  const log = async (status, extra) => { try { await sb.from("payments").insert({ external_id: evt.id, status, product: evt.type, raw: evt, ...extra }); } catch (_) {} };
-
-  // Idempotency: this Stripe event already processed?
-  try { const { data: dupe } = await sb.from("payments").select("id").eq("external_id", evt.id).maybeSingle(); if (dupe) return json(200, { received: true, status: "duplicate" }); } catch (_) {}
+  // Idempotency guard (ATOMIC): CLAIM this event by inserting its payments row FIRST. The
+  // UNIQUE(external_id) constraint makes a concurrent redelivery fail here (code 23505) → we
+  // return duplicate and grant nothing. `log` then UPDATEs that row to the final status. (Was a
+  // SELECT-then-act check, which let two concurrent redeliveries both pass and double-grant.)
+  try {
+    const { error } = await sb.from("payments").insert({ external_id: evt.id, status: "processing", product: evt.type, raw: evt });
+    if (error && error.code === "23505") return json(200, { received: true, status: "duplicate" });
+  } catch (_) { /* non-unique error → proceed best-effort; never drop a real payment over a logging hiccup */ }
+  const log = async (status, extra) => { try { await sb.from("payments").update({ status, ...extra }).eq("external_id", evt.id); } catch (_) {} };
 
   const obj = (evt.data && evt.data.object) || {};
   try {

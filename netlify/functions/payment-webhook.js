@@ -70,19 +70,20 @@ exports.handler = async (event) => {
   const product = String(body.product || body.description || body.title || "").trim() || null;
   const raw = body;
 
-  // Log helper - records EVERY event, granted or not.
+  // Log helper - UPDATEs the claimed payments row (created by the idempotency guard below).
   async function log(status, extra) {
-    const row = { external_id: externalId || null, email: email || null, amount_cents: cents, product, status, raw, ...extra };
-    try { await sb.from("payments").insert(row); } catch (e) { /* non-fatal: never block the response */ }
+    try { await sb.from("payments").update({ status, ...(extra || {}) }).eq("external_id", externalId); } catch (e) { /* non-fatal: never block the response */ }
   }
 
-  if (!externalId) { await log("error", { detail: "missing external_id (idempotency key)" }); return json(400, { error: "missing_external_id" }); }
+  if (!externalId) { try { await sb.from("payments").insert({ external_id: null, email: email || null, amount_cents: cents, product, status: "error", raw, detail: "missing external_id (idempotency key)" }); } catch (_) {} return json(400, { error: "missing_external_id" }); }
 
-  // Idempotency: already processed this invoice/charge? Do nothing.
+  // Idempotency guard (ATOMIC): CLAIM this invoice by inserting its payments row FIRST. UNIQUE(external_id)
+  // makes a concurrent redelivery fail (code 23505) → return duplicate and grant nothing. `log` then
+  // UPDATEs this row. (Was SELECT-then-act, which let two concurrent redeliveries both pass + double-grant.)
   try {
-    const { data: dupe } = await sb.from("payments").select("id,status").eq("external_id", externalId).maybeSingle();
-    if (dupe) return json(200, { ok: true, status: "duplicate", external_id: externalId });
-  } catch (_) {}
+    const { error } = await sb.from("payments").insert({ external_id: externalId, email: email || null, amount_cents: cents, product, status: "processing", raw });
+    if (error && error.code === "23505") return json(200, { ok: true, status: "duplicate", external_id: externalId });
+  } catch (_) { /* non-unique error → proceed best-effort */ }
 
   // Resolve WHAT was bought (explicit fields win; else map by amount). Never guess a tier.
   let plan = (body.plan || "").toString().toLowerCase().trim();

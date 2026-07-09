@@ -16,26 +16,23 @@
 
 [functions]
   directory = "netlify/functions"
-  # The grounds render engine (content-design.js) reads the locked kit off disk.
-  # Bundle the grounds + DM fonts + nav lockups into every function package so they
-  # resolve at runtime (the /brand/* tree is force-404'd for the public site only).
+  # Keep the @napi-rs/canvas native binary external (ship the prebuilt .node rather
+  # than inline it). Top-level so every function that reaches the renderer gets it -
+  # content-design AND content-queue (which calls renderBrief in-process). Harmless
+  # for functions that don't use it. The grounds/fonts (included_files) are scoped
+  # to ONLY the two rendering functions below (25MB - never copy it into all ~85 bundles).
+  external_node_modules = ["@napi-rs/canvas"]
+
+# Grounds render engine: reads the locked kit off disk (grounds + DM fonts + nav
+# lockups); /brand/* is force-404'd for the public site only. Needs render+upload budget.
+[functions."content-design"]
+  timeout = 26
   included_files = [
     "brand/template-kit/grounds/**",
     "brand/template-kit/fonts/**",
     "brand/template-kit/riley-nav-logo.png",
     "brand/template-kit/riley-nav-ink.png"
   ]
-  # Keep the @napi-rs/canvas native binary external (ship the prebuilt .node rather
-  # than inline it). Top-level so every function that reaches the renderer gets it -
-  # content-design AND content-queue (which calls renderBrief in-process). Ignored
-  # harmlessly by the file-tracing bundler, which includes native modules anyway.
-  external_node_modules = ["@napi-rs/canvas"]
-
-# Grounds render engine: needs the render + upload budget.
-# (content-queue already has its own [functions."content-queue"] block below with
-# timeout=26; the top-level external_node_modules above covers it for the renderer.)
-[functions."content-design"]
-  timeout = 26
 
 [functions."scout"]
   timeout = 26
@@ -257,9 +254,15 @@
   schedule = "0 12 * * 0"
 
 # ── AUTOMATED CONTENT ENGINE (content schema) ──────────────────────────────
-# Admin queue API (list / approve→Echo→Buffer / revise / reject / counts)
+# Admin queue API (approve auto-assigns a design via renderBrief - needs the kit + fonts).
 [functions."content-queue"]
   timeout = 26
+  included_files = [
+    "brand/template-kit/grounds/**",
+    "brand/template-kit/fonts/**",
+    "brand/template-kit/riley-nav-logo.png",
+    "brand/template-kit/riley-nav-ink.png"
+  ]
 
 # Design template library manager (paste Canva Brand Template IDs)
 [functions."content-templates"]

@@ -13,6 +13,7 @@
  * prefs, fully reversible). A signed HMAC token is a pre-launch hardening - flagged.
  */
 const { getSupabaseClient } = require("./supabase-client");
+const { verifyUid } = require("./comms-sign");
 
 const PAGE = (title, msg, uid) =>
   '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -27,6 +28,17 @@ const PAGE = (title, msg, uid) =>
 exports.handler = async (event) => {
   const q = event.queryStringParameters || {};
   const uid = (q.u || "").toString().slice(0, 60);
+
+  // Opt-IN / resubscribe links ADD email, so require a valid HMAC signature (prevents forging a link for
+  // someone else). Opt-OUT (the default unsubscribe + letter=0) is ALWAYS honored below - we never trap a
+  // subscriber (RFC 8058 / CAN-SPAM), signature or not.
+  const isOptIn = q.lifecycle === "1" || q.letter === "1";
+  if (isOptIn && !verifyUid(uid, (q.s || "").toString())) {
+    if (event.httpMethod === "POST") return { statusCode: 200, body: "" };
+    return { statusCode: 200, headers: { "Content-Type": "text/html" },
+      body: PAGE("This link has expired", "For your security, please manage your email preferences from inside the Riley app.", uid) };
+  }
+
   const patch = { updated_at: new Date().toISOString() };
   let title = "You're unsubscribed", msg = "You won't receive lifecycle emails from Riley anymore. Anything you've bought, and the app itself, keep working exactly the same. You can turn these back on anytime.";
 

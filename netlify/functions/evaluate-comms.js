@@ -20,22 +20,28 @@
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
 const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
+const { signUid } = require("./comms-sign");
 
 const APP = "https://riley.meetriley.us";
 const DAY = 86400000;
+// When a member's timezone is unknown, evaluate quiet-hours in this zone instead of UTC (a US-recovery
+// userbase - default matches the company's Montana home). Set COMMS_DEFAULT_TZ to override, no redeploy.
+const DEFAULT_TZ = process.env.COMMS_DEFAULT_TZ || "America/Denver";
 
 function firstName(profile) {
   const n = (profile && (profile.preferred_name || profile.full_name)) || "";
   return (n.split(" ")[0] || "there");
 }
-function prefUrl(uid) { return APP + "/preferences?u=" + encodeURIComponent(uid); }
-function unsubUrl(uid) { return APP + "/.netlify/functions/comms-unsubscribe?u=" + encodeURIComponent(uid); }
+// Sign the member id so only links we generated are honored for opt-IN (see comms-sign.js). Empty when
+// no secret is configured, in which case comms-unsubscribe fails open - never blocking a real request.
+function sigParam(uid) { const s = signUid(uid); return s ? "&s=" + s : ""; }
+function prefUrl(uid) { return APP + "/preferences?u=" + encodeURIComponent(uid) + sigParam(uid); }
+function unsubUrl(uid) { return APP + "/.netlify/functions/comms-unsubscribe?u=" + encodeURIComponent(uid) + sigParam(uid); }
 
 function inQuietHours(tz) {
   try {
-    const h = tz
-      ? Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: tz }).format(new Date()))
-      : new Date().getUTCHours();
+    const zone = tz || DEFAULT_TZ;   // never fall back to UTC - that would email a US member at ~2am
+    const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: zone }).format(new Date()));
     return h >= 21 || h < 8; // 9pm–8am local = quiet
   } catch (e) { return false; }
 }

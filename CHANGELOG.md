@@ -12,6 +12,26 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Comms go-live hardening (still DARK): signed unsubscribe links + timezone-aware quiet hours
+- **Why:** pre-go-live audit flagged two dev items on the lifecycle-comms system before `COMMS_ENABLED` is
+  ever flipped: (1) unsubscribe/preference links were raw `?u=<uid>` (someone could forge a link for another
+  member), (2) quiet-hours fell back to UTC when a member's timezone was unknown (would email a US member at
+  ~2am). System stays DARK - nothing sends until Brenden sets `RESEND_API_KEY` + `COMMS_ENABLED=true`.
+- **What (signed links):** new `netlify/functions/comms-sign.js` - HMAC-SHA256 (128-bit hex) over the member
+  id. Secret = `COMMS_UNSUB_SECRET` with fallback to `SUPABASE_SERVICE_KEY` (always set) so it works with NO
+  new required env var. `evaluate-comms.js` now appends `&s=<sig>` to every emailed unsubscribe + preference
+  URL (footer links AND the RFC 8058 `List-Unsubscribe` header). `comms-unsubscribe.js` requires a valid sig
+  for opt-IN actions (resubscribe / letter-on) and shows a "link expired" page otherwise; opt-OUT (the default
+  unsubscribe + letter-off) is ALWAYS honored regardless of signature (never trap a subscriber, per RFC 8058 /
+  CAN-SPAM). Fails open if no secret is configured. Roundtrip unit-tested (correct→ok, forged/empty/other-id→
+  reject, no-secret→fail-open).
+- **What (quiet hours):** `inQuietHours` no longer falls back to UTC - unknown timezone now evaluates in
+  `COMMS_DEFAULT_TZ` (default `America/Denver`, the company's home zone), so the 9pm-8am quiet window is roughly
+  right for a US userbase even before per-member timezones are populated. Override via env, no redeploy.
+- **Files:** `comms-sign.js` (new), `evaluate-comms.js`, `comms-unsubscribe.js`. Still-open go-live blockers
+  (Brenden): set `RESEND_API_KEY` + verify domain/mailboxes, replace interim `guide_5` copy, then flip
+  `COMMS_ENABLED=true` (see the go-live runbook).
+
 ### Operator delete-account: legible errors + erase-completeness fix (privacy)
 - **Why:** Brenden hit a "failed out" when deleting a member from the operator portal. The UI only showed a
   generic "Delete failed" so the real cause was invisible. Investigation: the function loads fine (401

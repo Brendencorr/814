@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Your Profile — Riley</title>
+<title>Your Profile - Riley</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
@@ -106,7 +106,7 @@ async function load(){
 
 $('av-file').addEventListener('change', async e=>{
   const file=e.target.files[0]; if(!file) return;
-  if(file.size>5*1024*1024){status('That image is a bit large — please pick one under ~5 MB.',true);return;}
+  if(file.size>5*1024*1024){status('That image is a bit large - please pick one under ~5 MB.',true);return;}
   status('Uploading photo…');
   const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'')||'png';
   const path=UID+'/avatar.'+ext;
@@ -115,7 +115,7 @@ $('av-file').addEventListener('change', async e=>{
   const {data}=SB.storage.from('avatars').getPublicUrl(path);
   pendingAvatar=data.publicUrl+'?v='+Date.now();
   showAvatar(pendingAvatar,$('f-name').value);
-  status('Photo ready — hit Save to keep it.');
+  status('Photo ready - hit Save to keep it.');
 });
 
 $('save').addEventListener('click', async ()=>{

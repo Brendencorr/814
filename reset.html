@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>The 8:14 Reset — Meet Riley</title>
+<title>The 8:14 Reset - Meet Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -75,7 +75,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 .timer{font-family:'DM Mono',monospace;font-size:34px;color:var(--gold);letter-spacing:0.04em}
 .riley-line{display:flex;gap:11px;align-items:flex-start;padding:15px 18px;background:linear-gradient(135deg,rgba(201,168,76,0.07),rgba(20,18,16,0.4));border:1px solid rgba(201,168,76,0.15);border-radius:6px;margin-bottom:22px}
 .done-tag{display:inline-flex;align-items:center;gap:7px;color:var(--green2);font-size:12.5px;font-weight:500}
-/* Week One Letter takeover (Doc 4 §8) — a letter, not a card stack; quiet fade, no confetti */
+/* Week One Letter takeover (Doc 4 §8) - a letter, not a card stack; quiet fade, no confetti */
 #wol{position:fixed;inset:0;z-index:9999;background:var(--ink);overflow-y:auto;opacity:0;transition:opacity 1.6s ease}
 #wol.show{opacity:1}
 .wol-inner{max-width:640px;width:100%;margin:0 auto;padding:70px 30px 130px;display:flex;flex-direction:column}
@@ -116,14 +116,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 const RESET_URL='/.netlify/functions/reset-day';
 let USER=null,UID=null,TOK=null,DAY=1,DATA=null,PROG={};
-// "The Heart of It" deep reflections — re-homed from onboarding v2 to the Reset
+// "The Heart of It" deep reflections - re-homed from onboarding v2 to the Reset
 // evenings, one per night, Days 2-6 (D6 absorbs the one-year vision). Saved to
 // riley_memory so Riley references them later. This overrides only the DISPLAYED
 // evening prompt; the reset_days DB content stays intact (fully reversible).
 const DEEP_Q={
   2:"What gives you energy? The people, places, or moments that fill you up.",
-  3:"And what drains you? No judgment — just honesty.",
-  4:"What are you most proud of? It can be big or quiet — both count.",
+  3:"And what drains you? No judgment - just honesty.",
+  4:"What are you most proud of? It can be big or quiet - both count.",
   5:"What's one thing you'd like to change? The thing you think about when it's quiet.",
   6:"What's one dream you've never given up on? The one that's still there, underneath everything."
 };
@@ -191,7 +191,7 @@ function render(){
   html += `<div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);letter-spacing:0.06em;margin-bottom:26px">MORNING ACTION &nbsp;·&nbsp; EVENING CLOSE &nbsp;·&nbsp; 8:14 A DAY</div>`;
 
   // ── MORNING ──
-  html += `<div class="rcard"><div class="rlabel" style="color:var(--gold)">☀️ Morning — the check-in</div><div class="rq">${esc(isDay7 && DATA.day1_sentence ? day.morning_checkin.replace('the heaviest thing you were carrying','“'+DATA.day1_sentence+'”') : day.morning_checkin)}</div>`;
+  html += `<div class="rcard"><div class="rlabel" style="color:var(--gold)">☀️ Morning - the check-in</div><div class="rq">${esc(isDay7 && DATA.day1_sentence ? day.morning_checkin.replace('the heaviest thing you were carrying','“'+DATA.day1_sentence+'”') : day.morning_checkin)}</div>`;
   if(isDay1 && !morningDone){
     html += `<textarea class="rin" id="checkin" placeholder="One honest sentence. Just name it."></textarea>`;
   } else if(!morningDone){
@@ -213,10 +213,10 @@ function render(){
   html += `</div></div>`;
 
   // ── EVENING ──
-  html += `<div class="rcard" style="${morningDone?'':'opacity:.7'}"><div class="rlabel" style="color:var(--smoke)">🌙 Evening — the close &nbsp;·&nbsp; ~2 min</div>`;
+  html += `<div class="rcard" style="${morningDone?'':'opacity:.7'}"><div class="rlabel" style="color:var(--smoke)">🌙 Evening - the close &nbsp;·&nbsp; ~2 min</div>`;
   html += `<div class="rq" style="font-size:14px">${esc(DEEP_Q[DAY]||day.evening_reflection)}</div>`;
   html += `<textarea class="rin" id="evening" placeholder="One line to Riley." ${eveningDone?'disabled':''}>${eveningDone?'(closed)':''}</textarea>`;
-  if(day.fuel_setup) html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)"><div class="rlabel" style="color:var(--smoke2)">🍃 Fuel — set up tomorrow</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(day.fuel_setup)}</div></div>`;
+  if(day.fuel_setup) html += `<div style="margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)"><div class="rlabel" style="color:var(--smoke2)">🍃 Fuel - set up tomorrow</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(day.fuel_setup)}</div></div>`;
   html += `<div style="margin-top:16px" id="e-area">`;
   html += eveningDone
     ? `<div class="done-tag"><span>✓</span> Day ${DAY} closed. ${DAY<7?'Tomorrow is Day '+(DAY+1)+'.':'You reached Day 7.'}</div>`
@@ -225,7 +225,7 @@ function render(){
 
   // Day 7 handoff (after the action)
   if(isDay7 && morningDone){
-    html += `<div class="rcard" style="border-color:rgba(201,168,76,0.3)"><div class="rlabel" style="color:var(--gold)">The handoff</div><div style="font-size:14.5px;color:var(--parchment);line-height:1.75">You showed up for seven days. The Guide — this — stays free and never expires. If you want me checking on you, or here every day without limits, that's what Companion and Coach are. No pressure, and no wrong answer.</div><div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><a href="/programs" class="btn btn-gold" style="padding:10px 20px">See what's next →</a><a href="/dashboard" class="btn btn-ghost" style="padding:10px 20px">Stay right here</a></div></div>`;
+    html += `<div class="rcard" style="border-color:rgba(201,168,76,0.3)"><div class="rlabel" style="color:var(--gold)">The handoff</div><div style="font-size:14.5px;color:var(--parchment);line-height:1.75">You showed up for seven days. The Guide - this - stays free and never expires. If you want me checking on you, or here every day without limits, that's what Companion and Coach are. No pressure, and no wrong answer.</div><div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><a href="/programs" class="btn btn-gold" style="padding:10px 20px">See what's next →</a><a href="/dashboard" class="btn btn-ghost" style="padding:10px 20px">Stay right here</a></div></div>`;
   }
 
   document.getElementById('content').innerHTML=html;
@@ -276,7 +276,7 @@ async function markEvening(){
 
 // ── Measurement v2: WHO-5 wellbeing baseline + support preference ─────────────
 // WHO-5 (standard 5-item, raw 0-25) offered Day-1 evening, re-offered Day 3 if
-// skipped, repeats every 14 days — its recall window. Support-pref on Day 4.
+// skipped, repeats every 14 days - its recall window. Support-pref on Day 4.
 function ovl(inner){let o=document.getElementById('rovl');if(!o){o=document.createElement('div');o.id='rovl';o.style.cssText='position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,3,2,0.82);backdrop-filter:blur(4px);font-family:\'DM Sans\',sans-serif';document.body.appendChild(o);}o.innerHTML=`<div style="max-width:440px;width:100%;background:#141210;border:1px solid rgba(255,255,255,0.09);border-radius:16px;padding:26px 24px;color:#f5f0e8">${inner}</div>`;}
 function ovlClose(){const o=document.getElementById('rovl');if(o)o.remove();}
 const WHO5_ITEMS=["I have felt cheerful and in good spirits","I have felt calm and relaxed","I have felt active and vigorous","I woke up feeling fresh and rested","My daily life has been filled with things that interest me"];
@@ -288,20 +288,20 @@ async function maybeOfferWho5(){
   try{window.trackEvent&&window.trackEvent('who5_offered',{});}catch(e){}
   WHO5_A=[]; who5Intro();
 }
-function who5Intro(){ovl(`<div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.35;margin-bottom:8px">A quick starting point?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:18px">Five quick taps about the last two weeks — so in two weeks, you can see what's changed. No right answers, and you can skip it.</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button onclick="who5Q(0)" style="background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:11px 22px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer">Sure — 30 seconds</button><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Maybe later</button></div>`);}
+function who5Intro(){ovl(`<div style="font-family:'DM Serif Display',serif;font-size:22px;line-height:1.35;margin-bottom:8px">A quick starting point?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:18px">Five quick taps about the last two weeks - so in two weeks, you can see what's changed. No right answers, and you can skip it.</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button onclick="who5Q(0)" style="background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:11px 22px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer">Sure - 30 seconds</button><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Maybe later</button></div>`);}
 function who5Q(i){if(i>=WHO5_ITEMS.length)return who5Save();ovl(`<div style="font-size:10px;font-family:'DM Mono',monospace;color:#c9a84c;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px">Baseline · ${i+1} of 5</div><div style="font-size:12px;color:#8a8578;margin-bottom:6px">Over the last two weeks…</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.35;margin-bottom:16px">${esc(WHO5_ITEMS[i])}</div><div style="display:flex;flex-direction:column;gap:7px">${WHO5_SCALE.map(s=>`<button onclick="who5Ans(${i},${s[0]})" style="text-align:left;padding:12px 14px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${s[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:14px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip the rest</button></div>`);}
 function who5Ans(i,v){WHO5_A[i]=v;who5Q(i+1);}
-async function who5Save(){const score=WHO5_A.reduce((a,b)=>a+(b||0),0);const domains={cheerful:WHO5_A[0],calm:WHO5_A[1],active:WHO5_A[2],rested:WHO5_A[3],interested:WHO5_A[4]};try{await SB.from('who5_scores').insert({user_id:UID,score:score,domains:domains});}catch(e){}try{window.trackEvent&&window.trackEvent('who5_completed',{});}catch(e){}ovl(`<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:10px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4">Got it — thank you.</div><div style="font-size:14px;color:#8a8578;margin-top:8px;line-height:1.6">That's our starting line. In two weeks we'll look again and see how far you've come.</div><div style="margin-top:16px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Close</button></div></div>`);}
-const SUPPORT_OPTS=[['self',"Mostly self-guided — I've got it"],['reminders','Gentle reminders help'],['weekly','A weekly reflection with you'],['outside','I may want outside support']];
-async function offerSupportPref(){try{const {data:p}=await SB.from('user_profiles').select('support_preference').eq('id',UID).maybeSingle();if(p&&p.support_preference)return;}catch(e){}ovl(`<div style="font-family:'DM Serif Display',serif;font-size:21px;line-height:1.35;margin-bottom:8px">How do you want support from here?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:16px">No wrong answer — and you can change it anytime.</div><div style="display:flex;flex-direction:column;gap:8px">${SUPPORT_OPTS.map(o=>`<button data-track="support_opt" onclick="saveSupportPref('${o[0]}')" style="text-align:left;padding:13px 15px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${o[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:12px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip</button></div>`);}
-async function saveSupportPref(v){try{await SB.from('user_profiles').update({support_preference:v}).eq('id',UID);}catch(e){}try{window.trackEvent&&window.trackEvent('support_pref_set',{});}catch(e){}if(v==='outside'){ovl(`<div style="padding:6px 0"><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4;margin-bottom:8px">That takes courage to name.</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:14px">Wanting outside support is a strength, not a step back. Whenever you're ready, here are places to start — at your pace.</div><a href="/resources" style="display:block;text-align:center;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px;border-radius:8px;text-decoration:none;font-weight:600">See support resources</a><div style="text-align:center;margin-top:10px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Not now</button></div></div>`);}else ovlClose();}
+async function who5Save(){const score=WHO5_A.reduce((a,b)=>a+(b||0),0);const domains={cheerful:WHO5_A[0],calm:WHO5_A[1],active:WHO5_A[2],rested:WHO5_A[3],interested:WHO5_A[4]};try{await SB.from('who5_scores').insert({user_id:UID,score:score,domains:domains});}catch(e){}try{window.trackEvent&&window.trackEvent('who5_completed',{});}catch(e){}ovl(`<div style="text-align:center;padding:8px 0"><div style="font-size:28px;margin-bottom:10px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4">Got it - thank you.</div><div style="font-size:14px;color:#8a8578;margin-top:8px;line-height:1.6">That's our starting line. In two weeks we'll look again and see how far you've come.</div><div style="margin-top:16px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Close</button></div></div>`);}
+const SUPPORT_OPTS=[['self',"Mostly self-guided - I've got it"],['reminders','Gentle reminders help'],['weekly','A weekly reflection with you'],['outside','I may want outside support']];
+async function offerSupportPref(){try{const {data:p}=await SB.from('user_profiles').select('support_preference').eq('id',UID).maybeSingle();if(p&&p.support_preference)return;}catch(e){}ovl(`<div style="font-family:'DM Serif Display',serif;font-size:21px;line-height:1.35;margin-bottom:8px">How do you want support from here?</div><div style="font-size:14px;color:#8a8578;line-height:1.6;margin-bottom:16px">No wrong answer - and you can change it anytime.</div><div style="display:flex;flex-direction:column;gap:8px">${SUPPORT_OPTS.map(o=>`<button data-track="support_opt" onclick="saveSupportPref('${o[0]}')" style="text-align:left;padding:13px 15px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${o[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:12px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip</button></div>`);}
+async function saveSupportPref(v){try{await SB.from('user_profiles').update({support_preference:v}).eq('id',UID);}catch(e){}try{window.trackEvent&&window.trackEvent('support_pref_set',{});}catch(e){}if(v==='outside'){ovl(`<div style="padding:6px 0"><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4;margin-bottom:8px">That takes courage to name.</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:14px">Wanting outside support is a strength, not a step back. Whenever you're ready, here are places to start - at your pace.</div><a href="/resources" style="display:block;text-align:center;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px;border-radius:8px;text-decoration:none;font-weight:600">See support resources</a><div style="text-align:center;margin-top:10px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Not now</button></div></div>`);}else ovlClose();}
 
-// ── PHQ-2 / GAD-2 (depression + anxiety screen) — DISABLED BY DEFAULT ─────────
-// These are validated CLINICAL screeners — high-stakes. Do NOT enable until a
+// ── PHQ-2 / GAD-2 (depression + anxiety screen) - DISABLED BY DEFAULT ─────────
+// These are validated CLINICAL screeners - high-stakes. Do NOT enable until a
 // licensed clinician reviews the items, consent copy, elevated-score routing, and
 // the crisis interplay. When enabled: offer ONLY to consenting emotional-focus
 // users (grief lane / low WHO-5); elevated scores (phq2>=3 or gad2>=3) route to the
-// Concern support path (resources + presence) — NEVER an automated diagnosis.
+// Concern support path (resources + presence) - NEVER an automated diagnosis.
 const PHQGAD_ENABLED=false;   // <-- flip to true ONLY after clinical sign-off
 const PHQ2_ITEMS=["Little interest or pleasure in doing things","Feeling down, depressed, or hopeless"];
 const GAD2_ITEMS=["Feeling nervous, anxious, or on edge","Not being able to stop or control worrying"];
@@ -313,10 +313,10 @@ async function maybeOfferPhqGad(){
     if(last&&last.length&&(Date.now()-new Date(last[0].taken_at))<14*86400000)return;}catch(e){}
   PG_A=[]; pgConsent();
 }
-function pgConsent(){ovl(`<div style="font-family:'DM Serif Display',serif;font-size:21px;line-height:1.35;margin-bottom:8px">Two quick check-ins — only if you want</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:16px">A few questions about mood and worry over the last two weeks. It helps me understand how to show up for you. It's private, it's not a diagnosis, and you can skip it — no pressure at all.</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button onclick="pgQ(0)" style="background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:11px 22px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer">Okay</button><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Not now</button></div>`);}
+function pgConsent(){ovl(`<div style="font-family:'DM Serif Display',serif;font-size:21px;line-height:1.35;margin-bottom:8px">Two quick check-ins - only if you want</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:16px">A few questions about mood and worry over the last two weeks. It helps me understand how to show up for you. It's private, it's not a diagnosis, and you can skip it - no pressure at all.</div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><button onclick="pgQ(0)" style="background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;border:none;padding:11px 22px;font-size:14px;font-weight:600;border-radius:8px;cursor:pointer">Okay</button><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Not now</button></div>`);}
 function pgQ(i){const items=PHQ2_ITEMS.concat(GAD2_ITEMS);if(i>=items.length)return pgSave();ovl(`<div style="font-size:10px;font-family:'DM Mono',monospace;color:#c9a84c;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px">Check-in · ${i+1} of 4</div><div style="font-size:12px;color:#8a8578;margin-bottom:6px">Over the last two weeks, how often have you been bothered by…</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.35;margin-bottom:16px">${esc(items[i])}</div><div style="display:flex;flex-direction:column;gap:7px">${PHQGAD_SCALE.map(s=>`<button data-track="pg_opt" onclick="pgAns(${i},${s[0]})" style="text-align:left;padding:12px 14px;min-height:24px;background:#1c1a18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#f5f0e8;font-size:14px;cursor:pointer">${s[1]}</button>`).join('')}</div><div style="text-align:center;margin-top:14px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:12px;cursor:pointer">Skip</button></div>`);}
 function pgAns(i,v){PG_A[i]=v;pgQ(i+1);}
-async function pgSave(){const phq2=(PG_A[0]||0)+(PG_A[1]||0),gad2=(PG_A[2]||0)+(PG_A[3]||0);try{await SB.from('phq_gad_scores').insert({user_id:UID,phq2:phq2,gad2:gad2,consented:true});}catch(e){}try{window.trackEvent&&window.trackEvent('phqgad_completed',{});}catch(e){}const elevated=(phq2>=3||gad2>=3);ovl(`<div style="padding:6px 0"><div style="font-size:26px;text-align:center;margin-bottom:10px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4;text-align:center">Thank you for trusting me with that.</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-top:8px;text-align:center">${elevated?"It sounds like things have felt heavy lately. You don't have to carry that alone — talking with someone can really help, whenever you're ready.":"I'll keep this in mind as we go. I'm glad you're here."}</div>${elevated?`<a href="/resources" style="display:block;text-align:center;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:14px">See support options</a>`:''}<div style="text-align:center;margin-top:12px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Close</button></div></div>`);}
+async function pgSave(){const phq2=(PG_A[0]||0)+(PG_A[1]||0),gad2=(PG_A[2]||0)+(PG_A[3]||0);try{await SB.from('phq_gad_scores').insert({user_id:UID,phq2:phq2,gad2:gad2,consented:true});}catch(e){}try{window.trackEvent&&window.trackEvent('phqgad_completed',{});}catch(e){}const elevated=(phq2>=3||gad2>=3);ovl(`<div style="padding:6px 0"><div style="font-size:26px;text-align:center;margin-bottom:10px">🐦</div><div style="font-family:'DM Serif Display',serif;font-size:19px;line-height:1.4;text-align:center">Thank you for trusting me with that.</div><div style="font-size:14px;color:#8a8578;line-height:1.65;margin-top:8px;text-align:center">${elevated?"It sounds like things have felt heavy lately. You don't have to carry that alone - talking with someone can really help, whenever you're ready.":"I'll keep this in mind as we go. I'm glad you're here."}</div>${elevated?`<a href="/resources" style="display:block;text-align:center;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:11px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:14px">See support options</a>`:''}<div style="text-align:center;margin-top:12px"><button onclick="ovlClose()" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer">Close</button></div></div>`);}
 
 // ── Week One Letter takeover (Doc 4 §8) ──────────────────────────────
 const WOL_URL='/.netlify/functions/week-one-letter';
@@ -343,7 +343,7 @@ async function openWeekOneLetter(mode){
   try{
     const r=await fetch(WOL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',token:TOK})});
     const d=await r.json();
-    if(!d||!d.ready){ quietCloseWOL(); return; } // not ready (e.g. crisis-delayed §6.1) — retry next session
+    if(!d||!d.ready){ quietCloseWOL(); return; } // not ready (e.g. crisis-delayed §6.1) - retry next session
     WOL_DATA=d;
     if(WOL_MODE==='completion'){ try{localStorage.setItem('wol_shown_'+UID,'1');}catch(e){} }
     renderLetter(d);
@@ -379,7 +379,7 @@ async function keepInJourneys(){
     await fetch(WOL_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'save',token:TOK})});
     if(btn){btn.textContent='Kept in Journeys ✓';btn.disabled=true;}
     if(note)note.textContent='Saved. You can reread it anytime in Journeys.';
-  }catch(e){ if(note)note.textContent='Could not save just now — it’s still yours; try again.'; }
+  }catch(e){ if(note)note.textContent='Could not save just now - it’s still yours; try again.'; }
 }
 
 async function saveLetterImage(){
@@ -401,10 +401,10 @@ async function saveLetterImage(){
     bl.forEach(function(l){ if(l.t){ctx.font=bodyFont;ctx.fillStyle='#f5f0e8';ctx.fillText(l.t,pad,y);} y+=l.lh; });
     y+=midGap-40; ctx.strokeStyle='rgba(201,168,76,0.28)'; ctx.beginPath(); ctx.moveTo(pad,y-20); ctx.lineTo(pad+120,y-20); ctx.stroke();
     pl.forEach(function(l){ if(l.t){ctx.font=psFont;ctx.fillStyle='#c9a84c';ctx.fillText(l.t,pad,y);} y+=l.lh; });
-    canvas.toBlob(function(blob){ if(!blob){ if(note)note.textContent='Could not save just now — try again.'; return; } const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='your-week-one-letter.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},2000); if(note)note.textContent='Saved to your device.'; },'image/png');
+    canvas.toBlob(function(blob){ if(!blob){ if(note)note.textContent='Could not save just now - try again.'; return; } const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='your-week-one-letter.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},2000); if(note)note.textContent='Saved to your device.'; },'image/png');
   }catch(e){
     try{ const txt=(WOL_DATA.body||'')+'\n\n'+(WOL_DATA.ps||''); const blob=new Blob([txt],{type:'text/plain'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='your-week-one-letter.txt'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(url);},2000); if(note)note.textContent='Saved to your device.'; }
-    catch(e2){ if(note)note.textContent='Could not save just now — try again.'; }
+    catch(e2){ if(note)note.textContent='Could not save just now - try again.'; }
   }
 }
 
@@ -425,10 +425,10 @@ function pushCard(){
   if(!pushSupported()||localStorage.getItem('riley_reset_push'))return'';
   return `<div class="rcard" id="push-card" style="border-color:rgba(201,168,76,0.25)">
     <div class="rlabel" style="color:var(--gold)">🔔 Want me to nudge you?</div>
-    <div id="push-msg" style="font-size:14px;color:var(--parchment);line-height:1.65">I can send two short notifications a day while you're doing the Reset — one in the morning to start, one at night to close. Just for these 7 days, then they stop on their own. You can turn them off anytime.</div>
+    <div id="push-msg" style="font-size:14px;color:var(--parchment);line-height:1.65">I can send two short notifications a day while you're doing the Reset - one in the morning to start, one at night to close. Just for these 7 days, then they stop on their own. You can turn them off anytime.</div>
     <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
       <button class="btn btn-gold" style="padding:9px 18px" onclick="enablePush()">Yes, nudge me</button>
-      <button class="btn btn-ghost" style="padding:9px 18px" onclick="declinePush()">No thanks — I'll come to you</button>
+      <button class="btn btn-ghost" style="padding:9px 18px" onclick="declinePush()">No thanks - I'll come to you</button>
     </div></div>`;
 }
 async function enablePush(){
@@ -441,7 +441,7 @@ async function enablePush(){
     if(!publicKey)throw new Error('no key');
     const wantKey=urlB64ToU8(publicKey);
     let sub=await reg.pushManager.getSubscription();
-    // A subscription bound to a different VAPID key can never receive our pushes — drop it and
+    // A subscription bound to a different VAPID key can never receive our pushes - drop it and
     // re-subscribe with the current key (self-healing after a key change / DB move).
     if(sub){try{const cur=sub.options&&sub.options.applicationServerKey;let same=!!cur;if(cur){const a=new Uint8Array(cur);same=a.length===wantKey.length;for(let i=0;same&&i<a.length;i++)same=a[i]===wantKey[i];}if(!same){try{await sub.unsubscribe();}catch(e){}sub=null;}}catch(e){sub=null;}}
     if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wantKey});
@@ -456,7 +456,7 @@ async function declinePush(){
 }
 function dismissPush(state){
   const card=document.getElementById('push-card'); if(!card)return;
-  if(state==='on'){card.innerHTML='<div class="done-tag" style="padding:4px 0;flex-wrap:wrap;gap:6px"><span>✓</span> I\'ll send two short nudges a day — morning and night. <a href="#" onclick="sendTest(event)" style="color:var(--gold)">Send a test now →</a></div>';}
+  if(state==='on'){card.innerHTML='<div class="done-tag" style="padding:4px 0;flex-wrap:wrap;gap:6px"><span>✓</span> I\'ll send two short nudges a day - morning and night. <a href="#" onclick="sendTest(event)" style="color:var(--gold)">Send a test now →</a></div>';}
   else card.remove();
 }
 async function sendTest(e){
@@ -464,7 +464,7 @@ async function sendTest(e){
   const tag=document.querySelector('#push-card .done-tag');
   try{
     const r=await fetch('/.netlify/functions/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'test',token:TOK})});
-    if(tag)tag.innerHTML = r.ok ? '<span>✓</span> Test sent — check your notifications.' : '<span>⚠</span> Couldn\'t send just now — give it a moment after deploy.';
+    if(tag)tag.innerHTML = r.ok ? '<span>✓</span> Test sent - check your notifications.' : '<span>⚠</span> Couldn\'t send just now - give it a moment after deploy.';
   }catch(err){}
 }
 async function doSignOut(){await SB.auth.signOut();window.location.href='https://riley.meetriley.us';}

@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Your Journey — Meet Riley</title>
+<title>Your Journey - Meet Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -141,7 +141,7 @@ async function loadJourney(){
   // Already completed today's step?
   const {data:todayDone}=await SB.from('journey_step_completions').select('day_number').eq('user_id',UID).eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
 
-  // Fetch the step content — pre-written if it exists, else generate on demand
+  // Fetch the step content - pre-written if it exists, else generate on demand
   let {data:step}=await SB.from('journey_steps').select('*').eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
   if(!step){
     document.getElementById('content').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:48px 0;text-align:center"><div style="font-size:28px">🐦</div><div style="color:var(--smoke);font-size:13px;line-height:1.6">Riley is preparing today\'s step…<br>Just a moment.</div></div>';
@@ -152,7 +152,7 @@ async function loadJourney(){
     }catch(e){}
   }
   if(!step){
-    document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">This journey\'s daily steps are being written. Check back soon — or talk with Riley in the meantime.</div>';
+    document.getElementById('content').innerHTML='<div style="color:var(--smoke);font-size:13px">This journey\'s daily steps are being written. Check back soon - or talk with Riley in the meantime.</div>';
     return;
   }
   STEP=step;
@@ -210,9 +210,9 @@ async function completeStep(day){
     // Advance the enrollment
     const next=Math.min(day,dur);
     await SB.from('user_program_progress').update({days_completed:next,day_completed:next,last_activity:new Date().toISOString(),status:next>=dur?'completed':'active'}).eq('id',ENROLL.id);
-    // Also mirror journal into reflection (daily_checkins notes) if written — non-fatal
+    // Also mirror journal into reflection (daily_checkins notes) if written - non-fatal
     if(journal){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,notes:journal},{onConflict:'user_id,checkin_date'});}catch(e){}}
-    // Reload — shows completion or next-day-locked state
+    // Reload - shows completion or next-day-locked state
     document.getElementById('complete-area').innerHTML='<div style="display:flex;align-items:center;gap:8px;color:var(--green2);font-size:13px;font-weight:500"><span>✓</span> Day '+day+' complete. '+(next>=dur?'You finished the journey.':'Come back tomorrow for the next step.')+'</div>';
     if(next>=dur)setTimeout(()=>{ENROLL.days_completed=next;renderCompletion();},1200);
   }catch(e){if(btn){btn.disabled=false;btn.textContent='Complete Day '+day+' →';}console.error(e);}
@@ -335,7 +335,7 @@ boot();
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

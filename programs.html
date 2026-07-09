@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Program Add-ons — Riley</title>
+<title>Program Add-ons - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -176,7 +176,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 
 (async()=>{ await boot(async()=>{ setTimeout(function(){ loadPrograms(); rileyUnlockWaitlist(); }, 0); }); })();
-// Waitlist takeover — every in-app "Unlock with Coach/Companion" CTA lands here as ?unlock=<feat>.
+// Waitlist takeover - every in-app "Unlock with Coach/Companion" CTA lands here as ?unlock=<feat>.
 // Coach & Companion are waitlist-only for now (Brenden grants access manually); Guide stays open.
 // Matches the marketing-site waitlist copy. The member is logged in, so joining is one tap (we have their email).
 function rileyUnlockWaitlist(){
@@ -189,7 +189,7 @@ function rileyUnlockWaitlist(){
   ov.innerHTML=`<div style="background:#141210;border:1px solid rgba(201,168,76,0.24);border-radius:14px;max-width:420px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6)">
     <div style="width:54px;height:54px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 34px rgba(201,168,76,0.45)"></div>
     <div style="font-family:'DM Serif Display',serif;font-size:23px;color:#f5f0e8;margin-bottom:10px">Upgrade to ${label}</div>
-    <div id="rw-body" style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Start your ${label} membership — cancel anytime, and your first payment is fully refundable within 30 days.</div>
+    <div id="rw-body" style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Start your ${label} membership - cancel anytime, and your first payment is fully refundable within 30 days.</div>
     <button id="rw-join" style="width:100%;padding:13px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px">Continue to checkout →</button>
     <button id="rw-close" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:6px">Not now</button>
   </div>`;
@@ -200,7 +200,7 @@ function rileyUnlockWaitlist(){
   document.getElementById('rw-join').onclick=async function(){
     const btn=this; btn.disabled=true; btn.textContent='Opening checkout…';
     try{
-      if(!(await paymentsLive())){ document.getElementById('rw-body').textContent='Memberships open very soon — thanks for your patience.'; btn.disabled=false; btn.textContent='Continue to checkout →'; return; }
+      if(!(await paymentsLive())){ document.getElementById('rw-body').textContent='Memberships open very soon - thanks for your patience.'; btn.disabled=false; btn.textContent='Continue to checkout →'; return; }
       const tok=(await SB.auth.getSession()).data.session?.access_token;
       if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
       const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:plan+'_monthly'})});
@@ -220,7 +220,7 @@ async function loadPrograms_LEGACY_UNUSED(){ /* superseded by the program-list l
   const eIds=new Set(enrolled.map(e=>e.programs?.id||e.program_id).filter(Boolean));
   const active=enrolled.filter(e=>e.status!=='paused');
   const acEl=document.getElementById('pg-active');
-  if(!active.length){acEl.innerHTML='<div class="card"><div class="empty" style="padding:20px 0">No active programs — enroll below.</div></div>';}
+  if(!active.length){acEl.innerHTML='<div class="card"><div class="empty" style="padding:20px 0">No active programs - enroll below.</div></div>';}
   else{acEl.innerHTML=active.map(e=>{const pr=e.programs||{};const d=e.days_completed||e.day_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const fin=pct>=100;
     const slug=pr.slug||'';
     return`<div class="card"><div style="font-size:36px;margin-bottom:10px">${pr.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(pr.title||e.program_name||'Program')}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:14px">Day ${d} of ${t} · ${fin?'Complete ✓':'Active'}</div><div class="pbar" style="height:6px;margin-bottom:10px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'DM Mono',monospace;font-size:22px;color:${fin?'var(--green2)':'var(--gold)'}">${fin?'✓':pct+'%'}</span>${fin?'<a href="/roadmap" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">View Timeline</a>':'<a href="/journey'+(slug?'?slug='+slug:'')+'" class="btn btn-gold" style="font-size:11px;padding:6px 14px">Open Today\'s Step →</a>'}</div></div>`;
@@ -228,7 +228,7 @@ async function loadPrograms_LEGACY_UNUSED(){ /* superseded by the program-list l
   const avEl=document.getElementById('pg-avail');
   const avail=all.filter(p=>!eIds.has(p.id));
   // ── Entitlement gating: owned/free programs are enrollable; the rest render a
-  // locked preview with an upsell. Respects free-access mode automatically —
+  // locked preview with an upsell. Respects free-access mode automatically -
   // entitlements grants every product when it's on, so all cards are enrollable. ──
   let ownedProds=new Set();
   try{
@@ -248,7 +248,7 @@ async function loadPrograms_LEGACY_UNUSED(){ /* superseded by the program-list l
     if(hasAccess(p)){
       return `<div class="card"><div style="font-size:36px;margin-bottom:10px">${p.emoji||'🎯'}</div>${head}<button class="btn btn-gold" style="width:100%;text-align:center" onclick="enroll('${p.id}','${esc(p.title)}')">Begin This Journey →</button></div>`;
     }
-    // Locked preview — visible, dimmed, with an upsell to the storefront.
+    // Locked preview - visible, dimmed, with an upsell to the storefront.
     return `<div class="card" style="position:relative"><div style="position:absolute;top:14px;right:16px;font-size:15px;opacity:0.75">🔒</div><div style="font-size:36px;margin-bottom:10px;opacity:0.5;filter:grayscale(0.4)">${p.emoji||'🎯'}</div>${head}<a href="https://www.meetriley.us" target="_blank" rel="noopener" class="btn btn-ghost" style="width:100%;text-align:center;display:block;border-color:rgba(201,168,76,0.45);color:var(--gold)">Unlock · ${priceLabel(p)} →</a></div>`;
   }).join('');}
 }
@@ -273,15 +273,15 @@ async function loadPrograms(){
   }catch(e){}
   const inc=data.included||[];
   if(incEl) incEl.innerHTML = inc.length ? inc.map(function(p){return programCard(p,true);}).join('')
-    : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet — Companion includes the 3 self-guided programs, Coach includes all of them.</div>';
+    : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet - Companion includes the 3 self-guided programs, Coach includes all of them.</div>';
   const av=data.available||[];
   if(addEl){
     if(!av.length){ addEl.innerHTML='<div style="font-size:13px;color:var(--smoke)">You have every program. 🎉</div>'; return; }
     var selfG=av.filter(function(p){return pgFamily(p.kind)==='self';});
     var rileyL=av.filter(function(p){return pgFamily(p.kind)==='riley';});
     addEl.innerHTML =
-        pgSection('Self-Guided Programs','Full program content, yours to keep. Move through it at your own pace — no Riley, no tracking. A one-time purchase.',selfG)
-      + pgSection('Riley-Led Programs','Coaching with Riley — a Session Zero plus 14 guided sessions. Riley builds the plan with you, adapts it every week, and remembers exactly where you are.',rileyL);
+        pgSection('Self-Guided Programs','Full program content, yours to keep. Move through it at your own pace - no Riley, no tracking. A one-time purchase.',selfG)
+      + pgSection('Riley-Led Programs','Coaching with Riley - a Session Zero plus 14 guided sessions. Riley builds the plan with you, adapts it every week, and remembers exactly where you are.',rileyL);
   }
 }
 // Two distinct offerings: self-guided content (self_guided + bundle) vs Riley-led coaching (interactive + guided).
@@ -314,13 +314,13 @@ function programCard(p,owned){
     return '<div class="card" style="opacity:.9">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';
   return '<div class="card">'+head+'<button class="btn btn-gold" style="width:100%;text-align:center" onclick="buyProgram(\''+p.key+'\')">Get it · '+pgPrice(p.price_cents)+'</button></div>';
 }
-// Payments gate — the in-app buy buttons take real money ONLY when app_settings.payments_live=true
+// Payments gate - the in-app buy buttons take real money ONLY when app_settings.payments_live=true
 // (the single go-live switch, shared with the marketing site). Fail-closed: any error → blocked.
 async function paymentsLive(){ try{ const {data}=await SB.from('app_settings').select('value').eq('key','payments_live').maybeSingle(); return !!(data&&String(data.value).toLowerCase()==='true'); }catch(e){ return false; } }
 async function buyProgram(key){
   A('pg-alert','Opening secure checkout…',true);
   try{
-    if(!(await paymentsLive())){ A('pg-alert','Purchasing opens very soon — hang tight while we finish setup.',true); return; }
+    if(!(await paymentsLive())){ A('pg-alert','Purchasing opens very soon - hang tight while we finish setup.',true); return; }
     const tok=(await SB.auth.getSession()).data.session?.access_token;
     if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
     const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:key})});
@@ -428,7 +428,7 @@ async function buyProgram(key){
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Home — Meet Riley</title>
+<title>Home - Meet Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -104,7 +104,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .hb-fill{height:100%;border-radius:3px;transition:width 1s ease}
 .hb-val{font-size:10px;font-family:'DM Mono',monospace;color:var(--parchment);width:28px;text-align:right}
 
-/* TREND CARDS — dynamic per member, each is a tappable link into its history */
+/* TREND CARDS - dynamic per member, each is a tappable link into its history */
 .trends{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
 .tcard{display:block;text-decoration:none;color:inherit;cursor:pointer;background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
 .tcard:hover{transform:translateY(-2px);border-color:rgba(201,168,76,0.25)}
@@ -221,20 +221,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   .riley-warm{font-family:'DM Serif Display',serif;font-size:15px;font-style:italic;font-weight:300;color:var(--smoke);margin-top:3px;letter-spacing:0.01em}
   .riley-sig{font-size:10px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;margin-top:2px;opacity:0.8}
 
-  /* Story card — sits above hero, sets tone */
+  /* Story card - sits above hero, sets tone */
   .story-card{background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:22px 26px;margin-bottom:18px;animation:fadeUp .6s ease backwards}
   .story-eyebrow{font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:10px;opacity:0.8}
   .story-text{font-family:'DM Serif Display',serif;font-size:19px;font-weight:340;line-height:1.65;color:var(--parchment);letter-spacing:-0.01em}
   .story-text .muted{color:var(--smoke)}
 
-  /* Riley Notices — small floating notes */
+  /* Riley Notices - small floating notes */
   .notices{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;animation:fadeUp .6s ease .1s backwards}
   .notice{display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px}
   .notice-ico{font-size:15px;flex-shrink:0;margin-top:1px}
   .notice-label{font-family:'DM Mono',monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8}
   .notice-text{font-size:13px;color:var(--smoke);line-height:1.55}
 
-  /* Milestone celebration — replaces cold sobriety number */
+  /* Milestone celebration - replaces cold sobriety number */
   .milestone{text-align:center;background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(16,14,12,0.3));border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:28px;margin-bottom:18px;animation:fadeUp .7s ease backwards}
   .ms-spark{font-size:28px;margin-bottom:8px}
   .ms-num{font-family:'DM Serif Display',serif;font-size:52px;font-weight:300;color:var(--parchment);line-height:1;letter-spacing:-0.02em}
@@ -293,13 +293,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- Milestone celebration (milestone days only) -->
     <div id="milestone-slot"></div>
 
-    <!-- Today's Story — sets emotional tone before metrics -->
+    <!-- Today's Story - sets emotional tone before metrics -->
     <div id="story-slot"></div>
 
-    <!-- Riley Notices — small alive observations -->
+    <!-- Riley Notices - small alive observations -->
     <div id="notices-slot"></div>
 
-    <!-- Phase 2 — Riley's progressive discovery (one gentle question at a time) -->
+    <!-- Phase 2 - Riley's progressive discovery (one gentle question at a time) -->
     <div id="phase2-slot"></div>
 
     <!-- HERO -->
@@ -310,7 +310,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <circle cx="80" cy="80" r="64" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="11"/>
           <circle id="hero-ring" cx="80" cy="80" r="64" fill="none" stroke="url(#ringGrad)" stroke-width="11" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="402"/>
         </svg>
-        <div class="hero-center"><div class="hero-score" id="hero-score">—</div><div class="hero-score-label">Clarity</div></div>
+        <div class="hero-center"><div class="hero-score" id="hero-score">-</div><div class="hero-score-label">Clarity</div></div>
       </div>
       <div class="hero-info">
         <div class="hero-title" id="hero-title">Calculating your readiness…</div>
@@ -323,10 +323,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
-    <!-- For You Today — Riley Brain's matched recommendations -->
+    <!-- For You Today - Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
-    <!-- Everything Riley Offers — reliable, entitlement-driven locked previews so
+    <!-- Everything Riley Offers - reliable, entitlement-driven locked previews so
          every member sees the full menu of what they could unlock (Coach hides it) -->
     <div id="explore-slot"></div>
 
@@ -341,7 +341,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <!-- Brief -->
         <div class="brief">
           <div class="brief-head">
-            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals — in your inbox by 6:00 AM.</div></div>
+            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals - in your inbox by 6:00 AM.</div></div>
             <div id="bc-regen-wrap" style="text-align:right;flex-shrink:0;padding-left:16px;display:none"><button onclick="genDashBrief(true)" id="bc-regen" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--smoke2);padding:5px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em">↻ Regenerate</button></div>
           </div>
           <div id="brief-body" style="padding:4px 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
@@ -358,7 +358,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
              as tappable stat tiles at the top of the page (see DYNAMIC STAT TILES). -->
         <div class="panel" id="habits-panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
         <div class="panel" id="goals-panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
-        <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs — <a href="/programs">enroll</a></div></div></div>
+        <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
       </div>
     </div>
   </div>
@@ -368,7 +368,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-// "App day" rolls at 4am LOCAL, not midnight — a night owl checking in at 1am is still on
+// "App day" rolls at 4am LOCAL, not midnight - a night owl checking in at 1am is still on
 // today, never bumped to tomorrow. Anchors check-in dedup/save + the streak + grid together.
 let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),MOOD=null,SOBER_DAYS=0,CHECKINS=[];
 
@@ -378,23 +378,23 @@ const SEASON_WARMS={spring:["Spring. Time to build.","New season. New chapter.",
 
 // ── MOOD ENGINE ───────────────────────────────────────────────────────────────
 const MOOD_CONFIG={
-  5:{story:"You're bringing real energy today. <span style='color:var(--smoke)'>Whatever's feeding it — build on it.</span>",insight:"Real momentum right now. Use it intentionally today.",response:"Wonderful. Let's build on that.",choices:false,challenge:"Push one thing slightly further than feels comfortable today.",mode:'thriving'},
-  4:{story:"A good day ahead. <span style='color:var(--smoke)'>Steady and solid. That consistency matters more than most people realize.</span>",insight:"Good energy. Keep the habits going — this is what momentum feels like.",response:"Good. That's a solid foundation.",choices:false,challenge:"One thing slightly outside your comfort zone today.",mode:'building'},
-  3:{story:"Okay is honest. <span style='color:var(--smoke)'>Start here — no need to force anything. Show up, and that's enough.</span>",insight:"Okay days are still days. Show up as you are — Riley's here with you.",response:"Okay is honest. That's where we begin.",choices:false,challenge:"Just one small thing today. That's enough.",mode:'steady'},
-  2:{story:"Today feels heavy, and that's allowed. <span style='color:var(--smoke)'>You don't have to fix anything. Being here counts.</span>",insight:"I'm glad you checked in. That takes something on a hard day.",response:"I hear you. I'm glad you're here.",choices:true,challenge:"A short walk — even ten minutes — tends to loosen the heavy days.",mode:'struggling'},
-  1:{story:"Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>",insight:"Thank you for telling me. That's not easy. I'm here — what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:"Move. Breathe. Reflect. That's the whole day.",mode:'struggling'}
+  5:{story:"You're bringing real energy today. <span style='color:var(--smoke)'>Whatever's feeding it - build on it.</span>",insight:"Real momentum right now. Use it intentionally today.",response:"Wonderful. Let's build on that.",choices:false,challenge:"Push one thing slightly further than feels comfortable today.",mode:'thriving'},
+  4:{story:"A good day ahead. <span style='color:var(--smoke)'>Steady and solid. That consistency matters more than most people realize.</span>",insight:"Good energy. Keep the habits going - this is what momentum feels like.",response:"Good. That's a solid foundation.",choices:false,challenge:"One thing slightly outside your comfort zone today.",mode:'building'},
+  3:{story:"Okay is honest. <span style='color:var(--smoke)'>Start here - no need to force anything. Show up, and that's enough.</span>",insight:"Okay days are still days. Show up as you are - Riley's here with you.",response:"Okay is honest. That's where we begin.",choices:false,challenge:"Just one small thing today. That's enough.",mode:'steady'},
+  2:{story:"Today feels heavy, and that's allowed. <span style='color:var(--smoke)'>You don't have to fix anything. Being here counts.</span>",insight:"I'm glad you checked in. That takes something on a hard day.",response:"I hear you. I'm glad you're here.",choices:true,challenge:"A short walk - even ten minutes - tends to loosen the heavy days.",mode:'struggling'},
+  1:{story:"Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>",insight:"Thank you for telling me. That's not easy. I'm here - what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:"Move. Breathe. Reflect. That's the whole day.",mode:'struggling'}
 };
 
 function applyMoodEngine(n){
   const cfg=MOOD_CONFIG[n]||MOOD_CONFIG[3];
-  // ── RILEY SUGGESTS — one card, two beats. Beat 1 = reflection (was "Today's
+  // ── RILEY SUGGESTS - one card, two beats. Beat 1 = reflection (was "Today's
   // Story"); Beat 2 = the actionable suggestion. One continuous thought. ──
   const stSlot=document.getElementById('story-slot');
   if(stSlot){
     stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+cfg.story+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+cfg.challenge+'</div></div>';
     try{track('riley_suggests_shown',{mood:n,card_id:'riley_suggests'});}catch(e){}
   }
-  // Conversational support — only on harder days (the choice buttons). Good days
+  // Conversational support - only on harder days (the choice buttons). Good days
   // are fully covered by the two-beat card above; we don't stack a third Riley line.
   let mr=document.getElementById('mood-response');
   if(cfg.choices){
@@ -406,21 +406,21 @@ function applyMoodEngine(n){
 
 function applyEncourageMode(){
   const slot=document.getElementById('notices-slot');
-  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">🕊</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing — four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">🕊</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing - four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
 
 function applyUpliftMode(){
   const slot=document.getElementById('notices-slot');
-  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">✨</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:6px">Hope isn\'t pretending everything is okay. Hope is believing tomorrow can be better.</div><div style="font-size:11px;color:var(--smoke)">You showed up today. That\'s not nothing — that\'s everything.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🎵</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s music</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Gentle acoustic. Calming piano. Something that asks nothing of you.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">📖</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s reflection</div><div style="font-size:13px;color:var(--smoke);line-height:1.55;font-style:italic">What is one thing — however small — that I am grateful for right now?</div></div></div></div>';
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">✨</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:6px">Hope isn\'t pretending everything is okay. Hope is believing tomorrow can be better.</div><div style="font-size:11px;color:var(--smoke)">You showed up today. That\'s not nothing - that\'s everything.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🎵</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s music</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Gentle acoustic. Calming piano. Something that asks nothing of you.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">📖</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s reflection</div><div style="font-size:13px;color:var(--smoke);line-height:1.55;font-style:italic">What is one thing - however small - that I am grateful for right now?</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
-// Engagement tracking — fire-and-forget, never blocks render. Logs event + bumps counters.
+// Engagement tracking - fire-and-forget, never blocks render. Logs event + bumps counters.
 function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}try{window.RileyPH&&window.RileyPH.track(type,data||{});}catch(e){}}
 
-// ── Notifications (client alerts) — new library additions, etc. ───────────────
+// ── Notifications (client alerts) - new library additions, etc. ───────────────
 let ALERTS=[];
 async function loadClientAlerts(){
   if(!UID)return;
@@ -490,7 +490,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
   try{
     const {data:{session}}=await SB.auth.getSession();
     if(!session){
-      // Post-checkout return with no session (e.g. paid in a window that isn't signed into Riley) — send
+      // Post-checkout return with no session (e.g. paid in a window that isn't signed into Riley) - send
       // them to sign in with a clear "payment complete" note instead of dumping them on the marketing home.
       var _paid=false; try{ _paid=new URLSearchParams(location.search).get('checkout')==='success'; }catch(e){}
       window.location.href = _paid ? 'https://riley.meetriley.us/login?paid=1' : 'https://riley.meetriley.us';
@@ -499,7 +499,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     USER=session.user;UID=USER.id;
     track('app_open');
     loadClientAlerts();
-    // Onboarding guard — new users build their profile with Riley first.
+    // Onboarding guard - new users build their profile with Riley first.
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
       if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/riley-auth.html';return;}
@@ -531,14 +531,14 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const h=new Date().getHours();
     const tod=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
     document.getElementById('greeting').textContent=tod+', '+firstName+'.';
-    // Warm sub-greeting — seasonally aware
+    // Warm sub-greeting - seasonally aware
     const season=getSeason();
     const seasonWarms=SEASON_WARMS[season]||[];
-    const baseWarms=["I'm glad you're here.","Take a breath. You made it today.","However today feels — we'll meet it together.","It's good to see you.","One quiet moment, then we begin."];
+    const baseWarms=["I'm glad you're here.","Take a breath. You made it today.","However today feels - we'll meet it together.","It's good to see you.","One quiet moment, then we begin."];
     const allWarms=[...baseWarms,...seasonWarms];
     const warmLine=allWarms[new Date().getDate()%allWarms.length];
     const greetEl=document.getElementById('greeting');
-    greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">— Riley</div>');
+    greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">- Riley</div>');
     document.getElementById('tbdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
     const av=document.getElementById('sb-av');if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;
     document.getElementById('sb-name').textContent=fullName;
@@ -557,17 +557,17 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     ]);
     const g=r=>r.status==='fulfilled'?r.value?.data:null;
     const brief=g(briefR),sobriety=g(sobR),checkins=g(ciR)||[],goals=g(goalR)||[],habits=g(habR)||[],done7=g(hdR)||[],convMsgs=g(convR)||[],progs=g(progR)||[],workouts=g(wkR)||[],nutrition=g(nuR)||[];
-    // Entitlement (for the inline Brief gating) — reuse the gating IIFE's sessionStorage cache.
+    // Entitlement (for the inline Brief gating) - reuse the gating IIFE's sessionStorage cache.
     let ENT={tier:'guide',features:{}};
     try{ const _ec=sessionStorage.getItem('ent_'+UID); if(_ec){ENT=JSON.parse(_ec);} else { const _er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:(await authToken()),preview_tier:sessionStorage.getItem('admin_preview_tier')||undefined})}); ENT=await _er.json(); sessionStorage.setItem('ent_'+UID,JSON.stringify(ENT)); } }catch(e){}
     // Doc 2 §1.2/§2: the habit tracker (habits + goals) is Companion+ (plan_entitlements.habit_tracker).
-    // Guide hides the module entirely — never an empty "Habits: 0". Fail-open if entitlements missing.
+    // Guide hides the module entirely - never an empty "Habits: 0". Fail-open if entitlements missing.
     if(ENT.entitlements && ENT.entitlements.habit_tracker==='false'){ ['habits-panel','goals-panel'].forEach(function(id){var el=document.getElementById(id); if(el)el.style.display='none';}); }
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;
 
-    // Pattern detection — struggling 5+ days in 14
+    // Pattern detection - struggling 5+ days in 14
     const lowMoodDays=checkins.filter(c=>c.mood&&c.mood<=2&&c.checkin_date>=dAgo(14)).length;
     if(lowMoodDays>=5&&!todayCI?.mood){
       const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
@@ -581,10 +581,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const goalsOnTrack=goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
     const habitsTotal=habits.length,habitsDoneToday=habits.filter(h=>habitDone.has(h.id)).length;
 
-    // ── CLARITY SCORE — prefer the persisted State Engine value; fall back to
+    // ── CLARITY SCORE - prefer the persisted State Engine value; fall back to
     // the live client computation when the engine hasn't written state yet ──
     let UDS=null;try{const _u=await SB.from('user_daily_state').select('clarity_score,clarity_note,crisis_flag').eq('user_id',UID).eq('date',TODAY).maybeSingle();UDS=_u&&_u.data||null;}catch(e){}
-    // Sobriety only counts toward Clarity for members actually tracking it —
+    // Sobriety only counts toward Clarity for members actually tracking it -
     // an active sobriety_tracker row is the signal. Weights are rebalanced
     // (not just zeroed) so members who aren't in recovery can still reach 100.
     const factors=sobriety?[
@@ -612,7 +612,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(moodToday)pills.push({t:['','Low','Off','OK','Good','Great'][moodToday]+' mood',c:moodToday>=4?'pill-green':'pill-gold'});
     if(habitsTotal)pills.push({t:habitsDoneToday+'/'+habitsTotal+' habits',c:habitsDoneToday>=habitsTotal*0.5?'pill-green':'pill-gold'});
     document.getElementById('hero-title').textContent=score>=80?'You\'re in a great rhythm.':score>=60?'You\'re building momentum.':score>=40?'One step at a time.':score>0?'You\'re rebuilding.':'Every day counts.';
-    document.getElementById('hero-msg').textContent=(UDS&&UDS.clarity_note)?UDS.clarity_note:(score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing — keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?(sobriety?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Log a sleep entry and check in daily. Each one helps Riley know you better.'):(sobriety?'Add your sobriety date and a few habits in Reflection — Riley will take it from there.':'Add a few habits and goals in Reflection — Riley will take it from there.'));
+    document.getElementById('hero-msg').textContent=(UDS&&UDS.clarity_note)?UDS.clarity_note:(score>=80?'Sleep, recovery, and habits are all showing up. Whatever you\'re doing - keep doing it.':score>=60?'Strong foundation. One more check-in or logged habit and you\'re in a great rhythm.':score>=40?'You\'re showing up. That\'s the whole thing. Riley gets better the more you share.':score>0?(sobriety?'Set your sobriety date, log a sleep entry, and check in daily. Each one helps Riley know you better.':'Log a sleep entry and check in daily. Each one helps Riley know you better.'):(sobriety?'Add your sobriety date and a few habits in Reflection - Riley will take it from there.':'Add a few habits and goals in Reflection - Riley will take it from there.'));
     document.getElementById('hero-pills').innerHTML=pills.map(p=>`<span class="pill ${p.c}">${p.t}</span>`).join('')+(score<100?'<a href="/tracker" class="pill pill-add">+ Add to your day</a>':'');
 
     // Hero breakdown bars
@@ -621,15 +621,15 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // ── RILEY INSIGHT (smart, contextual) ──
     let insight=null;
-    if(sleepLast&&sleepLast<6) insight=`You slept ${sleepLast}h last night — below your recovery threshold. Consider a lighter day and prioritize getting to bed early tonight.`;
-    else if(SOBER_DAYS>0&&[7,30,60,90,180,365,730].includes(SOBER_DAYS)) insight=`Today marks ${SOBER_DAYS} days sober — a real milestone. Take a moment to acknowledge how far you've come.`;
+    if(sleepLast&&sleepLast<6) insight=`You slept ${sleepLast}h last night - below your recovery threshold. Consider a lighter day and prioritize getting to bed early tonight.`;
+    else if(SOBER_DAYS>0&&[7,30,60,90,180,365,730].includes(SOBER_DAYS)) insight=`Today marks ${SOBER_DAYS} days sober - a real milestone. Take a moment to acknowledge how far you've come.`;
     else if(dateStreak>=7) insight=`${dateStreak} days of consistent check-ins. This kind of consistency is exactly what builds lasting change.`;
     else if(moodToday&&moodToday<=2) insight=`Your mood is low today. That's worth honoring, not pushing past. Riley's here whenever you want to talk it through.`;
-    else if(habitsTotal>0&&habitsDoneToday===habitsTotal) insight=`Every habit done today. That's a clean sweep — momentum like this compounds.`;
+    else if(habitsTotal>0&&habitsDoneToday===habitsTotal) insight=`Every habit done today. That's a clean sweep - momentum like this compounds.`;
     else if(workouts.length>=3) insight=`${workouts.length} workouts logged in the last two weeks. Your consistency in training is showing up across your whole system.`;
     if(insight){document.getElementById('insight').style.display='flex';document.getElementById('insight-text').textContent=insight;}
 
-    // ── DYNAMIC STAT TILES — only the trackers THIS member actually uses (profile +
+    // ── DYNAMIC STAT TILES - only the trackers THIS member actually uses (profile +
     //    entitlements + history), each a tappable link into its own history page. ──
     const hasFeat=k=>!!(ENT&&ENT.features&&ENT.features[k]&&ENT.features[k].access===true);
     function tileCard(label,value,sub,sparkData,color,id,href){
@@ -637,7 +637,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       return `<a class="tcard" href="${href}"><span class="tc-go">›</span><div class="tc-head"><span class="tc-label">${label}</span></div><div class="tc-value">${value}</div><div class="tc-sub">${arrow}${sub}</div><div class="tc-chart">${sparkData.length?areaSpark(id,sparkData,color):''}</div></a>`;
     }
     // Sobriety: a full ring means nothing (you can't be "partly" N-days sober). Show the
-    // count + progress toward the NEXT milestone — that bar is real, incomplete momentum.
+    // count + progress toward the NEXT milestone - that bar is real, incomplete momentum.
     function soberTile(days,href){
       const MS=[7,30,60,90,180,365,730,1095,1460,1825];
       let next=MS.find(m=>m>days); if(!next)next=Math.ceil((days+1)/365)*365;
@@ -656,10 +656,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const moodLabels=['','Low','Off','OK','Good','🔥'];
     const TILES=[];
     if(sobriety) TILES.push(soberTile(SOBER_DAYS,'/progress'));
-    TILES.push(tileCard('Mood',moodToday?moodLabels[moodToday]:'—','7-day trend',moodHist,'#c9a84c','sp3','/progress'));
-    if(hasFeat('tracker_sleep')||sleepHist.length) TILES.push(tileCard('Sleep',sleepLast?sleepLast+'h':'—','last night vs 7d',sleepHist,'#5bc488','sp2','/sleep'));
-    if(hasFeat('tracker_fitness')||workouts.length) TILES.push(tileCard('Movement',workouts.length||'—','workouts · 14d',wkHist,'#4a7ab0','sp4','/workouts'));
-    if(hasFeat('tracker_nutrition')||(nutrition&&nutrition.length)) TILES.push(tileCard('Nutrition',nuToday||'—','logged today · 7d',nuHist,'#4aad72','sp5','/nutrition'));
+    TILES.push(tileCard('Mood',moodToday?moodLabels[moodToday]:'-','7-day trend',moodHist,'#c9a84c','sp3','/progress'));
+    if(hasFeat('tracker_sleep')||sleepHist.length) TILES.push(tileCard('Sleep',sleepLast?sleepLast+'h':'-','last night vs 7d',sleepHist,'#5bc488','sp2','/sleep'));
+    if(hasFeat('tracker_fitness')||workouts.length) TILES.push(tileCard('Movement',workouts.length||'-','workouts · 14d',wkHist,'#4a7ab0','sp4','/workouts'));
+    if(hasFeat('tracker_nutrition')||(nutrition&&nutrition.length)) TILES.push(tileCard('Nutrition',nuToday||'-','logged today · 7d',nuHist,'#4aad72','sp5','/nutrition'));
     document.getElementById('trends').innerHTML=TILES.join('');
 
     // ── BRIEF (consolidated: the real narrative brief, inline + plan-gated) ──
@@ -671,7 +671,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       if(m.riley_note)S.push(`<div style="padding:14px 16px;background:rgba(74,122,176,0.08);border:1px solid rgba(74,122,176,0.2);border-radius:4px;display:flex;gap:11px;align-items:flex-start;margin-bottom:14px"><div style="font-size:18px;flex-shrink:0">🤝</div><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:#4a7ab0;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley noticed</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.6">${esc(m.riley_note)}</div></div></div>`);
       if(m.focus)S.push(`<div style="padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:3px;margin-bottom:14px"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px">Today's focus</div><div style="font-size:13.5px;color:var(--parchment);font-weight:500">${esc(m.focus)}</div></div>`);
       if(m.action)S.push(`<div style="padding:14px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);border-radius:3px;display:flex;gap:11px;align-items:flex-start"><div style="font-size:16px">✅</div><div><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">One action today</div><div style="font-size:13.5px;color:var(--parchment);font-weight:500">${esc(m.action)}</div></div></div>`);
-      return S.join('')||'<div style="font-size:12px;color:var(--smoke)">Your brief is ready — check back in a moment.</div>';
+      return S.join('')||'<div style="font-size:12px;color:var(--smoke)">Your brief is ready - check back in a moment.</div>';
     }
     window.genDashBrief=async function(forceNew){
       const b=document.getElementById('dash-gen-btn')||document.getElementById('bc-regen');
@@ -688,7 +688,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(_brBody){
       if(!_entBrief){
         const _sub=document.getElementById('bc-sub'); if(_sub)_sub.textContent='A personalized 45-second briefing to start every day with intention.';
-        _brBody.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:26px 20px"><div style="font-size:22px">🔒</div><div style="font-size:13px;color:var(--parchment);max-width:320px;line-height:1.55">Your Morning Brief is part of <b style="color:var(--gold)">Riley Companion</b> — Riley reads your week and hands you one focused page each morning.</div><a href="/programs?unlock=adaptive_programming" style="background:var(--gold);color:var(--ink);padding:9px 18px;font-size:12px;font-weight:600;text-decoration:none;border-radius:3px">Unlock with Companion →</a></div>';
+        _brBody.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:11px;padding:26px 20px"><div style="font-size:22px">🔒</div><div style="font-size:13px;color:var(--parchment);max-width:320px;line-height:1.55">Your Morning Brief is part of <b style="color:var(--gold)">Riley Companion</b> - Riley reads your week and hands you one focused page each morning.</div><a href="/programs?unlock=adaptive_programming" style="background:var(--gold);color:var(--ink);padding:9px 18px;font-size:12px;font-weight:600;text-decoration:none;border-radius:3px">Unlock with Companion →</a></div>';
       } else if(brief&&brief.modules&&Object.keys(brief.modules).length){
         const rw=document.getElementById('bc-regen-wrap'); if(rw)rw.style.display='block';
         _brBody.innerHTML=_briefHTML(brief.modules);
@@ -706,7 +706,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(!sList.length)cEl.innerHTML='<div class="empty">No conversations yet.<br><a href="/chat">Start talking to Riley →</a></div>';
     else cEl.innerHTML=sList.slice(0,4).map(s=>{const f=s.msgs.find(m=>m.role==='user');const pv=s.title||f?.content?.slice(0,55)||'Riley Session';return `<a href="/conversations" class="conv"><div><div class="conv-t">${esc(pv)}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><div class="conv-d">${fmtDate(s.created_at)}<br>${fmtTime(s.created_at)}</div></a>`;}).join('');
 
-    // ── MOOD state — the visible mood picker AND the standalone sobriety streak panel
+    // ── MOOD state - the visible mood picker AND the standalone sobriety streak panel
     //    were retired: mood now lives in the Riley chat check-in, and both mood + sobriety
     //    surface as the tappable stat tiles above. Keep MOOD in state for the mood engine. ──
     if(todayCI?.mood){MOOD=todayCI.mood;}
@@ -728,11 +728,11 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // MILESTONE
     const mSlot=document.getElementById('milestone-slot');
     if(SOBER_DAYS>0){
-      const mDefs={7:'One week. The first foundation stone.',30:'A full month. The hardest part is behind you.',90:'Ninety days — where identity begins to shift.',180:'Half a year rebuilt.',365:'One full year. A complete transformation.',730:'Two years of choosing this.',1095:'Three years. A whole new version of yourself.',1825:'Five years. Half a decade.',2190:'Six years. Extraordinary.',2555:'Seven years of showing up.'};
+      const mDefs={7:'One week. The first foundation stone.',30:'A full month. The hardest part is behind you.',90:'Ninety days - where identity begins to shift.',180:'Half a year rebuilt.',365:'One full year. A complete transformation.',730:'Two years of choosing this.',1095:'Three years. A whole new version of yourself.',1825:'Five years. Half a decade.',2190:'Six years. Extraordinary.',2555:'Seven years of showing up.'};
       const specials=[200,300,400,500,600,700,800,900,1000,1500,2000,2500,3000];
       const yrs=Math.floor(SOBER_DAYS/365);
 
-      // Cardinal feather — day 100 is quiet, special
+      // Cardinal feather - day 100 is quiet, special
       if(SOBER_DAYS===100){
         mSlot.innerHTML='<div style="text-align:center;padding:28px 20px;margin-bottom:18px"><div style="font-size:44px;margin-bottom:12px">🪶</div><div style="font-family:\'DM Serif Display\',serif;font-size:20px;font-style:italic;font-weight:300;color:var(--smoke);line-height:1.6">100 days.</div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;font-weight:300;color:var(--smoke);margin-top:8px">Look how far you\'ve come.</div></div>';
       } else {
@@ -747,17 +747,17 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(sleepLast2&&sleepLast2>=7.5)stTxt='Your mind is rested. <span style="color:var(--smoke)">Seven-plus hours gave your clarity room to recharge. Good foundation.</span>';
     else if(sleepLast2&&sleepLast2<6)stTxt='Running on less than you needed. <span style="color:var(--smoke)">Last night was short. Slower is still forward today.</span>';
     else if(moodToday&&moodToday<=2)stTxt="Today feels heavy, and that’s allowed. <span style='color:var(--smoke)'>You don’t have to fix it. Being here counts.</span>";
-    else if(moodToday&&moodToday>=4)stTxt="There’s some lightness in you today. <span style='color:var(--smoke)'>Whatever’s feeding it — protect it.</span>";
+    else if(moodToday&&moodToday>=4)stTxt="There’s some lightness in you today. <span style='color:var(--smoke)'>Whatever’s feeding it - protect it.</span>";
     else if(dateStreak>=7)stTxt=dateStreak+' days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>';
     else if(SOBER_DAYS>0)stTxt='Another morning, sober. <span style="color:var(--smoke)">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>';
     else stTxt='Today is a fresh page. <span style="color:var(--smoke)">No quiz to pass. Just you, here, beginning.</span>';
-    // Beat 2 — the actionable suggestion (was the standalone "Riley suggests" notice).
+    // Beat 2 - the actionable suggestion (was the standalone "Riley suggests" notice).
     let rec='Take ten quiet minutes before opening your phone. The day will still be there.';
     if(sleepLast2&&sleepLast2<6)rec='Easy on the caffeine today. Try to be in bed a little earlier tonight.';
-    else if(moodToday&&moodToday<=2)rec='A short walk outside — even ten minutes — tends to loosen the heavy days.';
-    // ── RILEY SUGGESTS — one card, two beats (Today screen consolidation) ──
+    else if(moodToday&&moodToday<=2)rec='A short walk outside - even ten minutes - tends to loosen the heavy days.';
+    // ── RILEY SUGGESTS - one card, two beats (Today screen consolidation) ──
     // Beat 1 = reflection (was "Today's Story"); Beat 2 = the suggestion. One
-    // continuous thought — no divider, no second card.
+    // continuous thought - no divider, no second card.
     if(!_briefShown)stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+rec+'</div></div>';
     try{track('riley_suggests_shown',{card_id:'riley_suggests'});}catch(e){}
     // NOTICES
@@ -767,33 +767,33 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     if(sleepWin>=3)nItems.push({ico:'🌙',text:"I noticed you've slept 7+ hours on "+sleepWin+" nights recently. Your body is finding its rhythm."});
     if(habitsTotal>0&&habitsDoneToday===habitsTotal&&habitsTotal>=2)nItems.push({ico:'🌿',text:'Every habit done already today. That kind of morning carries forward.'});
     const daysSinceCI=checkins.length?Math.floor((Date.now()-new Date(checkins[0].checkin_date))/86400000):99;
-    if(daysSinceCI>=5)nItems.push({ico:'📖',text:"You haven't journaled in a few days. Whenever you're ready — I'm here."});
+    if(daysSinceCI>=5)nItems.push({ico:'📖',text:"You haven't journaled in a few days. Whenever you're ready - I'm here."});
     // "Riley suggests" merged into the two-beat Riley Suggests card above (Beat 2).
     const noteHtml=nItems.slice(0,3).map(function(n){return '<div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:11px 14px"><span style="font-size:14px;flex-shrink:0;margin-top:1px">'+n.ico+'</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">'+(n.label||'Riley noticed')+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">'+n.text+'</div></div></div>';}).join('');
     if(noteHtml&&!_briefShown)nSlot.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px">'+noteHtml+'</div>';
 
-    // Riley Brain — non-blocking; assembles today's matched recommendations
+    // Riley Brain - non-blocking; assembles today's matched recommendations
     loadRileyBrain();
-    // Everything Riley Offers — reliable entitlement-driven locked previews
+    // Everything Riley Offers - reliable entitlement-driven locked previews
     loadExplore();
-    // The daily check-in now lives inside the Riley chat (auto-opened once/day by pwa.js) — the old
+    // The daily check-in now lives inside the Riley chat (auto-opened once/day by pwa.js) - the old
     // dashboard modal was retired to end the double check-in. Phase-2 discovery (the "A note from
     // Riley" prompt) is delayed ~5 min into the session so it never collides with that check-in.
     // It's once/day gated (set only when it actually fires), and the timer clears if the member
-    // leaves the page first — so it only surfaces for someone who's settled into their session.
+    // leaves the page first - so it only surfaces for someone who's settled into their session.
     setTimeout(loadPhase2Discovery, 5 * 60 * 1000);
     }catch(e){console.error('Dashboard:',e);}
 })();
 
-// ── EVERYTHING RILEY OFFERS — reliable, entitlement-driven locked previews ────
+// ── EVERYTHING RILEY OFFERS - reliable, entitlement-driven locked previews ────
 // Shows every member (except Coach, who has it all) the full menu of what they
-// could unlock — so the value of upgrading is always visible on the Today page.
+// could unlock - so the value of upgrading is always visible on the Today page.
 const EXPLORE_FLAGSHIP=[
-  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals — Riley learns from every entry.', need:'Riley Companion'},
+  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Companion'},
   {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Companion'},
-  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life — not a rigid diet.',             need:'Riley Companion'},
+  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Companion'},
   {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Companion'},
-  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story — a living map of who you are becoming.',       need:'Riley Coach'},
+  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach'},
   {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach'}
 ];
 async function loadExplore(){
@@ -815,7 +815,7 @@ async function loadExplore(){
   }catch(e){console.warn('explore (non-fatal):',e.message);}
 }
 
-// ── RILEY BRAIN — the decision engine drives "For You Today" ──────────────────
+// ── RILEY BRAIN - the decision engine drives "For You Today" ──────────────────
 async function loadRileyBrain(){
   try{
     const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
@@ -832,16 +832,16 @@ async function loadRileyBrain(){
       insightTx.textContent=brainMsg;insightEl.style.display='flex';
     }
 
-    // Emotional date — gentle banner above everything
+    // Emotional date - gentle banner above everything
     if(brain.emotional_date||brain.personal_date){
       const d=brain.personal_date||brain.emotional_date;
       const mSlot=document.getElementById('milestone-slot');
       if(mSlot&&!mSlot.innerHTML.trim()){
-        mSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(74,122,176,0.08),rgba(16,14,12,0.4));border:1px solid rgba(74,122,176,0.2);border-radius:8px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:12px"><span style="font-size:20px">📅</span><div style="font-size:13px;color:var(--parchment);line-height:1.6">'+esc(d.label)+(d.strategy?' — <span style="color:var(--smoke)">'+esc(d.strategy.split('.')[0])+'.</span>':'')+'</div></div>';
+        mSlot.innerHTML='<div style="background:linear-gradient(135deg,rgba(74,122,176,0.08),rgba(16,14,12,0.4));border:1px solid rgba(74,122,176,0.2);border-radius:8px;padding:18px 22px;margin-bottom:18px;display:flex;align-items:center;gap:12px"><span style="font-size:20px">📅</span><div style="font-size:13px;color:var(--parchment);line-height:1.6">'+esc(d.label)+(d.strategy?' - <span style="color:var(--smoke)">'+esc(d.strategy.split('.')[0])+'.</span>':'')+'</div></div>';
       }
     }
 
-    // For You Today — matched content from the library
+    // For You Today - matched content from the library
     const fy=document.getElementById('foryou-slot');
     if(fy&&brain.recommended_content&&brain.recommended_content.length){
       const icons={breathwork:'🫁',journal_prompt:'📖',music:'🎵',podcast:'🎧',book:'📚',workout:'🏋️',meditation:'🧘',recipe:'🍳',video:'🎥',article:'📄'};
@@ -853,7 +853,7 @@ async function loadRileyBrain(){
       </div>`).join('');
       fy.innerHTML='<div style="margin-bottom:18px"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:12px">For You Today · Riley selected these</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'+cards+'</div></div>';
     }
-    // §9 — locked previews: show what's behind the next tier with an upgrade CTA,
+    // §9 - locked previews: show what's behind the next tier with an upgrade CTA,
     // instead of hiding it. Guide/Companion/à-la-carte see it; Coach (has
     // everything, per v4 pricing) doesn't.
     if(fy&&brain.locked_modules&&brain.locked_modules.length&&brain.tier!=='concierge'&&brain.tier!=='coach'){
@@ -869,14 +869,14 @@ async function logRec(contentId,type){
   contentEvent(contentId,type,{status:'started'});
   try{await SB.from('recommendation_history').insert({user_id:UID,content_id:contentId,recommended_on:TODAY,reaction:'opened',reacted_at:new Date().toISOString()});}catch(e){}
 }
-// §7/§7.1 — record content status + feedback so recommendations actually learn.
+// §7/§7.1 - record content status + feedback so recommendations actually learn.
 async function contentEvent(contentId,type,payload){
   try{
     var tok=(await SB.auth.getSession()).data.session?.access_token;
     fetch('/.netlify/functions/content-event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({user_id:UID,token:tok,content_id:contentId,content_type:type},payload||{}))}).catch(function(){});
   }catch(e){}
 }
-// §7.1 — "Was this helpful?" feedback prompt.
+// §7.1 - "Was this helpful?" feedback prompt.
 function contentFeedback(contentId,type){
   var opts=[['helpful','Helpful'],['not_helpful','Not helpful'],['wrong_timing','Wrong timing'],['too_intense','Too intense'],['more_like_this','More like this'],['dont_show','Don\'t show this again']];
   var btns=opts.map(function(o){return '<button onclick="sendFeedback(\''+contentId+'\',\''+esc(type)+'\',\''+o[0]+'\')" style="background:var(--ink3);border:1px solid rgba(255,255,255,0.12);color:var(--parchment);padding:9px 14px;font-size:13px;border-radius:20px;cursor:pointer">'+o[1]+'</button>';}).join('');
@@ -884,29 +884,29 @@ function contentFeedback(contentId,type){
 }
 async function sendFeedback(contentId,type,fb){
   contentEvent(contentId,type,{feedback:fb});
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:26px;margin-bottom:10px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you — that helps me learn.</div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:26px;margin-bottom:10px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you - that helps me learn.</div></div>');
   setTimeout(closeP2,1500);
 }
 
-// ── PHASE 2 — Progressive Discovery (Days 1-7) ───────────────────────────────
-// Deferred onboarding questions, surfaced one at a time, conversationally —
+// ── PHASE 2 - Progressive Discovery (Days 1-7) ───────────────────────────────
+// Deferred onboarding questions, surfaced one at a time, conversationally -
 // never a second form. Each gated by days-since-onboarding, tracked so it never repeats.
 const PHASE2_BANK=[
-  // SOBRIETY FOLLOW-UP — surfaces on the very next login after onboarding for
+  // SOBRIETY FOLLOW-UP - surfaces on the very next login after onboarding for
   // anyone who flagged sobriety in "What brings you here?" (why_here). Doesn't
-  // assume they're already sober — that's the whole point of asking.
+  // assume they're already sober - that's the whole point of asking.
   {key:"s_status",bucket:"sobriety",day:0,store:"custom",when:ctx=>ctx.sobrietyInterest&&!ctx.hasSobrietyTracker,prompt:"When you first signed up, you mentioned sobriety was something you wanted to explore. Are you already sober, or is that something you'd like to work toward?",type:"choice",opts:["Already sober","Want to get sober","Not right now"]},
   // PHYSICAL (available from day 1)
-  {key:"p_age",bucket:"physical",day:0,store:"detail",prompt:"Hey — I realized I don't actually know how old you are. Mind sharing?",type:"text",ph:"Your age"},
-  {key:"p_occupation",bucket:"physical",day:0,store:"detail",prompt:"What do you do with your days? Work, school, caregiving — whatever fills them.",type:"text",ph:"What you do"},
-  {key:"p_exercise",bucket:"physical",day:1,store:"detail",prompt:"How often do you usually move your body in a week? No judgment — I just want your brief to fit your real life.",type:"choice",opts:["Rarely","1–2 times","3–4 times","5 or more"]},
+  {key:"p_age",bucket:"physical",day:0,store:"detail",prompt:"Hey - I realized I don't actually know how old you are. Mind sharing?",type:"text",ph:"Your age"},
+  {key:"p_occupation",bucket:"physical",day:0,store:"detail",prompt:"What do you do with your days? Work, school, caregiving - whatever fills them.",type:"text",ph:"What you do"},
+  {key:"p_exercise",bucket:"physical",day:1,store:"detail",prompt:"How often do you usually move your body in a week? No judgment - I just want your brief to fit your real life.",type:"choice",opts:["Rarely","1–2 times","3–4 times","5 or more"]},
   {key:"p_sleep_dur",bucket:"physical",day:1,store:"detail",prompt:"On an average night, how many hours of sleep do you actually get?",type:"choice",opts:["Under 5","5–6","6–7","7–8","8 or more"]},
-  {key:"p_recovery",bucket:"physical",day:2,store:"detail",prompt:"You mentioned rebuilding earlier. Would you be comfortable sharing where you're at with recovery? Only if you want to — it helps me understand you.",type:"text",ph:"Only if you want to share",optional:true},
+  {key:"p_recovery",bucket:"physical",day:2,store:"detail",prompt:"You mentioned rebuilding earlier. Would you be comfortable sharing where you're at with recovery? Only if you want to - it helps me understand you.",type:"text",ph:"Only if you want to share",optional:true},
   // PERSONALITY (day 2+)
   {key:"pers_encouragement",bucket:"personality",day:2,store:"profile",col:"preferred_encouragement",prompt:"I want to show up for you the right way. How do you like to be encouraged?",type:"choice",opts:["Gently","Direct and honest","With some humor","A balance","Not sure yet"]},
   {key:"pers_difficult",bucket:"personality",day:3,store:"detail",prompt:"When things get hard, what usually helps you most?",type:"text",ph:"What helps you"},
   {key:"pers_learning",bucket:"personality",day:3,store:"detail",prompt:"How do you take in new things best?",type:"choice",opts:["Reading","Watching","Listening","Doing","A mix"]},
-  // PREFERENCES (day 3+) — light, to deepen the relationship
+  // PREFERENCES (day 3+) - light, to deepen the relationship
   {key:"pref_music",bucket:"preferences",day:3,store:"detail",prompt:"What do you put on when you want to feel good?",type:"text",ph:"Music, artists, a vibe…"},
   {key:"pref_outdoor",bucket:"preferences",day:4,store:"detail",prompt:"Favorite way to be outside?",type:"text",ph:"Hiking, the porch, anywhere…"},
   {key:"pref_season",bucket:"preferences",day:4,store:"detail",prompt:"Favorite season? I ask because the whole experience shifts with it.",type:"choice",opts:["Spring","Summer","Fall","Winter"]},
@@ -924,13 +924,13 @@ async function loadPhase2Discovery(force){
     const startedAt=p.onboarding_completed_at?new Date(p.onboarding_completed_at):new Date(Date.now()-86400000);
     const daysSince=Math.max(0,Math.floor((Date.now()-startedAt)/86400000));
 
-    // Wellness baseline (day 4+) — the culmination. Show once if not done.
+    // Wellness baseline (day 4+) - the culmination. Show once if not done.
     if(daysSince>=4&&!prog.wellness_baseline){
       const {data:wb}=await SB.from('wellness_baseline').select('id').eq('user_id',UID).maybeSingle();
       if(!wb){localStorage.setItem(gateKey,TODAY);renderWellnessBaseline();return;}
     }
 
-    // Only probe for an existing tracker when it's actually relevant — avoids
+    // Only probe for an existing tracker when it's actually relevant - avoids
     // an extra query for the majority who never flagged sobriety interest.
     let hasSobrietyTracker=false;
     if(p.sobriety_interest&&!prog.s_status){
@@ -947,7 +947,7 @@ async function loadPhase2Discovery(force){
   }catch(e){console.warn('phase2 (non-fatal):',e.message);}
 }
 
-// ── Phase 2 modal — a gentle popup, not an inline card ──
+// ── Phase 2 modal - a gentle popup, not an inline card ──
 function p2Modal(inner){
   let ov=document.getElementById('p2-modal');
   if(!ov){ov=document.createElement('div');ov.id='p2-modal';ov.style.cssText='position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.78);backdrop-filter:blur(10px);padding:24px;animation:p2fade .4s ease';document.body.appendChild(ov);
@@ -994,7 +994,7 @@ function phase2MemoryLine(key,val){
   return m[key]||(key+': '+val);
 }
 
-// ── Sobriety follow-up branch — "already sober" vs "want to get sober" get
+// ── Sobriety follow-up branch - "already sober" vs "want to get sober" get
 // very different responses. Never assumes a start date for the latter. ──
 async function p2saveSobrietyStatus(val){
   try{
@@ -1005,7 +1005,7 @@ async function p2saveSobrietyStatus(val){
       renderSoberDateAsk();
     }else if(val==='Want to get sober'){
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They want to get sober but have not started yet. Be supportive and non-judgmental, let them set the pace, do not assume a start date or push a plan.',source:'phase2',confidence:0.95,is_active:true});
-      p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready — even just to talk it through — I am here.</span></div></div>');
+      p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready - even just to talk it through - I am here.</span></div></div>');
       setTimeout(closeP2,2400);
     }else{
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They were asked about sobriety and said not right now. Do not bring it up unprompted going forward, let them lead.',source:'phase2',confidence:0.95,is_active:true});
@@ -1026,7 +1026,7 @@ async function p2saveSoberDate(){
     await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
     await SB.from('sobriety_tracker').insert({user_id:UID,start_date:dt,is_active:true,milestone_days:[]});
   }catch(e){console.warn('p2saveSoberDate',e.message);}
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it — saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="font-size:30px;margin-bottom:12px">🐦</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it - saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
   setTimeout(closeP2,2000);
 }
 function p2skipSoberDate(){
@@ -1034,11 +1034,11 @@ function p2skipSoberDate(){
   setTimeout(closeP2,2000);
 }
 
-// Wellness baseline — the Day 5-7 culmination, 10 quick ratings (modal)
+// Wellness baseline - the Day 5-7 culmination, 10 quick ratings (modal)
 function renderWellnessBaseline(){
   const dims=[['sleep','Sleep'],['stress','Stress'],['energy','Energy'],['motivation','Motivation'],['confidence','Confidence'],['purpose','Purpose'],['relationships','Relationships'],['nutrition','Nutrition'],['fitness','Fitness'],['overall_happiness','Overall happiness']];
   p2Modal(`
-    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:30px;flex-shrink:0">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A quick baseline</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Where are you starting from? Rate each from 1 to 10 — so one day we can look back and see how far you've come.</div></div></div>
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><span style="font-size:30px;flex-shrink:0">🐦</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A quick baseline</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Where are you starting from? Rate each from 1 to 10 - so one day we can look back and see how far you've come.</div></div></div>
     <div id="wb-grid" style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;max-height:46vh;overflow-y:auto">${dims.map(([k,l])=>`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--parchment);width:100px;flex-shrink:0">${l}</span><div style="display:flex;gap:3px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="wbPick('${k}',${n},this)" data-k="${k}" style="width:25px;height:25px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--smoke);font-size:10px;cursor:pointer;transition:all .12s">${n}</button>`).join('')}</div></div>`).join('')}</div>
     <div style="display:flex;align-items:center;gap:14px"><button onclick="wbSave()" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Save my baseline</button><button onclick="p2skipBaseline()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Not now</button></div>`);
   window._wb={};
@@ -1053,7 +1053,7 @@ async function wbSave(){
 }
 async function p2skipBaseline(){await markP2('wellness_baseline','skipped');closeP2();}
 
-// Fire a Tier 1 (state-changing) event into the State Engine. Fire-and-forget —
+// Fire a Tier 1 (state-changing) event into the State Engine. Fire-and-forget -
 // never blocks the UI; the engine persists user_daily_state + clarity server-side.
 // Note: free-text crisis still flows through checkin-scan, so we do NOT pass the
 // check-in note here (avoids double crisis processing).
@@ -1067,7 +1067,7 @@ async function fireState(eventType,data){
 
 function pickMood(n){MOOD=n;hlMood(n);saveMood(n);applyMoodEngine(n);}
 function hlMood(n){document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));const b=document.querySelector(`.mood-btn[data-n="${n}"]`);if(b)b.classList.add('active');}
-// Quick mood tap — logs mood only. It does NOT complete the day's check-in; that happens
+// Quick mood tap - logs mood only. It does NOT complete the day's check-in; that happens
 // exclusively in the Riley chat check-in (so the mandatory flow can't be bypassed here).
 async function saveMood(n){try{await SB.from('daily_checkins').upsert({user_id:UID,checkin_date:TODAY,mood:n,sobriety_day:SOBER_DAYS>0},{onConflict:'user_id,checkin_date'});fireState('mood_checked_in',{mood:n});const el=document.getElementById('mood-saved');if(el){el.style.display='block';el.textContent='✓ MOOD LOGGED';}}catch(e){console.error(e);}}
 async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!row)return;const ck=row.querySelector('.h-check');const nm=row.querySelector('.h-name');const was=ck.classList.contains('done');ck.classList.toggle('done',!was);ck.textContent=was?'':'✓';if(nm)nm.classList.toggle('done',!was);try{if(was)await SB.from('habit_completions').delete().eq('habit_id',id).eq('completed_date',TODAY).eq('user_id',UID);else{await SB.from('habit_completions').upsert({habit_id:id,user_id:UID,completed_date:TODAY},{onConflict:'habit_id,completed_date'});fireState('goal_completed',{habit_id:id});}}catch(e){ck.classList.toggle('done',was);console.error(e);}}
@@ -1075,7 +1075,7 @@ async function toggleHabit(id){const row=document.getElementById('hi-'+id);if(!r
 async function authToken(){try{return (await SB.auth.getSession()).data.session?.access_token||null;}catch(e){return null;}}
 
 // One-time consent overlay for members who onboarded before consent existed.
-// Own DOM, NO click-outside close — so awaiting it in load() can never hang.
+// Own DOM, NO click-outside close - so awaiting it in load() can never hang.
 function requireConsent(consentAt){
   return new Promise(resolve=>{
     if(consentAt){resolve();return;}
@@ -1085,10 +1085,10 @@ function requireConsent(consentAt){
     ov.innerHTML=`<div style="max-width:480px;width:100%;background:linear-gradient(160deg,#16130f,#0f0d0b);border:1px solid rgba(201,168,76,0.18);border-radius:12px;padding:30px;box-shadow:0 24px 80px rgba(0,0,0,0.6)">
       <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:14px">A note about your privacy</div>
       <div style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);line-height:1.4;margin-bottom:14px">Here's what I keep, in plain words.</div>
-      <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:14px">· <b>What you tell me</b> — your name, your story, your goals<br>· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>· <b>Our conversations</b> — so I remember and you never repeat yourself</div>
+      <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:14px">· <b>What you tell me</b> - your name, your story, your goals<br>· <b>How you're doing</b> - check-ins, mood, sleep, reflections<br>· <b>Our conversations</b> - so I remember and you never repeat yourself</div>
       <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:10px">I keep these only to know you and support you over time. <b style="color:var(--parchment)">Never sold. Never used for advertising.</b> If you ever share an unsafe moment, that stays private and is used only to keep you safe.</div>
-      <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:20px">You're in control — view or delete everything anytime under <b style="color:var(--parchment)">Your Data</b>.</div>
-      <button id="consent-ok" style="width:100%;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:13px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer">I understand — continue</button>
+      <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:20px">You're in control - view or delete everything anytime under <b style="color:var(--parchment)">Your Data</b>.</div>
+      <button id="consent-ok" style="width:100%;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:13px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer">I understand - continue</button>
     </div>`;
     document.body.appendChild(ov);
     document.getElementById('consent-ok').onclick=async()=>{
@@ -1099,19 +1099,19 @@ function requireConsent(consentAt){
   });
 }
 
-// About Riley — persistent, plain-language transparency (§1.1)
+// About Riley - persistent, plain-language transparency (§1.1)
 function aboutRiley(){
   p2Modal(`<div style="padding:4px 0">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:26px">🕊️</span><div style="font-family:'DM Serif Display',serif;font-size:21px;color:var(--parchment)">About Riley</div></div>
-    <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:12px">I'm Riley — your coach and companion. I'm here every day to listen, encourage you, and help you take the next small step.</div>
+    <div style="font-size:14.5px;color:var(--parchment);line-height:1.7;margin-bottom:12px">I'm Riley - your coach and companion. I'm here every day to listen, encourage you, and help you take the next small step.</div>
     <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:12px"><b style="color:var(--parchment)">Being honest about what I am:</b> I'm not a therapist, doctor, or medical or mental-health provider. I don't diagnose, and I'm not a replacement for professional care. I work best <i>alongside</i> the people and care already in your life.</div>
     <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:12px"><b style="color:var(--parchment)">If you're ever in a hard or unsafe moment,</b> I'll always point you to real help. In the US you can call or text <b style="color:var(--parchment)">988</b> (Suicide &amp; Crisis Lifeline) any time, or call <b style="color:var(--parchment)">911</b> if you're in immediate danger.</div>
-    <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:18px"><b style="color:var(--parchment)">Your privacy.</b> What you share is kept so I can know and support you — never sold, never used for advertising. You control it anytime under Your Data.</div>
+    <div style="font-size:14px;color:var(--smoke);line-height:1.65;margin-bottom:18px"><b style="color:var(--parchment)">Your privacy.</b> What you share is kept so I can know and support you - never sold, never used for advertising. You control it anytime under Your Data.</div>
     <div style="display:flex;gap:14px;align-items:center"><button onclick="yourData()" style="background:var(--ink3);border:1px solid rgba(201,168,76,0.3);color:var(--parchment);padding:10px 18px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Your Data →</button><button onclick="closeP2()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer;margin-left:auto">Close</button></div>
   </div>`);
 }
 
-// Your Data — view / download / delete (§1.4)
+// Your Data - view / download / delete (§1.4)
 function yourData(){
   p2Modal(`<div style="padding:4px 0">
     <div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:10px">Your Data</div>
@@ -1149,7 +1149,7 @@ async function doDeleteData(){
     const r=await fetch('/.netlify/functions/auth-handler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete_data',token:tok,confirm:true})});
     if(!r.ok)throw new Error('delete failed');
     const j=await r.json();
-    if(j.failed&&j.failed.length)console.warn('delete partial — failed:',j.failed);
+    if(j.failed&&j.failed.length)console.warn('delete partial - failed:',j.failed);
     p2Modal(`<div style="text-align:center;padding:12px 0"><div style="font-size:28px;margin-bottom:12px">🕊️</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">Your data has been cleared.</div><div style="font-size:14px;color:var(--smoke);margin-top:10px;line-height:1.6">Thank you for trusting me with it. Signing you out now.</div></div>`);
     setTimeout(async()=>{try{await SB.auth.signOut();}catch(e){}window.location.href='https://riley.meetriley.us';},2800);
   }catch(e){console.warn('delete',e.message);const bb=document.getElementById('del-confirm-btn');if(bb){bb.disabled=false;bb.textContent='Try again';}}
@@ -1254,7 +1254,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
@@ -1282,7 +1282,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
 })();
 </script>
 <script>
-/* Doc 2 §5.3 — the single post-weekend ask (once, warm, dismissible). Only selling moment in the sequence. */
+/* Doc 2 §5.3 - the single post-weekend ask (once, warm, dismissible). Only selling moment in the sequence. */
 (async function(){
   try{
     if(typeof SB==='undefined')return;
@@ -1295,8 +1295,8 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     var content=document.querySelector('.content'); if(!content)return;
     var card=document.createElement('div');
     card.style.cssText='background:linear-gradient(135deg,rgba(201,168,76,0.12),var(--ink2));border:1px solid rgba(201,168,76,0.28);border-radius:12px;padding:22px 24px;margin-bottom:20px';
-    card.innerHTML='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);margin-bottom:8px">The weekend&rsquo;s over &mdash; and I&rsquo;m still here.</div>'
-      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Guide. If these two days felt like something you&rsquo;d want more of, Companion means we can talk like this any time &mdash; no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
+    card.innerHTML='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);margin-bottom:8px">The weekend&rsquo;s over - and I&rsquo;m still here.</div>'
+      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Guide. If these two days felt like something you&rsquo;d want more of, Companion means we can talk like this any time - no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><a href="/programs?src=post_weekend" class="tbtn tbtn-gold" style="text-decoration:none">See Companion</a><button class="tbtn tbtn-ghost" id="pw-dismiss">Maybe later</button></div>';
     content.insertAdjacentElement('afterbegin',card);
     try{localStorage.setItem('pw_ask_seen_'+uid,'1');}catch(e){}
@@ -1311,7 +1311,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
 <!-- The "Chat with Riley" floating pill + embedded popup are now provided globally by pwa.js
      (on every page), so the old dashboard-only inline popup was removed to avoid a double intercept. -->
 <script>
-/* Admin tier-preview toggle — visible only to master admins (entitlements.admin).
+/* Admin tier-preview toggle - visible only to master admins (entitlements.admin).
    Flips the whole home between Guide / Companion / Coach by re-fetching entitlements
    with a preview_tier (honored server-side for admins only). */
 (function(){
@@ -1341,7 +1341,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
   }
   var tries=0, iv=setInterval(function(){
     tries++;
-    // Read ONLY the CURRENT signed-in user's entitlements — never any stale ent_* left by a
+    // Read ONLY the CURRENT signed-in user's entitlements - never any stale ent_* left by a
     // prior login on this browser (that leak showed the admin-only toggle to regular clients).
     var uid=null; try{ uid=UID; }catch(e){}
     var raw=uid?sessionStorage.getItem('ent_'+uid):null;

@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Sign In — Meet Riley</title>
+<title>Sign In - Meet Riley</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -40,7 +40,7 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
 <div class="card">
   <div class="logo">I&rsquo;m Riley<span style="color:#c9a84c">.</span></div>
   <div class="tagline">Let's Rebuild Together</div>
-  <div id="paid-banner" style="display:none;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:12px 14px;margin-bottom:1rem;color:#e8e4de;font-size:.9rem;line-height:1.5">✓ Payment complete — sign in to unlock your membership.</div>
+  <div id="paid-banner" style="display:none;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:12px 14px;margin-bottom:1rem;color:#e8e4de;font-size:.9rem;line-height:1.5">✓ Payment complete - sign in to unlock your membership.</div>
   <p class="desc">Sign in to talk with Riley, track your progress, and access your programs.</p>
   <script>try{ if(new URLSearchParams(location.search).get('paid')==='1'){ var _pb=document.getElementById('paid-banner'); if(_pb)_pb.style.display='block'; } }catch(e){}
   // Carry a "buy" intent from the marketing pricing CTAs through sign-in (same-origin sessionStorage survives the
@@ -70,13 +70,13 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-// Simple, direct — no async boot, no site-config dependency
+// Simple, direct - no async boot, no site-config dependency
 var _sb = window.supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
   'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8'
 );
 // Origin-aware so sign-in works on whatever domain serves this page. We land the OAuth callback on
-// /riley-auth.html (the onboarding chat) — NOT /dashboard — because that page tolerates the post-OAuth
+// /riley-auth.html (the onboarding chat) - NOT /dashboard - because that page tolerates the post-OAuth
 // session-hydration race (it waits for the SIGNED_IN event) and routes correctly: new members straight
 // into the onboarding chat, already-onboarded members onward to /dashboard. Landing on /dashboard could
 // bounce a not-yet-hydrated session back to the marketing/sign-in page (the "loops back to sign-in" bug).
@@ -85,7 +85,7 @@ var DEST = (function(){ var h = window.location.hostname; var base = h.replace(/
 // If already logged in, go straight to dashboard
 _sb.auth.getSession().then(function(r) {
   if (r.data && r.data.session) {
-    setStatus('Already signed in — taking you home…', 'ok');
+    setStatus('Already signed in - taking you home…', 'ok');
     setTimeout(function(){ window.location.href = DEST; }, 500);
   }
 });
@@ -103,7 +103,7 @@ _sb.auth.onAuthStateChange(function(event, session) {
         });
       }
     } catch (_e) {}
-    setStatus('Signed in — welcome. Taking you home…', 'ok');
+    setStatus('Signed in - welcome. Taking you home…', 'ok');
     setTimeout(function(){ window.location.href = DEST; }, 500);
   }
 });
@@ -131,7 +131,7 @@ function doSignIn() {
   });
 }
 
-// Magic-link (passwordless) sign-in — Supabase email OTP. emailRedirectTo uses the same
+// Magic-link (passwordless) sign-in - Supabase email OTP. emailRedirectTo uses the same
 // origin-aware DEST the Google flow already uses (so it's an allowed Supabase redirect URL).
 // NOTE: the OTP email is sent by Supabase's default sender for now; moves to Resend/Workspace later.
 function sendMagic(e) {
@@ -144,7 +144,7 @@ function sendMagic(e) {
   _sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: DEST } })
     .then(function(r) {
       if (r.error) { setStatus('Error: ' + r.error.message, 'err'); b.disabled = false; b.textContent = 'Send me a sign-in link'; }
-      else { setStatus('Check your email — we sent you a sign-in link.', 'ok'); b.textContent = 'Link sent ✓'; }
+      else { setStatus('Check your email - we sent you a sign-in link.', 'ok'); b.textContent = 'Link sent ✓'; }
     })
     .catch(function(err) { setStatus('Error: ' + err.message, 'err'); b.disabled = false; b.textContent = 'Send me a sign-in link'; });
   return false;

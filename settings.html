@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Settings — Riley</title>
+<title>Settings - Riley</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
@@ -69,7 +69,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <div class="card" id="billing-card" style="display:none">
     <h2>Membership &amp; billing</h2>
-    <div class="cdesc">Update your card, switch plans, cancel, or view &amp; download invoices — handled securely by Stripe.</div>
+    <div class="cdesc">Update your card, switch plans, cancel, or view &amp; download invoices - handled securely by Stripe.</div>
     <div class="row"><div class="lbl">Billing<div class="val">Manage your subscription &amp; payment method</div></div><button class="linkbtn" id="manage-billing">Manage billing</button></div>
   </div>
 
@@ -83,13 +83,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
   <div class="card" id="admin-card" style="display:none">
     <h2>Operator</h2>
-    <div class="cdesc">Admin tools — visible to you only.</div>
+    <div class="cdesc">Admin tools - visible to you only.</div>
     <div class="row"><div class="lbl">Operator Dashboard<div class="val">Members, content engine, pipeline, safety</div></div><a class="linkbtn" id="admin-link" href="https://meetriley.us/operator" target="_blank" rel="noopener">Open &#8599;</a></div>
   </div>
 
   <div class="card">
     <h2>The Riley app</h2>
-    <div class="cdesc">Add Riley to your home screen for one-tap access — always with you, like a real app.</div>
+    <div class="cdesc">Add Riley to your home screen for one-tap access - always with you, like a real app.</div>
     <div class="row"><div class="lbl">Install Riley<div class="val">Works on your phone and desktop</div></div><button class="linkbtn" id="install-app">Install app</button></div>
   </div>
 </div>
@@ -137,7 +137,7 @@ async function enablePush(){
     if(!publicKey) return false;
     const wantKey=urlB64ToU8(publicKey);
     let sub=await reg.pushManager.getSubscription();
-    // A subscription bound to a different VAPID key can never receive our pushes — drop it and
+    // A subscription bound to a different VAPID key can never receive our pushes - drop it and
     // re-subscribe with the current key (self-healing after a key change / DB move).
     if(sub){try{const cur=sub.options&&sub.options.applicationServerKey;let same=!!cur;if(cur){const a=new Uint8Array(cur);same=a.length===wantKey.length;for(let i=0;same&&i<a.length;i++)same=a[i]===wantKey[i];}if(!same){try{await sub.unsubscribe();}catch(e){}sub=null;}}catch(e){sub=null;}}
     if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wantKey});
@@ -181,7 +181,7 @@ $('del-account').addEventListener('click', ()=> RileyDeleteAccount.open({ supaba
       var r=await fetch('/.netlify/functions/stripe-portal',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok})});
       var d=await r.json();
       if(d&&d.url){ window.location.href=d.url; return; }
-      b.disabled=false; b.textContent=t; alert(d&&d.error==='no_billing_account'?'You\'ll have billing options here after your first purchase.':'Could not open billing — please try again.');
+      b.disabled=false; b.textContent=t; alert(d&&d.error==='no_billing_account'?'You\'ll have billing options here after your first purchase.':'Could not open billing - please try again.');
     }catch(e){ b.disabled=false; b.textContent=t; }
   });
 })();
@@ -194,15 +194,15 @@ $('install-app').addEventListener('click', ()=>{
 $('tg-email').addEventListener('click', async ()=>{
   const next=!_emailOn; setEmailToggle(next);
   const ok=await saveNotif('email_notifications', next);
-  if(ok) nstatus(next?'Email updates on.':'Email updates off — safety messages still reach you.');
-  else { setEmailToggle(!next); nstatus('Could not save — try again.',true); }
+  if(ok) nstatus(next?'Email updates on.':'Email updates off - safety messages still reach you.');
+  else { setEmailToggle(!next); nstatus('Could not save - try again.',true); }
 });
 $('tg-push').addEventListener('click', async ()=>{
   if(!_pushOn){
     nstatus('Enabling…');
     const ok=await enablePush();
     if(ok){ setPushToggle(true); await saveNotif('push_notifications', true); nstatus('Push on.'); }
-    else nstatus("Couldn't enable push — check this browser's notification permission.",true);
+    else nstatus("Couldn't enable push - check this browser's notification permission.",true);
   } else {
     setPushToggle(false);
     await saveNotif('push_notifications', false);

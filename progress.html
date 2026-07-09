@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>My Story — Riley</title>
+<title>My Story - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -120,10 +120,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <div id="pr-story" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.65;padding:0 2px;margin-bottom:18px;min-height:26px"></div>
 
 <div class="stat-row">
-  <div class="stat"><div class="sv" id="pr-sober">—</div><div class="sl">Days Sober</div></div>
-  <div class="stat"><div class="sv" id="pr-streak">—</div><div class="sl">Days Showing Up</div></div>
-  <div class="stat"><div class="sv" id="pr-habits">—</div><div class="sl">Habit Rhythm</div></div>
-  <div class="stat"><div class="sv" id="pr-goals">—</div><div class="sl">Goals Moving</div></div>
+  <div class="stat"><div class="sv" id="pr-sober">-</div><div class="sl">Days Sober</div></div>
+  <div class="stat"><div class="sv" id="pr-streak">-</div><div class="sl">Days Showing Up</div></div>
+  <div class="stat"><div class="sv" id="pr-habits">-</div><div class="sl">Habit Rhythm</div></div>
+  <div class="stat"><div class="sv" id="pr-goals">-</div><div class="sl">Goals Moving</div></div>
 </div>
 <div class="two-col">
 <div>
@@ -197,9 +197,9 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   if(sober){document.getElementById('pr-sober').textContent=soberDays;}
   const sorted=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));
   let streak=0,exp=TODAY;for(const d of sorted){if(d.checkin_date===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else break;}
-  document.getElementById('pr-streak').textContent=streak||'—';
+  document.getElementById('pr-streak').textContent=streak||'-';
 
-  // Narrative story line — numbers support, stories inspire
+  // Narrative story line - numbers support, stories inspire
   const storyEl=document.getElementById('pr-story');
   if(storyEl){
     const habPct=habits.length?Math.round(done14.filter(d=>d.completed_date>=dAgo(6)).length/(habits.length*7)*100):0;
@@ -211,16 +211,16 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
     else if(soberDays>=30){story=`${soberDays} days. <span style="color:var(--smoke)">A full month of choosing this. That foundation holds.</span>`;}
     else if(streak>=7){story=`${streak} days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>`;}
     else if(habPct>=80){story=`Your habits are strong this week. <span style="color:var(--smoke)">That kind of consistency compounds.</span>`;}
-    else if(avgMood>=4){story=`There\'s some lightness in your recent days. <span style="color:var(--smoke)">Whatever\'s feeding it — protect it.</span>`;}
+    else if(avgMood>=4){story=`There\'s some lightness in your recent days. <span style="color:var(--smoke)">Whatever\'s feeding it - protect it.</span>`;}
     else if(soberDays>0){story=`${soberDays} days sober. <span style="color:var(--smoke)">Every single one of them counted.</span>`;}
     else{story=`You\'re here. <span style="color:var(--smoke)">That\'s the whole thing. Start with one habit in Reflection.</span>`;}
     storyEl.innerHTML=story;
   }
   const dSet=new Set(done14.map(d=>d.habit_id+'|'+d.completed_date));
   const possible=habits.length*7;
-  document.getElementById('pr-habits').textContent=possible?Math.round(done14.filter(d=>d.completed_date>=dAgo(6)).length/possible*100)+'%':'—';
+  document.getElementById('pr-habits').textContent=possible?Math.round(done14.filter(d=>d.completed_date>=dAgo(6)).length/possible*100)+'%':'-';
   const onTrack=goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
-  document.getElementById('pr-goals').textContent=goals.length?onTrack+'/'+goals.length:'—';
+  document.getElementById('pr-goals').textContent=goals.length?onTrack+'/'+goals.length:'-';
   // Mood chart
   const mMap=Object.fromEntries(checkins.filter(c=>c.mood).map(c=>[c.checkin_date,c.mood]));
   const emoji=['','😔','😐','🙂','😊','🔥'];
@@ -244,7 +244,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
   const slMap=Object.fromEntries(checkins.filter(c=>c.sleep_hours).map(c=>[c.checkin_date,c.sleep_hours]));
   const maxS=Math.max(...Object.values(slMap),8,1);
   document.getElementById('pr-sleep').innerHTML=last14.map(d=>{const h=slMap[d];const pct=h?Math.min(100,h/maxS*100):0;
-    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:100%;background:${h?(h>=7?'var(--green2)':'var(--gold)'):'rgba(255,255,255,0.06)'};height:${pct}%;border-radius:2px 2px 0 0;min-height:${h?2:0}px" title="${d}${h?' — '+h+'h':''}"></div><div style="font-size:7px;color:var(--smoke2);font-family:'DM Mono',monospace">${new Date(d+'T12:00:00').toLocaleDateString('en-US',{day:'numeric'})}</div></div>`;}).join('');
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:100%;background:${h?(h>=7?'var(--green2)':'var(--gold)'):'rgba(255,255,255,0.06)'};height:${pct}%;border-radius:2px 2px 0 0;min-height:${h?2:0}px" title="${d}${h?' - '+h+'h':''}"></div><div style="font-size:7px;color:var(--smoke2);font-family:'DM Mono',monospace">${new Date(d+'T12:00:00').toLocaleDateString('en-US',{day:'numeric'})}</div></div>`;}).join('');
 }); })();
 
 </script>
@@ -347,7 +347,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Daily Brief — Riley</title>
+<title>Daily Brief - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -312,7 +312,7 @@ async function generateBrief(forceNew){
     else throw new Error('No brief returned');
   }catch(e){
     const b=document.getElementById('br-body');
-    if(b)b.innerHTML='<div style="font-size:12px;color:var(--red)">Could not generate brief — try again.</div><button onclick="generateBrief()" style="margin-top:12px;background:var(--gold);color:var(--ink);border:none;padding:8px 18px;font-size:11px;font-weight:600;border-radius:2px;cursor:pointer">Retry</button>';
+    if(b)b.innerHTML='<div style="font-size:12px;color:var(--red)">Could not generate brief - try again.</div><button onclick="generateBrief()" style="margin-top:12px;background:var(--gold);color:var(--ink);border:none;padding:8px 18px;font-size:11px;font-weight:600;border-radius:2px;cursor:pointer">Retry</button>';
   }finally{
     if(regen){regen.disabled=false;regen.textContent='↻ Regenerate';}
   }
@@ -335,7 +335,7 @@ function renderBrief(brief){
   // Build the 45-second layout
   const sections=[];
 
-  // Riley Note — most personal, top of brief
+  // Riley Note - most personal, top of brief
   if(m.riley_note){
     sections.push(`<div style="padding:16px 20px;background:rgba(74,122,176,0.08);border:1px solid rgba(74,122,176,0.2);border-radius:4px;display:flex;gap:12px;align-items:flex-start;margin-bottom:16px">
       <div style="font-size:20px;flex-shrink:0">🤝</div>
@@ -344,7 +344,7 @@ function renderBrief(brief){
     </div>`);
   }
 
-  // Mood note — where they are
+  // Mood note - where they are
   if(m.mood_note){
     sections.push(`<div style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.6;margin-bottom:20px;padding-left:14px;border-left:2px solid var(--gold)">${esc(m.mood_note)}</div>`);
   }
@@ -373,7 +373,7 @@ function renderBrief(brief){
   if(m.music_mood) extraCards.push(`<div style="padding:12px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:3px;flex:1"><div style="font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">🎵 Music</div><div style="font-size:12px;color:var(--parchment);line-height:1.5">${esc(m.music_mood)}</div></div>`);
   if(extraCards.length) sections.push(`<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">${extraCards.join('')}</div>`);
 
-  // Action — with done toggle
+  // Action - with done toggle
   if(m.action){
     sections.push(`<div id="action-card" onclick="markActionDone(this)" style="padding:16px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);border-radius:3px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px" title="Click when done">
       <div id="action-check" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:10px;color:var(--gold)"></div>
@@ -497,7 +497,7 @@ function markActionDone(el){
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

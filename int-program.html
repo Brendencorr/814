@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Program — Riley</title>
+<title>Program - Riley</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
@@ -158,7 +158,7 @@ function renderIntro(){
   $('backbtn').style.display='none';
   $('content').innerHTML=
     '<h1 class="phead">Ready when you are</h1>'
-    +'<div class="intro-cta"><p style="font-size:15px;color:var(--warm);margin:0 0 4px">This is a Riley-led program — Session Zero + 14 sessions, at your pace.</p>'
+    +'<div class="intro-cta"><p style="font-size:15px;color:var(--warm);margin:0 0 4px">This is a Riley-led program - Session Zero + 14 sessions, at your pace.</p>'
     +'<p class="pblurb" style="margin:0 auto 18px">Riley builds it around your real life, holds the plan, and follows up on every commitment by name. Suggested twice a week; never locked, never expiring.</p>'
     +'<button class="btn" id="beginbtn" onclick="doEnroll()">Begin Session Zero →</button></div>';
 }
@@ -227,7 +227,7 @@ function renderMap(){
   // Artifacts shelf
   const arts=s.artifacts||[];
   if(arts.length){
-    html+='<div class="tools"><h3>🔑 My Tools — everything you\'ve built</h3>';
+    html+='<div class="tools"><h3>🔑 My Tools - everything you\'ve built</h3>';
     arts.forEach(a=>{ html+='<button class="tool-chip" onclick="viewArtifact(\''+a.id+'\')">'+esc(a.name)+'</button>'; });
     html+='</div>';
   }
@@ -265,13 +265,13 @@ function renderSession(d){
   html+='<div class="sphase">'+esc(s.phase||'')+' · Session '+(n===0?'Zero':n)+'</div>';
   html+='<h1 class="stitle">'+esc(s.title)+(s.is_milestone?'<span class="ms">Milestone</span>':'')+'</h1>';
 
-  // OPEN — Riley opens from memory (prior commitment + its confirm state)
+  // OPEN - Riley opens from memory (prior commitment + its confirm state)
   if(s.open_template){
     html+='<div class="seg open"><span class="lbl open">Riley opens</span><div class="body">'+mdLite(s.open_template)+'</div>';
     if(d.prior_commitment){
       const pc=d.prior_commitment, cs=pc.confirmed_state;
-      const line = cs==='done'?'You said this one landed — nice.':cs==='partly'?'You said it happened partly — that counts.':cs==='not_yet'?'You said not yet — no audit, we just pick it back up.':'Still open from last time.';
-      html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:var(--smoke)"><em style="color:var(--gold2);font-style:normal">"'+esc(pc.text)+'"</em> — '+esc(line)+'</div>';
+      const line = cs==='done'?'You said this one landed - nice.':cs==='partly'?'You said it happened partly - that counts.':cs==='not_yet'?'You said not yet - no audit, we just pick it back up.':'Still open from last time.';
+      html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);font-size:13px;color:var(--smoke)"><em style="color:var(--gold2);font-style:normal">"'+esc(pc.text)+'"</em> - '+esc(line)+'</div>';
     }
     html+='</div>';
   }
@@ -281,29 +281,29 @@ function renderSession(d){
     html+='<div class="seg"><span class="lbl learn">Learn</span><div class="body">'+mdLite(s.learn_body)+'</div></div>';
   }
 
-  // WORK — capture the artifact
+  // WORK - capture the artifact
   html+='<div class="seg"><span class="lbl work">Work</span>';
   if(ws.artifact) html+='<div class="artname">'+esc(ws.artifact)+'</div>';
   if(ws.intro) html+='<div class="body"><p>'+esc(ws.intro)+'</p></div>';
   if(ws.prompts&&ws.prompts.length){ html+='<ul class="wprompts">'; ws.prompts.forEach(p=>html+='<li>'+esc(p)+'</li>'); html+='</ul>'; }
-  html+='<textarea id="artbody" placeholder="Capture your work here — Riley keeps it in My Tools.">'+esc(artifactBody(ws.artifact))+'</textarea>';
+  html+='<textarea id="artbody" placeholder="Capture your work here - Riley keeps it in My Tools.">'+esc(artifactBody(ws.artifact))+'</textarea>';
   html+='<button class="btn ghost" id="savebtn" onclick="saveArtifact('+n+',\''+esc(ws.artifact||'Session '+n+' notes').replace(/'/g,"\\'")+'\')">Save to My Tools</button>';
   html+='<div class="saved" id="savedmsg"></div></div>';
 
   // COMMIT
   html+='<div class="seg"><span class="lbl commit">Commit</span>';
-  html+='<div class="body"><p>One specific commitment — pick one Riley drafted, or write your own.</p></div>';
+  html+='<div class="body"><p>One specific commitment - pick one Riley drafted, or write your own.</p></div>';
   opts.forEach((o,i)=>{ html+='<button class="opt" data-i="'+i+'" onclick="selOption('+i+',this)">'+esc(o)+'</button>'; });
   html+='<input type="text" id="customcommit" placeholder="…or write your own commitment" oninput="clearOpt()">';
-  html+='<span class="dtl">When? (optional — Riley follows up after)</span>';
+  html+='<span class="dtl">When? (optional - Riley follows up after)</span>';
   html+='<input type="datetime-local" id="commitwhen">';
   html+='<button class="btn" id="commitbtn" onclick="doCommit('+n+')">'+(n>=14?'Finish the program →':'Commit & close this session →')+'</button>';
   html+='<div class="saved" id="commitmsg"></div></div>';
 
-  // Talk this through with Riley — the session, conversationally. Cap-exempt (context carries enrollment_id).
+  // Talk this through with Riley - the session, conversationally. Cap-exempt (context carries enrollment_id).
   CHAT_MSGS=[];
   html+='<div class="chat"><h4>🌿 Talk this through with Riley</h4>'
-    +'<p class="chint">Riley\'s leading this session — say anything, and it won\'t count against your Guide chat limit.</p>'
+    +'<p class="chint">Riley\'s leading this session - say anything, and it won\'t count against your Guide chat limit.</p>'
     +'<div class="chatlog" id="chatlog"></div>'
     +'<form class="chatform" id="chatform" onsubmit="return sendSessionChat(event)">'
     +'<input id="chatin" placeholder="Type to Riley…" autocomplete="off">'
@@ -334,9 +334,9 @@ async function sendSessionChat(ev){
     if(bubble) bubble.textContent='';
     const reader=res.body.getReader(); const dec=new TextDecoder();
     while(true){ const {done,value}=await reader.read(); if(done) break; full+=dec.decode(value,{stream:true}); if(bubble){bubble.textContent=full;} const lg=$('chatlog'); if(lg) lg.scrollTop=lg.scrollHeight; }
-    if(!full && bubble) bubble.textContent='(no reply — try again)';
+    if(!full && bubble) bubble.textContent='(no reply - try again)';
     CHAT_MSGS.push({role:'assistant',content:full});
-  }catch(e){ if(bubble) bubble.textContent="I'm having trouble connecting — try again in a moment."; }
+  }catch(e){ if(bubble) bubble.textContent="I'm having trouble connecting - try again in a moment."; }
   finally{ if(btn) btn.disabled=false; if(inp) inp.focus(); }
   return false;
 }
@@ -355,7 +355,7 @@ async function saveArtifact(n,name){
   const body=$('artbody').value;
   const b=$('savebtn'); if(b){ b.disabled=true; }
   const {status}=await api('save_artifact',{session_number:n,name,body});
-  $('savedmsg').textContent = status===200?'Saved ✓':'Couldn\'t save — try again';
+  $('savedmsg').textContent = status===200?'Saved ✓':'Couldn\'t save - try again';
   if(b) b.disabled=false;
   // refresh cached artifacts so re-open shows saved text
   const {d}=await api('state'); if(d&&d.enrolled)STATE=d;
@@ -368,7 +368,7 @@ async function doCommit(n){
   const b=$('commitbtn'); if(b){ b.disabled=true; b.textContent='Saving…'; }
   const extra={session_number:n,text}; if(when) extra.due_at=new Date(when).toISOString();
   const {status,d}=await api('commit',extra);
-  if(status!==200){ $('commitmsg').textContent='Couldn\'t save — try again'; if(b){ b.disabled=false; b.textContent='Commit & close this session →'; } return; }
+  if(status!==200){ $('commitmsg').textContent='Couldn\'t save - try again'; if(b){ b.disabled=false; b.textContent='Commit & close this session →'; } return; }
   // refresh + return to map (celebrate graduation)
   const {d:st}=await api('state'); if(st&&st.enrolled)STATE=st;
   if(d.graduated){ renderGraduation(); } else { goMap(); }
@@ -377,7 +377,7 @@ function renderGraduation(){
   VIEW='grad'; window.scrollTo(0,0);
   $('backbtn').textContent='← Program map'; $('backbtn').onclick=goMap;
   $('content').innerHTML='<div class="intro-cta"><h1 class="phead" style="margin-top:0">You finished.</h1>'
-    +'<p class="pblurb" style="margin:0 auto 8px">Every tool you built is yours to keep, and I\'m still here — I\'ll reference the plan in normal chat whenever it fits. This was never about a finish line. It was the becoming.</p>'
+    +'<p class="pblurb" style="margin:0 auto 8px">Every tool you built is yours to keep, and I\'m still here - I\'ll reference the plan in normal chat whenever it fits. This was never about a finish line. It was the becoming.</p>'
     +'<button class="btn" onclick="goMap()">See everything you built →</button></div>';
 }
 

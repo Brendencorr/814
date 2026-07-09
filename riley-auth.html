@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Riley — 8:14</title>
+<title>Riley - 8:14</title>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -307,7 +307,7 @@ header {
   .input-row { padding: .75rem .85rem; }
   #save-prompt { padding: .65rem .85rem; }
 }
-/* Riley-led onboarding — cards + quick-reply buttons */
+/* Riley-led onboarding - cards + quick-reply buttons */
 .msg.ob-card { max-width: 90%; }
 .ob-btns { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .9rem; }
 .ob-btn { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.35); color: var(--gold); font: inherit; font-size: .85rem; padding: .5rem .95rem; border-radius: 999px; cursor: pointer; transition: background .15s; }
@@ -330,7 +330,7 @@ header {
     </div>
   </header>
 
-  <!-- Chat is always visible — no login gate -->
+  <!-- Chat is always visible - no login gate -->
   <div id="chat-screen">
 
     <!-- Sobriety date (signed-in users only) -->
@@ -351,7 +351,7 @@ header {
     <!-- Welcome screen -->
     <div class="welcome" id="chat-welcome">
       <h2 id="welcome-heading">Hi. I'm Riley. I'm glad you're here.</h2>
-      <p>Whatever's weighing on you — recovery, grief, sleep, anxiety, a hard day — I'm listening. You don't have to have it figured out.</p>
+      <p>Whatever's weighing on you - recovery, grief, sleep, anxiety, a hard day - I'm listening. You don't have to have it figured out.</p>
       <div class="starters">
         <button class="starter" onclick="starter(this)">I had a bad day and I want to drink</button>
         <button class="starter" onclick="starter(this)">I relapsed. What do I do now?</button>
@@ -365,7 +365,7 @@ header {
     <!-- Message thread -->
     <div class="messages" id="messages" style="display:none"></div>
 
-    <!-- Save prompt — appears after 5th message, non-blocking -->
+    <!-- Save prompt - appears after 5th message, non-blocking -->
     <div id="save-prompt">
       <p>Want to save this conversation and track your rebuild?</p>
       <button class="save-prompt-google" id="save-prompt-btn" onclick="signInWithGoogle()">
@@ -403,7 +403,7 @@ let userMsgCount  = 0;   // counts user messages sent this session
 let savePromptDismissed = false;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
-// Load immediately — chat is open to everyone. Auth is optional.
+// Load immediately - chat is open to everyone. Auth is optional.
 async function boot() {
   // Restore conversation from sessionStorage if user is returning from OAuth redirect
   const savedHistory = sessionStorage.getItem('riley_pre_auth_history');
@@ -425,7 +425,7 @@ async function boot() {
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
   } catch (e) {
     console.warn('site-config failed (chat still works without auth):', e.message);
-    return; // Chat still works — just no auth features
+    return; // Chat still works - just no auth features
   }
 
   // ── Dashboard redirect for authenticated users ──────────────
@@ -447,13 +447,13 @@ async function boot() {
       await onSignedIn(session);
     } else {
       currentUser = null;
-      // Not signed in — chat still works, no action needed
+      // Not signed in - chat still works, no action needed
     }
   });
 
   // Popup sign-in hand-off: the marketing popup writes the conversation to
   // sessionStorage and sends us to /talk?signin=1. The conversation has now been
-  // restored above, so start OAuth via signInWithGoogle() (top-level branch) —
+  // restored above, so start OAuth via signInWithGoogle() (top-level branch) -
   // it re-saves the conversation to sessionStorage before the redirect.
   if (window.location.search.indexOf('signin=1') !== -1 && window.self === window.top) {
     signInWithGoogle();
@@ -463,7 +463,7 @@ boot();
 
 // ── Signed-in state ───────────────────────────────────────────────────────────
 async function onSignedIn(session) {
-  // Hide the save prompt — they just signed in
+  // Hide the save prompt - they just signed in
   hideSavePrompt();
 
   // Show user pill in header
@@ -502,7 +502,7 @@ async function onSignedIn(session) {
   }
 }
 
-// ── Riley-led onboarding — runs IN the chat, right after sign-in, for new members ──
+// ── Riley-led onboarding - runs IN the chat, right after sign-in, for new members ──
 let onboarding = { active: false, resolveInput: null };
 function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
@@ -573,22 +573,22 @@ async function runOnboarding(session, consentAt) {
   const humanOs = {};
 
   addMsg('riley', (gName ? gName + ', thank you' : 'Thank you') + ' for signing in.' +
-    (track1 ? " I saved everything we were just talking about — we'll pick it right back up in a moment." : '') +
-    " First, an honest note about your privacy — then a few things so I can really understand you.");
+    (track1 ? " I saved everything we were just talking about - we'll pick it right back up in a moment." : '') +
+    " First, an honest note about your privacy - then a few things so I can really understand you.");
   await wait(600);
 
-  // ── Consent — ALWAYS shown, mandatory. Must be acknowledged before anything else. ──
+  // ── Consent - ALWAYS shown, mandatory. Must be acknowledged before anything else. ──
   const choice = await askButtons(
     "<b>Here's what I keep, in plain words.</b><br><br>" +
-    "· <b>What you tell me</b> — your name, your story, your goals<br>" +
-    "· <b>How you're doing</b> — check-ins, mood, sleep, reflections<br>" +
-    "· <b>Our conversations</b> — so I remember, and you never repeat yourself<br><br>" +
+    "· <b>What you tell me</b> - your name, your story, your goals<br>" +
+    "· <b>How you're doing</b> - check-ins, mood, sleep, reflections<br>" +
+    "· <b>Our conversations</b> - so I remember, and you never repeat yourself<br><br>" +
     "I keep these only to know you and support you over time. <b>Never sold. Never used for advertising.</b> " +
     "You can view or delete everything, anytime, under Your Data.",
     [{ label: 'Decline', value: 'decline' }, { label: 'Agree & Continue', value: 'agree', primary: true }]
   );
   if (choice === 'decline') {
-    addMsg('riley', "That's completely okay — no pressure at all. I can't save our conversation or build your space without it, so I'll sign you back out. You're always welcome back, any time.");
+    addMsg('riley', "That's completely okay - no pressure at all. I can't save our conversation or build your space without it, so I'll sign you back out. You're always welcome back, any time.");
     onboarding.active = false;
     setTimeout(function () { signOut(); }, 4000);
     return;
@@ -599,7 +599,7 @@ async function runOnboarding(session, consentAt) {
   // ── Name ──
   let preferred = gName;
   const nameChoice = await askButtons(
-    "I've got you as <b>" + (gName || 'you') + "</b>. Want me to call you that — or something else?",
+    "I've got you as <b>" + (gName || 'you') + "</b>. Want me to call you that - or something else?",
     [{ label: gName ? 'Call me ' + gName : 'That works', value: 'keep', primary: true }, { label: 'Something else', value: 'other' }]
   );
   if (nameChoice === 'other') {
@@ -610,14 +610,14 @@ async function runOnboarding(session, consentAt) {
 
   // ── Pronouns ──
   const pr = await askButtons(
-    "And your pronouns, if you'd like me to have them — completely optional.",
+    "And your pronouns, if you'd like me to have them - completely optional.",
     [{ label: 'she/her', value: 'she/her' }, { label: 'he/him', value: 'he/him' }, { label: 'they/them', value: 'they/them' }, { label: 'Prefer not to say', value: 'skip' }]
   );
   if (pr !== 'skip') patch.pronouns = pr;
   await wait(400);
 
   // ── Why here ──
-  const why = (await askText("So I understand where you're at — what brought you here today?")).trim();
+  const why = (await askText("So I understand where you're at - what brought you here today?")).trim();
   if (why) patch.why_here = why;
   await wait(300);
 
@@ -634,19 +634,19 @@ async function runOnboarding(session, consentAt) {
   if (vision) patch.one_year_vision = vision;
   await wait(300);
 
-  // ── Human OS — a few honest reflections ──
-  addMsg('riley', "A few quick reflections now — there are no wrong answers here.");
+  // ── Human OS - a few honest reflections ──
+  addMsg('riley', "A few quick reflections now - there are no wrong answers here.");
   await wait(500);
   const energy = (await askText("What gives you energy? The people, places, or moments that fill you up.")).trim();
   if (energy) humanOs.energy = energy;
   await wait(250);
-  const drains = (await askText("And what drains you? No judgment — just honesty.")).trim();
+  const drains = (await askText("And what drains you? No judgment - just honesty.")).trim();
   if (drains) humanOs.drains = drains;
   await wait(250);
   const proud = (await askText("What are you most proud of? It can be big or quiet. Both count.")).trim();
   if (proud) humanOs.proud = proud;
   await wait(250);
-  const dream = (await askText("And one dream you have never given up on — the one that is still there, underneath everything?")).trim();
+  const dream = (await askText("And one dream you have never given up on - the one that is still there, underneath everything?")).trim();
   if (dream) humanOs.dream = dream;
   if (Object.keys(humanOs).length) patch.human_os = humanOs;
   await wait(300);
@@ -660,12 +660,12 @@ async function runOnboarding(session, consentAt) {
   await wait(300);
 
   // ── Heroes / favorites ──
-  const heroes = (await askText("One more — and it's my favorite to ask. Who are some of your people? Heroes, favorite authors or artists, a song or a book that has stayed with you — anyone whose words tend to land for you.")).trim();
+  const heroes = (await askText("One more - and it's my favorite to ask. Who are some of your people? Heroes, favorite authors or artists, a song or a book that has stayed with you - anyone whose words tend to land for you.")).trim();
 
   patch.onboarding_completed = true;
   patch.onboarding_step = 7;
   patch.onboarding_completed_at = new Date().toISOString();
-  // Onboarding is done — now the app-install prompt (pwa.js) is allowed to appear.
+  // Onboarding is done - now the app-install prompt (pwa.js) is allowed to appear.
   try { localStorage.setItem('riley_onboarded', '1'); } catch (e) {}
   try { await sb.from('user_profiles').upsert(patch, { onConflict: 'id' }); } catch (e) { console.warn('onboarding save', e && e.message); }
   // influences is saved separately + non-fatally: if migration 036 (the influences
@@ -677,7 +677,7 @@ async function runOnboarding(session, consentAt) {
   onboarding.resolveInput = null;
   await wait(400);
   addMsg('riley', "That's everything I need, " + (preferred || 'friend') + ". " +
-    (track1 ? "Let's pick up right where we left off — I'm taking you into your space now." : "I'm taking you into your space now — this is where we'll talk from here."));
+    (track1 ? "Let's pick up right where we left off - I'm taking you into your space now." : "I'm taking you into your space now - this is where we'll talk from here."));
   await wait(1300);
 
   // ── Continue the conversation inside the portal ──
@@ -737,7 +737,7 @@ async function signInWithGoogle() {
 }
 
 // (Popup ?signin=1 hand-off is triggered at the end of boot() now, after the
-//  conversation has been restored — see boot().)
+//  conversation has been restored - see boot().)
 
 async function signOut() {
   try { if (sb) await sb.auth.signOut(); } catch (e) {}
@@ -773,7 +773,7 @@ function showSignInModal(reason) {
   modal.innerHTML = `<div style="background:#0d1520;border:1px solid #1a2530;border-radius:16px;padding:2rem;max-width:360px;width:90%;text-align:center">
     <div style="font-size:1.8rem;margin-bottom:12px">🔒</div>
     <div style="font-size:1rem;font-weight:600;color:#c8d4e0;margin-bottom:8px">Save this conversation</div>
-    <div style="font-size:.85rem;color:#4a5a6a;margin-bottom:1.5rem;line-height:1.5">${reason} Sign in to keep everything Riley knows about you — and pick up exactly where you left off.</div>
+    <div style="font-size:.85rem;color:#4a5a6a;margin-bottom:1.5rem;line-height:1.5">${reason} Sign in to keep everything Riley knows about you - and pick up exactly where you left off.</div>
     <button onclick="signInWithGoogle()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;padding:.85rem;background:#fff;border:none;border-radius:10px;color:#333;font-size:.92rem;font-weight:600;cursor:pointer;margin-bottom:.75rem">
       <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
       Sign in with Google
@@ -803,7 +803,7 @@ function renderSobrietyInfo() {
     document.getElementById('sobriety-banner').style.display = 'flex';
     document.getElementById('sobriety-set-bar').style.display = 'none';
   } else {
-    // No date set — do NOT prompt for it. The "When did you start your rebuild?" ask was removed from
+    // No date set - do NOT prompt for it. The "When did you start your rebuild?" ask was removed from
     // onboarding; sobriety stays optional (settable from the tracker), never pushed on new members.
     document.getElementById('sobriety-set-bar').style.display = 'none';
     document.getElementById('sobriety-banner').style.display = 'none';
@@ -856,7 +856,7 @@ function addMsg(role, text) {
   return div;
 }
 
-// Small, one-time grey note after the first exchange — points to the site footer for
+// Small, one-time grey note after the first exchange - points to the site footer for
 // Riley / privacy / safety info (per founder: no in-dialog disclosure, just this pointer).
 var _aiNoteShown = false;
 function showAiNote() {
@@ -955,7 +955,7 @@ async function send() {
     if (userMsgCount === 1) showAiNote();   // one-time footer pointer after first exchange
 
   } catch (e) {
-    bubble.textContent = 'Something went wrong — ' + e.message;
+    bubble.textContent = 'Something went wrong - ' + e.message;
   } finally {
     bubble.classList.remove('streaming');
     sendBtn.disabled = false;

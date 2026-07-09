@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Welcome — Meet Riley</title>
+<title>Welcome - Meet Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -133,12 +133,12 @@ function crisisInterrupt(resumeFn){
   el().innerHTML=`<div class="crisis-card">
     <div style="font-size:28px;margin-bottom:10px">🐦</div>
     <div class="riley-says" style="font-size:22px;margin-bottom:6px">I'm really glad you told me.</div>
-    <div class="riley-sub" style="margin-bottom:6px">You don't have to carry this alone right now, and you don't have to keep going with any of this. Talking to a real person can help — right now, any time.</div>
-    <a class="line" data-track="crisis_call" href="tel:988">📞 Call 988 — Suicide &amp; Crisis Lifeline</a>
+    <div class="riley-sub" style="margin-bottom:6px">You don't have to carry this alone right now, and you don't have to keep going with any of this. Talking to a real person can help - right now, any time.</div>
+    <a class="line" data-track="crisis_call" href="tel:988">📞 Call 988 - Suicide &amp; Crisis Lifeline</a>
     <a class="line" data-track="crisis_text" href="sms:988">💬 Text 988</a>
     <a class="line" data-track="crisis_chat" href="https://988lifeline.org/chat/" target="_blank" rel="noopener">🌐 Chat online at 988lifeline.org</a>
     <div style="margin-top:18px;display:flex;gap:14px;align-items:center">
-      <button class="btn" onclick="(${resumeFn.name})()">I'm okay — let's keep going</button>
+      <button class="btn" onclick="(${resumeFn.name})()">I'm okay - let's keep going</button>
     </div>
   </div>`;
 }
@@ -164,7 +164,7 @@ function renderWelcome(){
     <div style="font-size:40px;margin-bottom:24px">🐦</div>
     <div class="riley-says" style="font-size:30px">Welcome.<br>I'm really glad you're here.</div>
     <div class="riley-sub" style="max-width:400px;margin:18px auto 0">Before we begin, I'd love to get to know you.<br>There's no rush. We'll build this together.</div>
-    <div class="sig">— Riley</div>
+    <div class="sig">- Riley</div>
     <div style="margin-top:36px"><button class="btn" onclick="sName()">Begin</button></div>
   </div>`;
 }
@@ -193,7 +193,7 @@ function sBrings(){
   const elseOpen=A.why_set.includes(WHY.length-1);
   swap(`<div class="section-label">What brings you here</div>
     <div class="riley-says">What brings you here?</div>
-    <div class="riley-sub">Choose anything that fits — you can pick more than one. There's no wrong answer.</div>
+    <div class="riley-sub">Choose anything that fits - you can pick more than one. There's no wrong answer.</div>
     <div class="opts" id="why-opts">${WHY.map((w,i)=>`<button class="opt ${A.why_set.includes(i)?'sel':''}" data-track="why_opt" data-i="${i}" onclick="pickWhy(${i})">${esc(w)}</button>`).join('')}</div>
     <div id="why-else" style="display:${elseOpen?'block':'none'};margin-top:8px"><label class="fld">Tell me a little more</label><textarea id="why-text" placeholder="As much or as little as you want.">${esc(A.why_here_detail||'')}</textarea></div>
     <div class="actions"><button class="skip" onclick="sName()" style="margin-right:auto">← Back</button><button class="btn" id="b-brings" onclick="doneBrings()" ${A.why_set.length?'':'disabled'}>Continue</button></div>
@@ -210,26 +210,26 @@ async function doneBrings(){
   if(!A.why_set||!A.why_set.length)return;
   const txt=document.getElementById('why-text')?document.getElementById('why-text').value.trim():'';
   A.why_here_detail=txt||null;
-  // Same crisis detector as chat + check-in — explicit risk interrupts into 988 UI.
+  // Same crisis detector as chat + check-in - explicit risk interrupts into 988 UI.
   if(txt){const lvl=await crisisScan(txt);if(lvl>=3){return crisisInterrupt(sBrings);}}
   A.why_here=A.why_set.map(i=>WHY[i]).join('; ');
   const sob=A.why_set.some(i=>WHY[i]==='I am working on my sobriety.');
   await save({why_here:A.why_here,why_here_detail:A.why_here_detail,sobriety_interest:sob},2);
-  await saveMemory([{content:`Why they came to Riley: ${A.why_here}${A.why_here_detail?' — '+A.why_here_detail:''}`,type:'long_term'}]);
+  await saveMemory([{content:`Why they came to Riley: ${A.why_here}${A.why_here_detail?' - '+A.why_here_detail:''}`,type:'long_term'}]);
   sStart();
 }
 
 // ── Screen 4 · Where we start (up to 3; the FIRST pick is the starting lane) ────
 function sStart(){
   // Candidate set = the specific things they chose (excluding "not sure"/"something else"),
-  // else the full focus list. People carry more than one thing — pick up to 3.
+  // else the full focus list. People carry more than one thing - pick up to 3.
   const chosen=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!=='I am not really sure.'&&w!=='Something else.');
   const usingFocus=chosen.length===0;
   A._startCand=usingFocus?FOCUS:chosen;
   A.start_picks=A.start_picks||[]; // indices into _startCand, in tap order (first = primary)
   swap(`<div class="section-label">Where we start</div>
     <div class="riley-says">Where should we start?</div>
-    <div class="riley-sub">You carry more than one thing — I'll hold all of it. Pick up to three, and we'll begin with the first one you choose.</div>
+    <div class="riley-sub">You carry more than one thing - I'll hold all of it. Pick up to three, and we'll begin with the first one you choose.</div>
     <div class="opts" id="start-opts">${A._startCand.map((c,i)=>startOpt(c,i)).join('')}</div>
     <div class="chip-count" id="start-count">${A.start_picks.length}/3 · we'll start with the first</div>
     <div class="actions"><button class="skip" onclick="sBrings()" style="margin-right:auto">← Back</button><button class="btn" id="b-start" onclick="doneStart()" ${A.start_picks.length?'':'disabled'}>Continue</button></div>
@@ -256,7 +256,7 @@ async function doneStart(){
   const extras=(A.why_set||[]).map(i=>WHY[i]).filter(w=>w!=='Something else.'&&!picks.includes(w));
   A.secondary_focuses=[...new Set(picks.slice(1).concat(extras))];
   await save({primary_focus:A.primary_focus,focus_lane:A.focus_lane,secondary_focuses:A.secondary_focuses},3);
-  await saveMemory([{content:`Where we're starting: ${picks.join(', ')} — primary: ${A.primary_focus}`,type:'long_term'}]);
+  await saveMemory([{content:`Where we're starting: ${picks.join(', ')} - primary: ${A.primary_focus}`,type:'long_term'}]);
   sTwoWeeks();
 }
 
@@ -266,7 +266,7 @@ function sTwoWeeks(){
   const elseOpen=A._motivElse;
   swap(`<div class="section-label">Two weeks from now</div>
     <div class="riley-says">If the next two weeks went well, what would feel different?</div>
-    <div class="riley-sub">Not the finish line — just the next honest step.</div>
+    <div class="riley-sub">Not the finish line - just the next honest step.</div>
     <div class="opts" id="mv-opts">${opts.map((o,i)=>`<button class="opt ${A._motivIdx===i?'sel':''}" data-track="motiv_opt" data-i="${i}" onclick="pickMotiv(${i})">${esc(o)}</button>`).join('')}
       <button class="opt ${elseOpen?'sel':''}" data-track="motiv_opt" data-i="else" onclick="pickMotiv('else')">Something else…</button></div>
     <div id="mv-else" style="display:${elseOpen?'block':'none'};margin-top:6px"><textarea id="mv-text" placeholder="In your words.">${esc(A._motivText||'')}</textarea></div>
@@ -293,7 +293,7 @@ async function doneTwoWeeks(){
 function sReadiness(){
   swap(`<div class="section-label">Being honest</div>
     <div class="riley-says">How ready are you to work on this right now?</div>
-    <div class="riley-sub">Honest answer — there's no wrong one.</div>
+    <div class="riley-sub">Honest answer - there's no wrong one.</div>
     ${ruler('readiness','Not yet','All in',A.readiness)}
     <div class="actions"><button class="skip" onclick="sTwoWeeks()" style="margin-right:auto">← Back</button><button class="btn" id="readiness-btn" onclick="doneReadiness()" ${A.readiness!=null?'':'disabled'}>Continue</button></div>
     ${dots(5)}`);
@@ -323,7 +323,7 @@ async function doneConfidence(){
 function sClose(){
   swap(`<div class="section-label">Staying close</div>
     <div class="riley-says">When would you like me to check in?</div>
-    <div class="riley-sub">I'll show up when it helps — and stay quiet when it doesn't.</div>
+    <div class="riley-sub">I'll show up when it helps - and stay quiet when it doesn't.</div>
     <div class="opts" id="time-opts">${TIMING.map(([v,l])=>`<button class="opt ${A.notification_schedule===v?'sel':''}" data-v="${v}" onclick="pickTime('${v}')">${esc(l)}</button>`).join('')}</div>
     <div class="actions"><button class="skip" onclick="sConfidence()" style="margin-right:auto">← Back</button><button class="btn" id="b-time" onclick="doneClose()" ${A.notification_schedule?'':'disabled'}>Continue</button></div>
     ${dots(7)}`);
@@ -337,7 +337,7 @@ async function doneClose(){
 function notifRationale(){
   swap(`<div class="section-label">Staying close</div>
     <div class="riley-says">Want a gentle nudge at that time?</div>
-    <div class="riley-sub">One quiet reminder to check in — nothing more. You can change or turn this off anytime.</div>
+    <div class="riley-sub">One quiet reminder to check in - nothing more. You can change or turn this off anytime.</div>
     <div class="actions"><button class="btn" onclick="askNotif()">Turn on gentle nudges</button><button class="skip" onclick="sPrivacy()">Not now</button></div>
     ${dots(7)}`);
 }
@@ -351,19 +351,19 @@ function sPrivacy(){
   A.note_storage_consent=A.note_storage_consent||false;
   swap(`<div class="section-label">Your data, your choice</div>
     <div class="riley-says">An honest note about what I keep.</div>
-    <div class="riley-sub">Plain words — no fine print.</div>
+    <div class="riley-sub">Plain words - no fine print.</div>
     <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px 18px;margin-bottom:16px">
       <div style="font-size:14px;line-height:1.7">
-        · <b>What I keep</b> — your check-ins and our conversations, in our secure database, so I can know you over time.<br>
-        · <b>Always optional</b> — reflections, deeper questions, reminders.<br>
-        · <b>You're in control</b> — you can <a href="/privacy" style="color:var(--gold)" target="_blank">export or delete everything</a>, anytime.
+        · <b>What I keep</b> - your check-ins and our conversations, in our secure database, so I can know you over time.<br>
+        · <b>Always optional</b> - reflections, deeper questions, reminders.<br>
+        · <b>You're in control</b> - you can <a href="/privacy" style="color:var(--gold)" target="_blank">export or delete everything</a>, anytime.
       </div>
     </div>
     <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 18px 10px;margin-bottom:6px">
       <div class="toggle-row"><div><div class="tl">Remember my written reflections</div><div class="td">Off by default. When on, I keep the notes you write so I can refer back with care.</div></div><div class="sw" id="sw-note" onclick="tglNote()"></div></div>
     </div>
-    <div style="font-size:12px;color:var(--smoke2);line-height:1.5;margin-bottom:4px">Your information is never sold or used for advertising. If you ever share an unsafe moment, that stays private — used only to keep you safe. <a href="/safety" style="color:var(--smoke)" target="_blank">Our safety approach</a>.</div>
-    <div class="actions" style="flex-direction:column;align-items:stretch"><button class="btn" onclick="acceptPrivacy()" style="width:100%">I understand — let's begin</button></div>
+    <div style="font-size:12px;color:var(--smoke2);line-height:1.5;margin-bottom:4px">Your information is never sold or used for advertising. If you ever share an unsafe moment, that stays private - used only to keep you safe. <a href="/safety" style="color:var(--smoke)" target="_blank">Our safety approach</a>.</div>
+    <div class="actions" style="flex-direction:column;align-items:stretch"><button class="btn" onclick="acceptPrivacy()" style="width:100%">I understand - let's begin</button></div>
     ${dots(8)}`);
 }
 function tglNote(){A.note_storage_consent=!A.note_storage_consent;document.getElementById('sw-note').classList.toggle('on',A.note_storage_consent);}
@@ -372,14 +372,14 @@ async function acceptPrivacy(){
   sPreview();
 }
 
-// ── Screen 10 · Plan preview — the aha moment ──────────────────────────────────
+// ── Screen 10 · Plan preview - the aha moment ──────────────────────────────────
 function sPreview(){
   const lane=A.focus_lane||'other';
   try{window.trackEvent&&window.trackEvent('plan_preview_shown',{lane:lane,readiness_band:A.readiness==null?'na':(A.readiness<=4?'low':A.readiness<=7?'mid':'high'),has_secondary:!!(A.secondary_focuses&&A.secondary_focuses.length)});}catch(e){}
-  const pace=(A.readiness!=null&&A.readiness<=4)?'take this gently, one honest check-in at a time':'start moving — one small step a day';
+  const pace=(A.readiness!=null&&A.readiness<=4)?'take this gently, one honest check-in at a time':'start moving - one small step a day';
   const timeLabel=TIME_LABEL[A.notification_schedule]||'when it helps';
-  const holding=(A.secondary_focuses&&A.secondary_focuses.length)?" — and I'm holding the rest for when you're ready":"";
-  const plan=`Okay, ${esc(FIRST)}. Here's how we start: you're carrying <b>${esc(LANE_LABEL[lane])}</b>${holding}, and in two weeks you want <b>${esc((A.motivation||'').replace(/^I'?d\s*/i,'to ')||'to feel a little more like yourself')}</b>. You told me you're at a <b>${A.readiness}</b> on readiness — so we'll <b>${pace}</b>. I'll check in <b>${esc(timeLabel)}</b>.<br><br>First up: your very first check-in — thirty seconds, and I'll give you something back.`;
+  const holding=(A.secondary_focuses&&A.secondary_focuses.length)?" - and I'm holding the rest for when you're ready":"";
+  const plan=`Okay, ${esc(FIRST)}. Here's how we start: you're carrying <b>${esc(LANE_LABEL[lane])}</b>${holding}, and in two weeks you want <b>${esc((A.motivation||'').replace(/^I'?d\s*/i,'to ')||'to feel a little more like yourself')}</b>. You told me you're at a <b>${A.readiness}</b> on readiness - so we'll <b>${pace}</b>. I'll check in <b>${esc(timeLabel)}</b>.<br><br>First up: your very first check-in - thirty seconds, and I'll give you something back.`;
   swap(`<div class="section-label">Here's our start</div>
     <div class="plan-card">${plan}</div>
     <div class="actions" style="flex-direction:column;align-items:stretch;gap:10px;margin-top:18px">

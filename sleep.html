@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Sleep — Riley</title>
+<title>Sleep - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -120,10 +120,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <div id="sl-story" style="font-family:'DM Serif Display',serif;font-size:17px;color:var(--parchment);line-height:1.65;padding:0 2px;margin-bottom:18px;min-height:26px"></div>
 
 <div class="stat-row">
-  <div class="stat"><div class="sv" id="sl-avg">—</div><div class="sl">14-Day Average</div></div>
+  <div class="stat"><div class="sv" id="sl-avg">-</div><div class="sl">14-Day Average</div></div>
   <div class="stat"><div class="sv" id="sl-goal">8h</div><div class="sl">Your Goal</div></div>
-  <div class="stat"><div class="sv" id="sl-last">—</div><div class="sl">Last Night</div></div>
-  <div class="stat"><div class="sv" id="sl-str">—</div><div class="sl">Nights On Goal</div></div>
+  <div class="stat"><div class="sv" id="sl-last">-</div><div class="sl">Last Night</div></div>
+  <div class="stat"><div class="sv" id="sl-str">-</div><div class="sl">Nights On Goal</div></div>
 </div>
 <div class="card">
   <div id="sl-chart" style="height:80px;margin-bottom:4px"></div>
@@ -135,7 +135,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
   <div class="fr">
     <div class="field"><label>Date (night of)</label><input type="date" id="sl-date"></div>
     <div class="field"><label>Hours slept</label><input type="number" id="sl-hrs" placeholder="7.5" step="0.5" min="0" max="24"></div>
-    <div class="field"><label>Quality (1–5)</label><select id="sl-q"><option value="">—</option><option value="1">1 Terrible</option><option value="2">2 Poor</option><option value="3">3 OK</option><option value="4">4 Good</option><option value="5">5 Great</option></select></div>
+    <div class="field"><label>Quality (1–5)</label><select id="sl-q"><option value="">-</option><option value="1">1 Terrible</option><option value="2">2 Poor</option><option value="3">3 OK</option><option value="4">4 Good</option><option value="5">5 Great</option></select></div>
     <div class="field"><label>Sleep goal (hrs)</label><input type="number" id="sl-goal-in" placeholder="8" step="0.5" min="4" max="12"></div>
   </div>
   <div class="field"><label>Notes</label><textarea id="sl-notes" rows="2" placeholder="Woke up at 3am, stress dreams…"></textarea></div>
@@ -198,16 +198,16 @@ async function loadSleep(){
   document.getElementById('sl-goal-in').value=goalHrs;
   const ws=logs.filter(l=>l.sleep_hours);
   const avg=ws.length?Math.round(ws.reduce((s,l)=>s+l.sleep_hours,0)/ws.length*10)/10:null;
-  document.getElementById('sl-avg').textContent=avg?avg+'h':'—';
+  document.getElementById('sl-avg').textContent=avg?avg+'h':'-';
   if(ws.length)document.getElementById('sl-last').textContent=ws[0].sleep_hours+'h';
   // Consecutive CALENDAR days meeting the goal (a missing night breaks the streak),
-  // ending today or yesterday. Safe local date math — never UTC-parse a 'YYYY-MM-DD'.
+  // ending today or yesterday. Safe local date math - never UTC-parse a 'YYYY-MM-DD'.
   const _byD={};ws.forEach(l=>{_byD[l.checkin_date]=l.sleep_hours;});
   const _prev=y=>{const p=y.split('-');const d=new Date(+p[0],+p[1]-1,+p[2]);d.setDate(d.getDate()-1);return d.toLocaleDateString('en-CA');};
   let streak=0,exp=window.RileyDay?window.RileyDay.appDay():new Date().toLocaleDateString('en-CA');
   if(_byD[exp]===undefined)exp=_prev(exp);                 // no log today yet → start from yesterday
   while(_byD[exp]!==undefined&&_byD[exp]>=goalHrs){streak++;exp=_prev(exp);}
-  document.getElementById('sl-str').textContent=streak||'—';
+  document.getElementById('sl-str').textContent=streak||'-';
 
   // Narrative story line
   const storyEl=document.getElementById('sl-story');
@@ -218,7 +218,7 @@ async function loadSleep(){
     let story='';
     if(streak>=5){story=`${streak} nights at your goal. <span style="color:var(--smoke)">Your body is finding its rhythm. That extra rest is paying forward.</span>`;}
     else if(streak>=3){story=`Three nights on goal. <span style="color:var(--smoke)">Sleep consistency like this changes how everything else feels.</span>`;}
-    else if(improving&&avg>=7){story=`You\'ve been sleeping better this week. <span style="color:var(--smoke)">Whatever you changed — keep doing it.</span>`;}
+    else if(improving&&avg>=7){story=`You\'ve been sleeping better this week. <span style="color:var(--smoke)">Whatever you changed - keep doing it.</span>`;}
     else if(avg&&avg>=7.5){story=`Your mind is rested. <span style="color:var(--smoke)">Seven-plus hours gave your clarity room to recharge.</span>`;}
     else if(avg&&avg<6){story=`Running a little short lately. <span style="color:var(--smoke)">Even thirty more minutes tonight would help. Slower is still forward.</span>`;}
     else if(ws[0].sleep_hours>=goalHrs){story=`You slept well last night. <span style="color:var(--smoke)">That rest carries into today.</span>`;}
@@ -232,7 +232,7 @@ async function loadSleep(){
   document.getElementById('sl-chart').innerHTML='<div style="display:flex;align-items:flex-end;gap:3px;height:100%;position:relative">'+
     `<div style="position:absolute;left:0;right:0;bottom:${goalHrs/maxH*100}%;border-top:1px dashed rgba(201,168,76,0.5);pointer-events:none"></div>`+
     last14.map(d=>{const h=lm[d];const pct=h?Math.min(100,h/maxH*100):0;const col=h?(h>=goalHrs?'var(--green2)':'var(--gold)'):'rgba(255,255,255,0.06)';
-      return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:100%;background:${col};height:${pct}%;border-radius:2px 2px 0 0;min-height:${h?2:0}px;transition:height .4s" title="${d}${h?' — '+h+'h':''}"></div><div style="font-size:7px;color:var(--smoke2);font-family:'DM Mono',monospace">${new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'narrow'})}</div></div>`;
+      return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="width:100%;background:${col};height:${pct}%;border-radius:2px 2px 0 0;min-height:${h?2:0}px;transition:height .4s" title="${d}${h?' - '+h+'h':''}"></div><div style="font-size:7px;color:var(--smoke2);font-family:'DM Mono',monospace">${new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'narrow'})}</div></div>`;
     }).join('')+'</div>';
   const el=document.getElementById('sl-hist');
   if(!ws.length){el.innerHTML='<div class="empty">No sleep logged yet.</div>';return;}
@@ -357,7 +357,7 @@ async function logSleep(){
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

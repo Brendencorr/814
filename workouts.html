@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Movement — Riley</title>
+<title>Movement - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -118,10 +118,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 
 <div id="plan-slot" style="margin-bottom:18px"></div>
 <div class="stat-row">
-  <div class="stat"><div class="sv" id="wk-cnt">—</div><div class="sl">This Week</div></div>
-  <div class="stat"><div class="sv" id="wk-min">—</div><div class="sl">Minutes</div></div>
-  <div class="stat"><div class="sv" id="wk-mi">—</div><div class="sl">Miles</div></div>
-  <div class="stat"><div class="sv" id="wk-str">—</div><div class="sl">Day Streak</div></div>
+  <div class="stat"><div class="sv" id="wk-cnt">-</div><div class="sl">This Week</div></div>
+  <div class="stat"><div class="sv" id="wk-min">-</div><div class="sl">Minutes</div></div>
+  <div class="stat"><div class="sv" id="wk-mi">-</div><div class="sl">Miles</div></div>
+  <div class="stat"><div class="sv" id="wk-str">-</div><div class="sl">Day Streak</div></div>
 </div>
 <div class="card">
   <div class="card-title">Log a Workout</div>
@@ -184,13 +184,13 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 (async()=>{ await boot(async()=>{document.getElementById('w-date').value=TODAY;await loadWellness();await loadWorkouts();}); })();
 
-// ── WORKOUT PLAN — intake → generate → display → weekly adapt ────────────────
+// ── WORKOUT PLAN - intake → generate → display → weekly adapt ────────────────
 const WK_GOALS=[['weight_loss','Weight loss'],['muscle_gain','Muscle gain'],['strength','Strength'],['general_health','General health'],['stress_reduction','Stress reduction'],['mobility','Mobility / flexibility'],['recovery_support','Recovery support'],['athletic_performance','Athletic performance']];
-const WK_LEVELS=[['beginner','Beginner — 0–2 days/wk'],['intermediate','Intermediate — 3–4 days'],['advanced','Advanced — 5+ days']];
+const WK_LEVELS=[['beginner','Beginner - 0–2 days/wk'],['intermediate','Intermediate - 3–4 days'],['advanced','Advanced - 5+ days']];
 const WK_EQUIP=[['none','No equipment'],['dumbbells','Dumbbells only'],['full_gym','Full gym']];
 function wSel(id,label,opts){return `<div class="field"><label>${label}</label><select id="${id}">${opts.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select></div>`;}
 function wTxt(id,label,ph){return `<div class="field"><label>${label}</label><input id="${id}" placeholder="${ph||''}"></div>`;}
-// Adaptive plan generation is a Riley Coach feature (v4 pricing) — separate
+// Adaptive plan generation is a Riley Coach feature (v4 pricing) - separate
 // from workout LOGGING below, which stays open at Companion+ via the page's
 // existing tracker_fitness gate. Self-contained fetch (not the sidebar-gating
 // IIFE's cache) so there's no race on load order.
@@ -200,7 +200,7 @@ async function coachEntitled(featureKey){
     const r=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:UID,token:tok})});
     const d=await r.json();
     return !!(d&&d.features&&d.features[featureKey]&&d.features[featureKey].access);
-  }catch(e){return true;} // fail open — never block on a network hiccup
+  }catch(e){return true;} // fail open - never block on a network hiccup
 }
 function coachLockCard(slot,title,body){
   slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Coach →</a></div>`;
@@ -208,7 +208,7 @@ function coachLockCard(slot,title,body){
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
   if(!(await coachEntitled('adaptive_workouts'))){
-    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week — included with Riley Coach ($34/mo). Your workout log below still works on Companion.');
+    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week - included with Riley Coach ($34/mo). Your workout log below still works on Companion.');
   }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
@@ -222,7 +222,7 @@ function renderWorkoutIntake(slot){
     wSel('wi-goal','Your main fitness goal',WK_GOALS)+wSel('wi-level','Your current fitness level',WK_LEVELS)+
     `<div class="fr">`+wTxt('wi-days','Days/week you can train','3')+wTxt('wi-mins','Minutes per session','30')+`</div>`+
     wSel('wi-equip','Equipment you have',WK_EQUIP)+
-    wTxt('wi-injuries','Injuries or limitations? (optional)','e.g. bad knee — easy on impact')+
+    wTxt('wi-injuries','Injuries or limitations? (optional)','e.g. bad knee - easy on impact')+
     wTxt('wi-enjoy','Workouts you enjoy? (optional)','walking, lifting, yoga…')+
     wTxt('wi-success','What does success look like in 30 days?','In your words')+
     `<button class="btn btn-gold" id="wi-btn" onclick="saveWorkoutIntake()" style="margin-top:8px">Build my 7-day plan →</button><div class="alert" id="wi-alert"></div></div>`;
@@ -236,7 +236,7 @@ async function saveWorkoutIntake(){
 }
 async function generateWorkoutPlan(){
   const slot=document.getElementById('plan-slot');
-  slot.innerHTML=`<div class="card"><div class="card-sub" style="text-align:center;padding:28px 0">🤍 Riley is building your plan — this takes about 30 seconds…</div></div>`;
+  slot.innerHTML=`<div class="card"><div class="card-sub" style="text-align:center;padding:28px 0">🤍 Riley is building your plan - this takes about 30 seconds…</div></div>`;
   let prev=null;
   try{const {data}=await SB.from('wellness_plans').select('created_at').eq('user_id',UID).eq('plan_type','workout').eq('is_active',true).maybeSingle();prev=data&&data.created_at;}catch(e){}
   try{const tok=(await SB.auth.getSession()).data.session?.access_token;
@@ -247,22 +247,22 @@ async function generateWorkoutPlan(){
     tries++;let d=null;
     try{const {data}=await SB.from('wellness_plans').select('plan,created_at').eq('user_id',UID).eq('plan_type','workout').eq('is_active',true).maybeSingle();d=data;}catch(e){}
     if(d&&d.plan&&d.plan.days&&d.created_at!==prev)return renderWorkoutPlan(slot,d.plan);
-    if(tries>=22){slot.innerHTML=`<div class="card"><div class="card-sub">Still building — Riley's taking a little longer. <button class="btn btn-ghost" onclick="loadWellness()">Check for it</button></div></div>`;return;}
+    if(tries>=22){slot.innerHTML=`<div class="card"><div class="card-sub">Still building - Riley's taking a little longer. <button class="btn btn-ghost" onclick="loadWellness()">Check for it</button></div></div>`;return;}
     setTimeout(poll,4000);
   };
   setTimeout(poll,6000);
 }
-function renderWorkoutCta(slot){slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div class="card-title">Your plan is ready to build</div><div class="card-sub">Riley has your goals — tap to generate this week's workouts.</div><button class="btn btn-gold" onclick="generateWorkoutPlan()">Generate my 7-day plan →</button></div>`;}
+function renderWorkoutCta(slot){slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div class="card-title">Your plan is ready to build</div><div class="card-sub">Riley has your goals - tap to generate this week's workouts.</div><button class="btn btn-gold" onclick="generateWorkoutPlan()">Generate my 7-day plan →</button></div>`;}
 function renderWorkoutPlan(slot,plan){
   const days=(plan.days||[]).map(d=>{
-    const ex=(d.exercises||[]).map(e=>`<div style="font-size:12px;color:var(--smoke);padding:2px 0">• ${esc(e.name)}${e.sets?` — ${e.sets}×${esc(String(e.reps||''))}${e.rest?` (${esc(e.rest)} rest)`:''}`:''}</div>`).join('');
+    const ex=(d.exercises||[]).map(e=>`<div style="font-size:12px;color:var(--smoke);padding:2px 0">• ${esc(e.name)}${e.sets?` - ${e.sets}×${esc(String(e.reps||''))}${e.rest?` (${esc(e.rest)} rest)`:''}`:''}</div>`).join('');
     return `<div style="background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:13px 15px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--parchment)">${esc(d.day||'')} · ${esc(d.focus||'')}</div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--smoke2);white-space:nowrap">${d.duration_min?d.duration_min+' MIN':''}${d.intensity?' · '+esc(String(d.intensity)).toUpperCase():''}</div></div>${ex?`<div style="margin-top:8px">${ex}</div>`:''}${d.recovery_note?`<div style="font-size:11px;color:var(--smoke2);margin-top:6px;font-style:italic">${esc(d.recovery_note)}</div>`:''}</div>`;
   }).join('');
   slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28)"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><div class="card-title" style="margin:0">Your 7-Day Plan</div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateWorkoutPlan()">↻ Regenerate</button></div><div class="card-sub">${esc(plan.summary||'')}</div>${days}${plan.weekly_progression?`<div style="font-size:12px;color:var(--smoke);margin-top:10px"><b style="color:var(--parchment)">Next week:</b> ${esc(plan.weekly_progression)}</div>`:''}${plan.safety_note?`<div style="font-size:10px;color:var(--smoke2);margin-top:12px;border-top:1px solid rgba(255,255,255,0.06);padding-top:10px">⚠ ${esc(plan.safety_note)}</div>`:''}<button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="workoutWeekly()">Log this week's check-in →</button></div>`;
 }
 function workoutWeekly(){
   const slot=document.getElementById('plan-slot');
-  slot.innerHTML=`<div class="card"><div class="card-title">This week's check-in</div><div class="card-sub">Riley adapts next week from your honest answers — no wrong numbers.</div>`+
+  slot.innerHTML=`<div class="card"><div class="card-title">This week's check-in</div><div class="card-sub">Riley adapts next week from your honest answers - no wrong numbers.</div>`+
     wTxt('ww-pct','How many workouts did you complete? (%)','e.g. 70')+wTxt('ww-hard','Anything too hard? (optional)','')+wTxt('ww-easy','Anything too easy? (optional)','')+wTxt('ww-pain','Any pain or soreness? (optional)','')+wTxt('ww-energy','How was your energy? (optional)','')+
     `<button class="btn btn-gold" id="ww-btn" onclick="saveWorkoutWeekly()">Save & adapt my plan →</button><button class="btn btn-ghost" style="margin-left:8px" onclick="loadWellness()">Cancel</button></div>`;
 }
@@ -278,16 +278,16 @@ async function loadWorkouts(){
   const monday=new Date();monday.setDate(monday.getDate()-monday.getDay()+1);
   const ms=monday.toLocaleDateString('en-CA');
   const tw=logs.filter(l=>l.logged_date>=ms);
-  document.getElementById('wk-cnt').textContent=tw.length||'—';
-  document.getElementById('wk-min').textContent=tw.reduce((s,l)=>s+(l.duration_minutes||0),0)||'—';
+  document.getElementById('wk-cnt').textContent=tw.length||'-';
+  document.getElementById('wk-min').textContent=tw.reduce((s,l)=>s+(l.duration_minutes||0),0)||'-';
   const mi=tw.reduce((s,l)=>s+(parseFloat(l.distance_miles)||0),0);
-  document.getElementById('wk-mi').textContent=mi>0?mi.toFixed(1):'—';
+  document.getElementById('wk-mi').textContent=mi>0?mi.toFixed(1):'-';
   const dates=[...new Set(logs.map(l=>l.logged_date))].sort((a,b)=>b.localeCompare(a));
   let streak=0,exp=TODAY;for(const d of dates){if(d===exp){streak++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else if(d<exp)break;}
-  document.getElementById('wk-str').textContent=streak||'—';
+  document.getElementById('wk-str').textContent=streak||'-';
   const icons={Run:'🏃',Lift:'🏋️',Bike:'🚴',Walk:'🚶',Swim:'🏊',HIIT:'⚡',Yoga:'🧘',Recovery:'🛁'};
   const el=document.getElementById('w-hist');
-  if(!logs.length){el.innerHTML='<div class="empty">No workouts yet — log your first one above.</div>';return;}
+  if(!logs.length){el.innerHTML='<div class="empty">No workouts yet - log your first one above.</div>';return;}
   el.innerHTML='<div class="log-list">'+logs.slice(0,30).map(l=>{const det=[l.duration_minutes?l.duration_minutes+'min':null,l.distance_miles?l.distance_miles+'mi':null,l.notes].filter(Boolean).join(' · ');
     return`<div class="log-row"><div class="log-icon">${icons[l.activity_type]||'💪'}</div><div class="log-info"><div class="log-title">${esc(l.activity_type)}</div>${det?`<div class="log-detail">${esc(det)}</div>`:''}</div><div class="log-date">${fmtDate(l.logged_date)}</div></div>`;
   }).join('')+'</div>';
@@ -399,7 +399,7 @@ async function logWorkout(){
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Riley — Operator</title>
+<title>Riley - Operator</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* fonts loaded via <link> in <head> — DM Serif Display / DM Sans / DM Mono */
+/* fonts loaded via <link> in <head> - DM Serif Display / DM Sans / DM Mono */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  /* 8:14 dark system — matches the client app + marketing site (riley.meetriley.us) */
+  /* 8:14 dark system - matches the client app + marketing site (riley.meetriley.us) */
   --bg:#0a0908;
   --surface:#151210;
   --surface2:#1e1b17;
   --border:rgba(245,240,232,0.08);
   --border-strong:rgba(245,240,232,0.17);
-  /* Text — parchment on ink */
+  /* Text - parchment on ink */
   --ink:#f5f0e8;
   --ink2:#cfc8ba;
   --muted:#8a8578;
@@ -381,7 +381,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
 .lchip.on{background:var(--gold-soft);border-color:var(--gold);color:var(--amber);font-weight:600}
 .lchip b{font-weight:700;opacity:.7;margin-left:.15rem}
 .ltag{display:inline-block;padding:.08rem .42rem;background:var(--surface2);border:1px solid var(--border);border-radius:9px;font-size:.62rem;color:var(--muted);line-height:1.55}
-/* Detailed stat cards (value + trend delta + sparkline) — used across all tabs */
+/* Detailed stat cards (value + trend delta + sparkline) - used across all tabs */
 .statc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;position:relative;overflow:hidden;transition:border-color .15s,transform .15s}
 .statc.clk{cursor:pointer}
 .statc.clk:hover{border-color:var(--gold-mid);transform:translateY(-1px)}
@@ -503,7 +503,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
     </div>
   </div>
 
-  <!-- (retired: Social/Pipeline/Review screens — replaced by Content Engine) -->
+  <!-- (retired: Social/Pipeline/Review screens - replaced by Content Engine) -->
 
   <div class="sc" id="sce">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
@@ -548,7 +548,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <button class="bo" onclick="loadMetrics()">&#8635; Refresh</button>
         </div>
         <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;max-width:680px;line-height:1.6">
-          Revenue &amp; expenses, the growth funnel, and north-star metrics. Entitlement state only &mdash; this view never shows conversation content.
+          Revenue &amp; expenses, the growth funnel, and north-star metrics. Entitlement state only - this view never shows conversation content.
         </div>
         <div id="ro-finance" style="margin-bottom:1.8rem"><div class="em">Loading revenue &amp; expenses…</div></div>
         <div class="cl" style="margin:1.8rem 0 .8rem;font-size:.9rem">Growth &amp; Metrics</div>
@@ -578,7 +578,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <button class="op-modal-x" onclick="closeAddUser()" aria-label="Close">&times;</button>
         <div class="cl" style="margin:0 0 .3rem">Add a Member</div>
         <div style="font-size:.8rem;color:var(--muted);margin-bottom:1.4rem;max-width:560px;line-height:1.6">
-          Manually provision someone into Riley. Creates their account and profile right away &mdash; they sign in with <b style="color:var(--ink2)">Google</b> using the same email. Every add is written to the audit trail.
+          Manually provision someone into Riley. Creates their account and profile right away - they sign in with <b style="color:var(--ink2)">Google</b> using the same email. Every add is written to the audit trail.
         </div>
 
         <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Full name</label>
@@ -594,9 +594,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
             <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Membership</label>
             <select id="nu-tier"
               style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.6rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
-              <option value="guide">Guide &mdash; free</option>
-              <option value="companion">Companion &mdash; comped</option>
-              <option value="coach">Coach &mdash; comped</option>
+              <option value="guide">Guide - free</option>
+              <option value="companion">Companion - comped</option>
+              <option value="coach">Coach - comped</option>
             </select>
           </div>
           <div style="flex:1;min-width:180px">
@@ -609,7 +609,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
         <label style="display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;margin:.4rem 0 .2rem;padding:.7rem .8rem;border:1px solid var(--border);border-radius:6px;background:rgba(255,255,255,0.015)">
           <input type="checkbox" id="nu-email-toggle" style="margin-top:.15rem;accent-color:var(--gold);width:15px;height:15px;flex-shrink:0">
           <span style="font-size:.8rem;color:var(--ink2);line-height:1.5">Email the member a welcome + sign-in link
-            <span style="display:block;font-size:.72rem;color:var(--muted2);margin-top:.15rem">Sends once Resend is connected. Until then, the member is still created &mdash; no email goes out.</span>
+            <span style="display:block;font-size:.72rem;color:var(--muted2);margin-top:.15rem">Sends once Resend is connected. Until then, the member is still created - no email goes out.</span>
           </span>
         </label>
 
@@ -661,7 +661,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   </div>
 </div>
 
-<!-- ATTRIBUTION SCREEN — PostHog funnel by campaign -->
+<!-- ATTRIBUTION SCREEN - PostHog funnel by campaign -->
 <div class="sc" id="sat">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1180px;margin:0 auto">
@@ -692,7 +692,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
   </div>
 </div>
 
-<!-- PROGRAMS SCREEN (v4) — membership ladder + à la carte + retired -->
+<!-- PROGRAMS SCREEN (v4) - membership ladder + à la carte + retired -->
 <div class="sc" id="sy">
   <div style="flex:1;overflow-y:auto;padding:1.4rem 1.7rem">
     <div style="max-width:1000px;margin:0 auto">
@@ -723,7 +723,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
           <a id="cw-open" href="/home" target="_blank" rel="noopener" style="font-size:12px;color:#c9a84c;text-decoration:none;white-space:nowrap">Open live ↗</a>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover any element for the <b style="color:#f5f0e8">⛶ handle</b> — <b style="color:#f5f0e8">drag it to move</b> the element, or click it for the panel (width · height · spacing · align · text colour · bold/italic). Hover a <b style="color:#f5f0e8">section</b> for 👁 show/hide · ↑↓ reorder · 🎨 colors; click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Use <b style="color:#f5f0e8">📱 Mobile</b> to tune the phone layout separately — desktop changes never affect mobile. Nothing goes live until <b style="color:#c9a84c">Save &amp; publish</b> — then instantly, no redeploy.</div>
+      <div style="font-size:12px;color:var(--muted2,#8a8578);margin-bottom:.9rem;line-height:1.55">Click any <b style="color:#f5f0e8">text</b> to edit it. Hover any element for the <b style="color:#f5f0e8">⛶ handle</b> - <b style="color:#f5f0e8">drag it to move</b> the element, or click it for the panel (width · height · spacing · align · text colour · bold/italic). Hover a <b style="color:#f5f0e8">section</b> for 👁 show/hide · ↑↓ reorder · 🎨 colors; click a <b style="color:#f5f0e8">logo/image</b> to swap or remove it. Use <b style="color:#f5f0e8">📱 Mobile</b> to tune the phone layout separately - desktop changes never affect mobile. Nothing goes live until <b style="color:#c9a84c">Save &amp; publish</b> - then instantly, no redeploy.</div>
       <div style="display:grid;grid-template-columns:1fr 300px;gap:1rem;align-items:start" id="cw-grid">
         <div style="border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;background:#0a0908;height:74vh">
           <iframe id="cw-frame" title="Website preview" style="width:100%;height:100%;border:0;display:block"></iframe>
@@ -755,7 +755,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       <div style="max-width:1180px;margin:0 auto">
         <div style="margin-bottom:.4rem"><span style="font-family:'Bebas Neue',sans-serif;letter-spacing:.13em;color:var(--gold);font-size:.78rem">LIFECYCLE EMAIL</span></div>
         <h1 style="font-family:'DM Serif Display',Georgia,serif;font-size:1.9rem;color:var(--ink);margin:0 0 .35rem">Client Communications</h1>
-        <p style="color:var(--muted);font-size:.9rem;max-width:680px;margin:0 0 1rem;line-height:1.6">The whole lifecycle email sequence, grouped by flow. View, edit copy, retime, change the sender, or turn any message off. Every email shares one brand shell, so edits stay on-brand. The verbatim launch copy is the fallback — <b style="color:var(--ink2)">Reset to original</b> restores it anytime.</p>
+        <p style="color:var(--muted);font-size:.9rem;max-width:680px;margin:0 0 1rem;line-height:1.6">The whole lifecycle email sequence, grouped by flow. View, edit copy, retime, change the sender, or turn any message off. Every email shares one brand shell, so edits stay on-brand. The verbatim launch copy is the fallback - <b style="color:var(--ink2)">Reset to original</b> restores it anytime.</p>
         <div id="comms-dark" style="display:flex;align-items:center;gap:.6rem;background:var(--gold-soft);border:1px solid var(--gold-mid);border-radius:9px;padding:.7rem .95rem;margin-bottom:1.3rem;font-size:.82rem;color:var(--ink2)">
           <span style="font-size:1rem">🌙</span><span id="comms-dark-txt">Sending is <b style="color:var(--gold)">OFF</b> (dark). Edits are saved and previewed, but no member receives anything until go-live. Checking status…</span>
         </div>
@@ -866,7 +866,7 @@ try{ if(localStorage.getItem('814_rem')==='1'&&localStorage.getItem('814_opkey')
 // ── Operator-key injector ──────────────────────────────────────────────────
 // The pipeline / content-engine + admin endpoints are OPERATOR_KEY-gated server-side; this makes
 // EVERY dashboard call to our functions carry x-operator-key (prompting once). Only touches
-// /.netlify/functions/ URLs — never Supabase. Redundant-but-harmless for calls that already set it.
+// /.netlify/functions/ URLs - never Supabase. Redundant-but-harmless for calls that already set it.
 (function(){
   var _origFetch = window.fetch.bind(window);
   window.fetch = function(url, opts){
@@ -895,11 +895,11 @@ async function unlock(){
   if(status!==200){
     opForget();  // wipe the rejected key from every store
     if(status===401||status===403){ err.textContent='Incorrect key.'; document.getElementById('pw').value=''; }
-    else { err.textContent='Couldn’t verify with the server — check your connection and try again.'; }
+    else { err.textContent='Couldn’t verify with the server - check your connection and try again.'; }
     document.getElementById('pw').focus();
     return;
   }
-  // Valid — persist (this device only if "remember"), then enter.
+  // Valid - persist (this device only if "remember"), then enter.
   try{
     sessionStorage.setItem('814_a','1');
     if(remember){ localStorage.setItem('814_opkey',pw); localStorage.setItem('814_rem','1'); }
@@ -922,7 +922,7 @@ function toggleSocialDD(e){
 }
 function closeSocialDD(){var el=document.getElementById('social-dd');if(el)el.style.display='none';}
 // The trigger reads "Social Media" whether Social, Pipeline, or Review is the
-// active screen — since gs() only highlights whichever specific item was
+// active screen - since gs() only highlights whichever specific item was
 // clicked (now hidden inside the closed dropdown), sync the trigger separately.
 function syncSocialTrigger(){
   var trig=document.getElementById('social-dd-trigger');if(!trig)return;
@@ -981,7 +981,7 @@ function opU8(b){var p='='.repeat((4-b.length%4)%4);var s=(b+p).replace(/-/g,'+'
 function opSameKey(sub,wantU8){try{var cur=sub.options&&sub.options.applicationServerKey;if(!cur)return false;var a=new Uint8Array(cur);if(a.length!==wantU8.length)return false;for(var i=0;i<a.length;i++)if(a[i]!==wantU8[i])return false;return true;}catch(e){return false;}}
 function opPushOn(){return localStorage.getItem('814_op_push')==='1'&&(window.Notification&&Notification.permission==='granted');}
 function opPushStatus(m,err){var els=document.querySelectorAll('.op-push-status');for(var i=0;i<els.length;i++){els[i].textContent=m||'';els[i].style.color=err?'var(--red)':'var(--muted)';}}
-// Home nudge — shown ONLY until the admin enables alerts, then it disappears (managed in Settings).
+// Home nudge - shown ONLY until the admin enables alerts, then it disappears (managed in Settings).
 function renderOperatorPushControl(){
   var body=document.getElementById('home-body'); if(!body) return;
   var old=document.getElementById('op-push-card'); if(old) old.remove();
@@ -993,7 +993,7 @@ function renderOperatorPushControl(){
     '<div class="op-push-status" style="flex-basis:100%;font-size:.72rem;color:var(--muted);min-height:14px"></div></div>';
   body.innerHTML=card+body.innerHTML;
 }
-// Settings control — the permanent place to manage alerts on this device.
+// Settings control - the permanent place to manage alerts on this device.
 function renderOperatorPushSetting(){
   var box=document.getElementById('op-push-setting'); if(!box) return;
   var btnSec='background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);font-size:.72rem;cursor:pointer;padding:6px 12px;margin-right:6px';
@@ -1011,10 +1011,10 @@ function renderOperatorPushSetting(){
 function renderOpPush(){ renderOperatorPushControl(); renderOperatorPushSetting(); }
 async function enableOperatorPush(){
   try{
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)){var _ios=/iP(hone|ad|od)/.test(navigator.userAgent||'');var _standalone=(window.navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);opPushStatus(_ios&&!_standalone?'On iPhone/iPad: open this page in Safari, tap Share → "Add to Home Screen", then open it from that icon and enable notifications. (iOS only allows web notifications from an installed app, and only via Safari — not Chrome.)':'This browser can\'t receive push notifications. On iPhone, use Safari + "Add to Home Screen".',true);return;}
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)){var _ios=/iP(hone|ad|od)/.test(navigator.userAgent||'');var _standalone=(window.navigator.standalone===true)||(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches);opPushStatus(_ios&&!_standalone?'On iPhone/iPad: open this page in Safari, tap Share → "Add to Home Screen", then open it from that icon and enable notifications. (iOS only allows web notifications from an installed app, and only via Safari - not Chrome.)':'This browser can\'t receive push notifications. On iPhone, use Safari + "Add to Home Screen".',true);return;}
     opPushStatus('Requesting permission…');
     var perm=await Notification.requestPermission();
-    if(perm!=='granted'){opPushStatus('Notifications are blocked for this site — enable them in your browser settings, then try again.',true);return;}
+    if(perm!=='granted'){opPushStatus('Notifications are blocked for this site - enable them in your browser settings, then try again.',true);return;}
     var reg=await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready;
     var kr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'key'})});
     var kj=await kr.json().catch(function(){return{};});
@@ -1022,16 +1022,16 @@ async function enableOperatorPush(){
     var wantKey=opU8(kj.publicKey);
     var sub=await reg.pushManager.getSubscription();
     // A subscription bound to a DIFFERENT VAPID key (e.g. the key rotated or moved to the DB)
-    // can never receive our pushes — drop it and re-subscribe with the current key. This makes
+    // can never receive our pushes - drop it and re-subscribe with the current key. This makes
     // Enable self-healing: no need to manually turn off first after a key change.
     if(sub&&!opSameKey(sub,wantKey)){try{await sub.unsubscribe();}catch(e){}sub=null;}
     if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wantKey});
-    var label=(window.prompt('Name this device (optional) — e.g. "Brenden iPhone":','')||'').trim();
+    var label=(window.prompt('Name this device (optional) - e.g. "Brenden iPhone":','')||'').trim();
     var tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'America/Denver';
     var rr=await fetch(B+'/operator-push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'subscribe',subscription:(sub.toJSON?sub.toJSON():sub),label:label,tz:tz})});
     if(!rr.ok){var ej=await rr.json().catch(function(){return{};});opPushStatus('Could not register: '+(ej.error||('HTTP '+rr.status)),true);return;}
     localStorage.setItem('814_op_push','1'); renderOpPush();
-    opPushStatus('Done — this device will get a push for every new member. Manage it in Settings ⚙.');
+    opPushStatus('Done - this device will get a push for every new member. Manage it in Settings ⚙.');
   }catch(e){opPushStatus('Something went wrong: '+((e&&e.message)||e),true);}
 }
 async function testOperatorPush(){
@@ -1104,7 +1104,7 @@ function deltaChip(cur,prev,invert){
   cur=+cur||0; prev=+prev||0;
   if(prev===0){ return cur>0?'<span class="dchip new">NEW</span>':''; }
   var pct=Math.round((cur-prev)/prev*100);
-  if(pct===0)return '<span class="dchip flat">—</span>';
+  if(pct===0)return '<span class="dchip flat">-</span>';
   var up=pct>0, good=invert?!up:up;
   return '<span class="dchip '+(good?'up':'down')+'">'+(up?'▲':'▼')+' '+Math.abs(pct)+'%</span>';
 }
@@ -1131,7 +1131,7 @@ function statCard(o){
   var sparkHtml=(o.spark&&o.spark.series&&o.spark.series.length)?('<div class="spark">'+spark(o.spark.series,o.spark.color||o.color)+'</div>'):'';
   return '<div class="'+cls+'"'+clk+'>'+
     '<div class="lbl"><span>'+x(o.label||'')+'</span>'+delta+'</div>'+
-    '<div class="val"'+vstyle+'>'+(o.value!=null?o.value:'—')+'</div>'+
+    '<div class="val"'+vstyle+'>'+(o.value!=null?o.value:'-')+'</div>'+
     (o.sub?('<div class="sub">'+o.sub+'</div>'):'')+sparkHtml+
   '</div>';
 }
@@ -1149,7 +1149,7 @@ function chHide(box){
   var p=(box&&box.closest&&box.closest('[data-chart]'))||box; if(!p||!p.querySelector)return;
   ['.chx','.chd','.chtip'].forEach(function(c){var e=p.querySelector(c);if(e)e.style.display='none';});
 }
-// Progress ring gauge (Apple/WHOOP-style) — pct 0-100.
+// Progress ring gauge (Apple/WHOOP-style) - pct 0-100.
 function ring(pct,label,sub,color){
   color=color||'var(--gold)'; pct=Math.max(0,Math.min(100,pct||0));
   var R=52,C=2*Math.PI*R, off=C*(1-pct/100);
@@ -1164,7 +1164,7 @@ function ring(pct,label,sub,color){
     '<div><div style="font-family:DM Serif Display,serif;font-size:17px;color:var(--ink);line-height:1.2">'+x(label||'')+'</div><div style="font-size:.72rem;color:var(--muted);margin-top:.3rem;line-height:1.4">'+(sub||'')+'</div></div>'+
   '</div>';
 }
-// Segmented distribution bar with legend — segs:[{label,n,color}]
+// Segmented distribution bar with legend - segs:[{label,n,color}]
 function distBar(segs){
   var total=segs.reduce(function(a,s){return a+(s.n||0);},0)||1;
   var bar=segs.map(function(s){var w=(s.n||0)/total*100; return w>0?'<div title="'+x(s.label)+': '+(s.n||0)+'" style="width:'+w.toFixed(2)+'%;background:'+s.color+';height:100%"></div>':'';}).join('');
@@ -1174,12 +1174,12 @@ function distBar(segs){
 function renderHome(d){
   _homeData=d;
   var c=d.clients||{}, t=d.totals||{};
-  var stat=function(label,val,sub,kind){return '<div class="mc" style="margin:0;cursor:pointer" onclick="openDrill(\''+kind+'\',null,\''+label+'\')"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'—')+'</div><div class="ms">'+(sub||'')+' ›</div></div>';};
+  var stat=function(label,val,sub,kind){return '<div class="mc" style="margin:0;cursor:pointer" onclick="openDrill(\''+kind+'\',null,\''+label+'\')"><div class="mn">'+label+'</div><div class="mv" style="font-size:30px">'+(val!=null?val:'-')+'</div><div class="ms">'+(sub||'')+' ›</div></div>';};
   function barList(rows,keyName,color,kind){
     if(!rows||!rows.length)return '<div class="em">Fills in as clients browse</div>';
     var max=1; rows.forEach(function(r){ if(r.n>max)max=r.n; });
     return rows.map(function(r){
-      var lbl=r[keyName]||'—';var pct=Math.round((r.n/max)*100);
+      var lbl=r[keyName]||'-';var pct=Math.round((r.n/max)*100);
       return '<div style="margin-bottom:.5rem;cursor:pointer" onclick="openDrill(\''+kind+'\',\''+String(lbl).split("\'").join("").slice(0,120)+'\',\''+kind+': '+x(lbl)+'\')"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.15rem"><span style="color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px">'+x(lbl)+'</span><span style="color:var(--muted)">'+r.n+' ›</span></div><div style="height:5px;background:var(--surface2);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:3px"></div></div></div>';
     }).join('');
   }
@@ -1211,9 +1211,9 @@ function renderHome(d){
     '</div>'+
   '</div>';
   W.stats='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:.75rem">'+
-    statCard({label:'Total Clients',value:(c.total!=null?c.total:'—'),sub:'all-time',kind:'total',color:'var(--gold)'})+
-    statCard({label:'Active · 7d',value:(c.active_7d!=null?c.active_7d:'—'),sub:'vs prior week',kind:'active',color:'var(--green)',delta:{cur:c.active_7d,prev:p.active_7d}})+
-    statCard({label:'New · 7d',value:(c.new_7d!=null?c.new_7d:'—'),sub:'signups vs prior',kind:'new',color:'var(--blue)',delta:{cur:c.new_7d,prev:p.new_7d}})+
+    statCard({label:'Total Clients',value:(c.total!=null?c.total:'-'),sub:'all-time',kind:'total',color:'var(--gold)'})+
+    statCard({label:'Active · 7d',value:(c.active_7d!=null?c.active_7d:'-'),sub:'vs prior week',kind:'active',color:'var(--green)',delta:{cur:c.active_7d,prev:p.active_7d}})+
+    statCard({label:'New · 7d',value:(c.new_7d!=null?c.new_7d:'-'),sub:'signups vs prior',kind:'new',color:'var(--blue)',delta:{cur:c.new_7d,prev:p.new_7d}})+
     statCard({label:'Logins · '+R+'d',value:loginD.cur,sub:'vs prior '+R+'d',kind:'logins',color:'var(--gold)',delta:{cur:loginD.cur,prev:loginD.prev},spark:{series:loginSlice.map(function(r){return r.n;}),color:'var(--gold)'}})+
     statCard({label:'Riley · '+R+'d',value:rileyD.cur,sub:'vs prior '+R+'d',kind:'messages',color:'var(--sage)',delta:{cur:rileyD.cur,prev:rileyD.prev},spark:{series:rileySlice.map(function(r){return r.n;}),color:'var(--sage)'}})+
   '</div>';
@@ -1221,11 +1221,11 @@ function renderHome(d){
   W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
-  // Clients — the unified tracker mirrored on Home: newest members first, rendered with the SAME
+  // Clients - the unified tracker mirrored on Home: newest members first, rendered with the SAME
   // rich engRow (state, tier, mood, last-active + email status). Replaces the old "Latest sign-ups"
   // and "Recent correspondence" widgets. Keeps the "Mark N seen" new-signup affordance.
   var sg=d.recent_signups||[];
-  if(!sg.length){ W.clients='<div class="em">No members yet — fills in as people join</div>'; }
+  if(!sg.length){ W.clients='<div class="em">No members yet - fills in as people join</div>'; }
   else{
     var lastSeen=localStorage.getItem('814_last_signup_seen')||'';
     window.__newestSignup=sg[0]&&sg[0].created_at;
@@ -1276,14 +1276,14 @@ function attachHomeDnD(){
 function homeMove(from,to){ var l=homeLayout(); var o=l.order.slice(); HOME_WIDGETS.forEach(function(k){if(o.indexOf(k)<0)o.push(k);}); o=o.filter(function(k){return k!==from;}); var ti=o.indexOf(to); if(ti<0)ti=o.length; o.splice(ti,0,from); l.order=o; saveHomeLayout(l); renderHome(_homeData); }
 function homeHide(k){ var l=homeLayout(); if(l.hidden.indexOf(k)<0)l.hidden.push(k); saveHomeLayout(l); renderHome(_homeData); }
 function homeShow(k){ var l=homeLayout(); l.hidden=l.hidden.filter(function(x){return x!==k;}); saveHomeLayout(l); renderHome(_homeData); }
-// ── Live Programs card on Home — current member count per live membership ───
+// ── Live Programs card on Home - current member count per live membership ───
 // Never forces the operator-key prompt on page load (matches checkSafetyAlerts'
 // pattern): if no key is cached yet, show a quiet "click to unlock" affordance
-// instead — the prompt only fires from that deliberate click.
+// instead - the prompt only fires from that deliberate click.
 async function loadHomePrograms(){
   var el=document.getElementById('ov-programs');if(!el)return;
   if(!opKey()){
-    el.innerHTML='<div class="em" style="cursor:pointer" onclick="loadHomePrograms_unlock()">Live Programs — click to view current member counts</div>';
+    el.innerHTML='<div class="em" style="cursor:pointer" onclick="loadHomePrograms_unlock()">Live Programs - click to view current member counts</div>';
     return;
   }
   try{
@@ -1320,7 +1320,7 @@ function renderOverview(eng,ps){
   var runs=(ps&&ps.pipeline_runs)||[];var lastRun=runs[0];var posts=(ps&&ps.published_posts)||[];var echo=(ps&&ps.echo_scores&&ps.echo_scores[0])||{};
   var socCol='<div style="background:var(--card);border:1px solid var(--border);padding:1.1rem 1.2rem">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><span class="cl" style="margin:0">Social Performance</span><span onclick="loadCE()" style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:.1em;cursor:pointer">VIEW ALL &#8594;</span></div>'+
-    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.6rem">'+ovSmall('Email signups · wk',echo.email_signups!=null?echo.email_signups:'—','var(--gold)')+ovSmall('Chatbot opens',echo.chatbot_opens!=null?echo.chatbot_opens:'—','var(--muted)')+ovSmall('IG saves',echo.instagram_saves!=null?echo.instagram_saves:'—','var(--muted)')+ovSmall('Link clicks',echo.link_clicks!=null?echo.link_clicks:'—','var(--muted)')+'</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem;margin-bottom:.6rem">'+ovSmall('Email signups · wk',echo.email_signups!=null?echo.email_signups:'-','var(--gold)')+ovSmall('Chatbot opens',echo.chatbot_opens!=null?echo.chatbot_opens:'-','var(--muted)')+ovSmall('IG saves',echo.instagram_saves!=null?echo.instagram_saves:'-','var(--muted)')+ovSmall('Link clicks',echo.link_clicks!=null?echo.link_clicks:'-','var(--muted)')+'</div>'+
     '<div style="border-top:1px solid var(--border);padding-top:.8rem"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--muted2);letter-spacing:.14em;text-transform:uppercase;margin-bottom:.5rem">Latest Pipeline Run</div>'+
     (lastRun?'<div style="font-size:.85rem;color:var(--text)">'+fd(lastRun.run_date)+' · <span style="color:'+(lastRun.status==='success'?'var(--green)':lastRun.status==='partial'?'var(--gold)':'var(--red)')+'">'+(lastRun.status||'?')+'</span> · '+(lastRun.sage_posts_count||0)+' posts</div>':'<div style="font-size:.8rem;color:var(--muted)">No pipeline runs yet.</div>')+
     '<div style="font-size:.72rem;color:var(--muted2);margin-top:.3rem">'+posts.length+' posts published all-time</div></div>'+
@@ -1384,7 +1384,7 @@ function renderAttribution(d){
 /* ── ENGAGEMENT · MISSION CONTROL ─────────────────────────────────────────── */
 function engEsc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function engAgo(ts){if(!ts)return'never';var d=(Date.now()-new Date(ts))/86400000;if(d<1)return'today';if(d<2)return'yesterday';return Math.floor(d)+'d ago';}
-function engMood(m){return['','Hard','Low','Okay','Good','Great'][m]||'—';}
+function engMood(m){return['','Hard','Low','Okay','Good','Great'][m]||'-';}
 function engColor(s){return s==='active'?'var(--green)':s==='cooling'?'var(--gold)':s==='dormant'?'var(--red)':'var(--blue)';}
 async function loadEngagement(btn){
   gs('e',btn);
@@ -1394,11 +1394,11 @@ async function loadEngagement(btn){
     var d=await opGet('/admin-engagement');
     renderEngagement(d);
   }catch(e){st.innerHTML='<div class="em">Could not load engagement: '+engEsc(e.message)+'</div>';}
-  // Safety queue — merged into Client Overview (no separate tab).
+  // Safety queue - merged into Client Overview (no separate tab).
   try{
     var sd=await safetyApi('list');
     renderSafety(sd,'safety-body-eng');updateSafetyBadge(sd.open_count);markSafetySeen(sd);
-  }catch(se){var sb=document.getElementById('safety-body-eng');if(sb)sb.innerHTML='<div class="em">Safety queue unavailable — '+engEsc(se.message)+'</div>';}
+  }catch(se){var sb=document.getElementById('safety-body-eng');if(sb)sb.innerHTML='<div class="em">Safety queue unavailable - '+engEsc(se.message)+'</div>';}
 }
 var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],mentor:['Mentor','var(--gold)'],alacarte:['À la carte','var(--sage)']};
 function engTierBadge(tier){
@@ -1439,7 +1439,7 @@ function trackerFilter(prefix){
 }
 function trackerHtml(prefix,title,count){
   return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.55rem">'+
-      '<div class="sh" style="margin:0">'+title+' ('+count+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">— click a client for their full profile</span></div>'+
+      '<div class="sh" style="margin:0">'+title+' ('+count+') <span style="color:var(--muted2);font-weight:400;font-size:.68rem">- click a client for their full profile</span></div>'+
       '<div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">'+segSelect(prefix,(_trackers[prefix]&&_trackers[prefix].seg)||'all')+
         '<input id="'+prefix+'-search" oninput="trackerFilterInput(\''+prefix+'\')" placeholder="Search name or email…" style="'+CIN+';max-width:210px;margin:0"></div>'+
     '</div>'+
@@ -1449,7 +1449,7 @@ function trackerHtml(prefix,title,count){
 function engRow(u,mailKind){
   var col=engColor(u.state);
   var moodC=u.recent_mood==null?'var(--muted2)':(u.recent_mood<=2?'var(--red)':u.recent_mood>=4?'var(--green)':'var(--muted)');
-  var reeng=u.won_back?'<span style="color:var(--green)">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold)">✉ emailed</span>':'<span style="color:var(--muted2)">—</span>');
+  var reeng=u.won_back?'<span style="color:var(--green)">↩ came back</span>':(u.reengaged?'<span style="color:var(--gold)">✉ emailed</span>':'<span style="color:var(--muted2)">-</span>');
   var mail;
   if(mailKind){ var mkst=(u.email_kinds&&u.email_kinds[mailKind])||null; var mksent=mkst==='sent';
     mail='<span style="color:'+(mksent?'var(--green)':'var(--red)')+';font-weight:600">'+(mksent?'✓':'✗')+' '+mailKind+(mksent?' sent':(mkst?(' '+mkst):' not sent'))+'</span>';
@@ -1457,7 +1457,7 @@ function engRow(u,mailKind){
     mail=u.last_email?('<span style="color:'+mailC+'" title="'+x(u.last_email.subject||'')+'">✉ '+engEsc(u.last_email.kind||'email')+' '+engEsc(u.last_email.status||'')+' · '+engAgo(u.last_email.created_at)+'</span>'):''; }
   var attn=!!u._attn;
   var safety=u.last_crisis_level?'<span style="font-size:.62rem;color:'+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border:1px solid '+(u.last_crisis_level>=3?'var(--red)':'var(--gold)')+';border-radius:10px;padding:.08rem .45rem">⚑ L'+u.last_crisis_level+'</span>':'';
-  var prog=u.active_program?('<span style="color:var(--text)">'+engEsc(u.active_program.title)+'</span> — Day '+(u.active_program.days_completed||0)+(u.active_program.duration_days?' of '+u.active_program.duration_days:'')):'<span style="color:var(--muted2)">No active program</span>';
+  var prog=u.active_program?('<span style="color:var(--text)">'+engEsc(u.active_program.title)+'</span> - Day '+(u.active_program.days_completed||0)+(u.active_program.duration_days?' of '+u.active_program.duration_days:'')):'<span style="color:var(--muted2)">No active program</span>';
   var products=(u.products&&u.products.length)?u.products.map(engEsc).join(', '):'';
   var initials=x((u.name||'?').trim().slice(0,1).toUpperCase());
   var av=u.avatar_url
@@ -1475,7 +1475,7 @@ function engRow(u,mailKind){
       '<span>Last active '+engAgo(u.last_active_at)+'</span>'+
       '<span>'+(u.brief_open_count||0)+' briefs</span>'+
       '<span>'+(u.riley_msg_count||0)+' msgs</span>'+
-      '<span style="color:'+moodC+'">Mood: '+(u.recent_mood==null?'—':engMood(u.recent_mood))+'</span>'+
+      '<span style="color:'+moodC+'">Mood: '+(u.recent_mood==null?'-':engMood(u.recent_mood))+'</span>'+
       '<span>'+reeng+'</span>'+
       (mail?'<span>'+mail+'</span>':'')+
     '</div>'+
@@ -1514,7 +1514,7 @@ function renderEngagement(d){
   trackerFilter('eng');
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();loadIntegrations();}
-// Real integration status (Settings) — which Netlify env keys are wired. Booleans only, never values.
+// Real integration status (Settings) - which Netlify env keys are wired. Booleans only, never values.
 async function loadIntegrations(){
   var box=document.getElementById('platform-status'); if(!box) return;
   try{
@@ -1523,7 +1523,7 @@ async function loadIntegrations(){
     items.forEach(function(it){
       if(it.group && it.group!==lastGroup){ lastGroup=it.group; }
       var ok=!!it.ok, col=ok?'var(--green)':(it.optional?'var(--muted2)':'var(--red)');
-      var txt=ok?'Connected':(it.optional?(it.note?it.note:'Not set — optional'):'Not set');
+      var txt=ok?'Connected':(it.optional?(it.note?it.note:'Not set - optional'):'Not set');
       html+='<div class="spr"><span class="sprl"><span class="sdot'+(ok?' on':'')+'" style="'+(ok?'':'background:'+(it.optional?'var(--muted2)':'var(--red)'))+'"></span>'+engEsc(it.label)+'</span><span class="sprv" style="color:'+col+'">'+txt+'</span></div>';
     });
     box.innerHTML=html||'<div class="spr"><span class="sprl">No integrations reported</span></div>';
@@ -1532,9 +1532,9 @@ async function loadIntegrations(){
   }
 }
 
-// ── Safety queue (crisis flags) — OPERATOR_KEY protected ─────────────────────
+// ── Safety queue (crisis flags) - OPERATOR_KEY protected ─────────────────────
 function opKey(){return sessionStorage.getItem('814_opkey')||'';}
-// Authenticated GET for operator-only endpoints — ensures the key (prompts once), sends x-operator-key.
+// Authenticated GET for operator-only endpoints - ensures the key (prompts once), sends x-operator-key.
 async function opGet(path){
   var k=opKey();
   if(!k){ k=(window.prompt('Operator key:')||'').trim(); if(!k) throw new Error('no-key'); sessionStorage.setItem('814_opkey',k); }
@@ -1611,14 +1611,14 @@ function markSafetySeen(d){var flags=(d&&d.flags)||[];if(flags.length){try{local
 function showSafetyPopup(fresh){
   var ov=document.getElementById('safety-pop');
   if(!ov){ov=document.createElement('div');ov.id='safety-pop';ov.style.cssText='position:fixed;top:1rem;right:1rem;z-index:10000;max-width:360px';document.body.appendChild(ov);}
-  var items=fresh.slice(0,5).map(function(f){var c=f.level>=3?'#d9534f':'#c9a84c';return '<div style="font-size:.8rem;margin:.22rem 0;color:#f0e0e0"><span style="color:'+c+'">●</span> '+engEsc(f.name)+' — '+(f.level>=3?'Level 3':'Level 2')+'</div>';}).join('');
+  var items=fresh.slice(0,5).map(function(f){var c=f.level>=3?'#d9534f':'#c9a84c';return '<div style="font-size:.8rem;margin:.22rem 0;color:#f0e0e0"><span style="color:'+c+'">●</span> '+engEsc(f.name)+' - '+(f.level>=3?'Level 3':'Level 2')+'</div>';}).join('');
   ov.innerHTML='<div style="background:#2a1414;border:1px solid #7a2e2e;border-radius:8px;padding:1rem 1.1rem;box-shadow:0 10px 40px rgba(0,0,0,.5)"><div style="color:#f0c0c0;font-weight:700;font-size:.92rem;margin-bottom:.5rem">⚠ '+fresh.length+' new safety flag'+(fresh.length>1?'s':'')+'</div>'+items+'<div style="display:flex;gap:.6rem;margin-top:.7rem"><button class="bo" style="border-color:#d9534f;color:#f0c0c0" onclick="dismissSafetyPopup();loadEngagement(document.querySelector(\'[data-s=e]\'));">View</button><button class="bo" onclick="dismissSafetyPopup()">Dismiss</button></div></div>';
   ov.style.display='block';
   try{localStorage.setItem('814_safety_seen',fresh[0].created_at);}catch(e){}
 }
 function dismissSafetyPopup(){var ov=document.getElementById('safety-pop');if(ov)ov.style.display='none';}
 async function checkSafetyAlerts(){
-  if(!opKey())return; // not authed this session yet — email still alerts; pop-up activates after first Safety visit
+  if(!opKey())return; // not authed this session yet - email still alerts; pop-up activates after first Safety visit
   try{
     var d=await safetyApi('list');
     updateSafetyBadge(d.open_count);
@@ -1627,7 +1627,7 @@ async function checkSafetyAlerts(){
     if(fresh.length)showSafetyPopup(fresh);
   }catch(e){}
 }
-// ── Admin Content Manager (§8) — OPERATOR_KEY protected, reuses opKey() ──────
+// ── Admin Content Manager (§8) - OPERATOR_KEY protected, reuses opKey() ──────
 async function contentApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
@@ -1681,7 +1681,7 @@ function renderLibList(){
   var chips='<button class="lchip'+(_libFilter==='all'?' on':'')+'" onclick="libFilter(\'all\')">All <b>'+total+'</b></button>';
   Object.keys(TYPE_META).forEach(function(t){if(typeCounts[t]){var m=tmeta(t);chips+='<button class="lchip'+(_libFilter===t?' on':'')+'" onclick="libFilter(\''+t+'\')">'+m.i+' '+m.l+' <b>'+typeCounts[t]+'</b></button>';}});
   var chipBar='<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">'+chips+'</div>';
-  var banner=_lib.missing_links>0?('<div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);color:var(--red);border-radius:6px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.8rem">⚠ '+_lib.missing_links+' live item'+(_lib.missing_links>1?'s have':' has')+' no link. Members can’t open those — add a URL via Edit.</div>'):'';
+  var banner=_lib.missing_links>0?('<div style="background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.25);color:var(--red);border-radius:6px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.8rem">⚠ '+_lib.missing_links+' live item'+(_lib.missing_links>1?'s have':' has')+' no link. Members can’t open those - add a URL via Edit.</div>'):'';
   var search='<input id="lib-search" placeholder="Search title, author, topic, tags…" value="'+engEsc(_libSearch)+'" oninput="libSearchInput(this.value)" style="'+CIN+';max-width:300px;margin-bottom:1rem">';
   return chipBar+banner+search+'<div id="lib-rows">'+libRowsHtml()+'</div>'+libForm();
 }
@@ -1718,7 +1718,7 @@ function libForm(){
     +'<div><label style="'+CFL+'">Type</label><select id="cf-type" style="'+CIN+'">'+typeOpts+'</select></div>'
     +cfield('cf-topic','Topic')+cfield('cf-mood','Moods (comma-sep)')+cfield('cf-duration','Duration (min)')
     +cfield('cf-url','URL (live link)')+cfield('cf-intensity','Emotional intensity 1-5')
-    +'</div><label style="'+CFL+'">Tags — how members find it (comma-separated)</label><input id="cf-tags" style="'+CIN+'">'
+    +'</div><label style="'+CFL+'">Tags - how members find it (comma-separated)</label><input id="cf-tags" style="'+CIN+'">'
     +'<label style="'+CFL+'">Description</label><textarea id="cf-desc" style="'+CIN+';min-height:58px"></textarea>'
     +'<div style="display:flex;gap:.6rem;margin-top:.5rem;align-items:center"><button class="bg" onclick="saveContent()">Save</button><button class="bo" onclick="clearContentForm()">Clear</button><span id="cf-msg" style="color:var(--muted);font-size:.78rem"></span></div></div></details>';
 }
@@ -1738,9 +1738,9 @@ function suggRow(c){
   var author=c.creator?' <span style="color:var(--muted2);font-weight:400;font-size:.78rem">· '+engEsc(c.creator)+'</span>':'';
   var meta=m.l+(c.topic?' · '+engEsc(c.topic):'')+(c.duration_minutes?' · '+c.duration_minutes+'m':'');
   var tags=(c.tags&&c.tags.length)?'<div style="margin-top:.45rem;display:flex;flex-wrap:wrap;gap:.25rem">'+c.tags.slice(0,10).map(function(t){return '<span class="ltag">'+engEsc(t)+'</span>';}).join('')+'</div>':'';
-  var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;word-break:break-all">'+engEsc(c.content_url)+' ↗</a>':'<span style="color:var(--red);font-size:.72rem">⚠ no link — cannot be published</span>';
+  var link=c.content_url?'<a href="'+engEsc(c.content_url)+'" target="_blank" rel="noopener" style="color:var(--green);font-size:.72rem;word-break:break-all">'+engEsc(c.content_url)+' ↗</a>':'<span style="color:var(--red);font-size:.72rem">⚠ no link - cannot be published</span>';
   var reason=c.suggestion_reason?'<div style="font-size:.74rem;color:var(--muted);font-style:italic;margin-top:.35rem">“'+engEsc(c.suggestion_reason)+'”</div>':'';
-  var approve=c.content_url?'<button class="bg" onclick="suggApprove(\''+c.id+'\')">Approve &amp; alert members</button>':'<button class="bg" disabled title="No live link — reject or add a URL first" style="opacity:.5;cursor:not-allowed">Approve</button>';
+  var approve=c.content_url?'<button class="bg" onclick="suggApprove(\''+c.id+'\')">Approve &amp; alert members</button>':'<button class="bg" disabled title="No live link - reject or add a URL first" style="opacity:.5;cursor:not-allowed">Approve</button>';
   return '<div style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.85rem 1rem;margin-bottom:.6rem">'
     +'<div style="display:flex;gap:.6rem;align-items:flex-start"><div style="font-size:1.2rem;flex-shrink:0">'+m.i+'</div>'
     +'<div style="flex:1;min-width:0"><div style="color:var(--text);font-size:.9rem;font-weight:600">'+engEsc(c.title)+author+'</div>'
@@ -1754,14 +1754,14 @@ function libSuggest(){
   var f=document.getElementById('lib-focus');var focus=f?f.value.trim():'';
   var btn=document.getElementById('lib-suggest-btn');var msg=document.getElementById('lib-suggest-msg');
   if(btn){btn.disabled=true;btn.textContent='Scouting…';}
-  if(msg)msg.textContent='Searching the live web — this can take a minute.';
+  if(msg)msg.textContent='Searching the live web - this can take a minute.';
   var baseline=_lib.suggestions.length;
   try{fetch(B+'/library-suggest-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({count:6,focus:focus})});}catch(e){}
   _libPolling=true;libPoll(0,baseline);
 }
 function libPoll(tries,baseline){
   if(!_libPolling)return;
-  if(tries>18){var msg=document.getElementById('lib-suggest-msg');if(msg)msg.textContent='Still working — check back shortly and refresh.';var btn=document.getElementById('lib-suggest-btn');if(btn){btn.disabled=false;btn.textContent='✨ Suggest new content';}return;}
+  if(tries>18){var msg=document.getElementById('lib-suggest-msg');if(msg)msg.textContent='Still working - check back shortly and refresh.';var btn=document.getElementById('lib-suggest-btn');if(btn){btn.disabled=false;btn.textContent='✨ Suggest new content';}return;}
   setTimeout(function(){
     contentApi('list').then(function(d){
       applyLibData(d);
@@ -1772,7 +1772,7 @@ function libPoll(tries,baseline){
 }
 async function suggApprove(id){
   try{var r=await contentApi('approve_suggestion',{id:id});var d=await contentApi('list');applyLibData(d);renderLibrary();
-    window.alert(r&&r.alerted?'Added to the library — members have been alerted in their dashboard.':'Added to the library. (Member alert could not be sent — check function logs.)');
+    window.alert(r&&r.alerted?'Added to the library - members have been alerted in their dashboard.':'Added to the library. (Member alert could not be sent - check function logs.)');
   }catch(e){window.alert('Approve failed: '+e.message);}
 }
 async function suggReject(id){
@@ -1797,14 +1797,14 @@ async function saveContent(){
 async function retireContent(id){if(!window.confirm('Retire this content? It stops being recommended but is kept.'))return;try{await contentApi('retire',{id:id});loadContent();}catch(e){window.alert(e.message);}}
 async function activateContent(id){try{await contentApi('activate',{id:id});loadContent();}catch(e){window.alert(e.message);}}
 
-// Program Content admin section (curriculum CRUD) removed per Brenden — the
+// Program Content admin section (curriculum CRUD) removed per Brenden - the
 // live 7-Day Reset/Recovery Journey/Move & Nourish/Carry Both curriculum data
 // is untouched and still serves /programs + /journey exactly as before; this
 // operator screen was just redundant with the Pricing catalog above it. If
 // curriculum content ever needs admin editing again, admin-programs.js (the
-// backend) is still intact — only this UI section was removed.
+// backend) is still intact - only this UI section was removed.
 
-// ── Membership & Pricing (v4) — OPERATOR_KEY protected, reuses opKey() ───────
+// ── Membership & Pricing (v4) - OPERATOR_KEY protected, reuses opKey() ───────
 async function pricingApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
@@ -1833,7 +1833,7 @@ async function loadPricing(btn){
 function pricingRow(p){
   var price=p.price_cents?('$'+(p.price_cents/100).toFixed(p.price_cents%100?2:0)+(p.recurring?'/mo':'')):'Free';
   var col=STATUS_COLOR[p.status]||'var(--muted2)';
-  var future=p.status==='draft'?' <span style="color:var(--muted2);font-size:.66rem">· Future release — not launched</span>':'';
+  var future=p.status==='draft'?' <span style="color:var(--muted2);font-size:.66rem">· Future release - not launched</span>':'';
   var cnt=p.active_count||0;
   var countBadge=cnt>0
     ?'<span onclick="event.stopPropagation();toggleProductMembers(\''+p.product_key+'\')" style="cursor:pointer;font-size:.68rem;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:.12rem .55rem;white-space:nowrap" title="Click to see who">'+cnt+' active</span>'
@@ -1894,7 +1894,7 @@ async function togglePricingContent(key,kind){
     }
   }catch(e){ el.innerHTML='<div class="em" style="font-size:.72rem;color:var(--red)">'+(e.message==='bad-key'?'Operator key incorrect.':engEsc(e.message))+'</div>'; }
 }
-// Explicit display order within a group — falls back to sort_order for
+// Explicit display order within a group - falls back to sort_order for
 // anything not listed (e.g. a brand-new product added later).
 var ALACARTE_ORDER=['prog_sobriety','prog_grief','prog_body','prog_first30','prog_eat','prog_move'];
 var RETIRED_ORDER=['concierge','prog_sobriety_90','prog_body_90'];
@@ -1911,22 +1911,22 @@ function pricingGroup(title,sub,items){
   return '<div class="sh" style="margin:1.2rem 0 .6rem">'+title+(sub?' <span style="color:var(--muted2);font-weight:400;font-size:.7rem">'+sub+'</span>':'')+'</div>'+items.map(pricingRow).join('');
 }
 function renderPricing(products,limits,freeAccess){
-  // Free-access toggle removed (2026-07-06): free_access_mode is OFF for good — tiers/caps/entitlements
+  // Free-access toggle removed (2026-07-06): free_access_mode is OFF for good - tiers/caps/entitlements
   // are enforced; comp members via the operator grant flow. The DB flag still exists if it's ever needed.
   var fa='';
 
-  // Three groups, by status + tier_level — no new fields needed:
-  //  · Live Programs — the membership ladder (tier_level > 0), Mentor included
+  // Three groups, by status + tier_level - no new fields needed:
+  //  · Live Programs - the membership ladder (tier_level > 0), Mentor included
   //    even while status='draft' so the roadmap stays visible to the admin.
-  //  · À La Carte — content-only products (tier_level 0) that are still live.
-  //  · Retired — anything status='retired', regardless of tier.
+  //  · À La Carte - content-only products (tier_level 0) that are still live.
+  //  · Retired - anything status='retired', regardless of tier.
   var liveTiers  = products.filter(function(p){return p.tier_level>0;}).sort(function(a,b){return a.tier_level-b.tier_level;});
   var alacarte   = products.filter(function(p){return p.tier_level===0 && p.status!=='retired';}).sort(byExplicitOrder(ALACARTE_ORDER));
   var retired    = products.filter(function(p){return p.status==='retired';}).sort(byExplicitOrder(RETIRED_ORDER));
 
-  var groups = pricingGroup('Live Programs','— the membership ladder',liveTiers)
-             + pricingGroup('À La Carte','— content only, no Riley, no subscription',alacarte)
-             + pricingGroup('Retired','— kept for history; existing holders keep access, hidden from everyone else',retired);
+  var groups = pricingGroup('Live Programs','- the membership ladder',liveTiers)
+             + pricingGroup('À La Carte','- content only, no Riley, no subscription',alacarte)
+             + pricingGroup('Retired','- kept for history; existing holders keep access, hidden from everyone else',retired);
   if(!groups) groups='<div class="em">No products found.</div>';
 
   var limitRows=limits.length?limits.map(function(l){
@@ -1949,7 +1949,7 @@ function renderPricing(products,limits,freeAccess){
   document.getElementById('pricing-body').innerHTML=
     '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Programs</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+products.length+' products</div></div>'+
     summary+fa+groups+
-    '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Guide — Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
+    '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Guide - Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
 }
 async function setProductStatus(key,status){try{await pricingApi('update_product',{key:key,patch:{status:status}});loadPricing();}catch(e){window.alert(e.message);}}
 async function editProductPrice(key,current){
@@ -1962,7 +1962,7 @@ async function setUsageLimit(id,amount,period){
   var patch={};if(amount!=null)patch.limit_amount=amount;if(period!=null)patch.limit_period=period;
   try{await pricingApi('update_usage_limit',{id:id,patch:patch});loadPricing();}catch(e){window.alert(e.message);}
 }
-/* togglePricingFreeAccess removed 2026-07-06 — free-access is off for good; comp members via the grant flow. */
+/* togglePricingFreeAccess removed 2026-07-06 - free-access is off for good; comp members via the grant flow. */
 
 function init(){
   try{
@@ -1975,13 +1975,13 @@ function init(){
     document.getElementById('app').style.display='flex';
     var errDiv=document.createElement('div');
     errDiv.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#8a2a1a;color:#f5f0e8;padding:1rem 1.5rem;z-index:9999;font-family:DM Mono,monospace;font-size:13px;max-width:600px;text-align:center;';
-    errDiv.textContent='Init error: '+err.message+' — open DevTools Console for details';
+    errDiv.textContent='Init error: '+err.message+' - open DevTools Console for details';
     document.body.appendChild(errDiv);
   }
 }
 async function ls(){try{var r=await fetch(B+'/pipeline-status');if(!r.ok)return;var d=await r.json();_statusCache=d;rrns(d.pipeline_runs||[]);recho(d.echo_scores&&d.echo_scores[0]);rh(d.published_posts||[]);var l=d.pipeline_runs&&d.pipeline_runs[0];if(l)document.getElementById('slr').textContent=fd(l.run_date)+'('+( l.status||'?')+')'}catch(e){console.warn(e.message);}}
-function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r,i){var row=document.createElement('div');row.className='rr clickable';row.title='Click to view this week\'s posts and numbers';row.onclick=function(){openWk(r);};row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'—')+'</span><span>'+x(r.echo_format_winner||'—')+'</span>';p.appendChild(row);});}
-function recho(s){if(!s)return;var p=document.getElementById('ep');document.getElementById('ee').style.display='none';var scs=[['biggest_lever','BIGGEST LEVER','l'],['best_pillar','BEST PILLAR','w'],['worst_pillar','WORST PILLAR','d']];scs.forEach(function(a){if(!s[a[0]])return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(s[a[0]])+'</div>';p.appendChild(d);});if(s.email_signups!=null){document.getElementById('ms').textContent=s.email_signups;document.getElementById('mc2').textContent=s.chatbot_opens||'—';document.getElementById('msv').textContent=s.instagram_saves||'—';document.getElementById('mcl').textContent=s.link_clicks||'—';}}
+function rrns(runs){var p=document.getElementById('rp');if(!runs.length)return;document.getElementById('re').style.display='none';runs.slice(0,5).forEach(function(r,i){var row=document.createElement('div');row.className='rr clickable';row.title='Click to view this week\'s posts and numbers';row.onclick=function(){openWk(r);};row.innerHTML='<span>'+fd(r.run_date)+'</span><span><span class="sb '+(r.status==='success'?'ss':r.status==='partial'?'sp':r.status==='failed'?'sf':'sr')+'">'+(r.status||'...')+'</span></span><span>'+(r.sage_posts_count||0)+'</span><span>'+x(r.echo_top_pillar||'-')+'</span><span>'+x(r.echo_format_winner||'-')+'</span>';p.appendChild(row);});}
+function recho(s){if(!s)return;var p=document.getElementById('ep');document.getElementById('ee').style.display='none';var scs=[['biggest_lever','BIGGEST LEVER','l'],['best_pillar','BEST PILLAR','w'],['worst_pillar','WORST PILLAR','d']];scs.forEach(function(a){if(!s[a[0]])return;var d=document.createElement('div');d.className='es '+a[2];d.innerHTML='<div class="esl">'+a[1]+'</div><div class="est">'+x(s[a[0]])+'</div>';p.appendChild(d);});if(s.email_signups!=null){document.getElementById('ms').textContent=s.email_signups;document.getElementById('mc2').textContent=s.chatbot_opens||'-';document.getElementById('msv').textContent=s.instagram_saves||'-';document.getElementById('mcl').textContent=s.link_clicks||'-';}}
 function rh(posts){if(!posts.length)return;var l=document.getElementById('hl');l.innerHTML='';var ic={instagram:'📷',facebook:'🔵',youtube:'►️'};posts.slice(0,20).forEach(function(p){var d=document.createElement('div');d.className='pe';d.innerHTML='<span class="pico">'+(ic[(p.platform||'').toLowerCase()]||'📄')+'</span><div class="pnfo"><div class="pty">'+x(p.post_type||'Post')+'</div><div class="pmt">'+fd(p.week_of)+'</div></div><div class="pd '+(p.buffer_update_id?'g':'a')+'"></div>';l.appendChild(d);});}
 function scd(){function t(){var now=new Date(),nx=new Date(now);nx.setUTCDate(now.getUTCDate()+((7-now.getUTCDay())%7||7));nx.setUTCHours(12,0,0,0);var ms=nx-now,days=Math.floor(ms/864e5),hrs=Math.floor((ms%864e5)/36e5);var el=document.getElementById('cdn');if(el)el.textContent=days>0?days+'d '+hrs+'h':hrs+'h';}t();setInterval(t,60000);}
 function onm(){document.getElementById('nm').style.display='flex';}
@@ -2016,7 +2016,7 @@ async function runBgPipeline(){
   },1000);
 
   try{
-    // Fire the background function — returns 202 immediately
+    // Fire the background function - returns 202 immediately
     var r=await fetch(B+'/manual-pipeline-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});
     if(r.status!==202 && !r.ok){
       var txt=await r.text();
@@ -2085,7 +2085,7 @@ function jr(){
   }).catch(function(){RP=dp();buildReviewGrid();gs('r',document.querySelector('[data-s="r"]'));});
 }
 
-// Full parser — extracts complete captions, slides, hashtags from raw Sage output
+// Full parser - extracts complete captions, slides, hashtags from raw Sage output
 function parseSageFull(text){
   var lines=text.split('\n'),blocks=[],cur='';
   lines.forEach(function(l){
@@ -2197,11 +2197,11 @@ function svd(){localStorage.setItem('814_draft',JSON.stringify({posts:RP,date:ne
 function rth(){document.getElementById('sucov').classList.remove('show');gs('h',document.querySelector('[data-s="h"]'));ls();}
 function ldst(){var ids=localStorage.getItem('814_pids');if(ids)document.getElementById('spids').value=ids;}
 function svp(){var v=document.getElementById('spids').value.trim();if(v)localStorage.setItem('814_pids',v);}
-async function tpl(){var btn=document.getElementById('stb'),res=document.getElementById('str');btn.disabled=true;res.textContent='Starting…';try{var r=await fetch(B+'/weekly-pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});var d=await r.json();res.textContent=d.status==='success'?'✓ Complete — '+(d.sage_posts||0)+' posts':'⚠ '+(d.error||'Partial');ls();}catch(e){res.textContent='Error: '+e.message;}finally{btn.disabled=false;}}
+async function tpl(){var btn=document.getElementById('stb'),res=document.getElementById('str');btn.disabled=true;res.textContent='Starting…';try{var r=await fetch(B+'/weekly-pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});var d=await r.json();res.textContent=d.status==='success'?'✓ Complete - '+(d.sage_posts||0)+' posts':'⚠ '+(d.error||'Partial');ls();}catch(e){res.textContent='Error: '+e.message;}finally{btn.disabled=false;}}
 async function ca(agent,message){var r=await fetch(B+'/'+agent,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:message})});var raw=await r.text();if(!r.ok){var d=raw;try{d=JSON.parse(raw).error||raw;}catch(e){}throw new Error('HTTP '+r.status+' from '+agent+': '+d);}try{var d=JSON.parse(raw);return d.reply||raw;}catch(e){return raw;}}
 function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function exs(text,h){var idx=text.indexOf(h+':'),start=idx>=0?idx+h.length+1:-1;if(start<0){idx=text.indexOf(h+'\n');start=idx>=0?idx+h.length+1:-1;}if(start<0)return null;var lines=text.slice(start).split('\n'),out=[];for(var i=0;i<lines.length;i++){var l=lines[i];if(out.length>0&&(/^[A-Z][A-Z &'\/—-]{4,}:/.test(l.trim())||/^---/.test(l.trim())))break;out.push(l);}return out.join('\n').trim()||null;}
-function fd(s){if(!s)return'—';try{return new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}}
+function fd(s){if(!s)return'-';try{return new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}}
 function nxs(){var d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7||7));return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
 function sh2(id){var el=document.getElementById(id);if(el)el.style.display='';}
 function hi2(id){var el=document.getElementById(id);if(el)el.style.display='none';}
@@ -2383,18 +2383,18 @@ function renderUserList(users){
       ?'<div class="uav"><img src="'+x(u.avatar_url)+'" alt=""></div>'
       :'<div class="uav">'+initials+'</div>';
 
-    var sobDays='—';
+    var sobDays='-';
     if(u.sobriety_date){
       var days=Math.max(0,Math.floor((Date.parse(new Date(Date.now()-14400000).toLocaleDateString("en-CA"))-Date.parse(String(u.sobriety_date).slice(0,10)))/86400000));
       sobDays=days+'d';
     }
 
-    var programs=(u.programs_purchased&&u.programs_purchased.length)?u.programs_purchased.length:'—';
+    var programs=(u.programs_purchased&&u.programs_purchased.length)?u.programs_purchased.length:'-';
 
-    var lastActive=u.updated_at?fd(u.updated_at):'—';
+    var lastActive=u.updated_at?fd(u.updated_at):'-';
 
     row.innerHTML=avHtml+
-      '<div><div class="uname">'+x(u.full_name||'—')+'</div><div class="uemail">'+x(u.email||'')+'</div></div>'+
+      '<div><div class="uname">'+x(u.full_name||'-')+'</div><div class="uemail">'+x(u.email||'')+'</div></div>'+
       '<div class="utag">'+sobDays+'</div>'+
       '<div class="utag">'+programs+'</div>'+
       '<div class="utag">'+lastActive+'</div>'+
@@ -2428,7 +2428,7 @@ function udTrends(d){
   var cards='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;margin-bottom:.9rem">'+
     statCard({label:'Activity · 7d',value:(st.events_7d||0),color:'var(--gold)',delta:{cur:st.events_7d,prev:st.events_prev_7d},spark:{series:actSpark,color:'var(--gold)'}})+
     statCard({label:'Riley · 7d',value:(st.riley_7d||0),color:'var(--sage)',delta:{cur:st.riley_7d,prev:st.riley_prev_7d},spark:{series:riSpark,color:'var(--sage)'}})+
-    statCard({label:'Avg Mood',value:(st.avg_mood!=null?st.avg_mood:'—'),color:'var(--blue)',sub:(st.checkins_30d||0)+' check-ins · 30d'})+
+    statCard({label:'Avg Mood',value:(st.avg_mood!=null?st.avg_mood:'-'),color:'var(--blue)',sub:(st.checkins_30d||0)+' check-ins · 30d'})+
   '</div>';
   var actChart=(se.activity_30d&&se.activity_30d.length)?'<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem"><div class="sh" style="margin:0 0 .2rem">30-Day Activity</div>'+svgBars(se.activity_30d,'var(--gold)',null)+'</div>':'';
   var moodChart=(se.mood&&se.mood.length>1)?'<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem"><div class="sh" style="margin:0 0 .2rem">Mood Trend <span style="color:var(--muted2);font-weight:400;font-size:.66rem">1–5 scale</span></div>'+svgBars(se.mood,'var(--blue)',null)+'</div>':'';
@@ -2493,14 +2493,14 @@ function renderUserDetail(d){
 
   // Profile fields
   html+='<div style="font-size:.78rem;color:var(--text);line-height:1.8">';
-  html+='<div><span style="color:var(--muted2)">Email: </span>'+x(profile.email||'—')+'</div>';
+  html+='<div><span style="color:var(--muted2)">Email: </span>'+x(profile.email||'-')+'</div>';
   html+='<div><span style="color:var(--muted2)">Member since: </span>'+fd(profile.created_at)+'</div>';
   html+='<div><span style="color:var(--muted2)">Last active: </span>'+fd(profile.updated_at)+'</div>';
   html+='<div><span style="color:var(--muted2)">Community member: </span>'+(profile.community_member?'<span style="color:var(--green)">Yes</span>':'No')+'</div>';
   html+='</div>';
   html+='</div>';
 
-  // Membership & Entitlements (v4) — populated async below, after ud-body is set
+  // Membership & Entitlements (v4) - populated async below, after ud-body is set
   html+='<div class="ud-section"><div class="ud-section-label">Membership &amp; Entitlements</div><div id="ud-membership"><div class="em">Loading…</div></div></div>';
 
   // Programs purchased
@@ -2532,7 +2532,7 @@ function renderUserDetail(d){
     html+='<div class="ud-section">';
     html+='<div class="ud-section-label">Riley Conversations ('+sessions.length+' sessions, '+totalMsgs+' messages)</div>';
     // Privacy: session METADATA only. Member conversation content is never sent to, or shown in,
-    // the operator dashboard — these are people's lives and secrets. Counts + timestamps only.
+    // the operator dashboard - these are people's lives and secrets. Counts + timestamps only.
     sessions.forEach(function(s){
       html+='<div class="session-block">';
       html+='<div class="session-hd" style="cursor:default">';
@@ -2580,7 +2580,7 @@ function loadUserEmails(userId){
     var rows=(d&&d.items)||[];
     if(!rows.length){el.innerHTML='<div class="em">No emails sent yet.</div>';return;}
     el.innerHTML='<div class="rp" style="margin:0">'+rows.map(function(r){
-      var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+      var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'-';
       var col=r.status==='sent'?'var(--green)':r.status==='failed'?'var(--red)':'var(--muted2)';
       var reason=(r.status!=='sent'&&r.error)?' <span style="color:var(--muted2)">('+x(r.error)+')</span>':'';
       return '<div class="rr" style="grid-template-columns:14px 1fr 118px 84px"><span style="color:'+col+'">&#9679;</span>'+
@@ -2592,14 +2592,14 @@ function loadUserEmails(userId){
 }
 
 // ── Billing: the member's Stripe subscription + payments (with hosted receipts) + cancel/refund controls.
-// No raw banking data — Stripe holds the card; we surface amount, status, card brand/last4 + the hosted
+// No raw banking data - Stripe holds the card; we surface amount, status, card brand/last4 + the hosted
 // receipt link. Cancel/refund go through admin-billing; the stripe-webhook keeps Supabase access in lockstep.
 function money(c){return '$'+((c||0)/100).toFixed(2);}
 function loadBillingPanel(userId){
   var el=document.getElementById('ud-billing-body'); if(!el)return;
   fetch(B+'/admin-billing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',user_id:userId})})
     .then(function(r){return r.json();}).then(function(d){
-      if(!d||!d.customer){el.innerHTML='<div class="em">No billing account yet — this member hasn\'t purchased.</div>';return;}
+      if(!d||!d.customer){el.innerHTML='<div class="em">No billing account yet - this member hasn\'t purchased.</div>';return;}
       var subs=(d.subscriptions||[]), pays=(d.payments||[]), h='';
       if(subs.length){
         h+='<div style="margin-bottom:.55rem">'+subs.map(function(s){
@@ -2611,7 +2611,7 @@ function loadBillingPanel(userId){
       }
       if(pays.length){
         h+='<div class="rp" style="margin:0">'+pays.map(function(p){
-          var when=p.created?new Date(p.created*1000).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
+          var when=p.created?new Date(p.created*1000).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'-';
           var refunded=(p.refunded||p.amount_refunded>0);
           var col=refunded?'var(--muted2)':(p.status==='succeeded'?'var(--green)':'var(--red)');
           var card=p.card_brand?(x(p.card_brand)+' &middot;'+x(p.card_last4||'')):'';
@@ -2640,7 +2640,7 @@ function refundCharge(userId,chargeId,btn){
     .catch(function(){ if(btn){btn.disabled=false;btn.textContent='Refund';} });
 }
 
-// ── Membership & Entitlements panel (v4) — merged into the Users tab ────────
+// ── Membership & Entitlements panel (v4) - merged into the Users tab ────────
 async function membershipApi(action,extra){
   var k=opKey();
   if(!k){k=(window.prompt('Operator key:')||'').trim();if(!k)throw new Error('no-key');sessionStorage.setItem('814_opkey',k);}
@@ -2650,7 +2650,7 @@ async function membershipApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-// ── Program content editor (self-guided modules) — edit Read/Do/Keep/Riley copy without SQL ──
+// ── Program content editor (self-guided modules) - edit Read/Do/Keep/Riley copy without SQL ──
 async function pmApi(action,extra){
   var r=await fetch(B+'/admin-program-modules',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:action},extra||{}))});
   if(r.status===401||r.status===403) throw new Error('bad-key');
@@ -2665,7 +2665,7 @@ async function pmInit(){
     if(!progs.length){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Program content</div><div class="em" style="font-size:.72rem">No editable program content yet (run the seed migrations first).</div>'; return; }
     var btns=progs.map(function(p){return '<button class="bo" onclick="pmOpen(\''+p.program_key+'\')">'+engEsc(p.name)+' · '+p.modules+' modules</button>';}).join(' ');
     box.innerHTML='<div class="cl" style="margin:0 0 .3rem">Program content</div>'
-      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.7rem">Edit module copy (Read / Do / Keep / Riley) — saves per module. Catalog price &amp; status are below.</div>'
+      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.7rem">Edit module copy (Read / Do / Keep / Riley) - saves per module. Catalog price &amp; status are below.</div>'
       +'<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem">'+btns+'</div><div id="pm-list"></div>';
   }catch(e){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Program content</div><div class="em" style="font-size:.72rem;color:var(--red)">'+(e.message==='bad-key'?'Operator key incorrect.':'Could not load: '+engEsc(e.message))+'</div>'; }
 }
@@ -2702,7 +2702,7 @@ async function pmSave(key,n,id,btn){
   finally{ btn.disabled=false; }
 }
 
-// ── Interactive program editor (Riley-led sessions) — edit content, flip Live, set founder canon ──
+// ── Interactive program editor (Riley-led sessions) - edit content, flip Live, set founder canon ──
 async function iseApi(action,extra){
   var r=await fetch(B+'/admin-int-sessions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action:action},extra||{}))});
   if(r.status===401||r.status===403) throw new Error('bad-key');
@@ -2715,11 +2715,11 @@ async function iseMetrics(){
     if(r.status===401||r.status===403){ box.innerHTML=''; return; }
     var d=await r.json(); var progs=d.programs||[], t=d.totals||{};
     if(!progs.length){ box.innerHTML=''; return; }
-    var cell=function(v){ return '<td style="padding:.4rem .6rem;text-align:right;font-family:DM Mono,monospace;font-size:.78rem;color:var(--ink)">'+(v==null?'—':v)+'</td>'; };
+    var cell=function(v){ return '<td style="padding:.4rem .6rem;text-align:right;font-family:DM Mono,monospace;font-size:.78rem;color:var(--ink)">'+(v==null?'-':v)+'</td>'; };
     var th=function(h,l){ return '<th style="text-align:'+(l?'left':'right')+';padding:.4rem .6rem;font-family:DM Mono,monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)">'+h+'</th>'; };
     var rowFor=function(name,status,b,gold){
       return '<tr'+(gold?' style="border-top:1px solid var(--border)"':'')+'><td style="padding:.4rem .6rem;font-size:.78rem;color:'+(gold?'var(--gold)':'var(--ink)')+'">'+engEsc(name)+(status?' <span style="color:var(--muted2);font-size:.62rem;text-transform:uppercase">'+engEsc(status)+'</span>':'')+'</td>'
-        +cell(b.enrolled)+cell(b.session_zero)+cell(b.session_four)+cell(b.graduated)+cell(b.confirm_rate==null?'—':b.confirm_rate+'%')+cell(b.artifacts)+cell(b.lapse_active)+'</tr>';
+        +cell(b.enrolled)+cell(b.session_zero)+cell(b.session_four)+cell(b.graduated)+cell(b.confirm_rate==null?'-':b.confirm_rate+'%')+cell(b.artifacts)+cell(b.lapse_active)+'</tr>';
     };
     var head='<tr style="border-bottom:1px solid var(--border)">'+th('Program',true)+['Enrolled','S0','S4','Grad','Confirm','Artifacts','In lapse'].map(function(h){return th(h);}).join('')+'</tr>';
     box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive program metrics</div>'
@@ -2734,7 +2734,7 @@ async function iseInit(){
   box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive programs (Riley-led)</div><div class="em" style="font-size:.72rem">Loading…</div>';
   try{
     var d=await iseApi('list'); var progs=d.programs||[];
-    if(!progs.length){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive programs (Riley-led)</div><div class="em" style="font-size:.72rem">None yet — run migration 060 (and 061–064 for content).</div>'; return; }
+    if(!progs.length){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive programs (Riley-led)</div><div class="em" style="font-size:.72rem">None yet - run migration 060 (and 061–064 for content).</div>'; return; }
     var btns=progs.map(function(p){
       var live=p.status==='live';
       return '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem;flex-wrap:wrap">'
@@ -2744,7 +2744,7 @@ async function iseInit(){
         +'</div>';
     }).join('');
     box.innerHTML='<div class="cl" style="margin:0 0 .3rem">Interactive programs (Riley-led)</div>'
-      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.7rem">Edit each session&#39;s OPEN / LEARN / WORK / COMMIT. Flip a program LIVE only after review — members can then buy it. $18.14, admin-managed.</div>'
+      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.7rem">Edit each session&#39;s OPEN / LEARN / WORK / COMMIT. Flip a program LIVE only after review - members can then buy it. $18.14, admin-managed.</div>'
       +btns+'<div id="ise-list" style="margin-top:.8rem"></div><div id="ise-canon" style="margin-top:1.2rem"></div>';
     iseCanon();
   }catch(e){ box.innerHTML='<div class="cl" style="margin:0 0 .5rem">Interactive programs (Riley-led)</div><div class="em" style="font-size:.72rem;color:var(--red)">'+(e.message==='bad-key'?'Operator key incorrect.':'Could not load: '+engEsc(e.message))+'</div>'; }
@@ -2785,7 +2785,7 @@ async function iseSave(key,n,id,btn){
   var patch={phase:pmV('ph-'+id),title:pmV('ti-'+id),open_template:pmV('op-'+id),learn_body:pmV('le-'+id),work_spec:pmV('wk-'+id),commit_options:pmV('co-'+id)};
   var mi=document.getElementById('mi-'+id); if(mi) patch.is_milestone=mi.checked;
   try{ JSON.parse(patch.work_spec||'{}'); JSON.parse(patch.commit_options||'[]'); }
-  catch(e){ if(st){st.textContent='Invalid JSON — fix before saving';st.style.color='var(--red)';} return; }
+  catch(e){ if(st){st.textContent='Invalid JSON - fix before saving';st.style.color='var(--red)';} return; }
   btn.disabled=true; if(st){st.textContent='Saving…';st.style.color='var(--muted2)';}
   try{ var d=await iseApi('save',{program_key:key,session_number:n,patch:patch});
     if(d&&d.ok){ if(st){st.textContent='Saved ✓';st.style.color='var(--green)';} } else throw new Error((d&&d.error)||'save failed');
@@ -2798,8 +2798,8 @@ async function iseCanon(){
     var d=await iseApi('get_canon'); var rows=d.rows||[];
     var lapse=rows.filter(function(r){return r.key==='lapse_first_response';})[0]||{key:'lapse_first_response',body:'',author:'interim'};
     var pending=lapse.author!=='founder';
-    box.innerHTML='<div class="cl" style="margin:0 0 .3rem">Founder canon — the slip first response</div>'
-      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.5rem">The first thing Riley says when someone reports a slip, across all surfaces. '+(pending?'<b style="color:var(--gold)">FOUNDER COPY PENDING</b> — currently the interim text.':'<b style="color:var(--green)">Founder copy set.</b>')+'</div>'
+    box.innerHTML='<div class="cl" style="margin:0 0 .3rem">Founder canon - the slip first response</div>'
+      +'<div style="font-size:.72rem;color:var(--muted2);margin-bottom:.5rem">The first thing Riley says when someone reports a slip, across all surfaces. '+(pending?'<b style="color:var(--gold)">FOUNDER COPY PENDING</b> - currently the interim text.':'<b style="color:var(--green)">Founder copy set.</b>')+'</div>'
       +pmField('lapse_first_response','canon-lapse',lapse.body,5)
       +'<button class="spb" style="margin-top:.6rem" onclick="iseSaveCanon(this)">Save as founder copy</button>'
       +' <span id="canon-st" style="font-size:.72rem;margin-left:.5rem"></span>';
@@ -2815,7 +2815,7 @@ async function iseSaveCanon(btn){
   finally{ btn.disabled=false; }
 }
 
-var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)'],['prog_int_move_nourish','Move Nourish — interactive ($18.14)'],['prog_int_grief','Living Forward — interactive ($18.14)'],['prog_int_happiness','Building Happiness — interactive ($18.14)'],['prog_int_staying_free','Staying Free — interactive ($18.14)']];
+var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)'],['prog_int_move_nourish','Move Nourish - interactive ($18.14)'],['prog_int_grief','Living Forward - interactive ($18.14)'],['prog_int_happiness','Building Happiness - interactive ($18.14)'],['prog_int_staying_free','Staying Free - interactive ($18.14)']];
 async function loadMembershipPanel(userId){
   var el=document.getElementById('ud-membership');if(!el)return;
   try{
@@ -2853,7 +2853,7 @@ function toggleSession(id){
 }
 
 function fdt(s){
-  if(!s)return'—';
+  if(!s)return'-';
   try{
     var d=new Date(s);
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+
@@ -2905,7 +2905,7 @@ function ceRenderPerformance(d){
       '<div style="font-size:.85rem;color:var(--ink2);line-height:1.6">'+x(learn.digest)+'</div></div>';
   }
   if(!d.has_data){
-    html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once FeedHive is connected and posts go live, engagement + reach + clicks land here nightly — then Riley starts weighting new content toward what your audience responds to.</div>';
+    html+='<div class="em" style="padding:1.5rem;line-height:1.7">No performance data yet.<br>Once FeedHive is connected and posts go live, engagement + reach + clicks land here nightly - then Riley starts weighting new content toward what your audience responds to.</div>';
     body.innerHTML=html;return;
   }
   // ── totals + engagement rate ──
@@ -2942,7 +2942,7 @@ function ceRenderPerformance(d){
   // top / bottom tables
   function tbl(title,rows,color){
     var h='<div class="sh" style="color:'+color+'">'+title+'</div><div class="rp" style="margin-bottom:1.1rem">';
-    if(!rows.length){h+='<div class="em">—</div>';}
+    if(!rows.length){h+='<div class="em">-</div>';}
     rows.forEach(function(r){
       h+='<div class="rr" style="grid-template-columns:70px 1fr 60px 60px"><span style="font-size:.68rem;color:var(--muted);text-transform:uppercase">'+x(r.platform)+'</span>'+
         '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.caption)+'</span>'+
@@ -2958,7 +2958,7 @@ function ceRenderPerformance(d){
 
 function ceRenderPending(q){
   var body=document.getElementById('ce-body');
-  if(!q.length){body.innerHTML='<div class="em">Nothing pending. Scout runs daily at 6 AM MT — or hit Run Now.</div>';return;}
+  if(!q.length){body.innerHTML='<div class="em">Nothing pending. Scout runs daily at 6 AM MT - or hit Run Now.</div>';return;}
   var html='<div class="ce-grid">';
   q.forEach(function(it){
     var v=it.safety_verdict||'pass';
@@ -2996,7 +2996,7 @@ function ceRenderJobs(jobs){
   if(!jobs.length){body.innerHTML='<div class="em">Nothing here yet.</div>';return;}
   var html='';
   jobs.forEach(function(j){
-    var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'—');
+    var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'-');
     html+='<div class="ce-job"><span class="ce-job-plat">'+x(j.platform)+'</span>';
     html+='<span class="ce-job-cap">'+x((j.caption_final||'').slice(0,120))+'</span>';
     html+='<span class="ce-job-when">'+when+' · '+x(j.state)+'</span></div>';
@@ -3027,7 +3027,7 @@ async function ceRevise(id){
 async function ceRunNow(){
   var btn=document.getElementById('ce-run');
   btn.disabled=true;btn.textContent='Running…';
-  document.getElementById('ce-runstat').textContent='pipeline running in background — refresh in ~2 min';
+  document.getElementById('ce-runstat').textContent='pipeline running in background - refresh in ~2 min';
   try{
     // background function returns 202 immediately
     fetch(B+'/content-run-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trigger:'manual'})});
@@ -3085,7 +3085,7 @@ async function openDrill(kind,val,title){
       var when=r.at?new Date(r.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
       var clickable=r.user_id?' style="cursor:pointer" onclick="closeDrill();openUserPanel(\''+r.user_id+'\')"':'';
       return '<div class="rr" '+clickable+'style="grid-template-columns:1fr auto;border-bottom:1px solid var(--border);padding:.6rem 1.25rem">'+
-        '<div style="min-width:0"><div style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.name||'—')+(r.user_id?' ›':'')+'</div>'+
+        '<div style="min-width:0"><div style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.name||'-')+(r.user_id?' ›':'')+'</div>'+
         (r.detail?'<div style="color:var(--muted);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.detail)+'</div>':'')+'</div>'+
         '<div style="color:var(--muted2);font-size:.7rem;white-space:nowrap">'+when+'</div></div>';
     }).join('')+'</div>'+
@@ -3093,7 +3093,7 @@ async function openDrill(kind,val,title){
   }catch(e){body.innerHTML='<div class="em" style="color:var(--red);padding:1.5rem">Error: '+x(e.message)+'</div>';}
 }
 
-// ── METRICS + OPERATOR ACTIONS (Pricing V5, Doc 3) — reuses opKey()/x()/B/gs() ──
+// ── METRICS + OPERATOR ACTIONS (Pricing V5, Doc 3) - reuses opKey()/x()/B/gs() ──
 function loadMetrics(btn){
   if(btn!==undefined) gs('mx',btn);                 // from nav (has btn); Refresh calls with none
   renderFinanceOverview();                          // Riley Overview = Revenue & Expenses + metrics
@@ -3104,7 +3104,7 @@ function loadMetrics(btn){
   fetch(B+'/admin-metrics',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({})})
     .then(function(r){ if(r.status===401||r.status===403){ opForget(); throw new Error('bad-key'); } return r.json(); })
     .then(function(d){ box.innerHTML=mxRenderMetrics(d); })
-    .catch(function(e){ box.innerHTML='<div class="em" style="color:var(--red)">'+(e.message==='bad-key'?'Bad operator key &mdash; click Refresh to re-enter.':'Failed to load metrics.')+'</div>'; });
+    .catch(function(e){ box.innerHTML='<div class="em" style="color:var(--red)">'+(e.message==='bad-key'?'Bad operator key - click Refresh to re-enter.':'Failed to load metrics.')+'</div>'; });
 }
 
 // ── Add User · manual member provisioning (OPERATOR_KEY protected) ───────────
@@ -3157,7 +3157,7 @@ async function renderFinanceOverview(){
     });
     h+='</tbody><tfoot><tr style="border-top:2px solid var(--border)"><td colspan="2" style="padding:.6rem .5rem;font-weight:600;color:var(--ink)">Active monthly total</td><td style="text-align:right;font-weight:600;color:var(--gold)">'+finMoney(d.expenses.monthly)+'</td><td colspan="3"></td></tr></tfoot></table>';
     el.innerHTML=h;
-  }catch(e){ el.innerHTML='<div class="em">'+(e.message==='bad-key'?'Bad operator key — click Refresh.':e.message==='no-key'?'Operator key required.':'Could not load finances: '+engEsc(e.message))+'</div>'; }
+  }catch(e){ el.innerHTML='<div class="em">'+(e.message==='bad-key'?'Bad operator key - click Refresh.':e.message==='no-key'?'Operator key required.':'Could not load finances: '+engEsc(e.message))+'</div>'; }
 }
 function finEdit(id){
   var e=(id&&_finData)?((_finData.expenses.list||[]).filter(function(x){return x.id===id;})[0]||{}):{};
@@ -3220,29 +3220,29 @@ async function createUserSubmit(){
     if(sendEmail){
       if(d.emailed&&d.emailed.sent) emailNote=' &middot; welcome email sent ✓';
       else if(d.emailed&&d.emailed.status==='skipped') emailNote=' &middot; email not sent ('+x((d.emailed.reason)||'not configured')+')';
-      else emailNote=' &middot; welcome email FAILED — '+x((d.emailed&&(d.emailed.reason||d.emailed.detail))||'unknown');
+      else emailNote=' &middot; welcome email FAILED - '+x((d.emailed&&(d.emailed.reason||d.emailed.detail))||'unknown');
     }
     res.innerHTML=nuMsg('&#10003; Added <b>'+nuEsc(name)+'</b> as <b>'+tierLabel+'</b>. They can sign in with Google using <b>'+nuEsc(email)+'</b>.'+emailNote,'green');
     document.getElementById('nu-name').value=''; document.getElementById('nu-email').value=''; document.getElementById('nu-sob').value=''; document.getElementById('nu-tier').value='guide'; document.getElementById('nu-email-toggle').checked=false;
     btn.disabled=false; btn.textContent=lbl;
   }catch(e){
-    res.innerHTML=nuMsg(e.message==='bad-key'?'Bad operator key &mdash; reload and re-enter.':'Could not reach the server. Try again.','red');
+    res.innerHTML=nuMsg(e.message==='bad-key'?'Bad operator key - reload and re-enter.':'Could not reach the server. Try again.','red');
     btn.disabled=false; btn.textContent=lbl;
   }
 }
 function mxRenderMetrics(d){
-  function card(lbl,val,sub){ return '<div class="statc"><div class="lbl">'+x(lbl)+'</div><div class="val">'+(val==null?'&mdash;':x(String(val)))+'</div>'+(sub?'<div class="sub">'+x(sub)+'</div>':'')+'</div>'; }
+  function card(lbl,val,sub){ return '<div class="statc"><div class="lbl">'+x(lbl)+'</div><div class="val">'+(val==null?'-':x(String(val)))+'</div>'+(sub?'<div class="sub">'+x(sub)+'</div>':'')+'</div>'; }
   var h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.2rem">';
-  (d.northStars||[]).forEach(function(s){ h+=card(s.label,(s.value==null?'—':s.value)+(s.unit||''),'Target '+s.target+(s.detail?(' · '+s.detail):'')); });
+  (d.northStars||[]).forEach(function(s){ h+=card(s.label,(s.value==null?'-':s.value)+(s.unit||''),'Target '+s.target+(s.detail?(' · '+s.detail):'')); });
   h+='</div>';
   h+='<div class="lbl" style="margin-bottom:.5rem">Funnel</div>';
   (d.funnel||[]).forEach(function(f){ h+='<div style="display:flex;justify-content:space-between;padding:.55rem .85rem;background:var(--surface);border-left:2px solid var(--gold);border-radius:4px;margin-bottom:.35rem"><span style="font-size:.82rem;color:var(--ink2)">'+x(f.step)+'</span><span style="font-family:DM Mono,monospace;font-size:.9rem;color:var(--gold)">'+x(String(f.count))+'</span></div>'; });
   h+='<div class="lbl" style="margin:1.1rem 0 .5rem">Supporting metrics</div>';
-  (d.rows||[]).forEach(function(r){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.35rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(r.label)+'</span><span><span style="font-family:DM Mono,monospace;font-size:.85rem;color:var(--gold)">'+(r.value==null?'&mdash;':x(String(r.value)))+x(r.unit||'')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.4rem">'+x(r.target||'')+'</span></span></div>'; });
+  (d.rows||[]).forEach(function(r){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.35rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(r.label)+'</span><span><span style="font-family:DM Mono,monospace;font-size:.85rem;color:var(--gold)">'+(r.value==null?'-':x(String(r.value)))+x(r.unit||'')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.4rem">'+x(r.target||'')+'</span></span></div>'; });
   var wl=d.waitlist||[];
   h+='<div class="lbl" style="margin:1.1rem 0 .5rem">Waitlist &middot; '+wl.length+(wl.length===100?'+':'')+'</div>';
   if(!wl.length){ h+='<div style="font-size:.78rem;color:var(--muted2);padding:.3rem .2rem">No signups yet.</div>'; }
-  else { wl.forEach(function(w){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.3rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(w.email||'(no email)')+'</span><span><span style="font-family:DM Mono,monospace;font-size:.72rem;color:var(--gold)">'+x(w.plan||'—')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.5rem">'+x(String(w.at||'').slice(0,10))+'</span></span></div>'; }); }
+  else { wl.forEach(function(w){ h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .85rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;margin-bottom:.3rem"><span style="font-size:.8rem;color:var(--ink2)">'+x(w.email||'(no email)')+'</span><span><span style="font-family:DM Mono,monospace;font-size:.72rem;color:var(--gold)">'+x(w.plan||'-')+'</span> <span style="font-size:.62rem;color:var(--muted2);margin-left:.5rem">'+x(String(w.at||'').slice(0,10))+'</span></span></div>'; }); }
   return h;
 }
 var mxCurrent=null;
@@ -3254,7 +3254,7 @@ function mxPost(action,extra){
   mxStatus('Working&#8230;');
   fetch(B+'/admin-comp',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify(Object.assign({action:action,user_id:mxCurrent.id},extra||{}))})
     .then(function(r){ if(r.status===401){ opForget(); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
-    .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Done — "'+action+'" applied. Refreshing…','var(--green)'); mxLookup(mxCurrent.id); })
+    .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Done - "'+action+'" applied. Refreshing…','var(--green)'); mxLookup(mxCurrent.id); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
 }
 function mxRegenLetter(){
@@ -3262,7 +3262,7 @@ function mxRegenLetter(){
   mxStatus('Regenerating letter…');
   fetch(B+'/week-one-letter',{method:'POST',headers:{'Content-Type':'application/json','x-operator-key':k},body:JSON.stringify({action:'regenerate',user_id:mxCurrent.id})})
     .then(function(r){ if(r.status===401){ opForget(); throw new Error('bad-key'); } return r.json().then(function(d){ return {ok:r.ok,d:d}; }); })
-    .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Letter regenerated'+(res.d&&res.d.is_fallback?' (fallback — sparse data)':'')+'.','var(--green)'); })
+    .then(function(res){ if(!res.ok){ mxStatus((res.d&&res.d.error)||'Failed.','var(--red)'); return; } mxStatus('Letter regenerated'+(res.d&&res.d.is_fallback?' (fallback - sparse data)':'')+'.','var(--green)'); })
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Request failed.','var(--red)'); });
 }
 function mxOp(op){
@@ -3283,7 +3283,7 @@ function mxRenderMember(u){
   (u.purchases||[]).forEach(function(p){ chips+=mxChip('à la carte: '+x(p)); });
   if((u.credits||[]).length) chips+=mxChip(u.credits.length+' active credit(s)');
   var h='<div style="background:var(--surface);border:1px solid var(--gold-mid);border-radius:10px;padding:1.1rem 1.25rem">'
-    +'<div style="font-family:\'DM Serif Display\',serif;font-size:1.15rem;color:var(--ink)">'+x(u.name||'—')+'</div>'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:1.15rem;color:var(--ink)">'+x(u.name||'-')+'</div>'
     +'<div style="font-family:DM Mono,monospace;font-size:.72rem;color:var(--muted);margin-top:.15rem">'+x(u.email||'no email on file')+'</div>'
     +'<div style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted2);margin-top:.1rem">'+x(u.id)+'</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem">'+chips+'</div>'
@@ -3313,11 +3313,11 @@ function mxLookup(preset){
     .catch(function(e){ mxStatus(e.message==='bad-key'?'Bad operator key.':'Lookup failed.','var(--red)'); });
 }
 
-/* ── CUSTOMIZE WEBSITE — live click-to-edit editor ─────────────────────────────
+/* ── CUSTOMIZE WEBSITE - live click-to-edit editor ─────────────────────────────
    The preview iframe loads the real marketing page in ?cms=edit mode (site-cms.js).
    It posts each edit up here; we collect them and, on Save, persist via
    admin-site-content (bulk_upsert / reset). The iframe has NO operator key, so only
-   this parent can write — loading a page in edit mode directly can never save. */
+   this parent can write - loading a page in edit mode directly can never save. */
 var CW_PENDING = {};      // "page::key" -> change object
 var CW_PAGE = 'home';
 var CW_IMG_KEY = null, CW_IMG_LABEL = '';
@@ -3387,13 +3387,13 @@ async function cwSave(){
     var resets =all.filter(function(c){return c.__reset;});
     if(upserts.length){
       var r=await fetch(B+'/admin-site-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bulk_upsert',changes:upserts})});
-      if(!r.ok){ if(r.status===401){opForget();throw new Error('Operator key rejected — refresh and re-enter.');} throw new Error('Save failed ('+r.status+')'); }
+      if(!r.ok){ if(r.status===401){opForget();throw new Error('Operator key rejected - refresh and re-enter.');} throw new Error('Save failed ('+r.status+')'); }
     }
     for(var i=0;i<resets.length;i++){
       await fetch(B+'/admin-site-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'reset',page:resets[i].page,key:resets[i].key})});
     }
     CW_PENDING={}; cwRenderTray();
-    if(msg) msg.textContent='Saved — live now.';
+    if(msg) msg.textContent='Saved - live now.';
     var f=document.getElementById('cw-frame'); if(f) f.src='/'+CW_PAGE+'?cms=edit&t='+Date.now();  // reload to confirm persisted state
   }catch(e){ if(msg) msg.textContent=e.message||'Save failed.'; if(save){ save.disabled=false; save.style.opacity='1'; } }
 }
@@ -3472,7 +3472,7 @@ window.addEventListener('message', function(e){
 
 </script>
 <script>
-/* Client Onboarding Communication tab — CRUD over the lifecycle email templates (admin-comms). */
+/* Client Onboarding Communication tab - CRUD over the lifecycle email templates (admin-comms). */
 (function(){
   var CF = [];                      // flows from the server
   function ce(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -3517,7 +3517,7 @@ window.addEventListener('message', function(e){
 
   function commsRow(t){
     var off=(t.enabled===false), b='';
-    if(t.transactional) b+='<span title="Transactional — receipts, always send" style="background:var(--blue-soft);color:var(--blue);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">RECEIPT</span> ';
+    if(t.transactional) b+='<span title="Transactional - receipts, always send" style="background:var(--blue-soft);color:var(--blue);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">RECEIPT</span> ';
     if(t.author==='interim') b+='<span title="Founder copy pending" style="background:var(--gold-soft);color:var(--gold);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">DRAFT</span> ';
     b+='<span id="ct_'+t.template_key+'_ed" style="background:var(--sage-soft);color:var(--sage);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px;'+(t.edited?'':'display:none')+'">EDITED</span> ';
     if(off) b+='<span style="background:var(--red-soft);color:var(--red);font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:6px">OFF</span> ';
@@ -3545,7 +3545,7 @@ window.addEventListener('message', function(e){
     L+='<div style="flex:2">'+fld('Timing note','trigger_label',t.trigger_label)+'</div>';
     L+='</div>';
     if(t.trigger_days!=null) L+=fld('Send after (days from the trigger)','trigger_days',t.trigger_days,'e.g. 7');
-    L+='<label style="display:block;margin-bottom:.6rem"><span style="display:block;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Body — one paragraph per blank line · links as [text](https://…)</span><textarea data-f="body_text" rows="9" style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.5rem .6rem;font-size:.83rem;font-family:inherit;line-height:1.55;box-sizing:border-box;resize:vertical">'+ce(t.body_text)+'</textarea></label>';
+    L+='<label style="display:block;margin-bottom:.6rem"><span style="display:block;color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Body - one paragraph per blank line · links as [text](https://…)</span><textarea data-f="body_text" rows="9" style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.5rem .6rem;font-size:.83rem;font-family:inherit;line-height:1.55;box-sizing:border-box;resize:vertical">'+ce(t.body_text)+'</textarea></label>';
     L+='<div style="display:flex;gap:.6rem"><div style="flex:1">'+fld('Button label (optional)','button_label',t.button_label,'Talk with Riley')+'</div><div style="flex:1">'+fld('Button link','button_url',t.button_url,'https://riley.meetriley.us/talk')+'</div></div>';
     L+='<div style="display:flex;align-items:center;gap:.7rem;margin-top:.3rem;flex-wrap:wrap">';
     L+='<label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;color:var(--ink2);font-size:.82rem"><input type="checkbox" data-f="enabled" '+(t.enabled!==false?'checked':'')+'> This email is on</label>';

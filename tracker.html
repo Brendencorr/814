@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Reflection — Riley</title>
+<title>Reflection - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -117,7 +117,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
-<!-- TIMELINE — horizontal, top -->
+<!-- TIMELINE - horizontal, top -->
 <div class="card" id="timeline-card" style="display:none">
   <div class="card-title">Your Timeline</div>
   <div class="card-sub">Every step forward, in order.</div>
@@ -192,7 +192,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
   <!-- GOALS -->
   <div class="card">
     <div class="card-title">Weekly Goals</div>
-    <div class="card-sub">Update your progress — Riley tracks trends over time.</div>
+    <div class="card-sub">Update your progress - Riley tracks trends over time.</div>
     <div id="goal-list"></div>
     <div class="divider">
       <div class="mini-head">Add a goal</div>
@@ -218,7 +218,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
       <div class="field"><label>Month</label><input type="number" id="d-month" min="1" max="12" placeholder="6"></div>
       <div class="field"><label>Day</label><input type="number" id="d-day" min="1" max="31" placeholder="14"></div>
     </div>
-    <label style="display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;color:var(--smoke);cursor:pointer"><input type="checkbox" id="d-sensitive" style="width:auto"> This is a tender date — soften things around it</label>
+    <label style="display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-size:12px;color:var(--smoke);cursor:pointer"><input type="checkbox" id="d-sensitive" style="width:auto"> This is a tender date - soften things around it</label>
     <button class="btn btn-gold" id="d-btn" onclick="addDate()">Add Date</button>
     <div class="alert" id="d-alert"></div>
 
@@ -390,7 +390,7 @@ async function loadHabits(){
   const {data:done}=await SB.from('habit_completions').select('habit_id').eq('user_id',UID).eq('completed_date',TODAY);
   const dSet=new Set((done||[]).map(x=>x.habit_id));
   const el=document.getElementById('habit-list');
-  if(!habits||!habits.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No habits yet — add one below.</div>';return;}
+  if(!habits||!habits.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No habits yet - add one below.</div>';return;}
   el.innerHTML=habits.map(h=>{const d=dSet.has(h.id);return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)" id="hr-${h.id}"><button onclick="toggleHabit('${h.id}')" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${d?'var(--green2)':'rgba(255,255,255,0.15)'};background:${d?'var(--green2)':'transparent'};color:white;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">${d?'✓':''}</button><span style="flex:1;font-size:13px;color:${d?'var(--smoke)':'var(--parchment)'};${d?'text-decoration:line-through':''}">${h.emoji||''} ${esc(h.title)}</span><button onclick="deleteHabit('${h.id}')" aria-label="Delete habit" title="Delete habit" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div>`;}).join('');
 }
 async function toggleHabit(id){
@@ -413,7 +413,7 @@ async function deleteHabit(id){try{await SB.from('habits').update({is_active:fal
 async function loadGoals(){
   const {data}=await SB.from('user_goals').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order');
   const el=document.getElementById('goal-list');
-  if(!data||!data.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No goals yet — add one below.</div>';return;}
+  if(!data||!data.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No goals yet - add one below.</div>';return;}
   el.innerHTML=data.map(g=>{const pct=g.target_value>0?Math.min(100,Math.round(g.current_value/g.target_value*100)):0;const fin=pct>=100;
     return`<div style="margin-bottom:16px" id="gr-${g.id}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:13px;color:var(--parchment)">${esc(g.title)}</span><button onclick="deleteGoal('${g.id}')" aria-label="Delete goal" title="Delete goal" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div><div style="display:flex;align-items:center;gap:10px"><input type="number" value="${g.current_value||0}" style="width:90px;padding:6px 10px;border:1px solid rgba(255,255,255,0.1);border-radius:2px;font-size:13px;font-family:'DM Mono',monospace;color:var(--parchment);background:var(--ink3)" onchange="updateGoal('${g.id}',this.value)" onblur="updateGoal('${g.id}',this.value)"><span style="font-size:11px;color:var(--smoke)">/ ${(g.target_value||0).toLocaleString()} ${g.unit||''}</span><span style="font-size:13px;font-family:'DM Mono',monospace;color:${fin?'var(--green2)':'var(--gold)'};margin-left:auto">${pct}%${fin?' ✓':''}</span></div><div class="pbar" style="margin-top:8px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div></div>`;
   }).join('');
@@ -554,7 +554,7 @@ async function addLifeEvent(){
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>
-      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are — and stays.</div>
+      <div style="font-size:14px;color:#8a8578;line-height:1.7;margin-bottom:28px">Unlock ${f.name.toLowerCase()} and Riley's full daily support with <strong style="color:#c9a84c">${f.need}</strong>. Riley adapts to where you are - and stays.</div>
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;

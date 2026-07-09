@@ -34,9 +34,9 @@ function sub(str, vars) {
 
 // ── Footer (both variants; FOOTER_VARIANT env selects, default B). Text-only, no logo image. ──
 const FOOTER_A =
-  "Riley by The 814 Project, LLC - A wellness platform built by real people with real experiences rebuilding their lives. Not a therapist or medical professional. In crisis? Call or text 988.";
+  "Riley by The 8:14 Project, LLC. Riley is a companion built by real people with real experiences rebuilding their lives. Not a therapist or medical professional. In crisis? Call or text 988.";
 const FOOTER_B =
-  "Riley by The 814 Project, LLC - Riley is an AI companion from The 814 Project, built by real people with real experiences rebuilding their lives. Not a therapist or medical professional. In crisis? Call or text 988.";
+  "Riley by The 8:14 Project, LLC. Riley is a companion built by real people with real experiences rebuilding their lives. Not a therapist or medical professional. In crisis? Call or text 988.";
 
 function footerText(unsubUrl, prefUrl) {
   const body = (process.env.FOOTER_VARIANT === "A" ? FOOTER_A : FOOTER_B);

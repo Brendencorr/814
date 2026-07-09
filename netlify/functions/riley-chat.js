@@ -1374,10 +1374,11 @@ exports.handler = async function (event) {
     supabase.from("engagement_events").insert({ user_id, event_type: "riley_message", event_data: { session_id } }).then(() => {}, () => {});
     supabase.from("user_profiles").update({ last_active_at: new Date().toISOString(), engagement_state: "active" }).eq("id", user_id).then(() => {}, () => {});
 
-    // Memory Engine - distill durable memories at conversation milestones.
-    // Bounded for scale: runs ~once per 6 messages, not every turn. Non-blocking.
+    // Memory Engine - distill durable memories + capture dated open-loop follow-ups.
+    // Bounded for scale (Haiku, non-blocking): an early pass at msg 4 so SHORT chats where someone
+    // mentions "interview Thursday" still get captured, then ~once per 6 messages after. Deduped.
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
-    if (fullConvo.length >= 6 && fullConvo.length % 6 === 0) {
+    if (fullConvo.length >= 4 && (fullConvo.length === 4 || fullConvo.length % 6 === 0)) {
       extractMemories(supabase, user_id, fullConvo);
     }
 

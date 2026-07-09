@@ -967,6 +967,19 @@
   status = 200
   force = true
 
+# ── Anonymous chat preview (marketing site, no login required) ──────────────
+# Served on all hosts (meetriley.us, riley.meetriley.us) so the marketing-pill
+# popup iframe works regardless of which domain the visitor is on.
+[[redirects]]
+  from = "/chat-anon"
+  to   = "/chat-anon.html"
+  status = 200
+
+[[redirects]]
+  from = "/chat-anon/"
+  to   = "/chat-anon.html"
+  status = 200
+
 [[redirects]]
   from = "/"
   to = "/operator.html"

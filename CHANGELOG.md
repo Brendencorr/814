@@ -12,6 +12,28 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Marketing pill: floating anonymous Chat with Riley on all 8 marketing pages
+- **Why:** marketing pages (meetriley.us) had "Talk to Riley" buttons pointing to `/talk` (a route that
+  never existed as a file), so they either broke or silently opened a popup with a blank iframe. Logged-
+  out visitors had no working way to try Riley before signing up.
+- **What:** New `chat-anon.html` (on-brand ink/gold/parchment, DM Serif/Sans) calls `riley-chat.js` as
+  an anonymous visitor (no user_id/token). All server-side crisis detection is fully active - the L3
+  988 response fires for crisis phrases on anonymous sessions. New `marketing-pill.js` renders the docked
+  non-blocking bottom-right pill and popup (mirrors app pwa.js UX) on all 8 marketing pages.
+  Intercepts existing /talk links so they open the popup. Added `/chat-anon` clean URL route.
+- **Crisis verified live:** both "I want to end my life" and "I have been thinking about suicide" returned
+  the full 988 + 911 safety response from the anonymous chat path. No bypass possible - crisis is
+  server-side in `riley-chat.js`.
+- **Rate-limit:** anonymous sessions capped at 10 messages/session (client-side) + 1s debounce. Sign-in
+  CTA nudge appears at message 3 and cap warning at message 8. Server enforces Guide cap for null user_id.
+- **Retired buttons:** removed standalone "Talk to Riley" CTA buttons from home hero, home "Meet Riley"
+  section, and resources section CTA. Footer "Talk to Riley" nav links kept - they work via pill intercept.
+- **Files:** `chat-anon.html` (new), `marketing-pill.js` (new), `netlify.toml` (+/chat-anon redirect),
+  `home.html`, `about.html`, `pillars.html`, `resources.html`, `blog.html`, `safety.html`, `help.html`,
+  `data.html` (remove old inline popup, add marketing-pill.js script tag, retire body CTA buttons).
+
+
+
 ### Operator customer lifecycle: Deactivate + Delete account (new `admin-account.js`)
 - **Why:** the operator could cancel/refund a member's Stripe subscription (admin-billing) but could NOT
   deactivate or delete a customer from the dashboard - full erasure was member-self-serve only.

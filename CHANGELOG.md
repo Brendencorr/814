@@ -12,6 +12,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Check-in counts toward Guide daily chat cap - unified relationship framing (`42d0355`)
+- **Why:** The daily check-in is a Riley-led client-side flow (chips, not LLM calls), so it
+  never incremented the 20/day Guide cap. The cap was effectively 20 free-form + free check-ins
+  - not the product intent (check-in = part of the Riley relationship, not a separate meter).
+- **What:** Completing a check-in now charges a fixed 5 from the same `usage_counters` row that
+  `riley-chat.js` reads. Net: ~15 free-form messages left after a check-in. Paid tiers (Companion/
+  Coach/Mentor) are unchanged - charged:0 immediately. `free_access_mode` also no-ops the charge.
+- **How:** New `checkin_charge` action in `auth-handler.js` - verifies token, resolves tier
+  (same subscription bridge as riley-chat), checks free_access_mode, calls `incrementUsage` x5,
+  returns remaining. `rcFinish()` in `chat.html` fires it after the `daily_checkins` upsert
+  (fire-and-forget; never blocks the check-in or handoff). Updates cap display immediately.
+- **UX framing:** cap-caption, `applyChatCap()` placeholder, and riley-chat's at-limit reply
+  updated to name the check-in positively ("your check-in and our conversations are all part
+  of the same relationship") - never framed as a penalty.
+- **Crisis/safety unchanged:** check-in always completes regardless of cap state; crisis
+  overrides at every layer in riley-chat.js.
+- **Files:** `netlify/functions/auth-handler.js`, `netlify/functions/riley-chat.js`, `chat.html`
+
 ### Server-side daily cap for anonymous chat - upgrade conversion lever (`b393cd6`, `bfd8ddb`)
 - **Why:** chat-anon.html had only a client-side session cap (was 10, easily bypassed by
   scripted callers and page refreshes). Anonymous visitors with no real cap = cost exposure

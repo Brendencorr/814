@@ -205,6 +205,12 @@
 [functions."memory-maintenance-cron"]
   schedule = "0 9 * * 1"
 
+# Post-hoc crisis safety backstop (Master Build Spec §7.3) — nightly ~08:00 UTC (~1am MT).
+# Re-reads the last day of UNFLAGGED member messages on STANDARD Haiku (never batched) and
+# queues anything a human should double-check. NEVER touches the live deterministic path.
+[functions."post-hoc-crisis-scan"]
+  schedule = "0 8 * * *"
+
 # TEMPORARY 24h promo (2026-07-07, operator-requested): auto-comp every NEW signup to Coach
 # tier while the app_settings.auto_comp_coach_until window is open. A scheduled SWEEP every
 # 10 min — never touches the signup path. Inert once the window passes; REMOVE this block after.

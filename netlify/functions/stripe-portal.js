@@ -38,7 +38,18 @@ exports.handler = async (event) => {
       body: b,
     });
     const session = await r.json();
-    if (!session.url) return json(500, { error: "portal_create_failed", detail: session.error });
+    if (!session.url) {
+      const err = session.error || {};
+      // The stored customer doesn't exist in THIS Stripe mode — e.g. a test-mode id lingering after go-live, or
+      // a customer deleted in Stripe. Self-heal: drop the stale id (so the billing card hides on next load) and
+      // report the friendly "no billing account" state instead of a scary "Could not open billing" error.
+      const missing = err.code === "resource_missing" || /no such customer/i.test(err.message || "");
+      if (missing) {
+        try { await sb.from("user_profiles").update({ stripe_customer_id: null }).eq("id", uid); } catch (_) {}
+        return json(400, { error: "no_billing_account", detail: "stored customer not found — cleared stale id" });
+      }
+      return json(502, { error: "portal_create_failed", detail: err.message || err });
+    }
     return json(200, { url: session.url });
   } catch (e) {
     return json(500, { error: String((e && e.message) || e) });

@@ -22,6 +22,11 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 - **Customer Portal config** (`stripe-setup.js`): creates a `billing_portal/configurations` (idempotent) so
   `stripe-portal` opens in live — update card / cancel / view+download invoices / update email+address. (Plan-switch
   left to dashboard — needs per-product config.)
+- **Portal self-heal** (`stripe-portal.js`): if Stripe says the stored customer doesn't exist in this mode
+  (stale TEST-mode `cus_` lingering after go-live, or a deleted customer), clear the id + return the friendly
+  `no_billing_account` instead of "Could not open billing". Live repro fixed: a sandbox `cus_` (livemode:false)
+  on a profile made the live portal 500 → cleared the stale id in DB + shipped the guard. **Go-live reminder:
+  purge all `livemode:false` rows from `payments`/`purchases` + null test `stripe_customer_id`s before launch.**
 - **Product descriptions** (`stripe-catalog.js`): custom buyer-facing copy on both subs + all 8 programs; `stripe-setup`
   now refreshes name+description on existing products on re-run.
 - 🔴 **Re-run stripe-setup (live, operator) to APPLY** the 7-event update + portal config on the live account.

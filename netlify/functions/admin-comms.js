@@ -30,8 +30,11 @@ const FLOWS = [
   { key: "addon",      title: "Add-on Flow",      blurb: "One-time $8.14 program purchases - receipt + a nudge to open." },
 ];
 
-// Realistic sample vars so {placeholders} render in the preview.
-const SAMPLE = { first_name: "Alex", n: 3, module_title: "Grounding", module_theme: "grounding", session_count: 12, plan: "Companion", price: "$19/mo", renewal_date: "August 5", program_name: "Living Forward" };
+// Show the MERGE TOKENS themselves (never fake sample data like "Alex") in both the editable body and the
+// preview. So the operator never sees a stand-in name, and if they Save, the template keeps {first_name}
+// (→ the member's real name at send, or "there" if none) rather than baking a literal name in. The REAL
+// substitution happens in evaluate-comms via firstName(); this admin view is source-of-truth, not a demo.
+const SAMPLE = { first_name: "{first_name}", n: "{n}", module_title: "{module_title}", module_theme: "{module_theme}", session_count: "{session_count}", plan: "{plan}", price: "{price}", renewal_date: "{renewal_date}", program_name: "{program_name}" };
 const SAMPLE_URLS = { unsub: "https://riley.meetriley.us/.netlify/functions/comms-unsubscribe?u=preview", pref: "https://riley.meetriley.us/preferences?u=preview" };
 
 const EDITABLE = ["subject", "preview", "from_sender", "trigger_label", "trigger_days", "body_text", "button_label", "button_url", "enabled"];

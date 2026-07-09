@@ -502,7 +502,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Onboarding guard - new users build their profile with Riley first.
     try{
       const {data:ob}=await SB.from('user_profiles').select('onboarding_completed,consent_at').eq('id',UID).maybeSingle();
-      if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/riley-auth.html';return;}
+      if(!ob||ob.onboarding_completed!==true){window.location.href='https://riley.meetriley.us/onboarding.html';return;}
       try{localStorage.setItem('riley_onboarded','1');}catch(e){}   // onboarded → app-install prompt (pwa.js) now allowed
       // Buy-intent from the marketing pricing CTAs (buy → sign in → land here → open Checkout). Only fires when
       // payments are live; ANY hiccup falls through to the normal dashboard so a member is never trapped.

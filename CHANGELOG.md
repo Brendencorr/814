@@ -12,6 +12,27 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Retire the old full-page chat (/talk = riley-auth.html) - it is now a pure OAuth router
+- **Why:** After a live checkout, a paying member landed on the OLD in-page chat onboarding on
+  `riley-auth.html` instead of the app. Brenden: "i do not want anyone to ever land on this page...
+  it needs to take the client to the dashboard where Riley pops up." Standing rule: every client
+  chats with Riley ONLY via the popup (marketing `chat-anon.html` popup + app `/chat?embed=1` pill).
+- **What (`riley-auth.html`):** boot() now covers the page immediately (full-screen spinner) for ALL
+  routing so the retired chat never flashes. `handlePostAuth` routes: buyer -> Stripe checkout; else
+  onboarded -> `/dashboard`; not-onboarded -> `onboarding.html` (the v2 screen-based onboarding, which
+  finishes on `/dashboard` where the pill auto-opens). Removed the old `runOnboarding()` call (function
+  now dead/unreferenced - left in place for a later cleanup, not deleted to avoid pre-launch risk).
+  Genuinely anonymous visitors (no OAuth callback, no `?signin=1` handoff) are bounced to `meetriley.us`
+  where the popup is the chat channel. OAuth callbacks (`?code=`/`#access_token=`) keep the cover and are
+  routed by `onAuthStateChange`; a 12s safety net sends a hung/failed callback to `/login`. site-config
+  failure now redirects to the marketing site instead of stranding on a blank covered page.
+- **What (`dashboard.html`):** the un-onboarded guard now redirects to `onboarding.html` (was
+  `riley-auth.html`) - one less hop, straight to the real onboarding.
+- **Unchanged:** marketing "Talk to Riley"/`/talk` links are still intercepted by `marketing-pill.js`
+  into the anonymous popup; the popup sign-in handoff still goes to `/login`. Both inline JS blocks
+  syntax-checked with `node --check`.
+- **Files:** `riley-auth.html`, `dashboard.html`.
+
 ### Lock the social template system v1.0 - kit, engines, nav-ink asset, rotation rules
 - **Why:** The locked social design system (six grounds, spec, render engines, examples, nav
   logos, PDFs) needed to live in the repo as the canonical brand toolkit, AND the "use templates

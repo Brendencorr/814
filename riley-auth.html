@@ -405,9 +405,15 @@ let savePromptDismissed = false;
 // ── Boot ──────────────────────────────────────────────────────────────────────
 // Load immediately - chat is open to everyone. Auth is optional.
 async function boot() {
-  // If the member came to BUY, cover the chat IMMEDIATELY with a redirect screen so they never see the
-  // chat flash before Stripe opens. The actual checkout fires in handlePostAuth (fail-open: hidden on error).
-  try { if (sessionStorage.getItem('riley_buy_intent')) showCheckoutRedirect(); } catch (e) {}
+  // riley-auth (/talk) is now PURELY the OAuth-completion + routing surface - the old full-page chat is
+  // retired and nobody should ever see it. Cover the page IMMEDIATELY so the chat never flashes during any
+  // routing. Buyers get the checkout copy; everyone else gets a neutral "One moment…". A genuinely
+  // anonymous visitor (no OAuth callback, no signin handoff) is bounced to the marketing site below, where
+  // the Riley popup is the (only) chat channel.
+  var _buy = false, _oauth = false;
+  try { _buy = !!sessionStorage.getItem('riley_buy_intent'); } catch (e) {}
+  try { _oauth = /[?&](code|access_token|error)=/.test(location.search) || /[#&](access_token|error)=/.test(location.hash); } catch (e) {}
+  showCheckoutRedirect(_buy ? undefined : 'One moment…');
   // Restore conversation from sessionStorage if user is returning from OAuth redirect
   const savedHistory = sessionStorage.getItem('riley_pre_auth_history');
   if (savedHistory) {
@@ -427,8 +433,9 @@ async function boot() {
     if (!cfg.supabaseUrl || !cfg.supabaseAnonKey) throw new Error('Missing config');
     sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
   } catch (e) {
-    console.warn('site-config failed (chat still works without auth):', e.message);
-    return; // Chat still works - just no auth features
+    console.warn('site-config failed - cannot init auth; sending to marketing site (popup chat lives there):', e.message);
+    window.location.replace('https://meetriley.us/');
+    return;
   }
 
   // ── Dashboard redirect for authenticated users ──────────────
@@ -460,7 +467,23 @@ async function boot() {
   // it re-saves the conversation to sessionStorage before the redirect.
   if (window.location.search.indexOf('signin=1') !== -1 && window.self === window.top) {
     signInWithGoogle();
+    return;
   }
+
+  // Genuinely anonymous: no existing session, no OAuth callback in flight, no signin handoff. The full-page
+  // chat here is retired, so don't render it - send them to the marketing site, where the Riley popup is the
+  // chat channel. (OAuth callbacks keep the cover and are routed by onAuthStateChange above.)
+  if (!_oauth) {
+    window.location.replace('https://meetriley.us/');
+    return;
+  }
+
+  // OAuth callback in flight: the cover stays up while onAuthStateChange(SIGNED_IN) routes us. Safety net so
+  // a failed/hung callback (e.g. ?error=access_denied) never strands the member on a blank covered page -
+  // if nothing has navigated us away, send them to sign in again. handlePostAuth's redirect cancels this.
+  setTimeout(function () {
+    if (document.getElementById('rz-checkout-ov')) window.location.replace('https://login.meetriley.us/');
+  }, 12000);
 }
 boot();
 
@@ -510,12 +533,13 @@ let onboarding = { active: false, resolveInput: null };
 function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 
 // Full-screen "redirecting to checkout" cover so a buyer never sees the chat flash before Stripe opens.
-function showCheckoutRedirect() {
-  if (document.getElementById('rz-checkout-ov')) return;
+function showCheckoutRedirect(text) {
+  var existing = document.getElementById('rz-checkout-ov');
+  if (existing) { if (text) { var t = existing.querySelector('.rz-cover-txt'); if (t) t.textContent = text; } return; }
   var o = document.createElement('div');
   o.id = 'rz-checkout-ov';
   o.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#06090e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;font-family:DM Sans,system-ui,sans-serif';
-  o.innerHTML = '<div style="width:34px;height:34px;border:3px solid rgba(201,168,76,.25);border-top-color:#c9a84c;border-radius:50%;animation:rzspin 1s linear infinite"></div><div style="font-size:15px;color:#c9a84c">Taking you to secure checkout…</div><style>@keyframes rzspin{to{transform:rotate(360deg)}}</style>';
+  o.innerHTML = '<div style="width:34px;height:34px;border:3px solid rgba(201,168,76,.25);border-top-color:#c9a84c;border-radius:50%;animation:rzspin 1s linear infinite"></div><div class="rz-cover-txt" style="font-size:15px;color:#c9a84c">' + (text || 'Taking you to secure checkout…') + '</div><style>@keyframes rzspin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(o);
 }
 function hideCheckoutRedirect() { var o = document.getElementById('rz-checkout-ov'); if (o) o.remove(); }
@@ -541,9 +565,10 @@ async function handlePostAuth(session) {
         if (_cj && _cj.url) { window.location.href = _cj.url; return; }
         console.warn('buy-intent checkout did not open:', _cj && _cj.error);
       }
-      hideCheckoutRedirect();
+      // Checkout did not open (payments off / product not set up / error): keep the cover up and fall
+      // through to onboarding below - the member still lands cleanly, never on the retired chat.
     }
-  } catch (e) { hideCheckoutRedirect(); console.warn('buy-intent checkout error (falling through to onboarding):', e && e.message); }
+  } catch (e) { console.warn('buy-intent checkout error (falling through to onboarding):', e && e.message); }
 
   try { await onSignedIn(session); } catch (e) {}
 
@@ -555,17 +580,10 @@ async function handlePostAuth(session) {
     consentAt = data ? data.consent_at : null;
   } catch (e) {}
   if (onboarded) { try { localStorage.setItem('riley_onboarded', '1'); } catch (e) {} window.location.href = '/dashboard'; return; }
-  try {
-    await runOnboarding(session, consentAt);
-  } catch (e) {
-    console.warn('onboarding failed - marking onboarded to avoid a loop, then to dashboard:', e && e.message);
-    // Full-page /chat is retired (it redirects to /dashboard now), and the dashboard bounces
-    // un-onboarded users back here - so mark them onboarded to prevent a loop, then land on the
-    // home/pill. Deferred Phase-2 questions still fill in anything the failed run missed.
-    try { await sb.from('user_profiles').update({ onboarding_completed: true }).eq('id', session.user.id); } catch (_) {}
-    try { localStorage.setItem('riley_onboarded', '1'); } catch (_) {}
-    window.location.href = '/dashboard';
-  }
+  // NOT onboarded → the v2 onboarding page (onboarding.html), which finishes on /dashboard (where the
+  // Riley pill pops up). The OLD in-chat onboarding that used to run on THIS page is RETIRED - nobody
+  // should ever see it. This page now only routes; the boot overlay keeps the chat hidden the whole time.
+  window.location.href = 'https://riley.meetriley.us/onboarding.html';
 }
 
 // A Riley message offering buttons; resolves with the chosen value.

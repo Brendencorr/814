@@ -12,6 +12,27 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Server-side daily cap for anonymous chat - upgrade conversion lever (`b393cd6`, `bfd8ddb`)
+- **Why:** chat-anon.html had only a client-side session cap (was 10, easily bypassed by
+  scripted callers and page refreshes). Anonymous visitors with no real cap = cost exposure
+  and no conversion pressure to sign up.
+- **What:** Server-side cap in `riley-chat.js` for requests with no user_id (anonymous):
+  - Per-anon_id product cap = 20/day (matches Guide tier `reset_free` in `usage_limits` - confirmed from DB)
+  - Per-IP abuse ceiling = 100/day (5x product cap; hashed FNV-32a, no raw IP stored). Scripts rotating
+    anon_id still hit the IP ceiling. Shared-IP honest users (cafes, offices) are never blocked at the low cap.
+  - Crisis ALWAYS overrides: Level 3 (988 response) fires before any cap check. Levels 1-2 also bypass.
+    Live-verified: "I want to end my life" at 20/20 cap returns 988 response, no nudge.
+  - Fail-open: if DB is unavailable, the message is allowed through (same policy as logged-in cap).
+  - Warm upgrade nudge on cap: "That's your free chat with me for today - and I'm glad we got to talk.
+    Riley Companion gives you unlimited conversations, any time..." (Riley voice, no em-dashes)
+  - X-Chat-Atlimit + X-Chat-Remaining headers set on all anon replies (same as logged-in path).
+- **chat-anon.html:** generates stable anon_id UUID in localStorage (survives page loads within a day),
+  sends it on every request. Reads cap headers, shows upgrade nudge and locks input at cap. CLIENT_CAP
+  raised to 20 to match server. Gentle "N messages left" notice at 3 remaining.
+- **Migration 082:** `anon_chat_counters` table + `increment_anon_counter` / `get_anon_counter` RPCs.
+  RLS enabled, no client access. Applied to prod.
+- **Files:** `netlify/functions/riley-chat.js`, `chat-anon.html`, `supabase/migrations/082_anon_chat_counters.sql`
+
 ### Marketing pill: floating anonymous Chat with Riley on all 8 marketing pages
 - **Why:** marketing pages (meetriley.us) had "Talk to Riley" buttons pointing to `/talk` (a route that
   never existed as a file), so they either broke or silently opened a popup with a blank iframe. Logged-

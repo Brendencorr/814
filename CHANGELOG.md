@@ -12,6 +12,27 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Lock the social template system v1.0 - kit, engines, nav-ink asset, rotation rules
+- **Why:** The locked social design system (six grounds, spec, render engines, examples, nav
+  logos, PDFs) needed to live in the repo as the canonical brand toolkit, AND the "use templates
+  randomly, within rules" cadence had to become enforceable so the Operator's social funnel follows it.
+- **What (brand kit):** New `brand/template-kit/` - `grounds/` (the six locked grounds x 3 canvases),
+  `examples/`, `carousel_engine.py` + `multiformat_engine.py`, `make_carousels.py` + `make_multiformat.py`,
+  `TEMPLATE_SPEC.md`, bundled `fonts/` (DM Serif Display / DM Sans / DM Mono), nav logos + the new
+  `riley-nav-ink.svg` (outlined-glyph vector source) and `riley-nav-ink@2x.png`. PDFs in `brand/docs/`.
+- **Engines fixed:** now LOAD the pre-baked ground PNGs (dropped numpy/procedural grounds), restrict to
+  the six locked names (Beam/Ember raise), and use the bundled DM fonts. Retired grounds remapped in the
+  content defs: **ember->veil** (grief/slip - heavy), **beam->first-light**; `firstlight`->`first-light`.
+- **Rendered library:** `make_*.py` produce `brand/template-kit/library/` (59 carousel slides, 20 singles,
+  20 stories, 6 H.264 reels). That output is **git-ignored** (~120MB, fully regenerable) - only the kit
+  SOURCE is committed. `/brand/*` is force-404'd in `netlify.toml` (internal, never served).
+- **Rotation rules (`netlify/functions/template-rotation.js`, Spec section 11):** never the same template
+  >2x in a row; never >3 dark or >3 light in a row; weekly mix of post/story/reel/carousel; Week 1 all
+  Riley/launch; Weeks 2-4 >=4 Riley/program posts (rest web-sourced). `planCampaign`/`nextPick`/
+  `validateSequence` + `--selftest` (5 seeds pass). Live pipeline wiring (auto-compose + FeedHive) is a follow-on.
+- **Files:** `brand/**`, `netlify/functions/template-rotation.js`, `netlify.toml` (brand 404),
+  `.gitignore` (library), `CLAUDE.md` (Social template system section). Punctuation: hyphens only (no em-dashes).
+
 ### Check-in counts toward Guide daily chat cap - unified relationship framing (`42d0355`)
 - **Why:** The daily check-in is a Riley-led client-side flow (chips, not LLM calls), so it
   never incremented the 20/day Guide cap. The cap was effectively 20 free-form + free check-ins

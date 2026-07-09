@@ -59,7 +59,21 @@ Netlify scheduled functions do NOT need a -background suffix — the schedule ma
 - netlify/functions/ — 8 Netlify serverless functions
 - dashboard.html — private agent dashboard (gated by the OPERATOR_KEY env var; value is NOT stored in this repo)
 - supabase/migrations/ — SQL migrations to run in Supabase SQL editor
+- brand/ — internal brand toolkit (NOT publicly served; force-404 via netlify.toml). See Social template system below.
 - All agent functions use the same handler pattern — only system prompts and Supabase logic differ
+
+## Social template system (LOCKED v1.0)
+brand/template-kit/TEMPLATE_SPEC.md is the locked contract - six grounds only (dawn, first-light, veil,
+parchment, framed, first-blush), launch-phase signatures (nav on dark, riley-nav-ink on light, no maker's mark).
+Rotation rules enforced in netlify/functions/template-rotation.js.
+- Grounds are pre-baked PNGs in brand/template-kit/grounds/; the Python engines LOAD them (never regenerate) and
+  restrict to the six locked names (Beam/Ember/etc. are retired and raise). Production fonts (DM Serif Display /
+  DM Sans / DM Mono) are bundled in brand/template-kit/fonts/ - never publish stand-in-font renders.
+- Rebuild the render library: `python3 brand/template-kit/make_carousels.py && python3 .../make_multiformat.py`
+  → brand/template-kit/library/ (GITIGNORED, ~120MB, regenerable - not committed).
+- Rotation rules (template-rotation.js, also Spec §11): never the same template >2x in a row · never >3 dark or
+  >3 light in a row · weekly mix of post/story/reel/carousel · Week 1 = all Riley/launch · Weeks 2-4 = ≥4
+  Riley/program posts per week (rest may be web-sourced). Self-test: `node netlify/functions/template-rotation.js --selftest`.
 
 ## Required Environment Variables
 Set all of these in Netlify → Site configuration → Environment variables:

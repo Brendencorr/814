@@ -1,13 +1,21 @@
 # 8:14 Project — Claude Code Instructions
 
 ## CRITICAL: Model Name
-The correct Anthropic model string for ALL functions in this repo is:
+The **member conversation** model is:
 claude-sonnet-4-6
 
 Never use claude-sonnet-4-20250514 — it is deprecated and will cause 502 errors.
 Never use claude-opus-4-5 — use claude-sonnet-4-6 instead.
 
-When editing any file in netlify/functions/, always verify the model string is claude-sonnet-4-6 before committing.
+**Model routing (Master Build Spec v2 §8.2 — supersedes the old "all functions sonnet" rule):**
+- **Conversation** (riley-chat member replies) → `claude-sonnet-4-6`. Non-negotiable; quality is felt here.
+- **Utility / background** (memory extraction, session summaries, classification, synthesis, plan
+  adaptation, post-hoc crisis scan) → **Haiku 4.5** `claude-haiku-4-5-20251001` for cost.
+- All models are routed through **`model-router.js`** (`MODELS.chat` / `MODELS.memory` / etc.) — change a
+  model in ONE place, not a grep. Every Haiku call site is non-blocking / fail-open, so a bad utility model
+  can never break a member's reply. **Do NOT "fix" Haiku back to Sonnet** in the utility functions.
+- New AI calls should go through **`anthropic-client.js` `callClaude()`** (prompt caching + cost logging +
+  retry/Haiku failover), not a raw fetch.
 
 ## CRITICAL: max_tokens
 - riley-chat.js (streaming): max_tokens = 1000 — short conversational replies, streams in real time

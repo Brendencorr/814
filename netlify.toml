@@ -314,6 +314,11 @@
   from = "https://riley.meetriley.us/memory/"
   to = "/memory.html"
   status = 200
+# Synthetic health endpoint for uptime monitoring (Spec §10).
+[[redirects]]
+  from = "/api/health-chat"
+  to = "/.netlify/functions/health-chat"
+  status = 200
 [[redirects]]
   from = "/DATA_CONTRACT.md"
   to = "/404.html"

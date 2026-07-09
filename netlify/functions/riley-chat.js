@@ -87,10 +87,12 @@ async function checkAnonCap(supabase, anonId, ipHash, dateStr) {
 }
 
 // Increment both counters after a real reply (non-blocking, non-fatal).
+// Wrapped in Promise.resolve() because supabase.rpc() returns a thenable but not
+// a native Promise, so .catch() isn't always available directly on the result object.
 function incrementAnonCounters(supabase, anonId, ipHash, dateStr) {
   if (!supabase || !anonId) return;
-  supabase.rpc("increment_anon_counter", { p_key_type: "anon_id", p_key_value: anonId, p_date: dateStr }).catch(() => {});
-  supabase.rpc("increment_anon_counter", { p_key_type: "ip_hash",  p_key_value: ipHash,  p_date: dateStr }).catch(() => {});
+  Promise.resolve(supabase.rpc("increment_anon_counter", { p_key_type: "anon_id", p_key_value: anonId, p_date: dateStr })).catch(() => {});
+  Promise.resolve(supabase.rpc("increment_anon_counter", { p_key_type: "ip_hash",  p_key_value: ipHash,  p_date: dateStr })).catch(() => {});
 }
 
 // ── System prompt ─────────────────────────────────────────────────────────────

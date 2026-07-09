@@ -199,6 +199,12 @@
 [functions."int-proactive-cron"]
   schedule = "0 15 * * *"
 
+# Memory v2 hygiene (Master Build Spec §1.2) — weekly Mon 09:00 UTC. Backfills embeddings,
+# merges near-duplicate memories, decays stale low-confidence ones. Gated + fail-open; a no-op
+# until an embedding key is set. Logs each run to system_incidents.
+[functions."memory-maintenance-cron"]
+  schedule = "0 9 * * 1"
+
 # TEMPORARY 24h promo (2026-07-07, operator-requested): auto-comp every NEW signup to Coach
 # tier while the app_settings.auto_comp_coach_until window is open. A scheduled SWEEP every
 # 10 min — never touches the signup path. Inert once the window passes; REMOVE this block after.

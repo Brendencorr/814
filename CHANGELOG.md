@@ -12,6 +12,26 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Operator delete-account: legible errors + erase-completeness fix (privacy)
+- **Why:** Brenden hit a "failed out" when deleting a member from the operator portal. The UI only showed a
+  generic "Delete failed" so the real cause was invisible. Investigation: the function loads fine (401
+  without a key), auth works, client is service-role, `eraseMemberById` is internally fault-tolerant (can't
+  throw), and NO foreign keys reference `auth.users` (so auth deletion isn't FK-blocked) - the code path is
+  sound, so the failure needs to be SEEN. Also found a real privacy gap while in the live DB.
+- **What (legibility):** `admin-account.js` now wraps the deactivate/delete logic in try/catch → returns
+  `{error:"server_error", detail}` instead of an opaque 500. `operator.html` deactivate + delete now read the
+  response as text (parse-safe), and surface `Delete failed (HTTP <status>): <detail>` incl. non-JSON bodies -
+  so the next attempt tells us exactly what happened (400 vs 500 vs 502 timeout vs network).
+- **What (privacy/completeness):** verified `ACCOUNT_DELETE_TABLES` against the live schema - 13 tables had a
+  `user_id` column but weren't erased. Added the member-owned ones so delete truly erases everything:
+  `int_enrollments, phq_gad_scores, who5_scores, program_module_progress, user_active_products,
+  user_comms_state, email_log, email_sends, feature_interest`. Deliberately NOT added: `crisis_log` (retained
+  de-identified), `payments` (financial record; Stripe authoritative), `admins` (operator), the
+  `data_integrity_report` view. Shared list, so self-serve + operator delete both benefit.
+- **Open:** root cause of the original hard-fail still to be confirmed from the now-legible error on retry
+  (most likely a transient/timeout or the "auth login not removed" success-caveat). Files: `admin-account.js`,
+  `auth-handler.js`, `operator.html`.
+
 ### Banger onboarding + check-in - breathing sun mark, Riley writes the plan live, gift cards
 - **Why:** Brenden, post-launch: "an absolutely BANGER onboarding flow and checkin." Both flows were already
   solid; this elevates the two most emotional surfaces. Vibe he chose: cinematic & alive + warm & minimal;

@@ -285,6 +285,12 @@ const ACCOUNT_DELETE_TABLES = [
   // Memory v2 tables (Master Build Spec) - erase these too. (api_cost_log / system_incidents
   // store only a hashed id, never user_id, so they're already de-identified.)
   "session_summaries", "chat_turn_signals",
+  // Newer member-owned tables (verified against the LIVE schema 2026-07-09) - added so a delete truly
+  // erases everything: interactive programs, clinical assessment scores, program progress, products,
+  // comms state + email logs. Deliberately NOT here: crisis_log (retained, de-identified when the
+  // profile row is removed), payments (financial record; Stripe is authoritative), admins (operator).
+  "int_enrollments", "phq_gad_scores", "who5_scores", "program_module_progress",
+  "user_active_products", "user_comms_state", "email_log", "email_sends", "feature_interest",
 ];
 
 // ── Action: delete_account - permanently close the account + erase all data ────

@@ -53,6 +53,10 @@ exports.handler = async function (event) {
 
   let sb; try { sb = getSupabaseClient(); } catch (_) { return json(500, { error: "config" }); }
 
+  // Wrap the action logic so ANY failure returns a legible JSON error (with detail) instead of an
+  // opaque 500 that the operator UI can only show as "network". eraseMemberById is internally
+  // fault-tolerant, but Stripe/network/schema surprises should never look like a silent crash.
+  try {
   // ── DEACTIVATE - reversible: stop the subscription, revoke access, keep data ──
   if (action === "deactivate") {
     const stripe = await cancelStripe(sb, uid);
@@ -79,4 +83,8 @@ exports.handler = async function (event) {
   }
 
   return json(400, { error: "unknown action" });
+  } catch (e) {
+    console.error("admin-account " + action + " failed:", (e && e.stack) || e);
+    return json(500, { error: "server_error", action: action, detail: String((e && e.message) || e) });
+  }
 };

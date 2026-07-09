@@ -2650,21 +2650,26 @@ function deactivateMember(userId,btn){
   if(!window.confirm('Deactivate this member?\n\nTheir subscription is canceled and membership access revoked, but all their data is KEPT (reversible - you can re-comp them later).'))return;
   if(btn){btn.disabled=true;btn.textContent='Deactivating…';}
   fetch(B+'/admin-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'deactivate',user_id:userId})})
-    .then(function(r){return r.json();}).then(function(d){
+    .then(function(r){return r.text().then(function(t){var d=null;try{d=JSON.parse(t);}catch(e){} return {status:r.status,d:d,raw:t};});})
+    .then(function(res){
+      var d=res.d;
       if(d&&d.ok){ window.alert('Deactivated. Subscriptions canceled: '+(d.subs_canceled||0)+'.'); if(typeof loadBillingPanel==='function')loadBillingPanel(userId); if(typeof loadMembershipPanel==='function')loadMembershipPanel(userId); }
-      else { window.alert('Deactivate failed: '+((d&&d.error)||'unknown')); }
+      else { window.alert('Deactivate failed (HTTP '+res.status+'): '+((d&&(d.detail||d.error))||(res.raw?res.raw.slice(0,160):'no response body'))); }
       if(btn){btn.disabled=false;btn.textContent='Deactivate';}
-    }).catch(function(){ if(btn){btn.disabled=false;btn.textContent='Deactivate';} window.alert('Deactivate failed (network).'); });
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='Deactivate';} window.alert('Deactivate failed (network): '+((e&&e.message)||e)); });
 }
 function deleteMemberHard(userId,btn){
   var typed=window.prompt('HARD DELETE - permanently erases this member and ALL their data. Crisis-safety records are kept de-identified per policy. This CANNOT be undone.\n\nType DELETE to confirm:');
   if(typed!=='DELETE'){ if(typed!==null) window.alert('Not deleted - you must type DELETE exactly.'); return; }
   if(btn){btn.disabled=true;btn.textContent='Deleting…';}
   fetch(B+'/admin-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',user_id:userId,confirm:true})})
-    .then(function(r){return r.json();}).then(function(d){
-      if(d&&d.ok&&d.deleted){ window.alert('Account deleted. Login removed: '+(d.auth_deleted?'yes':'no - contact support')+'.'); if(typeof closeUserPanel==='function')closeUserPanel(); if(typeof loadUsers==='function')loadUsers(); }
-      else { window.alert('Delete failed: '+((d&&d.error)||'unknown')); if(btn){btn.disabled=false;btn.textContent='Delete account';} }
-    }).catch(function(){ if(btn){btn.disabled=false;btn.textContent='Delete account';} window.alert('Delete failed (network).'); });
+    .then(function(r){return r.text().then(function(t){var d=null;try{d=JSON.parse(t);}catch(e){} return {status:r.status,d:d,raw:t};});})
+    .then(function(res){
+      var d=res.d;
+      if(d&&d.ok&&d.deleted){ window.alert('Account deleted. Login removed: '+(d.auth_deleted?'yes':'no - contact support')+'.'); if(typeof closeUserPanel==='function')closeUserPanel(); if(typeof loadUsers==='function')loadUsers(); return; }
+      window.alert('Delete failed (HTTP '+res.status+'): '+((d&&(d.detail||d.error))||(res.raw?res.raw.slice(0,160):'no response body')));
+      if(btn){btn.disabled=false;btn.textContent='Delete account';}
+    }).catch(function(e){ if(btn){btn.disabled=false;btn.textContent='Delete account';} window.alert('Delete failed (network): '+((e&&e.message)||e)); });
 }
 
 // ── Membership & Entitlements panel (v4) - merged into the Users tab ────────

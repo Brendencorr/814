@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Riley knows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#06090e; --card:#0a1018; --border:#1a2530; --gold:#c9a84c; --sage:#6f9e7f; --text:#e8e4de; --dim:#8a94a0; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:720px;margin:0 auto;padding:28px 18px 80px}
+  .back{display:inline-block;color:var(--dim);text-decoration:none;font-size:.9rem;margin-bottom:18px}
+  .back:hover{color:var(--gold)}
+  h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:2rem;margin:.2em 0 .1em}
+  .lede{color:var(--dim);margin:0 0 26px;max-width:56ch}
+  h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:1.15rem;color:var(--gold);margin:30px 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px}
+  .item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin:9px 0;display:flex;gap:12px;align-items:flex-start}
+  .item .body{flex:1;min-width:0}
+  .kind{display:inline-block;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sage);margin-bottom:3px}
+  .content{word-wrap:break-word}
+  .acts{display:flex;gap:6px;flex-shrink:0}
+  button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.8rem;padding:5px 10px;transition:.15s}
+  button:hover{border-color:var(--gold);color:var(--gold)}
+  button.danger:hover{border-color:#c05a5a;color:#e08a8a}
+  .edit{width:100%;background:#050a10;border:1px solid var(--gold);color:var(--text);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.95rem;margin-top:8px}
+  .row-edit{display:flex;gap:6px;margin-top:8px}
+  .empty{color:var(--dim);background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:22px;text-align:center}
+  .muted{color:var(--dim);font-size:.85rem}
+  #status{position:fixed;bottom:0;left:0;right:0;background:#0d1620;border-top:1px solid var(--border);padding:10px 16px;text-align:center;font-size:.9rem;transform:translateY(100%);transition:.25s}
+  #status.show{transform:translateY(0)}
+  .spinner{color:var(--dim);text-align:center;padding:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/settings">← Back to settings</a>
+  <h1>What Riley knows</h1>
+  <p class="lede">This is what Riley carries for you — built from your conversations and check-ins. Fix anything that's wrong. Remove anything you'd rather Riley let go. Nothing here is ever shared.</p>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+<div id="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+const FN = '/.netlify/functions/member-memory';
+let TOKEN = null;
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let toastT;
+function toast(msg){ const s=$('status'); s.textContent=msg; s.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>s.classList.remove('show'),2600); }
+
+async function api(payload){
+  const r = await fetch(FN, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ token:TOKEN, ...payload }) });
+  return r.json();
+}
+
+const FACET_LABEL = { win:'Wins', fear:'Fears', joy:'Joys', relationship:'People who matter', recovery_dna:'What keeps you steady', value:'Values', strength:'Strengths', why:'Your why', vision:'Who you’re becoming', energy:'Your rhythms' };
+
+function itemHtml(it){
+  return `<div class="item" data-id="${esc(it.id)}" data-table="${esc(it.table)}">
+    <div class="body"><span class="kind">${esc((FACET_LABEL[it.kind]||it.kind||'').toString())}</span>
+      <div class="content">${esc(it.content)}</div></div>
+    <div class="acts">
+      <button class="correct">Fix</button>
+      <button class="danger del">Remove</button>
+    </div></div>`;
+}
+
+async function render(){
+  const d = await api({ action:'list' });
+  if (d && d.error){ $('content').innerHTML = `<div class="empty">Couldn’t load right now. Please try again.</div>`; return; }
+  const mem = d.memories||[], map = d.lifemap||[];
+  if (!mem.length && !map.length){ $('content').innerHTML = `<div class="empty">Riley hasn’t saved anything about you yet. As you talk and check in, this fills up.</div>`; return; }
+  // group life map by facet
+  const groups = {};
+  map.forEach(m => { (groups[m.kind]=groups[m.kind]||[]).push(m); });
+  let html = '';
+  Object.keys(FACET_LABEL).forEach(f => { if (groups[f]) html += `<h2>${esc(FACET_LABEL[f])}</h2>` + groups[f].map(itemHtml).join(''); });
+  const otherFacets = Object.keys(groups).filter(f=>!FACET_LABEL[f]);
+  otherFacets.forEach(f => { html += `<h2>${esc(f)}</h2>` + groups[f].map(itemHtml).join(''); });
+  if (mem.length) html += `<h2>Other things Riley remembers</h2>` + mem.map(itemHtml).join('');
+  $('content').innerHTML = html;
+}
+
+document.addEventListener('click', async e => {
+  const item = e.target.closest('.item'); if(!item) return;
+  const id = item.dataset.id, table = item.dataset.table;
+
+  if (e.target.classList.contains('del')){
+    if (!confirm('Remove this? Riley will let it go and won’t bring it up again.')) return;
+    const r = await api({ action:'delete', id, table });
+    if (r && r.ok){ item.remove(); toast('Removed.'); } else toast('Couldn’t remove that.');
+  }
+
+  if (e.target.classList.contains('correct')){
+    const cur = item.querySelector('.content').textContent;
+    if (item.querySelector('.edit')) return;
+    const box = document.createElement('div'); box.className='row-edit';
+    box.innerHTML = `<input class="edit" value="${esc(cur)}" maxlength="300"><button class="save">Save</button>`;
+    item.querySelector('.body').appendChild(box);
+    box.querySelector('.edit').focus();
+    box.querySelector('.save').addEventListener('click', async ()=>{
+      const val = box.querySelector('.edit').value.trim();
+      if (val.length < 2) return;
+      const r = await api({ action:'correct', id, table, content: val });
+      if (r && r.ok){ item.querySelector('.content').textContent = val; box.remove(); toast('Fixed — thank you.'); }
+      else toast('Couldn’t save that.');
+    });
+  }
+});
+
+(async function(){
+  const { data:{ session } } = await SB.auth.getSession();
+  if (!session){ location.href = 'https://riley.meetriley.us'; return; }
+  TOKEN = session.access_token;
+  render();
+})();
+</script>
+</body>
+</html>

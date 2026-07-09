@@ -305,6 +305,15 @@
   to = "/404.html"
   status = 404
   force = true
+# Member "What Riley knows" page (Spec §6) — clean URL.
+[[redirects]]
+  from = "https://riley.meetriley.us/memory"
+  to = "/memory.html"
+  status = 200
+[[redirects]]
+  from = "https://riley.meetriley.us/memory/"
+  to = "/memory.html"
+  status = 200
 [[redirects]]
   from = "/DATA_CONTRACT.md"
   to = "/404.html"

@@ -11,6 +11,8 @@
  */
 
 const { getSupabaseClient, emitEvent } = require("./supabase-client");
+const { getRemaining, incrementUsage } = require("./usage-limits");
+const { currentTier } = require("./tier-utils");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -337,6 +339,57 @@ async function deleteAccount(supabase, body) {
   return json(200, { success: true, auth_deleted: true });
 }
 
+// ── Action: checkin_charge - count a completed daily check-in against the Guide cap ──
+// Check-ins are Riley-led; none of their exchanges go through riley-chat.js, so they
+// don't auto-count. This action credits a fixed 5 to the same usage_counters row that
+// riley-chat uses, leaving ~15 free-form messages for the day. Guide only - paid tiers
+// are unlimited and untouched. Non-fatal: a DB failure still returns ok:false, never 5xx.
+const CHECKIN_CHARGE = 5; // check-in consumes ~5 of the 20/day Guide cap
+async function checkinCharge(supabase, body) {
+  const { token } = body;
+  const user = await verifyToken(supabase, token);
+
+  // Paid tiers are unlimited - nothing to charge.
+  let ownedProducts = [];
+  try {
+    const { data: ent } = await supabase.from("user_active_products").select("product_key").eq("user_id", user.id);
+    ownedProducts = (ent || []).map((r) => r.product_key);
+    // Mirror the subscription bridge in riley-chat / getClientData so comp/paid members
+    // whose entitlement row hasn't landed yet are still correctly identified as uncapped.
+    const { data: subs } = await supabase.from("subscriptions").select("plan_id, expires_at").eq("user_id", user.id).eq("status", "active");
+    const now = Date.now();
+    (subs || []).forEach((s) => {
+      const live = !s.expires_at || new Date(s.expires_at).getTime() > now;
+      if (live && ["companion", "coach", "mentor"].includes(s.plan_id) && !ownedProducts.includes(s.plan_id)) ownedProducts.push(s.plan_id);
+    });
+  } catch (e) { console.warn("checkinCharge: entitlement read failed (fail-open):", e.message); }
+
+  const tier = currentTier(ownedProducts) || "guide";
+  const isUncapped = tier === "companion" || tier === "coach" || tier === "mentor" || tier === "concierge";
+  if (isUncapped) return json(200, { ok: true, charged: 0, reason: "uncapped_tier" });
+
+  // Respect free_access_mode - when everything is open, no cap to charge.
+  try {
+    const { data: fa } = await supabase.from("app_settings").select("value").eq("key", "free_access_mode").maybeSingle();
+    if (fa && String(fa.value).toLowerCase() === "true") return json(200, { ok: true, charged: 0, reason: "free_access_mode" });
+  } catch (e) {}
+
+  // Find the active cap row for riley_chat / reset_free so we charge the right period.
+  const prods = ownedProducts.length ? ownedProducts : ["reset_free"];
+  const before = await getRemaining(supabase, user.id, "riley_chat", prods);
+  if (!before) return json(200, { ok: true, charged: 0, reason: "no_cap_row" }); // no cap defined for this user
+
+  // Increment CHECKIN_CHARGE times using the same period / RPC the chat cap uses.
+  for (let i = 0; i < CHECKIN_CHARGE; i++) {
+    await incrementUsage(supabase, user.id, "riley_chat", before.periodStart).catch(() => {});
+  }
+
+  // Read back so the client can update its "remaining" display accurately.
+  const after = await getRemaining(supabase, user.id, "riley_chat", prods).catch(() => null);
+  const remaining = after ? after.remaining : Math.max(0, before.remaining - CHECKIN_CHARGE);
+  return json(200, { ok: true, charged: CHECKIN_CHARGE, remaining });
+}
+
 // Exported so the operator admin-account function reuses the exact same erasure.
 exports.eraseMemberById = eraseMemberById;
 
@@ -363,13 +416,14 @@ exports.handler = async function (event) {
     const supabase = getSupabaseClient();
 
     switch (action) {
-      case "get_session":    return await getSession(supabase, body);
-      case "save_message":   return await saveMessage(supabase, body);
-      case "update_profile": return await updateProfile(supabase, body);
-      case "export_data":    return await exportData(supabase, body);
-      case "delete_data":    return await deleteData(supabase, body);
-      case "delete_account": return await deleteAccount(supabase, body);
-      default:               return json(400, { error: `Unknown action: ${action}` });
+      case "get_session":     return await getSession(supabase, body);
+      case "save_message":    return await saveMessage(supabase, body);
+      case "update_profile":  return await updateProfile(supabase, body);
+      case "export_data":     return await exportData(supabase, body);
+      case "delete_data":     return await deleteData(supabase, body);
+      case "delete_account":  return await deleteAccount(supabase, body);
+      case "checkin_charge":  return await checkinCharge(supabase, body);
+      default:                return json(400, { error: `Unknown action: ${action}` });
     }
   } catch (err) {
     console.error("auth-handler error:", err.message);

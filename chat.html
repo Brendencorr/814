@@ -259,7 +259,7 @@ body.embed .topbar-actions{display:none}
           style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
       </div>
       <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley knows your sobriety streak, goals, habits, and programs</div>
-      <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:'DM Sans',sans-serif">Want conversations that don’t end? <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Companion is $19/month</a>.</div>
+      <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:’DM Sans’,sans-serif">Your daily conversations with Riley (check-in included) are part of the process - <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Companion means no limit, ever</a>.</div>
     </div>
   </main>
 </div>
@@ -571,6 +571,26 @@ async function rcFinish(){
   } }catch(e){}
   try{ await _db.from('daily_checkins').upsert(row,{onConflict:'user_id,checkin_date'}); }catch(e){}
   try{ sessionStorage.setItem('rc_dc_'+_uid, RC_TODAY); }catch(e){}   // mark seen only AFTER completion
+  // Guide chat cap: charge 5 of the 20/day pool for the check-in. Check-ins don't go through
+  // riley-chat.js so they don't auto-count; this credits them to the same counter so the member
+  // sees ~15 free-form messages left after a check-in. Paid tiers: no-op (server returns charged:0).
+  // Non-blocking fire-and-forget - a failure here never blocks the check-in or the handoff.
+  try{
+    const _cTok = (await _db.auth.getSession()).data.session?.access_token;
+    fetch('/.netlify/functions/auth-handler',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'checkin_charge',token:_cTok})
+    }).then(async function(r){
+      if(r.ok){
+        const d = await r.json();
+        if(d.charged > 0) {
+          // Update the cap display immediately so it's accurate when the member starts free-form chat.
+          const capInfo = { remaining: d.remaining };
+          if(capInfo.remaining <= 0) applyChatCap(); else clearChatCap();
+        }
+      }
+    }).catch(function(){});
+  }catch(e){}
   if(RC.mood){
     try{
       const tok = (await _db.auth.getSession()).data.session?.access_token;
@@ -820,9 +840,10 @@ async function send() {
 }
 
 // Doc 2 §3 - Guide chat-cap composer state (crisis always bypasses the cap server-side).
+// Placeholder reflects the combined daily total (check-in + free-form) positively.
 function applyChatCap(){
   const input=document.getElementById('msg-input'), btn=document.getElementById('send-btn'), cap=document.getElementById('cap-caption');
-  if(input){ input.disabled=true; input.placeholder='Riley will be here in the morning.'; }
+  if(input){ input.disabled=true; input.placeholder="You've made the most of today with Riley - more opens up tomorrow."; }
   if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
   if(cap) cap.style.display='block';
 }

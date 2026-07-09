@@ -1238,7 +1238,7 @@ exports.handler = async function (event) {
     // Warm, deterministic - no model call, matches the "capped, never a hard
     // wall implying they don't have Riley at all" tone from the client spec.
     const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : usageInfo.period === "month" ? "this month" : "for now";
-    const capReply = `We've used up our conversations ${periodWord} - Riley Guide includes a limited number so I can be here for everyone. More opens back up soon, or Riley Companion means we can talk as much as you want, any time. I'm not going anywhere either way.`;
+    const capReply = `We've had a full day together - your check-in and our conversations are all part of the same relationship. Riley Guide includes a daily number so I can be here for everyone. More opens up tomorrow, or Riley Companion means we can talk as much as you want, any time. I'm not going anywhere either way.`;
     // Funnel event (Doc 0 §9 / Doc 3 metrics: "Chat-limit encounters"). Fire-and-forget.
     if (supabase && user_id) emitEvent(supabase, user_id, "chat_limit_reached", { period: usageInfo.period });
     if (supabase && user_id && session_id) persistMessages(supabase, user_id, session_id, latestUserText, capReply);
@@ -1252,7 +1252,7 @@ exports.handler = async function (event) {
   // Near the limit but not out - let Riley mention it naturally, once, warmly.
   if (usageInfo && usageInfo.remaining > 0 && usageInfo.remaining <= 2) {
     const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : "for now";
-    systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord}. If it fits naturally, you may mention it warmly near the end - something like "we've got a couple conversations left ${periodWord} - want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
+    systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord} (their check-in and free-form messages share the same daily pool - that's intentional, both are time with Riley). If it fits naturally, you may mention it warmly near the end - something like "we've got a couple conversations left ${periodWord} - want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
   }
 
   // ── ANONYMOUS VISITOR DAILY CAP ─────────────────────────────────────────────

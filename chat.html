@@ -267,7 +267,15 @@ body.embed .topbar-actions{display:none}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // Embed mode: when iframed in the dashboard popup (?embed=1), hide the portal chrome.
-if (new URLSearchParams(location.search).get('embed')) document.body.classList.add('embed');
+// FULL-PAGE /chat IS RETIRED: every member talks to Riley ONLY through the docked pill (which embeds
+// this page with ?embed=1). A direct/full-page top-level visit is bounced to the dashboard, where the
+// pill lives and auto-opens. Embed + any iframed context stay (they ARE the pill). Single door-closer,
+// so no link or hard-redirect can strand someone on the old full-page chat.
+(function(){
+  var _isEmbed = new URLSearchParams(location.search).get('embed');
+  if (_isEmbed) { document.body.classList.add('embed'); return; }
+  if (window.top === window.self) { window.location.replace('https://riley.meetriley.us/dashboard'); }
+})();
 const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
 const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
 const RILEY_URL = '/.netlify/functions/riley-chat';

@@ -543,8 +543,13 @@ async function handlePostAuth(session) {
   try {
     await runOnboarding(session, consentAt);
   } catch (e) {
-    console.warn('onboarding failed, sending to /chat:', e && e.message);
-    window.location.href = '/chat';   // land in the portal (no onboarding guard there → no redirect loop)
+    console.warn('onboarding failed - marking onboarded to avoid a loop, then to dashboard:', e && e.message);
+    // Full-page /chat is retired (it redirects to /dashboard now), and the dashboard bounces
+    // un-onboarded users back here - so mark them onboarded to prevent a loop, then land on the
+    // home/pill. Deferred Phase-2 questions still fill in anything the failed run missed.
+    try { await sb.from('user_profiles').update({ onboarding_completed: true }).eq('id', session.user.id); } catch (_) {}
+    try { localStorage.setItem('riley_onboarded', '1'); } catch (_) {}
+    window.location.href = '/dashboard';
   }
 }
 
@@ -715,7 +720,7 @@ async function runOnboarding(session, consentAt) {
       await sb.from('riley_conversations').insert(rows);
     }
   } catch (e) { console.warn('conversation handoff', e && e.message); }
-  window.location.href = '/chat';
+  window.location.href = '/dashboard';   // land on the home; the docked pill auto-opens + resumes (full-page /chat is retired)
 }
 
 // ── Google OAuth ──────────────────────────────────────────────────────────────

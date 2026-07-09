@@ -489,7 +489,13 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 (async()=>{
   try{
     const {data:{session}}=await SB.auth.getSession();
-    if(!session){window.location.href='https://riley.meetriley.us';return;}
+    if(!session){
+      // Post-checkout return with no session (e.g. paid in a window that isn't signed into Riley) — send
+      // them to sign in with a clear "payment complete" note instead of dumping them on the marketing home.
+      var _paid=false; try{ _paid=new URLSearchParams(location.search).get('checkout')==='success'; }catch(e){}
+      window.location.href = _paid ? 'https://riley.meetriley.us/login?paid=1' : 'https://riley.meetriley.us';
+      return;
+    }
     USER=session.user;UID=USER.id;
     track('app_open');
     loadClientAlerts();

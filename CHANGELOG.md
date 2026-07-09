@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-08
 
+### Stripe LIVE verified end-to-end + post-checkout redirect hardening + operator test-checkout
+- ✅ **Live money loop PROVEN** with a real $19 Companion purchase: checkout → `checkout.session.completed`
+  granted the sub + stored the live `stripe_customer_id` → `invoice.paid` renewed. All on live keys.
+- **`stripe-test-checkout.js`** (`100de4d`, OPERATOR-gated): mints a real live Checkout Session for a given
+  member so we can smoke-test without opening the public buy buttons (`payments_live` stays false).
+- **Post-checkout redirect hardening** (`dashboard.html`, `login.html`): if someone returns from Stripe
+  with NO session (e.g. paid in a window not signed into Riley — which is how a test bounced to the marketing
+  home), `/dashboard` now routes to `/login?paid=1` with a "Payment complete — sign in to unlock" banner
+  instead of the bare marketing page. Real buyers are unaffected (marketing buy CTAs route through `/login`
+  first, so they always return signed in). 🔴 Reminder: dashboard branding (logo/icon + colors) is still
+  EMPTY in Stripe **Live** mode — set Icon+Logo+colors at dashboard.stripe.com/settings/branding (Live toggle).
+
 ### Stripe LIVE — +2 webhook events, Customer Portal config, product descriptions (`8f33dc0`)
 - Live Stripe is wired: live secret + webhook secret set by Brenden; 10 products / 12 prices live w/ descriptions;
   live endpoint armed. In-app buy buttons gated on `app_settings.payments_live` (still **false** → nothing charges).

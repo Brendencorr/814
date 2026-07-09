@@ -144,6 +144,11 @@
 [functions."stripe-portal"]
   timeout = 10
 
+# Stripe test checkout — OPERATOR-only; mints a live Checkout Session for a specific member to smoke-test
+# the money loop without opening the public buy buttons (payments_live can stay false).
+[functions."stripe-test-checkout"]
+  timeout = 15
+
 # Client engagement tracker ingest (page views, logins, clicks, dwell)
 [functions."track-event"]
   timeout = 10

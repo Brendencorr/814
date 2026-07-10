@@ -12,6 +12,22 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-09
 
+### Riley Relationship Engine (slice 3-6): tenure-calibrated trust · pattern-noticing · milestones · deepening
+- **Why:** Brenden gave auto-authority to build the rest of the structure that grows Riley's knowledge of each
+  member over time. All four are additive prompt/data layers in `riley-chat.js` (`buildUserContext` +
+  `getClientData`); crisis path untouched, no gender assumptions, hyphens only, model unchanged.
+- **#3 Trust calibrated to tenure:** from `user_profiles.created_at`, a RELATIONSHIP STAGE directive - week 1
+  "still earning trust, lead with listening"; <=30d "building a rhythm"; <=120d "established, be familiar";
+  beyond "deep, direct like a long friend."
+- **#4 Pattern-noticing:** a new recent-check-ins read (last 14) computes a check-in streak + recent-mood
+  tone; surfaced as "PATTERNS YOU HAVE NOTICED" (reflect gently/rarely). Explicitly framed as warm colour,
+  NOT a safety mechanism - crisis + check-in escalation still own risk. Only positive/steadying framings.
+- **#5 Milestones + anniversaries:** computes whether today is a sobriety milestone (1/7/30/60/90/180/270/
+  365/547/730d + yearly after) or a signup anniversary, and tells Riley to open with genuine warmth.
+- **#6 Progressive deepening:** a KEEP LEARNING directive - when things are calm, Riley may occasionally ask
+  ONE light new getting-to-know-you question (never in distress, never an interview).
+- **Verified:** `node --check` passes, no em-dashes, riley-chat prod-healthy. Files: `riley-chat.js`.
+
 ### Riley Relationship Engine (slice 1+2): actively use memory + date-triggered open-loop follow-ups
 - **Why:** Brenden - take the onboarding personalization into Riley's ongoing behavior so it "continually
   builds trust." Two highest-leverage pieces first: (1) Riley proactively USES what it knows (now that

@@ -417,6 +417,37 @@ function buildUserContext(profile, clientData) {
   );
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
 
+  // #3 Relationship stage - calibrate familiarity to how long they have known each other.
+  if (profile.created_at) {
+    const jdays = Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000);
+    let stage;
+    if (jdays <= 7)        stage = "You are still EARNING their trust (first week). Lead with listening and warmth; be gentle and unassuming; do not presume a deep shared history you do not have yet.";
+    else if (jdays <= 30)  stage = "You are BUILDING a rhythm together (first month). You can reference the history you do share and be a little more familiar, while still earning the deeper trust.";
+    else if (jdays <= 120) stage = "You have an ESTABLISHED relationship (a few months in). Be familiar and direct when it helps - you know each other, so talk like it.";
+    else                   stage = "You have a DEEP, long relationship (many months). Be as direct and familiar as a close friend who has been there the whole way; lean on everything you know about them.";
+    lines.push(`\nRELATIONSHIP STAGE: ${jdays} day${jdays !== 1 ? "s" : ""} since they joined. ${stage}`);
+  }
+
+  // #5 Milestones + anniversaries - show up on the days that matter (lead the reply when present).
+  {
+    const mile = [];
+    const sobDate = (clientData && clientData.sobriety && clientData.sobriety.start_date) || profile.sobriety_date;
+    if (sobDate) {
+      const sd = soberDaysForMember(sobDate);
+      const MILES = [1, 7, 30, 60, 90, 180, 270, 365, 547, 730];
+      if (MILES.includes(sd) || (sd > 365 && sd % 365 === 0)) mile.push(`TODAY is a sobriety milestone for them: ${sd} days. Open with genuine, specific warmth about it (never a canned "congrats").`);
+    }
+    if (profile.created_at) {
+      const c = new Date(profile.created_at), now = new Date();
+      const years = now.getUTCFullYear() - c.getUTCFullYear();
+      if (years >= 1 && now.getUTCMonth() === c.getUTCMonth() && now.getUTCDate() === c.getUTCDate()) mile.push(`Today is their ${years}-year anniversary with you - mark it warmly.`);
+    }
+    if (mile.length) lines.push("\nMILESTONE TODAY: " + mile.join(" "));
+  }
+
+  // #6 Progressive deepening - keep learning them over time, gently.
+  lines.push("\nKEEP LEARNING (gently): when the conversation is calm and going well, you may occasionally (not every time) ask ONE light, caring question about something you do not know about them yet, the way a friend deepens a friendship over months. Never when they are struggling, never as an interview, never more than one at a time.");
+
   if (clientData) {
     // Sobriety tracker
     if (clientData.sobriety) {
@@ -458,6 +489,16 @@ function buildUserContext(profile, clientData) {
       if (clientData.habitSummary.names && clientData.habitSummary.names.length) {
         lines.push(`  Active habits: ${clientData.habitSummary.names.join(", ")}`);
       }
+    }
+
+    // #4 Pattern-noticing - warm conversational colour, reflected back rarely; NEVER clinical, NEVER a
+    // safety mechanism (crisis + check-in escalation handle risk separately). Only positive/steadying framings.
+    if (clientData.patterns) {
+      const p = clientData.patterns, pbits = [];
+      if (p.streak >= 3) pbits.push(`they have checked in ${p.streak} days in a row - name that consistency warmly if it fits, it is real and it matters`);
+      if (p.recentMood != null && p.recentMood <= 2.2) pbits.push("their recent check-ins have felt heavier than usual - hold that gently and let them lead; do not diagnose, push, or make it the whole conversation");
+      else if (p.recentMood != null && p.recentMood >= 4) pbits.push("they have been in a genuinely good stretch - you can celebrate it and help them notice what is working so you can protect it together");
+      if (pbits.length) lines.push(`\nPATTERNS YOU HAVE NOTICED (reflect back gently and rarely, like a friend who pays attention - never clinical, never every message): ${pbits.join("; ")}.`);
     }
 
     // Active programs
@@ -631,7 +672,7 @@ async function getClientData(supabase, userId, queryText) {
     const fourAgo = new Date(); fourAgo.setDate(fourAgo.getDate() - 4);
     const fourISO = fourAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes, recentCheckinsRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
@@ -651,6 +692,8 @@ async function getClientData(supabase, userId, queryText) {
       supabase.from("session_summaries").select("summary,open_threads,emotional_tone,session_end").eq("user_id", userId).order("created_at", { ascending: false }).limit(3),
       // Date-triggered open-loop follow-ups now due (surfaced in the prompt, then marked so Riley asks once).
       supabase.from("member_followups").select("id,content,due_at").eq("user_id", userId).eq("status", "open").lte("due_at", appToday).gte("due_at", fourISO).order("due_at", { ascending: true }).limit(3),
+      // Recent check-ins for gentle pattern-noticing (streak + recent-mood tone). NOT a safety signal.
+      supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).order("checkin_date", { ascending: false }).limit(14),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -696,6 +739,18 @@ async function getClientData(supabase, userId, queryText) {
         .in("id", followups.map((f) => f.id)).then(() => {}, () => {});
     }
 
+    // #4 Pattern-noticing (warm conversational colour, NOT a safety signal - crisis/escalation stays separate).
+    let patterns = null;
+    const recentCheckins = recentCheckinsRes.value?.data || [];
+    if (recentCheckins.length) {
+      const dates = new Set(recentCheckins.map((r) => r.checkin_date));
+      let streak = 0; const d = new Date(appToday + "T12:00:00Z");
+      for (let i = 0; i < 30; i++) { const key = d.toISOString().slice(0, 10); if (dates.has(key)) { streak++; d.setUTCDate(d.getUTCDate() - 1); } else break; }
+      const moods = recentCheckins.map((r) => r.mood).filter((m) => typeof m === "number").slice(0, 5);
+      const recentMood = moods.length ? moods.reduce((a, b) => a + b, 0) / moods.length : null;
+      patterns = { streak, recentMood };
+    }
+
     // ── Hybrid semantic recall (Spec §1.3) - relevance, not just recency. FAIL-OPEN:
     // with no embedding key (embeddingsEnabled=false) or ANY error, memory/lifeMap stay
     // exactly the recency reads above → byte-identical to pre-v2 behavior. When live, the
@@ -734,6 +789,7 @@ async function getClientData(supabase, userId, queryText) {
       tier,
       memory,
       followups,
+      patterns,
       lifeEvents: lifeEventsRes.value?.data || [],
       sensitiveDates,
       wellness: wellnessRes.value?.data || null,

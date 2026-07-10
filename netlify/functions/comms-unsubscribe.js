@@ -40,7 +40,7 @@ exports.handler = async (event) => {
   }
 
   const patch = { updated_at: new Date().toISOString() };
-  let title = "You're unsubscribed", msg = "You won't receive lifecycle emails from Riley anymore. Anything you've bought, and the app itself, keep working exactly the same. You can turn these back on anytime.";
+  let title = "You're unsubscribed", msg = "You won't receive lifecycle emails from Riley anymore - this covers email only. To change push notifications, log in to your dashboard and update your preferences in Settings. Anything you've bought, and the app itself, keep working exactly the same. You can turn these back on anytime.";
 
   if (q.lifecycle === "1") { patch.unsubscribed_lifecycle = false; title = "Welcome back"; msg = "Lifecycle emails are on again - never more than one a day, and less if you're already here."; }
   else if (q.letter === "1") { patch.monthly_letter_optin = true; title = "You're on the list"; msg = "You'll get one short letter a month from Brenden about what we're building. That's it."; }

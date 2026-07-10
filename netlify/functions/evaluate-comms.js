@@ -17,7 +17,7 @@
  * should be reconciled against that spec before COMMS_ENABLED is flipped. Gone-Quiet ladder + gates
  * follow the handoff exactly. Once-per-template-ever is enforced here in code (not a DB constraint).
  */
-const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator, memberDay } = require("./supabase-client");
 const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 const { signUid } = require("./comms-sign");
@@ -120,8 +120,7 @@ exports.handler = async (event) => {
   // loggedKeys = any decision row incl. suppressed - used only to avoid re-logging the same
   // suppressed decision every hour while dark. A suppressed (never-sent) decision must NOT
   // block the real send at go-live, or the dark period would silently burn every template.
-  const sentKeys = {}; const loggedKeys = {}; const sentTodayNonTx = {}; const lastEmailByUser = {};
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const sentKeys = {}; const loggedKeys = {}; const nonTxSendsByUser = {}; const lastEmailByUser = {};
   sends.forEach((s) => {
     (loggedKeys[s.user_id] = loggedKeys[s.user_id] || new Set()).add(s.template_key);
     if (!s.suppressed) {
@@ -129,8 +128,10 @@ exports.handler = async (event) => {
       // "our last touch" = the last email we actually SENT them (suppressed rows while dark don't count).
       const t = +new Date(s.sent_at || 0);
       if (t && (!lastEmailByUser[s.user_id] || t > lastEmailByUser[s.user_id])) lastEmailByUser[s.user_id] = t;
+      // Collect non-transactional send times so the "one email per day" cap can be evaluated in the
+      // MEMBER'S local day (4am rollover via memberDay), not UTC - matches the app-wide member-day standard.
+      if (s.flow !== "transactional" && s.sent_at) (nonTxSendsByUser[s.user_id] = nonTxSendsByUser[s.user_id] || []).push(s.sent_at);
     }
-    if (!s.suppressed && s.flow !== "transactional" && String(s.sent_at || "").slice(0, 10) === todayStr) sentTodayNonTx[s.user_id] = true;
   });
 
   // Log a decision (send or suppression) to email_sends, and (if live) actually send.
@@ -192,7 +193,8 @@ exports.handler = async (event) => {
     // 1) GLOBAL GATES
     if (st.unsubscribed_lifecycle) { bump("skip:unsubscribed"); continue; }
     if (st.lapse_repair) { bump("skip:lapse_repair"); continue; }
-    if (sentTodayNonTx[uid]) { bump("skip:already_today"); continue; }
+    const localToday = memberDay(memberTz); // member's app-day (local, 4am rollover)
+    if ((nonTxSendsByUser[uid] || []).some((ts) => memberDay(memberTz, ts) === localToday)) { bump("skip:already_today"); continue; }
     if (inQuietHours(memberTz)) { bump("skip:quiet_hours"); continue; } // their LOCAL quiet hours; retry next run
 
     let fired = false;
@@ -242,8 +244,9 @@ exports.handler = async (event) => {
       }
       else if (resetDay >= 1) await send("guide_3");
       else if (daysSinceSignup >= dayFor("guide_2", 1)) await send("guide_2");
-      // guide_1 is sent at signup by the signup hook (not the cron); the cron backstops brand-new
-      // users who somehow have no guide_1 yet and are <1 day old.
+      // guide_1 (welcome) is sent HERE by the cron for brand-new users (<1 day old) who don't have it yet.
+      // Routing the welcome through the cron - not a synchronous signup hook - is deliberate: it makes the
+      // welcome honor quiet hours + the member's timezone (a 4:31am signup gets it at 7am local, not at night).
       else if (daysSinceSignup < 1 && !keys.has("guide_1")) await send("guide_1");
     }
 

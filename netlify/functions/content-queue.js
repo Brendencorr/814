@@ -154,24 +154,15 @@ exports.handler = async function (event) {
       return json(200, { ok: true, status: "revise" });
     }
 
-    // APPROVE (copy) → auto-assign + render a design → move to Review (status 'designed')
-    if (action === "approve") {
-      // HARD GATE: blocked items can never be approved.
-      if (item.safety_verdict === "block") {
-        return json(403, { error: "This item is blocked by Sentinel and cannot be approved. Revise or reject it." });
-      }
-      let design = { designed: false, assets: [] };
-      if (item.brief_id) {
-        try { design = await renderBrief(item.brief_id); }
-        catch (e) { design = { designed: false, reason: e.message, assets: [] }; }
-      }
-      const assetIds = (design.assets || []).map((a) => a.id);
-      await db.from("content_approval_queue").update({
-        status: "designed",
-        asset_ids: assetIds.length ? assetIds : (item.asset_ids || null),
-        reviewed_at: new Date().toISOString(),
-      }).eq("id", id);
-      return json(200, { ok: true, status: "designed", designed: design.designed, assets: design.assets || [], reason: design.reason || null });
+    // REGENERATE (send back to editing) → agents rebuild the post from its candidate
+    // (new Sage copy + fresh design + new schedule), and it reappears in Review.
+    if (action === "regenerate") {
+      if (!item.candidate_id) return json(400, { error: "no candidate to regenerate from" });
+      let r;
+      try { const { regenerateItem } = require("./content-run-background"); r = await regenerateItem(db, item); }
+      catch (e) { return json(500, { error: "regenerate failed: " + e.message }); }
+      if (!r || !r.ok) return json(500, { error: (r && r.reason) || "regenerate failed" });
+      return json(200, { ok: true, status: "regenerated", new_queue_id: r.newQueueId });
     }
 
     // SWAP the assigned design (re-render on a chosen ground/layout) - stays in Review
@@ -187,12 +178,18 @@ exports.handler = async function (event) {
       return json(200, { ok: true, status: "designed", designed: r.designed, assets: r.assets || [] });
     }
 
-    // PUBLISH (final approval) → Echo per-platform → publishing jobs → FeedHive (with media)
-    if (action === "publish" || action === "final_approve") {
+    // APPROVE = final approval → Echo → one publishing job → FeedHive (SCHEDULED live, with media)
+    // at the post's pre-assigned scheduled_for. No draft, no second step. (publish/final_approve = aliases.)
+    if (action === "approve" || action === "publish" || action === "final_approve") {
       // HARD GATE: blocked items can never be published.
       if (item.safety_verdict === "block") {
         return json(403, { error: "This item is blocked by Sentinel and cannot be approved. Revise or reject it." });
       }
+
+      // Live vs draft failsafe: SOCIAL_PUBLISH_MODE=live (default) schedules to publish;
+      // set it to 'draft' to route approvals to FeedHive drafts instead (no redeploy).
+      const goLive = (process.env.SOCIAL_PUBLISH_MODE || "live").toLowerCase() === "live";
+      const whenIso = item.scheduled_for || null;
 
       await db.from("content_approval_queue").update({ status: "approved", reviewed_at: new Date().toISOString() }).eq("id", id);
 
@@ -254,7 +251,7 @@ exports.handler = async function (event) {
           hashtags_final: pkg.hashtags_final || [],
           media_urls: pkg.media_urls || mediaUrls,
           utm_url: pkg.utm_url || null,
-          scheduled_for: pkg.scheduled_for || null,
+          scheduled_for: whenIso || pkg.scheduled_for || null, // the pipeline pre-assigned the slot
           state: "queued",
         };
         const { data: job, error: jobErr } = await db.from("content_publishing_jobs").insert(jobRow).select().single();
@@ -273,7 +270,7 @@ exports.handler = async function (event) {
             const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "x-operator-key": process.env.OPERATOR_KEY || "" },
-              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media_ids }),
+              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media_ids, schedule: goLive }),
             });
             const bd = await res.json();
             if (bd.success) {

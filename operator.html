@@ -529,8 +529,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
       </div>
       <!-- sub-tabs -->
       <div style="display:flex;gap:.4rem;margin-bottom:1.1rem;border-bottom:1px solid var(--border)">
-        <button class="ce-tab active" id="ce-tab-pending" onclick="ceTab('pending')">Pending <span id="ce-c-pending" class="ce-count">0</span></button>
-        <button class="ce-tab" id="ce-tab-review" onclick="ceTab('review')">Review <span id="ce-c-review" class="ce-count">0</span></button>
+        <button class="ce-tab active" id="ce-tab-review" onclick="ceTab('review')">Review <span id="ce-c-review" class="ce-count">0</span></button>
+        <button class="ce-tab" id="ce-tab-pending" onclick="ceTab('pending')">Needs attention <span id="ce-c-pending" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-scheduled" onclick="ceTab('scheduled')">Scheduled <span id="ce-c-scheduled" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-published" onclick="ceTab('published')">Published <span id="ce-c-published" class="ce-count">0</span></button>
         <button class="ce-tab" id="ce-tab-designs" onclick="ceTab('designs')">Designs 🎨</button>
@@ -2896,7 +2896,7 @@ function fdt(s){
 
 
 /* ═══════════ CONTENT ENGINE ═══════════ */
-var ceView='pending';
+var ceView='review';
 function loadCE(btn){gs('ce',btn);ceRefresh();}
 function ceTab(v){ceView=v;['pending','review','scheduled','published','designs','performance'].forEach(function(t){var el=document.getElementById('ce-tab-'+t);if(el)el.classList.toggle('active',t===v);});ceRefresh();}
 
@@ -2939,19 +2939,22 @@ var CE_GROUNDS=['dawn','first-light','veil','parchment','framed','first-blush'];
 // REVIEW: posts with a design assigned, awaiting final approval
 function ceRenderReview(q){
   var body=document.getElementById('ce-body');
-  if(!q.length){body.innerHTML='<div class="em">Nothing in review. Approve a pending post and Riley assigns it a design here.</div>';return;}
+  if(!q.length){body.innerHTML='<div class="em">Nothing to review. The daily run builds fully-designed, pre-scheduled posts here each morning - or hit Run Now.</div>';return;}
   var html='<div class="ce-grid">';
   q.forEach(function(it){
     var a=(it.assets||[])[0]||null;
     var cap=(it.brief&&(it.brief.headline_hook||it.brief.caption))||it.preview_caption||'(no caption)';
+    var when=it.scheduled_for?new Date(it.scheduled_for).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):null;
     html+='<div class="ce-card">';
     if(a&&a.file_url){
       html+='<img src="'+x(a.file_url)+'" alt="" style="width:100%;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">';
       html+='<div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--muted2)">'+x(a.template_id||'')+' · '+x(a.dimensions||'')+'</div>';
     }else{
-      html+='<div class="em" style="padding:1.5rem;text-align:center">No design rendered.<br>Try Swap, or check the render logs.</div>';
+      html+='<div class="em" style="padding:1.2rem;text-align:center;font-size:.72rem">No design rendered'+(it.kind==='repost'?' (repost - links the original)':'')+'.<br>Swap a ground below, or Send back to editing.</div>';
     }
     html+='<div class="ce-cap">'+x(cap)+'</div>';
+    // scheduled time (agent-assigned) - approving sends it live at this time
+    html+='<div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:'+(when?'var(--gold)':'var(--red)')+'"><span>🗓</span><span>'+(when?('Scheduled '+x(when)+' MT'):'No time assigned yet')+'</span></div>';
     // swap picker (grounds)
     html+='<div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:.2rem">Swap ground</div>';
     html+='<div style="display:flex;flex-wrap:wrap;gap:.3rem">';
@@ -2960,9 +2963,11 @@ function ceRenderReview(q){
     });
     html+='</div>';
     html+='<div class="ce-actions" style="margin-top:.4rem">';
-    html+='<button class="ce-btn approve" onclick="ceFinalApprove(\''+it.id+'\',this)">Final approve → schedule</button>';
+    html+='<button class="ce-btn approve" title="Schedules straight to FeedHive at the time above - no second step" onclick="ceFinalApprove(\''+it.id+'\',this)">Approve &amp; schedule</button>';
     html+='<button class="ce-btn reject" onclick="ceAct(\''+it.id+'\',\'reject\',this)">Reject</button>';
-    html+='</div></div>';
+    html+='</div>';
+    html+='<button class="ce-btn" style="margin-top:.35rem;font-size:.7rem" title="Agents rewrite the copy and re-render a fresh design" onclick="ceRegenerate(\''+it.id+'\',this)">↩ Send back to editing</button>';
+    html+='</div>';
   });
   html+='</div>';
   body.innerHTML=html;
@@ -2993,11 +2998,22 @@ function ceRenderDesigns(d){
 async function ceFinalApprove(id,btn){
   if(btn){btn.disabled=true;btn.textContent='Scheduling…';}
   try{
-    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'publish',id:id})});
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'approve',id:id})});
     var d=await r.json();
     if(!r.ok)throw new Error(d.error||'failed');
     ceRefresh();
-  }catch(e){alert('Could not schedule: '+e.message);if(btn){btn.disabled=false;btn.textContent='Final approve → schedule';}}
+  }catch(e){alert('Could not schedule: '+e.message);if(btn){btn.disabled=false;btn.innerHTML='Approve &amp; schedule';}}
+}
+
+async function ceRegenerate(id,btn){
+  if(!confirm('Send this back to the agents? They will rewrite the copy and re-render a fresh design, and it returns to Review.'))return;
+  if(btn){btn.disabled=true;btn.textContent='Regenerating…';}
+  try{
+    var r=await fetch(B+'/content-queue',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'regenerate',id:id})});
+    var d=await r.json();
+    if(!r.ok)throw new Error(d.error||'failed');
+    ceRefresh();
+  }catch(e){alert('Could not regenerate: '+e.message);if(btn){btn.disabled=false;btn.textContent='↩ Send back to editing';}}
 }
 
 async function ceSwap(id,ground,btn){

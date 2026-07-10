@@ -12,6 +12,28 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Streamlined social pipeline: agents build+schedule the whole post; one daily Review; Approve = live
+- **Why:** Too many operator steps (approve copy → design → review → final approve → then log into FeedHive to
+  schedule). The operator wants the agents to build each post COMPLETELY up front (design + caption + a scheduled
+  time) and a once-a-day Review where Approve schedules straight to FeedHive (no second step), plus Send-back and Reject.
+- **Pipeline (`content-run-background.js`):** design hook now points at the working grounds engine
+  (`require("./content-design")`, was gated Canva `content-atlas`), so every post is rendered in the daily run.
+  Extracted `buildPostFromCandidate()` (Sage → design → Sentinel → queue) + `assignSchedules()` — a scheduler agent
+  recommends optimal Mountain-Time posting windows and a deterministic allocator places each into the next open,
+  non-colliding future slot (DST-correct). Items now land as **`status='designed'` (Review) with a `scheduled_for`**
+  (Sentinel-blocked → stays out of Review). New `regenerateItem()` for Send-back.
+- **Lifecycle (`content-queue.js`):** **Approve** now = schedule LIVE to FeedHive at the post's `scheduled_for`
+  (folds in the old `publish`; `publish`/`final_approve` are aliases). New **`regenerate`** action (agents rebuild
+  the post). `feedhive-publish.js` honors an authorized `schedule:true` from the operator-gated caller →
+  FeedHive `status='scheduled'`. Failsafe: **`SOCIAL_PUBLISH_MODE`** env (default `live`; set `draft` to revert).
+- **Operator UI (`operator.html`):** **Review is the default tab** and each card shows the design + caption +
+  **scheduled time** with Approve &amp; schedule / Send back to editing / Reject (+ swap-ground). Pending → **Needs attention** (blocked only).
+- **DB:** migration `084` adds `content_approval_queue.scheduled_for` (applied). `netlify.toml`: `content-run-background`
+  now bundles the grounds/fonts (it renders in-process).
+- **Scope:** formats = post/story (carousel/reel follow-on); only IG+FB connected (per-platform routing follow-on).
+- **Files:** `content-run-background.js`, `content-queue.js`, `feedhive-publish.js`, `operator.html`, `netlify.toml`,
+  `supabase/migrations/084_queue_scheduled_for.sql`.
+
 ### Social publish actually reaches FeedHive: media upload + one-post-per-approval
 - **Why:** After the design step worked, "Final approve" created jobs but FeedHive rejected every one
   ("FeedHive API error") so nothing hit Scheduled. Cause: FeedHive `POST /posts` attaches media by

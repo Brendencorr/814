@@ -126,8 +126,12 @@ exports.handler = async function (event) {
     // pipeline already routed here (approval still gates upstream). Phase A will move this to a
     // DB-stored setting (admin toggle, no redeploy); the env var is the bootstrap default.
     const mode = (process.env.FEEDHIVE_MODE || "draft").toLowerCase();
-    // Mode gates draft-vs-live - NO client override (a forged body.status could bypass draft-safety).
-    const status = (mode === "live" && scheduled_at) ? "scheduled" : "draft";
+    // Draft-vs-live. This endpoint is already operator-key-gated, so the trusted caller
+    // (content-queue on Approve) may request live scheduling via `schedule:true` (still requires
+    // a scheduled_at). FEEDHIVE_MODE=live is a second path. A forged body can't pass the
+    // operator-key check above, so this doesn't weaken draft-safety for the public.
+    const wantSchedule = body.schedule === true || mode === "live";
+    const status = (wantSchedule && scheduled_at) ? "scheduled" : "draft";
 
     const payload = { text, accounts, status };
     if (status === "scheduled" && scheduled_at) payload.scheduled_at = scheduled_at;

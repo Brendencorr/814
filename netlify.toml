@@ -274,7 +274,14 @@
 
 # HTTP-triggered manual run of the daily content pipeline (background, no timeout).
 # Scout (live web search) -> candidates -> reposts fast-track / Sage briefs -> Sentinel -> queue.
+# Renders each post's design in-process (renderBrief), so it needs the grounds + fonts bundled.
 [functions."content-run-background"]
+  included_files = [
+    "brand/template-kit/grounds/**",
+    "brand/template-kit/fonts/**",
+    "brand/template-kit/riley-nav-logo.png",
+    "brand/template-kit/riley-nav-ink.png"
+  ]
 
 # Scheduled daily content run — 6:00 AM Mountain (12:00 UTC). Runs as background.
 [functions."content-daily-cron"]

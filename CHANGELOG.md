@@ -12,6 +12,13 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Brand ethos band added to member app dashboard (`aed2ca1`)
+- **What:** mirrored the three-line unattributed ethos ("Do hard things. / Do uncomfortable things. / Don't let small voices shake big dreams.") from home.html into dashboard.html as a quiet closing moment at the bottom of main content.
+- **Design:** app-dark treatment - muted `var(--smoke)` text (not full parchment), faint gold hairline top only, no bottom border. Understated - this is a functional home, not a marketing page.
+- **CSS:** app-scoped class names (app-ethos-band/eyebrow/lines) to avoid collision with home.html. Responsive with 700px breakpoint (matches dashboard sidebar breakpoint). clamp() font sizing.
+- **home.html mobile verified:** no changes needed - clamp() + .wrap padding already handles narrow viewports cleanly.
+- **Files:** `dashboard.html`.
+
 ### Social publishing HELD by default - nothing reaches FeedHive until the operator says go
 - **Why:** Operator directive: do not publish anything to FeedHive until explicit go-ahead. Approvals defaulted
   to live, so an approve click would have scheduled real posts.

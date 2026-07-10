@@ -12,6 +12,22 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Comms #3: proactive nudge respects quiet hours (per-member) + US-wide daytime run
+- **Why:** the once-daily interactive-program nudge fired at a fixed 15:00 UTC = 8am PT / 11am ET (fine for
+  current US members, but 15:00 UTC is 5am in Hawaii). Closes the last item from the quiet-hours audit.
+- **`netlify.toml`:** `int-proactive-cron` moved 15:00 -> **18:00 UTC** = daytime in EVERY US zone incl Hawaii
+  (8am HST) + Alaska (9-10am AKT) through Eastern (2pm ET).
+- **`supabase-client.js`:** new shared `inQuietHours(tz)` (10pm-7am member-local, Denver fallback,
+  `COMMS_DEFAULT_TZ` override) - **single source of truth** for the quiet-hours window.
+- **`evaluate-comms.js`:** now imports the shared `inQuietHours` (removed its private copy) so the window
+  can't drift between the two senders. Behavior identical.
+- **`int-proactive-cron.js`:** the EMAIL channel is gated by the member's local quiet hours (fetch `timezone`;
+  skip + count `email_quiet_skipped`). In-app `client_alerts` still fire for everyone (time-agnostic).
+- **⚠️ PARALLEL SESSION:** `int-proactive-cron.js` was edited here. My change is only in the email-send region
+  (profile select + send loop + response counter), NOT the `planForEnrollment`/batch-reads region. If you have
+  local int-proactive changes, rebase onto this and they should merge cleanly. Commit `46e7b3a`.
+- **Files:** `netlify.toml`, `supabase-client.js`, `evaluate-comms.js`, `int-proactive-cron.js`.
+
 ### Comms: audit follow-ups - member-local daily cap + unsubscribe = email-only
 - **Why:** three gaps found while auditing the quiet-hours fix.
 - **#1 member-local daily cap (`evaluate-comms.js`):** the "one lifecycle email per day" cap was measured

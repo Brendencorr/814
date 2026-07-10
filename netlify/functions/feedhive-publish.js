@@ -106,6 +106,16 @@ exports.handler = async function (event) {
 
     const body = JSON.parse(event.body || "{}");
 
+    // ── GLOBAL HOLD SWITCH ──────────────────────────────────────────────────────
+    // The single choke point for ALL FeedHive activity (every publisher path goes
+    // through here). Default = 'hold': NOTHING is sent to FeedHive - no posts, no
+    // drafts, no media uploads - until the operator gives the go-ahead by setting
+    // SOCIAL_PUBLISH_MODE=draft (FeedHive drafts) or =live (scheduled/live).
+    const publishMode = (process.env.SOCIAL_PUBLISH_MODE || "hold").toLowerCase();
+    if (publishMode === "hold") {
+      return json(200, { success: false, held: true, error: "Publishing is on hold (SOCIAL_PUBLISH_MODE=hold) - nothing sent to FeedHive." });
+    }
+
     // Media pre-upload endpoint: upload once, reuse the IDs across N posts (avoids
     // re-uploading the same image per platform). content-queue calls this before its loop.
     if (body.action === "upload_media") {

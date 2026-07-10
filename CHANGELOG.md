@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Social publishing HELD by default - nothing reaches FeedHive until the operator says go
+- **Why:** Operator directive: do not publish anything to FeedHive until explicit go-ahead. Approvals defaulted
+  to live, so an approve click would have scheduled real posts.
+- **What:** New **`SOCIAL_PUBLISH_MODE`** with default **`hold`**, enforced at the single choke point
+  `feedhive-publish.js` (every publisher path - content-queue + legacy pipelines - goes through it). In `hold`,
+  the endpoint sends NOTHING to FeedHive (no posts, drafts, or media uploads) and returns `{held:true}`.
+  `content-queue.js` treats a held response as **approved + queued** (job `state='queued'`, not failed), so you
+  can still curate the launch set now. Go-ahead = set `SOCIAL_PUBLISH_MODE=draft` (FeedHive drafts) or `=live`
+  (scheduled/live) in Netlify. Files: `feedhive-publish.js`, `content-queue.js`.
+
 ### Comms #3: proactive nudge respects quiet hours (per-member) + US-wide daytime run
 - **Why:** the once-daily interactive-program nudge fired at a fixed 15:00 UTC = 8am PT / 11am ET (fine for
   current US members, but 15:00 UTC is 5am in Hawaii). Closes the last item from the quiet-hours audit.

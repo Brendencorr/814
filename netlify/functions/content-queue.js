@@ -186,9 +186,11 @@ exports.handler = async function (event) {
         return json(403, { error: "This item is blocked by Sentinel and cannot be approved. Revise or reject it." });
       }
 
-      // Live vs draft failsafe: SOCIAL_PUBLISH_MODE=live (default) schedules to publish;
-      // set it to 'draft' to route approvals to FeedHive drafts instead (no redeploy).
-      const goLive = (process.env.SOCIAL_PUBLISH_MODE || "live").toLowerCase() === "live";
+      // Publish mode: default 'hold' (nothing reaches FeedHive - approvals are recorded as
+      // queued, held). 'draft' = FeedHive drafts; 'live' = scheduled/live. feedhive-publish
+      // enforces the hold globally; here it just picks scheduled-vs-draft for non-hold.
+      const publishMode = (process.env.SOCIAL_PUBLISH_MODE || "hold").toLowerCase();
+      const goLive = publishMode === "live";
       const whenIso = item.scheduled_for || null;
 
       await db.from("content_approval_queue").update({ status: "approved", reviewed_at: new Date().toISOString() }).eq("id", id);
@@ -273,7 +275,11 @@ exports.handler = async function (event) {
               body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media_ids, schedule: goLive }),
             });
             const bd = await res.json();
-            if (bd.success) {
+            if (bd.held) {
+              // Publishing is on hold - the post is approved + queued, but nothing was sent to FeedHive.
+              await db.from("content_publishing_jobs").update({ state: "queued", error_detail: "held (SOCIAL_PUBLISH_MODE=hold) - not sent to FeedHive" }).eq("id", job.id);
+              scheduledCount++;
+            } else if (bd.success) {
               await db.from("content_publishing_jobs").update({ state: "scheduled", buffer_post_id: bd.update_id || "scheduled" }).eq("id", job.id);
               scheduledCount++;
             } else {

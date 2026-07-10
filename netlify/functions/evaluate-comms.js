@@ -41,8 +41,8 @@ function unsubUrl(uid) { return APP + "/.netlify/functions/comms-unsubscribe?u="
 function inQuietHours(tz) {
   try {
     const zone = tz || DEFAULT_TZ;   // never fall back to UTC - that would email a US member at ~2am
-    const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: zone }).format(new Date()));
-    return h >= 21 || h < 8; // 9pm–8am local = quiet
+    const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: zone }).format(new Date())) % 24;
+    return h >= 22 || h < 7; // 10pm-7am in the MEMBER'S local timezone = quiet (company quiet-hours policy)
   } catch (e) { return false; }
 }
 
@@ -87,7 +87,7 @@ exports.handler = async (event) => {
 
   // ── Load source data (batched, not N+1) ──
   const [profR, stateR, sendsR, subsR, convR, ciR, tplR] = await Promise.allSettled([
-    sb.from("user_profiles").select("id,email,full_name,preferred_name,created_at,onboarding_completed"),
+    sb.from("user_profiles").select("id,email,full_name,preferred_name,created_at,onboarding_completed,timezone"),
     sb.from("user_comms_state").select("*"),
     sb.from("email_sends").select("user_id,template_key,flow,sent_at,suppressed"),
     sb.from("subscriptions").select("user_id,plan_id,status").eq("status", "active"),
@@ -179,10 +179,12 @@ exports.handler = async (event) => {
     const urls = { unsub: unsubUrl(uid), pref: prefUrl(uid) };
 
     // Refresh the derived snapshot (upsert) - this is the Task-5 state, server-derived.
+    const memberTz = prof.timezone || st.timezone || null;   // their captured location; quiet hours honor THIS
     const snap = {
       user_id: uid, signup_at: new Date(signupAt).toISOString(),
       last_login_at: st.last_login_at || null,
       last_riley_message_at: lastMsg ? new Date(lastMsg).toISOString() : (st.last_riley_message_at || null),
+      timezone: memberTz,
       plan, updated_at: new Date().toISOString(),
     };
     await sb.from("user_comms_state").upsert(snap, { onConflict: "user_id" });
@@ -191,7 +193,7 @@ exports.handler = async (event) => {
     if (st.unsubscribed_lifecycle) { bump("skip:unsubscribed"); continue; }
     if (st.lapse_repair) { bump("skip:lapse_repair"); continue; }
     if (sentTodayNonTx[uid]) { bump("skip:already_today"); continue; }
-    if (inQuietHours(st.timezone)) { bump("skip:quiet_hours"); continue; } // retry next run
+    if (inQuietHours(memberTz)) { bump("skip:quiet_hours"); continue; } // their LOCAL quiet hours; retry next run
 
     let fired = false;
     const send = async (key) => {

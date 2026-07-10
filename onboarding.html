@@ -25,6 +25,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .section-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:0.22em;text-transform:uppercase;margin-bottom:18px;opacity:0.85}
 .riley-says{font-family:'DM Serif Display',serif;font-size:27px;line-height:1.4;color:var(--parchment);margin-bottom:8px;letter-spacing:-0.01em}
 .riley-sub{font-size:15px;color:var(--smoke);line-height:1.6;margin-bottom:28px}
+.quiet-note{font-size:13px;color:var(--smoke);line-height:1.55;margin:-10px 0 26px;padding:12px 14px;border-left:2px solid var(--gold);background:rgba(201,168,76,0.06);border-radius:0 8px 8px 0}
+.quiet-note b{color:var(--parchment);font-weight:600}
 .sig{font-size:12px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.1em;margin-top:20px;opacity:0.8}
 input[type=text],input[type=date],select,textarea{width:100%;background:var(--ink2);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;transition:border-color .2s;margin-bottom:12px}
 input:focus,select:focus,textarea:focus{border-color:var(--gold)}
@@ -399,6 +401,7 @@ function notifRationale(){
   swap(`<div class="section-label">Staying close</div>
     <div class="riley-says">Want a gentle nudge at that time?</div>
     <div class="riley-sub">One quiet reminder to check in - nothing more. You can change or turn this off anytime.</div>
+    <div class="quiet-note">We keep <b>quiet hours</b>. You will never hear from us between <b>10pm and 7am your time</b> - notifications and emails only ever reach you during your day.</div>
     <div class="actions"><button class="btn" onclick="askNotif()">Turn on gentle nudges</button><button class="skip" onclick="sPrivacy()">Not now</button></div>
     ${dots(7)}`);
 }

@@ -12,6 +12,15 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Home: brand-ethos band added to marketing home page
+- **What:** new `<!-- BRAND ETHOS -->` section placed between Cardinal and footer on `home.html`.
+  Three-line brand mantra (unattributed, brand value standing on its own - not a testimonial):
+  "Do hard things. / Do uncomfortable things. / Don't let small voices shake big dreams."
+- **Design:** DM Serif Display, parchment text on ink background, faint gold hairline borders top+bottom
+  (`rgba(201,168,76,0.15)`), "WHAT WE BELIEVE" eyebrow label. `clamp(22px,3.8vw,40px)` responsive type.
+  Fully responsive, scroll-reveal animation, no em-dashes.
+- **Files:** `home.html` only. Commit `213a280`. Verified live on meetriley.us.
+
 ### Mobile: fix the topbar greeting crowding the hamburger + mobile polish
 - **Why:** Brenden reported the hamburger "overlapping Welcome, Brenden." Rendered the real dashboard topbar
   at 375px (harness + screenshot): the hamburger itself doesn't overlap (10px gap), but the greeting

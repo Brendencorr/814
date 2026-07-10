@@ -62,10 +62,26 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <h2>Account</h2>
     <div class="cdesc">Manage who you are and what Riley keeps.</div>
     <div class="row"><div class="lbl">Email<div class="val" id="acct-email">…</div></div><a class="linkbtn" href="/profile">Edit profile</a></div>
-    <div class="row"><div class="lbl">Your data<div class="val">View, download, or delete everything</div></div><a class="linkbtn" href="/dashboard#data">Manage data</a></div>
     <div class="row"><div class="lbl">What Riley knows<div class="val">See, fix, or remove what Riley remembers about you</div></div><a class="linkbtn" href="/memory">View</a></div>
     <div class="row"><div class="lbl">Sign out<div class="val">End this session</div></div><button class="linkbtn danger" id="signout">Sign out</button></div>
-    <div class="row"><div class="lbl">Delete account<div class="val">Permanently erase your account &amp; data</div></div><button class="linkbtn danger" id="del-account">Delete account</button></div>
+  </div>
+
+  <div class="card">
+    <h2>Your data</h2>
+    <div class="cdesc">Your information is yours - take it or erase it, anytime.</div>
+    <div class="row">
+      <div class="lbl">Export your data<div class="val">Download everything Riley has stored for you as JSON</div></div>
+      <button class="linkbtn" id="export-btn">Export</button>
+    </div>
+    <div class="row">
+      <div class="lbl">Delete your data<div class="val">Clear your profile, check-ins, reflections, and conversations - keeps your sign-in</div></div>
+      <button class="linkbtn danger" id="del-data-btn">Delete data</button>
+    </div>
+    <div class="row">
+      <div class="lbl">Delete account &amp; data<div class="val">Permanently erase your account and everything in it - cannot be undone</div></div>
+      <button class="linkbtn danger" id="del-account">Delete account</button>
+    </div>
+    <div class="status" id="export-status"></div>
   </div>
 
   <div class="card" id="billing-card" style="display:none">
@@ -172,6 +188,45 @@ $('signout').addEventListener('click', async ()=>{
 });
 
 $('del-account').addEventListener('click', ()=> RileyDeleteAccount.open({ supabase: SB, redirectTo: 'https://meetriley.us' }));
+
+// ── Your data: Export ─────────────────────────────────────────────────────────
+function xstatus(m,err){const s=$('export-status');if(s){s.textContent=m||'';s.className='status'+(err?' err':'');}}
+
+$('export-btn').addEventListener('click', async ()=>{
+  const btn=$('export-btn'); btn.disabled=true; btn.textContent='Preparing…'; xstatus('');
+  try{
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    if(!tok) throw new Error('Session expired - please sign in again.');
+    const r=await fetch('/.netlify/functions/auth-handler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'export_data',token:tok})});
+    if(!r.ok) throw new Error('Export failed ('+r.status+')');
+    const data=await r.json();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download='my-riley-data.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    btn.textContent='Export'; btn.disabled=false;
+    xstatus('Downloaded. Your data is yours.');
+  }catch(e){btn.textContent='Export'; btn.disabled=false; xstatus('Could not export - '+(e.message||'please try again.'),true);}
+});
+
+// ── Your data: Delete data (clears data, keeps sign-in) ──────────────────────
+$('del-data-btn').addEventListener('click', ()=>{
+  if(!confirm('This will permanently clear your profile, check-ins, reflections, and conversations. Your sign-in stays so you can start fresh. This cannot be undone.\n\nContinue?')) return;
+  (async()=>{
+    const btn=$('del-data-btn'); btn.disabled=true; btn.textContent='Deleting…'; xstatus('');
+    try{
+      const tok=(await SB.auth.getSession()).data.session?.access_token;
+      if(!tok) throw new Error('Session expired - please sign in again.');
+      const r=await fetch('/.netlify/functions/auth-handler',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete_data',token:tok,confirm:true})});
+      if(!r.ok) throw new Error('Delete failed ('+r.status+')');
+      const j=await r.json();
+      if(j.failed&&j.failed.length) console.warn('delete_data partial - failed:',j.failed);
+      xstatus('Data cleared. Signing you out…');
+      setTimeout(async()=>{try{await SB.auth.signOut();}catch(e){}location.href='https://riley.meetriley.us';},2000);
+    }catch(e){btn.textContent='Delete data'; btn.disabled=false; xstatus('Could not delete - '+(e.message||'please try again.'),true);}
+  })();
+});
 
 // Manage billing → Stripe Customer Portal (update card / switch plan / cancel / invoices).
 (function(){ var b=$('manage-billing'); if(!b) return;

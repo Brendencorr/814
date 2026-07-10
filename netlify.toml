@@ -284,8 +284,10 @@
   ]
 
 # Scheduled daily content run — 6:00 AM Mountain (12:00 UTC). Runs as background.
+# PAUSED for the 2-week launch: the curated all-Riley launch campaign drives the feed,
+# not the randomized web pipeline. Re-enable after launch by uncommenting the schedule.
 [functions."content-daily-cron"]
-  schedule = "0 12 * * *"
+  # schedule = "0 12 * * *"
 
 # Nightly performance pull (Buffer analytics -> content_performance_metrics) +
 # weekly learnings digest (Sundays) that Sage reads. 23:30 MT = 05:30 UTC.

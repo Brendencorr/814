@@ -383,17 +383,107 @@ exports.buildPostFromCandidate = buildPostFromCandidate;
 exports.assignSchedules = assignSchedules;
 exports.regenerateItem = regenerateItem;
 
+// ══════════════════════════════════════════════════════════════════════════════
+// LAUNCH CAMPAIGN - a curated 2-week, all-Riley sequence (28 posts, 2/day). Seeded
+// on demand into the Review queue, fully designed + pre-scheduled. This replaces the
+// randomized web pipeline during launch (pause the daily cron for the 2 weeks).
+// hook = on-image headline (gold period lands if it ends in "."); caption = post text
+// (hyphens only, no em-dashes); ground = the chosen template background.
+// ══════════════════════════════════════════════════════════════════════════════
+const LAUNCH = [
+  { slug: "meet-riley", hook: "I'm Riley.", ground: "dawn", persona: "universal", caption: "No appointments. No judgment. No starting over. I'm Riley - a companion for the messy middle of rebuilding a life. Meet me, free. meetriley.us" },
+  { slug: "start-where-you-are", hook: "Start where you are.", ground: "first-light", persona: "universal", caption: "You don't need a rock bottom or a diagnosis to begin. Start where you are - Riley will meet you there. Free, forever. meetriley.us" },
+  { slug: "why-814", hook: "Why 8:14?", ground: "dawn", persona: "universal", program_tie: "reset_814", caption: "It started with a little boy and his watch. 8:14 is the minute the light comes back - and it lives in everything we make. Ask Riley about it sometime." },
+  { slug: "the-minute", hook: "8:14 - the minute the light comes back.", ground: "dawn", persona: "universal", program_tie: "reset_814", caption: "Some stories are better discovered. This one is ours. meetriley.us" },
+  { slug: "no-label", hook: "Not sure if you have a problem? Good.", ground: "first-light", persona: "drinker_user", caption: "That's exactly who this is for. No labels required. No rock bottom either. The door doesn't check. meetriley.us" },
+  { slug: "no-appointments", hook: "No appointments. No judgment.", ground: "veil", persona: "universal", caption: "Talk to Riley at 2pm or 2am. No waiting rooms, no forms, no judgment - just a companion who is already there. meetriley.us" },
+  { slug: "riley-remembers", hook: "Riley remembers.", ground: "first-light", persona: "universal", caption: "Not your data. Your story - the way a friend would. No starting over every conversation. Come be known. meetriley.us" },
+  { slug: "known-not-tracked", hook: "Known is different from tracked.", ground: "first-light", persona: "universal", caption: "One feels like a system. The other feels like a friend. Riley is the second one." },
+  { slug: "reset-free", hook: "The 8:14 Reset is free, forever.", ground: "dawn", persona: "universal", program_tie: "reset_814", caption: "Seven days. One small light at a time. A quiet way to begin - no card, no trial clock. meetriley.us" },
+  { slug: "one-small-action", hook: "One small action every morning.", ground: "first-blush", persona: "universal", program_tie: "reset_814", caption: "Not a life overhaul. One thing, done quietly, before the day gets loud. That's the whole Reset." },
+  { slug: "on-grief", hook: "Grief doesn't follow a schedule.", ground: "veil", persona: "griever", caption: "Six weeks, six months, six years. It takes what it takes. Whenever you want to talk - Riley listens." },
+  { slug: "doing-this-right", hook: "You don't have to be okay to be doing this right.", ground: "first-light", persona: "griever", caption: "Showing up to the day counts. Even quietly. Even barely." },
+  { slug: "earn-rest", hook: "You don't have to earn rest.", ground: "first-light", persona: "burnt_out", caption: "Rest isn't a reward for finishing. It's part of how anything gets finished. Put some of it down - Riley can help you sort what's yours to carry." },
+  { slug: "not-lazy", hook: "You're not lazy. You're depleted.", ground: "parchment", persona: "burnt_out", caption: "One needs judgment. The other needs rest. Be honest about which one this is." },
+  { slug: "slip-moment", hook: "A slip is a moment. Not an identity.", ground: "veil", persona: "drinker_user", caption: "What matters most is the next hour - not the story you're telling yourself about the last one. No judgment here. There never was." },
+  { slug: "come-back", hook: "Come back. That's the whole assignment.", ground: "dawn", persona: "drinker_user", caption: "Today can still count. It usually does." },
+  { slug: "movement", hook: "Movement isn't punishment.", ground: "first-light", persona: "body_first", caption: "It's a way of being on your own side. No scale. No before-and-after. Just a body that carried you this far." },
+  { slug: "eight-minutes", hook: "Eight minutes is enough to begin.", ground: "first-blush", persona: "body_first", caption: "A stretch counts. A walk counts. Showing up counts. Start where you are." },
+  { slug: "rebuild", hook: "Rebuild your life. One day at a time.", ground: "dawn", persona: "universal", caption: "You don't build a life all at once. You build a day you can live with. Then another." },
+  { slug: "continuing", hook: "You're not starting over. You're continuing.", ground: "first-light", persona: "universal", caption: "And you don't have to do it alone. meetriley.us" },
+  { slug: "riley-awake", hook: "Riley is awake.", ground: "veil", persona: "universal", caption: "For the 3am thinkers: think out loud. It takes half the weight away. Riley is already there." },
+  { slug: "2am-lies", hook: "At 2am, everything lies.", ground: "first-light", persona: "griever", caption: "Wait for morning. Then decide. And if you don't want to wait alone - Riley is awake too." },
+  { slug: "testimonial-casey", hook: "“It felt like talking to someone who understood.”", ground: "parchment", persona: "universal", caption: "“Within 10 minutes it shifted my perspective and calmed my stress... It felt like talking to someone who genuinely understood. I walked away lighter, calmer, and grounded.” - Casey K." },
+  { slug: "come-be-known", hook: "Come be known.", ground: "dawn", persona: "universal", caption: "Free, forever. No appointments. No judgment. Just a companion who remembers. meetriley.us" },
+  { slug: "days-add-up", hook: "Days add up quietly.", ground: "dawn", persona: "universal", caption: "You don't build a life all at once. Counted one morning at a time - through hard days too." },
+  { slug: "today-counts", hook: "Today counts.", ground: "first-light", persona: "universal", caption: "That's the whole math. Riley keeps count with you - never over you." },
+  { slug: "speak-kindly", hook: "Speak to yourself like someone worth rebuilding.", ground: "framed", persona: "universal", caption: "Language is how you treat yourself in sentences. Choose the kind ones. Riley always will." },
+  { slug: "meet-riley-free", hook: "Meet Riley, free.", ground: "dawn", persona: "universal", caption: "Start where you are. Riley will meet you there. Free, forever. meetriley.us" },
+];
+
+// Seed the 2-week launch campaign: 28 curated posts, designed + scheduled 2/day (08:14
+// + 18:14 MT) starting tomorrow, dropped into Review (status 'designed'). Idempotent.
+async function seedLaunch(db, { force = false } = {}) {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const { data: existing } = await db.from("content_candidates").select("id").ilike("topic", "Launch: %").limit(1);
+    if (existing && existing.length && !force) {
+      return { ok: true, skipped: true, reason: "Launch campaign already seeded. Pass force:true to re-seed." };
+    }
+  } catch (e) { /* proceed */ }
+
+  let seeded = 0;
+  for (let i = 0; i < LAUNCH.length; i++) {
+    const p = LAUNCH[i];
+    try {
+      const { data: cand } = await db.from("content_candidates").upsert({
+        run_date: today, source_platform: "web_search", topic: `Launch: ${p.slug}`,
+        trend_type: "topic", engagement_signal: "high", brand_fit_score: 100, repost_safe: false,
+        recommended_action: "original", why_it_matters: "Riley 2-week launch campaign",
+        suggested_program: p.program_tie || "none", suggested_persona: p.persona || "universal", status: "fast_tracked",
+      }, { onConflict: "run_date,topic" }).select().single();
+
+      const { data: brief } = await db.from("content_briefs").insert({
+        candidate_id: cand ? cand.id : null, decision: "original",
+        headline_hook: p.hook, caption: p.caption, cta: null,
+        program_tie: p.program_tie || "none", persona: p.persona || "universal",
+        seo_keywords: [], hashtags: {}, template_family: null, asset_types: ["static"],
+        platforms: ["instagram", "facebook"], design_notes: `launch:${p.slug} ground:${p.ground}`,
+        sage_score: null, safety_prefilter: [], status: "brief",
+      }).select().single();
+      if (!brief) continue;
+
+      let assetIds = [];
+      try {
+        const d = await renderBrief(brief.id, { override: { ground: p.ground } });
+        if (d.designed) assetIds = d.assets.map((a) => a.id);
+      } catch (e) { console.warn("launch render failed (non-fatal):", p.slug, e.message); }
+
+      // 2/day: post i -> day floor(i/2)+1 (starting tomorrow), AM=08:14 / PM=18:14 MT
+      const day = Math.floor(i / 2) + 1;
+      const scheduledFor = denverSlotToUtcIso(day, i % 2 === 0 ? "08:14" : "18:14");
+
+      await db.from("content_approval_queue").insert({
+        kind: "original", candidate_id: cand ? cand.id : null, brief_id: brief.id,
+        asset_ids: assetIds, platforms: ["instagram", "facebook"], preview_caption: p.caption,
+        safety_verdict: "pass", safety_flags: [], status: "designed", scheduled_for: scheduledFor,
+      });
+      seeded++;
+    } catch (e) { console.error("launch seed item failed:", p.slug, e.message); }
+  }
+  await notify(`Launch campaign seeded: ${seeded}/${LAUNCH.length} posts designed + scheduled (2/day). Review at admin.meetriley.us → Social Media → Review.`);
+  return { ok: true, seeded, total: LAUNCH.length };
+}
+
 // ── HTTP handler (background function, manual trigger) ─────────────────────────
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   const _gate = requireOperator(event); if (_gate) return _gate;
-  const trigger = event.httpMethod === "POST" ? "manual" : "cron";
-  const result = await runDaily(trigger);
-  return {
-    statusCode: result.ok ? 200 : 500,
-    headers: { ...CORS, "Content-Type": "application/json" },
-    body: JSON.stringify(result),
-  };
+  let body = {}; try { body = JSON.parse(event.body || "{}"); } catch (e) {}
+  const done = (result) => ({ statusCode: result.ok ? 200 : 500, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(result) });
+  if (body.mode === "launch") return done(await seedLaunch(contentDb(), { force: body.force === true }));
+  return done(await runDaily(event.httpMethod === "POST" ? "manual" : "cron"));
 };
 
 exports.runDaily = runDaily;
+exports.seedLaunch = seedLaunch;

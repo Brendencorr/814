@@ -513,6 +513,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
         <div style="display:flex;gap:.5rem;align-items:center">
           <span id="ce-runstat" style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2)"></span>
           <button class="bo" onclick="ceToggleTemplates()">⚙ Design Templates</button>
+          <button class="bo" id="ce-launch" onclick="ceSeedLaunch()" title="Build the curated 2-week all-Riley launch campaign (28 posts, 2/day) into Review">🚀 Seed launch</button>
           <button class="bg" id="ce-run" onclick="ceRunNow()">▶ Run Now</button>
         </div>
       </div>
@@ -3168,6 +3169,18 @@ async function ceRevise(id){
     if(!r.ok){var d=await r.json();throw new Error(d.error||'failed');}
     ceRefresh();
   }catch(e){alert('Could not revise: '+e.message);}
+}
+
+async function ceSeedLaunch(){
+  if(!confirm('Build the 2-week all-Riley launch campaign?\n\n28 curated posts, designed + scheduled 2/day (8:14am + 6:14pm MT) starting tomorrow, dropped into Review. Runs once (~2-3 min); safe to leave the page.'))return;
+  var btn=document.getElementById('ce-launch');
+  btn.disabled=true;btn.textContent='Seeding…';
+  document.getElementById('ce-runstat').textContent='seeding launch campaign in background - refresh Review in ~2-3 min';
+  try{
+    // background function returns 202 immediately; designs render server-side
+    fetch(B+'/content-run-background',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'launch'})});
+    setTimeout(function(){btn.disabled=false;btn.textContent='🚀 Seed launch';ceView='review';ceRefresh();},5000);
+  }catch(e){btn.disabled=false;btn.textContent='🚀 Seed launch';alert('Could not start: '+e.message);}
 }
 
 async function ceRunNow(){

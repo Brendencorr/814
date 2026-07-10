@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### 2-week all-Riley launch campaign (28 curated posts) + pause the auto web-engine
+- **Why:** The launch should be a controlled, intentional Riley-promotion sequence, not the randomized
+  web-topic pipeline. Operator wants 2 weeks of all-Riley posts (2/day) built + scheduled up front, reviewed
+  daily; the autonomous engine switches on after launch.
+- **What:** `content-run-background.js` gains a curated **`LAUNCH`** array (28 posts: intro → 8:14 story → who
+  it's for → what Riley does → the Reset → pillars grief/burnout/body → slip → rebuild → 3am → Casey K. social
+  proof → the offer) and **`seedLaunch()`** — inserts candidate+brief, renders each design (grounds engine),
+  schedules **2/day (8:14am + 6:14pm MT)** starting tomorrow across 14 days, and drops them into Review
+  (status 'designed' + scheduled_for). Idempotent (skip if already seeded; force:true to re-seed). Triggered via
+  the handler `{mode:'launch'}` branch. Copy is hyphens-only, uses canonical lines verbatim, Casey's real quote.
+- **Operator:** new **🚀 Seed launch** button in the Social Media tab (fires the background seed, then opens Review).
+- **Pause:** `netlify.toml` comments the `content-daily-cron` schedule (the randomized daily run is off during
+  launch). Re-enable after 2 weeks by uncommenting.
+- **Files:** `content-run-background.js`, `operator.html`, `netlify.toml`.
+
 ### Streamlined social pipeline: agents build+schedule the whole post; one daily Review; Approve = live
 - **Why:** Too many operator steps (approve copy → design → review → final approve → then log into FeedHive to
   schedule). The operator wants the agents to build each post COMPLETELY up front (design + caption + a scheduled

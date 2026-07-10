@@ -12,6 +12,22 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Comms: audit follow-ups - member-local daily cap + unsubscribe = email-only
+- **Why:** three gaps found while auditing the quiet-hours fix.
+- **#1 member-local daily cap (`evaluate-comms.js`):** the "one lifecycle email per day" cap was measured
+  in UTC - the same UTC-vs-local class as the timezone bug (this file was missed by the app-wide member-day
+  sweep). Now evaluated in each member's local day via the shared `memberDay()` helper (4am rollover). We
+  collect per-user non-transactional send times and compare against their own local "today."
+- **#2 unsubscribe is email-only (`comms-unsubscribe.js`, `preferences.html`):** email unsubscribe stops
+  EMAIL only; push is a separate channel by design. The one-click unsubscribe confirmation and the
+  `/preferences` page now say so and point members to app Settings (verified `/settings` 200) to change push.
+- **#4 truthful comment (`evaluate-comms.js`):** guide_1 (welcome) is sent by the CRON, not a signup hook.
+  Behavior unchanged - routing the welcome through the cron is what makes it honor quiet hours + timezone.
+- **Deferred #3:** make the once-daily proactive nudge (`int-proactive-cron.js`, fixed 15:00 UTC) per-member-tz
+  for future HI/AK/international members. Held because a parallel session is mid-refactor on that file (N+1 ->
+  batched reads); will land on top of their change to avoid a broken merge.
+- **Files:** `evaluate-comms.js`, `comms-unsubscribe.js`, `preferences.html`. Commit `b4deb1d`.
+
 ### Comms: quiet hours now honor each member's real timezone (10pm-7am)
 - **Why:** Company policy - members never hear from us between 10pm and 7am THEIR local time. Two people
   signed up one morning and got nothing; root cause (confirmed against the live DB): the hourly evaluator

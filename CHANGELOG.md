@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Mobile: fix the topbar greeting crowding the hamburger + mobile polish
+- **Why:** Brenden reported the hamburger "overlapping Welcome, Brenden." Rendered the real dashboard topbar
+  at 375px (harness + screenshot): the hamburger itself doesn't overlap (10px gap), but the greeting
+  (19-22px serif) WRAPPED to multiple lines and collided with the right-side actions - that's the crowding.
+- **Fix (global, `pwa.js`):** at <=700px the topbar heading (`.greeting`/`.tb-title`/`.topbar-greeting`) is now
+  16px, one line, `white-space:nowrap` + ellipsis with `min-width:0` on its group so it shrinks/truncates
+  instead of wrapping; `.tb-actions` pinned `flex-shrink:0`; topbar padding tightened (64px left to clear the
+  hamburger, 14px right). Verified in an accurate harness: "Good afternoon, Brenden." now sits on one clean
+  line with the bell + avatar to the right, no overlap. One change fixes every member page's topbar.
+- **Polish (approved):** onboarding 0-10 ruler tightened at <=560px (gap 4px, `.rnum` min-width 22px);
+  `chat-anon` send button + textarea 38px -> 40px (fuller tap target); `brief.html` focus/challenge/extra
+  card rows now `flex-wrap:wrap` + `flex:1 1 140px` so they stack on very narrow phones.
+- **Files:** `pwa.js`, `onboarding.html`, `chat-anon.html`, `brief.html`.
+
 ### Founder letter (guide_5): personalize the greeting with the member's name
 - **Why:** Brenden's final letter opened "Hi," (built verbatim); he wants it personalized. The comms system
   is built for this - `admin-comms.js` renders the operator preview with `first_name:"{first_name}"`, so a

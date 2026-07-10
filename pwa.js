@@ -56,7 +56,13 @@
         '#riley-hamburger{display:flex}',
         '.sidebar{display:flex !important;position:fixed !important;top:0;left:0;bottom:0;height:100vh;width:272px;max-width:84vw;z-index:9998;transform:translateX(-104%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 0 44px rgba(0,0,0,0.6);overflow-y:auto}',
         '.sidebar.riley-mobile-open{transform:translateX(0)}',
-        '.topbar,.dash-topbar{padding-left:66px !important}',
+        // Topbar clears the hamburger AND keeps its heading on ONE line - shrink + truncate so the greeting
+        // never wraps or collides with the right-side actions (the real cause of the "overlap" on mobile).
+        '.topbar,.dash-topbar{padding-left:64px !important;padding-right:14px !important}',
+        '.topbar>div:first-child,.dash-topbar>div:first-child{min-width:0;overflow:hidden}',
+        '.greeting,.tb-title,.topbar-greeting{font-size:16px !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+        '.tb-date,.tb-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+        '.tb-actions{flex-shrink:0}',
       '}'
     ].join(''));
     var burger = document.createElement('div');

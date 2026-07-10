@@ -12,6 +12,22 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Comms: quiet hours now honor each member's real timezone (10pm-7am)
+- **Why:** Company policy - members never hear from us between 10pm and 7am THEIR local time. Two people
+  signed up one morning and got nothing; root cause (confirmed against the live DB): the hourly evaluator
+  computed quiet hours in Mountain for EVERYONE - it never loaded the member's captured timezone, so a
+  New York signup at ~10am ET still fell inside the Mountain "quiet" window and was held.
+- **Fix (`evaluate-comms.js`):** profile select now pulls `timezone`; the snapshot carries
+  `memberTz = prof.timezone || st.timezone`; the gate evaluates `inQuietHours(memberTz)`. Window moved
+  9pm-8am -> 10pm-7am. Unknown tz falls back to America/Denver, never UTC (UTC would email a US member at
+  ~2am). Timezone is auto-captured at onboarding (browser `Intl` -> `user_profiles.timezone`).
+- **Onboarding (`onboarding.html`):** trust note on the notifications screen - "quiet hours ... never
+  between 10pm and 7am your time." No new question, since the timezone is auto-detected.
+- **Notifications already compliant:** reset-nudge + brief-delivery crons fire at the member's LOCAL
+  chosen hour (daytime by design); only the email evaluator needed the tz fix.
+- **Files:** `evaluate-comms.js`, `onboarding.html`. Commit `1c6c1b0`. COMMS_ENABLED is on; sends resume
+  on the next hourly run for members currently in their daytime.
+
 ### Home: brand-ethos band added to marketing home page
 - **What:** new `<!-- BRAND ETHOS -->` section placed between Cardinal and footer on `home.html`.
   Three-line brand mantra (unattributed, brand value standing on its own - not a testimonial):

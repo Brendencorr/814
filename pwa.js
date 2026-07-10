@@ -232,6 +232,66 @@
   // Let the Settings page trigger install on demand.
   window.rileyTriggerInstall = triggerInstall;
 
+  // ── 5) 2nd-session privacy reminder (non-blocking, one-time soft toast) ─────
+  // Show once, to returning members, after their first session - never blocks the app,
+  // never interrupts a check-in. Uses a session counter in localStorage: first visit = 1,
+  // second visit = 2, that is when we show it (and mark it shown forever).
+  function maybePrivacyReminder() {
+    try {
+      // Never nag: skip if already shown, or if not onboarded yet, or on embed/login
+      if (localStorage.getItem('riley_privacy_reminder_shown') === '1') return;
+      if (!isOnboarded()) return;
+      if (/[?&]embed=1/.test(location.search)) return;
+      if (onLogin) return;
+
+      // Increment session counter once per browser session
+      var counted = sessionStorage.getItem('riley_session_counted');
+      if (!counted) {
+        var prev = parseInt(localStorage.getItem('riley_session_count') || '0', 10);
+        var next = prev + 1;
+        localStorage.setItem('riley_session_count', String(next));
+        sessionStorage.setItem('riley_session_counted', '1');
+      }
+      var count = parseInt(localStorage.getItem('riley_session_count') || '0', 10);
+      // Show on 2nd session only (count === 2)
+      if (count !== 2) return;
+
+      // Don't show if a check-in is active (the lock signal may not have arrived yet,
+      // so delay enough to let pwa.js receive the postMessage if it comes).
+      setTimeout(function () {
+        if (_checkinLock) return;  // check-in in progress - skip silently (we won't re-show on lock release)
+        localStorage.setItem('riley_privacy_reminder_shown', '1');
+
+        var toast = document.createElement('div'); toast.id = 'riley-privacy-toast';
+        styleOnce('riley-priv-toast-css', [
+          '#riley-privacy-toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:10003;',
+          'max-width:440px;width:calc(100vw - 32px);background:#161310;',
+          'border:1px solid rgba(201,168,76,0.3);border-radius:14px;',
+          'padding:13px 16px 13px 18px;box-shadow:0 10px 40px rgba(0,0,0,0.55);',
+          'font-family:"DM Sans",sans-serif;font-size:13.5px;color:#e8e4de;line-height:1.55;',
+          'display:flex;align-items:flex-start;gap:10px;',
+          'animation:privToastIn .35s cubic-bezier(.2,.7,.2,1)}',
+          '@keyframes privToastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}',
+          '@keyframes privToastOut{to{opacity:0;transform:translateX(-50%) translateY(-10px)}}'
+        ].join(''));
+        toast.innerHTML =
+          '<span style="font-size:15px;flex-shrink:0;margin-top:1px">&#128274;</span>'
+          + '<span style="flex:1">A quiet reminder - everything here is yours. Private, exportable, and deletable anytime.'
+          + ' <a href="/settings" style="color:#c9a84c;text-decoration:underline;text-underline-offset:2px">Your data controls</a>.</span>'
+          + '<button aria-label="Dismiss" id="riley-priv-toast-x" style="background:none;border:none;color:#8a8578;font-size:20px;line-height:1;cursor:pointer;flex-shrink:0;padding:0 2px;margin-left:4px">&times;</button>';
+        document.body.appendChild(toast);
+
+        function dismiss() {
+          toast.style.animation = 'privToastOut .25s ease forwards';
+          setTimeout(function () { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 280);
+        }
+        document.getElementById('riley-priv-toast-x').addEventListener('click', dismiss);
+        // Auto-dismiss after 12 s so it never sits forever
+        setTimeout(dismiss, 12000);
+      }, 1800);  // wait 1.8s - gives check-in lock postMessage time to arrive
+    } catch (e) {}
+  }
+
   window.addEventListener('load', function () {
     setTimeout(function () {
       if (!onChatPage) chatPill();                         // Chat pill - but NOT on the chat page itself
@@ -239,6 +299,7 @@
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)
       installFirstLogin();                                 // first-ever login → offer install
+      maybePrivacyReminder();                              // 2nd-session one-time privacy reminder
     }, onLogin ? 900 : 500);
   });
 })();

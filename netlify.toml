@@ -214,7 +214,10 @@
 # for the US). In-app alerts for everyone + opt-in email via Resend (per-enrollment nudge_channels +
 # global email consent). 1/day cap, lapse-aware, dry_run supported. Dormant until members enroll.
 [functions."int-proactive-cron"]
-  schedule = "0 15 * * *"
+  # 18:00 UTC = daytime in EVERY US timezone incl Hawaii (8am HST) and Alaska (9-10am AKT) through
+  # Eastern (2pm ET) - so the once-daily nudge never lands pre-7am. Per-member quiet-hours gating on the
+  # EMAIL channel (int-proactive-cron.js, shared inQuietHours) additionally protects exotic/international tz.
+  schedule = "0 18 * * *"
 
 # Memory v2 hygiene (Master Build Spec §1.2) — weekly Mon 09:00 UTC. Backfills embeddings,
 # merges near-duplicate memories, decays stale low-confidence ones. Gated + fail-open; a no-op

@@ -17,16 +17,13 @@
  * should be reconciled against that spec before COMMS_ENABLED is flipped. Gone-Quiet ladder + gates
  * follow the handoff exactly. Once-per-template-ever is enforced here in code (not a DB constraint).
  */
-const { getSupabaseClient, requireScheduledOrOperator, memberDay } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator, memberDay, inQuietHours } = require("./supabase-client");
 const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 const { signUid } = require("./comms-sign");
 
 const APP = "https://riley.meetriley.us";
 const DAY = 86400000;
-// When a member's timezone is unknown, evaluate quiet-hours in this zone instead of UTC (a US-recovery
-// userbase - default matches the company's Montana home). Set COMMS_DEFAULT_TZ to override, no redeploy.
-const DEFAULT_TZ = process.env.COMMS_DEFAULT_TZ || "America/Denver";
 
 function firstName(profile) {
   const n = (profile && (profile.preferred_name || profile.full_name)) || "";
@@ -37,14 +34,6 @@ function firstName(profile) {
 function sigParam(uid) { const s = signUid(uid); return s ? "&s=" + s : ""; }
 function prefUrl(uid) { return APP + "/preferences?u=" + encodeURIComponent(uid) + sigParam(uid); }
 function unsubUrl(uid) { return APP + "/.netlify/functions/comms-unsubscribe?u=" + encodeURIComponent(uid) + sigParam(uid); }
-
-function inQuietHours(tz) {
-  try {
-    const zone = tz || DEFAULT_TZ;   // never fall back to UTC - that would email a US member at ~2am
-    const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: zone }).format(new Date())) % 24;
-    return h >= 22 || h < 7; // 10pm-7am in the MEMBER'S local timezone = quiet (company quiet-hours policy)
-  } catch (e) { return false; }
-}
 
 async function resendSend(msg, uid) {
   // Route through the single client-email choke point (email-send.js) so every lifecycle

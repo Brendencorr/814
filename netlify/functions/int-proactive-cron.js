@@ -15,7 +15,7 @@
  * Uses the service key (scans all users; bypasses RLS by design).
  * Model: n/a
  */
-const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { getSupabaseClient, requireScheduledOrOperator, inQuietHours } = require("./supabase-client");
 const { sendClientEmail } = require("./email-send");
 const { shell, p, btn } = require("./comms-templates");
 
@@ -186,13 +186,13 @@ exports.handler = async (event) => {
     const emailUserIds = [...new Set(plans.filter((p) => (p.enr.nudge_channels || []).includes("email")).map((p) => p.enr.user_id))];
     if (emailUserIds.length) {
       try {
-        const { data: profs } = await sb.from("user_profiles").select("id, email, email_notifications").in("id", emailUserIds);
+        const { data: profs } = await sb.from("user_profiles").select("id, email, email_notifications, timezone").in("id", emailUserIds);
         (profs || []).forEach((pr) => { profileById[pr.id] = pr; });
       } catch (_) {}
     }
   }
 
-  let sent = 0, cleared = 0, emailed = 0;
+  let sent = 0, cleared = 0, emailed = 0, emailQuietSkipped = 0;
   if (!dryRun) {
     for (const p of plans) {
       try {
@@ -204,8 +204,15 @@ exports.handler = async (event) => {
         if (resendKey && (p.enr.nudge_channels || []).includes("email")) {
           const prof = profileById[p.enr.user_id];
           if (prof && prof.email && prof.email_notifications !== false) {
-            const ok = await sendProgramEmail(resendKey, prof.email, p.alert, p.enr.user_id);
-            if (ok) { emailed++; sb.from("engagement_events").insert({ user_id: p.enr.user_id, event_type: "program_nudge_email_sent", event_data: { step: p.step } }).then(() => {}, () => {}); }
+            // Company quiet-hours policy: no EMAIL between 10pm-7am in the member's LOCAL time. The in-app
+            // alert above already fired (time-agnostic - only seen when they open the app), so we just hold
+            // the email. This daily run is US daytime, so US members are never skipped; the gate protects a
+            // future member in an exotic timezone from a 3am nudge email. Counted (not silent) below.
+            if (inQuietHours(prof.timezone)) { emailQuietSkipped++; }
+            else {
+              const ok = await sendProgramEmail(resendKey, prof.email, p.alert, p.enr.user_id);
+              if (ok) { emailed++; sb.from("engagement_events").insert({ user_id: p.enr.user_id, event_type: "program_nudge_email_sent", event_data: { step: p.step } }).then(() => {}, () => {}); }
+            }
           }
         }
       } catch (e) { console.error("nudge send failed (non-fatal):", e.message); }
@@ -218,6 +225,7 @@ exports.handler = async (event) => {
   return json(200, {
     ok: true, dry_run: dryRun, date: todayStr, email_configured: !!resendKey,
     enrollments_scanned: (enrolls || []).length, planned: plans.length, sent: dryRun ? 0 : sent, emailed: dryRun ? 0 : emailed,
+    email_quiet_skipped: dryRun ? 0 : emailQuietSkipped,
     lapse_auto_cleared: dryRun ? clears.length : cleared,
     preview: plans.slice(0, 25).map((p) => ({ program: p.enr.program_key, step: p.step, title: p.alert.title })),
   });

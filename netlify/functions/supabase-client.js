@@ -53,6 +53,17 @@ function soberDaysForMember(startYmd, timezone) {
   const diff = Math.floor((Date.parse(memberDay(timezone)) - Date.parse(String(startYmd).slice(0, 10))) / 86400000);
   return Number.isNaN(diff) ? null : Math.max(0, diff);
 }
+// Company quiet-hours policy: we never send email/push between 10pm and 7am in the MEMBER'S local time.
+// Single source of truth (shared by evaluate-comms + int-proactive so the window can never drift). When a
+// member's tz is unknown, evaluate in COMMS_DEFAULT_TZ (defaults to Mountain, the company home) - never UTC,
+// which would land ~2am for a US member. Returns true when the given tz is currently inside quiet hours.
+function inQuietHours(timezone) {
+  try {
+    const zone = timezone || process.env.COMMS_DEFAULT_TZ || "America/Denver";
+    const h = Number(new Intl.DateTimeFormat("en-US", { hour: "numeric", hour12: false, timeZone: zone }).format(new Date())) % 24;
+    return h >= 22 || h < 7; // 10pm-7am local = quiet
+  } catch (e) { return false; }
+}
 
 // Operator-only gate. Returns null when the request carries the correct OPERATOR_KEY header,
 // or a fail-closed 401/503 response object otherwise. For operator/pipeline endpoints that must
@@ -123,4 +134,4 @@ async function getVapidConfig() {
   return env;
 }
 
-module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator, memberDay, soberDaysForMember, getVapidConfig };
+module.exports = { getSupabaseClient, getUserIdFromToken, emitEvent, requireOperator, requireScheduledOrOperator, memberDay, soberDaysForMember, inQuietHours, getVapidConfig };

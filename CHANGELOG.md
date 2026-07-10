@@ -10,6 +10,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-10
+
+### Social publish actually reaches FeedHive: media upload + one-post-per-approval
+- **Why:** After the design step worked, "Final approve" created jobs but FeedHive rejected every one
+  ("FeedHive API error") so nothing hit Scheduled. Cause: FeedHive `POST /posts` attaches media by
+  **uploaded media ID**, not URL - the code sent `[{type:'image',url}]`. Also Echo emits a package per
+  platform (instagram/tiktok/linkedin) while `feedhive-publish` targets ALL connected accounts every call,
+  so publishing each package would create duplicate drafts.
+- **What:** `feedhive-publish.js` now implements the 3-step media upload (create session → PUT to S3 →
+  complete → `med_` id) via `resolveMediaIds()`, accepts pre-uploaded `media_ids` OR `media` URLs, and a new
+  `action:'upload_media'` (upload once, reuse IDs). `content-queue.js` publish uploads the design ONCE before
+  the loop, passes `media_ids`, collapses to **one post per approval** (targets all connected accounts;
+  per-platform account routing is a follow-up), and now records the real FeedHive error `detail` on failed jobs.
+- **Files:** `feedhive-publish.js`, `content-queue.js`. FEEDHIVE_MODE=draft unchanged (nothing auto-posts).
+
 ## 2026-07-09
 
 ### Riley Relationship Engine (slice 3-6): tenure-calibrated trust · pattern-noticing · milestones · deepening

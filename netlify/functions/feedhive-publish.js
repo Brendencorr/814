@@ -40,6 +40,55 @@ async function resolveAccounts(token, provided) {
   } catch (_) { return []; }
 }
 
+// FeedHive attaches media by ID, not URL. Upload a public image URL through the
+// 3-step flow (create session -> PUT to S3 -> complete) and return the media record id.
+const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", mp4: "video/mp4", mov: "video/quicktime" };
+async function uploadMediaFromUrl(token, url) {
+  const imgRes = await fetch(url);
+  if (!imgRes.ok) throw new Error(`fetch media ${imgRes.status}`);
+  const buf = Buffer.from(await imgRes.arrayBuffer());
+  const clean = String(url).split("?")[0];
+  const filename = clean.split("/").pop() || "image.png";
+  const ext = (filename.split(".").pop() || "png").toLowerCase();
+  const contentType = imgRes.headers.get("content-type") || MIME[ext] || "image/png";
+  // 1) create upload session
+  const sess = await fetch(`${FEEDHIVE_API}/media/uploads`, {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ filename, content_type: contentType }),
+  });
+  const sj = await sess.json().catch(() => ({}));
+  const up = sj && sj.data;
+  if (!sess.ok || !up || !up.upload_url || !up.upload_id) throw new Error("upload session failed: " + JSON.stringify(sj).slice(0, 160));
+  // 2) PUT the bytes to the signed S3 URL (same content-type)
+  const put = await fetch(up.upload_url, { method: "PUT", headers: { "Content-Type": contentType }, body: buf });
+  if (!put.ok) throw new Error(`S3 PUT ${put.status}`);
+  // 3) complete -> media record id
+  const comp = await fetch(`${FEEDHIVE_API}/media/uploads/${encodeURIComponent(up.upload_id)}/complete`, {
+    method: "POST", headers: { Authorization: `Bearer ${token}` },
+  });
+  const cj = await comp.json().catch(() => ({}));
+  if (!comp.ok || !cj || !cj.data || !cj.data.id) throw new Error("complete failed: " + JSON.stringify(cj).slice(0, 160));
+  return cj.data.id;
+}
+
+// Normalize a caller's `media` (URLs or {url} objects) + `media_ids` (already uploaded)
+// into an array of FeedHive media IDs, uploading any URLs. Best-effort per item.
+async function resolveMediaIds(token, body) {
+  const ids = Array.isArray(body.media_ids) ? body.media_ids.filter((x) => typeof x === "string" && x) : [];
+  const urls = [];
+  if (Array.isArray(body.media)) {
+    for (const m of body.media) {
+      const u = typeof m === "string" ? m : (m && m.url);
+      if (u && typeof u === "string" && /^https?:\/\//.test(u)) urls.push(u);
+    }
+  }
+  for (const u of urls) {
+    try { ids.push(await uploadMediaFromUrl(token, u)); }
+    catch (e) { console.error("feedhive media upload failed (skipped):", u, e.message); }
+  }
+  return ids;
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS_HEADERS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
@@ -56,6 +105,15 @@ exports.handler = async function (event) {
     if (!token) return json(500, { error: "FEEDHIVE_API_KEY not configured" });
 
     const body = JSON.parse(event.body || "{}");
+
+    // Media pre-upload endpoint: upload once, reuse the IDs across N posts (avoids
+    // re-uploading the same image per platform). content-queue calls this before its loop.
+    if (body.action === "upload_media") {
+      const urls = Array.isArray(body.urls) ? body.urls : [];
+      const media_ids = await resolveMediaIds(token, { media: urls });
+      return json(200, { success: true, media_ids });
+    }
+
     const text = body.text;
     const scheduled_at = body.scheduled_at || null;
     if (!text) return json(400, { error: "text is required" });
@@ -74,7 +132,10 @@ exports.handler = async function (event) {
     const payload = { text, accounts, status };
     if (status === "scheduled" && scheduled_at) payload.scheduled_at = scheduled_at;
     if (scheduled_at) payload.notes = `Intended time: ${scheduled_at}`; // preserved even for drafts
-    if (Array.isArray(body.media) && body.media.length) payload.media = body.media;
+    // FeedHive wants media as an array of uploaded media IDs. Accept pre-uploaded
+    // media_ids, or media URLs/objects (which we upload here), and attach the IDs.
+    const mediaIds = await resolveMediaIds(token, body);
+    if (mediaIds.length) payload.media = mediaIds;
     if (Array.isArray(body.labels) && body.labels.length) payload.labels = body.labels;
 
     const res = await fetch(`${FEEDHIVE_API}/posts`, {

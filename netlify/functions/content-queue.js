@@ -217,11 +217,33 @@ exports.handler = async function (event) {
         maxTokens: 2500,
       });
       const echo = extractJson(echoRaw) || { packages: [] };
-      const packages = Array.isArray(echo.packages) ? echo.packages : [];
+      const allPackages = Array.isArray(echo.packages) ? echo.packages : [];
+      // ONE FeedHive post per approval - a single draft that targets all connected accounts
+      // (IG + FB). Echo produces a package per platform, but feedhive-publish posts to every
+      // connected account regardless, so publishing each package would create duplicate drafts.
+      // (Per-platform account routing with tailored captions is a follow-up.) Prefer the IG package.
+      const chosen = allPackages.find((p) => p && p.platform === "instagram") || allPackages[0] ||
+        { platform: "instagram", caption_final: masterCaption, hashtags_final: [] };
+      const packages = [chosen];
 
       // Create publishing jobs + push to FeedHive (feedhive-publish resolves accounts + key itself)
       const siteUrl = process.env.URL || "";
       let scheduledCount = 0;
+
+      // Upload the rendered design to FeedHive ONCE and reuse the media IDs across every
+      // platform post (FeedHive attaches media by ID, not URL). Reposts never re-upload.
+      let mediaIds = [];
+      if (siteUrl && item.kind !== "repost" && mediaUrls.length) {
+        try {
+          const upRes = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-operator-key": process.env.OPERATOR_KEY || "" },
+            body: JSON.stringify({ action: "upload_media", urls: mediaUrls }),
+          });
+          const uj = await upRes.json();
+          if (uj && Array.isArray(uj.media_ids)) mediaIds = uj.media_ids;
+        } catch (e) { console.error("feedhive media pre-upload failed (posts go text-only):", e.message); }
+      }
 
       for (const pkg of packages) {
         const jobRow = {
@@ -246,19 +268,20 @@ exports.handler = async function (event) {
             if (item.kind === "repost" && item.original_url) {
               text = `${jobRow.caption_final}\n\nvia ${item.original_creator || "original creator"}: ${item.original_url}`;
             }
-            // attach the rendered design(s) as media (reposts link the original, never re-upload)
-            const media = (item.kind === "repost") ? [] : (jobRow.media_urls || []).filter(Boolean).map((u) => ({ type: "image", url: u }));
+            // attach the rendered design by pre-uploaded media IDs (reposts link the original, never re-upload)
+            const media_ids = (item.kind === "repost") ? [] : mediaIds;
             const res = await fetch(`${siteUrl}/.netlify/functions/feedhive-publish`, {
               method: "POST",
               headers: { "Content-Type": "application/json", "x-operator-key": process.env.OPERATOR_KEY || "" },
-              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media }),
+              body: JSON.stringify({ text, scheduled_at: jobRow.scheduled_for, media_ids }),
             });
             const bd = await res.json();
             if (bd.success) {
               await db.from("content_publishing_jobs").update({ state: "scheduled", buffer_post_id: bd.update_id || "scheduled" }).eq("id", job.id);
               scheduledCount++;
             } else {
-              await db.from("content_publishing_jobs").update({ state: "failed", error_detail: bd.error || "buffer error" }).eq("id", job.id);
+              const detail = bd.detail ? `${bd.error || "FeedHive error"}: ${typeof bd.detail === "string" ? bd.detail : JSON.stringify(bd.detail)}` : (bd.error || "publish error");
+              await db.from("content_publishing_jobs").update({ state: "failed", error_detail: detail.slice(0, 300) }).eq("id", job.id);
             }
           } catch (e) {
             await db.from("content_publishing_jobs").update({ state: "failed", error_detail: e.message }).eq("id", job.id);

@@ -12,6 +12,13 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### `01c6258` - Privacy/trust: confidentiality bullet, 2nd-session reminder, Settings data card
+- **Why:** three trust-building updates for a grief/recovery/addiction audience - honesty and control matter here.
+- **Task 1 (onboarding.html):** added "Yours, and private" as the FIRST bullet on the Screen 9 consent screen. Honest about the safety exception ("The one exception: a real safety moment, used only to help you, nothing else."). Consistent with the footer that was already there - no contradictions.
+- **Task 2 (pwa.js):** one-time, non-blocking soft toast on the member's 2nd session. Tracks via `riley_session_count` (localStorage, incremented once per browser session via `riley_session_counted` in sessionStorage) + `riley_privacy_reminder_shown` flag. Shows only after onboarding, skips if check-in is locked, auto-dismisses after 12s, links to /settings.
+- **Task 3 (settings.html):** replaced the "Your data -> /dashboard#data" redirect row with a dedicated "Your data" card - Export, Delete data, and Delete account all one tap away. Export wires to the existing `auth-handler.js export_data` action (already existed; downloads `my-riley-data.json`). Delete data wires to `delete_data` action (clears data, keeps sign-in). Delete account unchanged (RileyDeleteAccount modal).
+- **Files:** `onboarding.html`, `pwa.js`, `settings.html`.
+
 ### 2-week all-Riley launch campaign (28 curated posts) + pause the auto web-engine
 - **Why:** The launch should be a controlled, intentional Riley-promotion sequence, not the randomized
   web-topic pipeline. Operator wants 2 weeks of all-Riley posts (2/day) built + scheduled up front, reviewed

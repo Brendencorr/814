@@ -281,7 +281,7 @@ async function buildPostFromCandidate(db, c, ctx) {
     design_notes: brief.design_notes || null,
     sage_score: brief.sage_score || null,
     safety_prefilter: brief.safety_prefilter || [],
-    status: "brief",
+    status: "ready_for_atlas",
   }).select().single();
   await db.from("content_candidates").update({ status: "sent_to_sage" }).eq("id", c.id);
 
@@ -426,7 +426,9 @@ const LAUNCH = [
 async function seedLaunch(db, { force = false } = {}) {
   const today = new Date().toISOString().slice(0, 10);
   try {
-    const { data: existing } = await db.from("content_candidates").select("id").ilike("topic", "Launch: %").limit(1);
+    // Guard on the actual OUTPUT (a built launch brief), not candidates - candidates can
+    // exist from a failed prior attempt while nothing downstream was created.
+    const { data: existing } = await db.from("content_briefs").select("id").ilike("design_notes", "launch:%").limit(1);
     if (existing && existing.length && !force) {
       return { ok: true, skipped: true, reason: "Launch campaign already seeded. Pass force:true to re-seed." };
     }
@@ -449,7 +451,7 @@ async function seedLaunch(db, { force = false } = {}) {
         program_tie: p.program_tie || "none", persona: p.persona || "universal",
         seo_keywords: [], hashtags: {}, template_family: null, asset_types: ["static"],
         platforms: ["instagram", "facebook"], design_notes: `launch:${p.slug} ground:${p.ground}`,
-        sage_score: null, safety_prefilter: [], status: "brief",
+        sage_score: null, safety_prefilter: [], status: "ready_for_atlas",
       }).select().single();
       if (!brief) continue;
 

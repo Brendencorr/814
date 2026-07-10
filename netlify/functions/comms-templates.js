@@ -227,7 +227,7 @@ const TEMPLATES = {
     subject: "A note from the person who built Riley",
     preview: "One month in - I wanted you to hear from me.",
     html: (v) =>
-      p("Hi,") +
+      p("Hi " + esc(v.first_name || "there") + ",") +
       p("For the last month, you've been getting to know Riley.") +
       p("I thought it was only fair that you got to know the person who built her.") +
       p("I'm Brenden.") +
@@ -266,7 +266,7 @@ const TEMPLATES = {
       p("I'm really glad you're here.") +
       p("- Brenden<br>Founder, The 8:14 Project"),
     text: (v) =>
-      "Hi,\n\n" +
+      "Hi " + (v.first_name || "there") + ",\n\n" +
       "For the last month, you've been getting to know Riley.\n\n" +
       "I thought it was only fair that you got to know the person who built her.\n\n" +
       "I'm Brenden.\n\n" +

@@ -12,6 +12,14 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-10
 
+### Founder letter (guide_5): personalize the greeting with the member's name
+- **Why:** Brenden's final letter opened "Hi," (built verbatim); he wants it personalized. The comms system
+  is built for this - `admin-comms.js` renders the operator preview with `first_name:"{first_name}"`, so a
+  template using `v.first_name` shows "Hi {first_name}," in the preview and "Hi Casey," at send.
+- **What:** `guide_5` greeting → `"Hi " + esc(v.first_name || "there") + ","` (html) and the text twin.
+  Verified: real send → "Hi Casey,"; operator preview → "Hi {first_name},"; missing name → "Hi there,".
+- **Files:** `comms-templates.js`.
+
 ### `01c6258` - Privacy/trust: confidentiality bullet, 2nd-session reminder, Settings data card
 - **Why:** three trust-building updates for a grief/recovery/addiction audience - honesty and control matter here.
 - **Task 1 (onboarding.html):** added "Yours, and private" as the FIRST bullet on the Screen 9 consent screen. Honest about the safety exception ("The one exception: a real safety moment, used only to help you, nothing else."). Consistent with the footer that was already there - no contradictions.

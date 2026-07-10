@@ -123,9 +123,8 @@ const TRIGGERS = {
   guide_3:     { flow: "guide",      seq: 3, label: "After Reset Day 1 is completed",      days: null },
   reset_daily: { flow: "guide",      seq: 4, label: "Reset days 2–7 · daily",     days: null },
   guide_4:     { flow: "guide",      seq: 5, label: "Day 4",                               days: 4 },
-  guide_5:     { flow: "guide",      seq: 6, label: "Day 7 · end of first week",       days: 7 },
   guide_6:     { flow: "guide",      seq: 7, label: "Day 12",                              days: 12 },
-  guide_7:     { flow: "guide",      seq: 8, label: "Day 30",                              days: 30 },
+  guide_5:     { flow: "guide",      seq: 8, label: "Day 29 · month one (founder)",     days: 29 },
   quiet_1:     { flow: "gone_quiet", seq: 1, label: "After N days of no contact (us or them)", days: 14 },
   quiet_2:     { flow: "gone_quiet", seq: 2, label: "One gap later · auto-spaced",            days: null },
   quiet_3:     { flow: "gone_quiet", seq: 3, label: "One more gap later · final",             days: null },
@@ -221,23 +220,90 @@ const TEMPLATES = {
       "He tells it better than I ever could:\nRead the story behind 8:14 → " + SITE + "/about\n\nDay 5 is ready whenever you are.",
   },
 
+  // The Month One Letter - founder-authored, FINAL. Owns the one-month moment (guide_7 retired).
+  // Day 29, active users only (Gone-Quiet owns the absent). No CTA - this letter sells nothing.
   guide_5: {
-    from: "brenden", flow: "guide", author: "interim",
-    subject: "You finished the week",
-    preview: "A note from the person who built Riley.",
+    from: "brenden", flow: "guide", author: "founder", replyTo: "support@meetriley.us",
+    subject: "A note from the person who built Riley",
+    preview: "One month in - I wanted you to hear from me.",
     html: (v) =>
-      p("Hi - I'm Brenden. I built Riley, and I wanted the first note after your first week to come from a person.") +
-      p("Seven days ago you gave a stranger's idea eight minutes of your morning. Most people don't. Most people download things like this, open them twice, and let them go. You didn't - and I want you to notice that, because noticing is most of the work.") +
-      p("I built Riley because when my own life came apart, the hardest part wasn't the big moments. It was the ordinary mornings - nobody to hand me the next small right thing to do. She exists so you always have that.") +
-      p("From here, there's no program to follow. Talk to her when you want. Come back when you need. She'll be there - and if a day comes when you want her to remember everything you've built together, that door is open too.") +
-      p("Either way: I'm glad you're here. Keep going.") +
-      p("- Brenden"),
+      p("Hi,") +
+      p("For the last month, you've been getting to know Riley.") +
+      p("I thought it was only fair that you got to know the person who built her.") +
+      p("I'm Brenden.") +
+      p("First, thank you.") +
+      p("Whether you've talked with Riley every day or only a handful of times, you came back. In a world full of things competing for our attention, that's no small thing.") +
+      p("Real change rarely looks dramatic while it's happening.") +
+      p("Most of the moments that changed my life didn't feel important at the time. They were ordinary mornings. Quiet walks. Honest conversations. One small decision to keep going when it would have been easier not to.") +
+      p("I didn't build Riley from a business plan.") +
+      p("I built her because there was a season of my life when I needed someone to help me find the next small, right step.") +
+      p("Recovery taught me that.<br>Grief taught me that.<br>Starting over taught me that.") +
+      p("The hardest part wasn't always the crisis itself. It was the morning after. The ordinary Tuesday when life expected me to keep moving, but I had no idea what came next.") +
+      p("I wished there had been something I could reach for in those moments.") +
+      p("That's why Riley exists.") +
+      p("If you've spent any time reading about The 8:14 Project, you've probably wondered where the name comes from.") +
+      p("It began with a little boy and his watch.") +
+      p("One day, that watch stopped.") +
+      p("It stopped at 8:14.") +
+      p("For the people who loved him, that number became something much bigger than a moment on a clock. It became a reminder that love outlasts loss, that time is precious, and that even after life changes forever, we still get to decide what we build with the days we're given.") +
+      p("That's what 8:14 means to me.") +
+      p("It's not about looking backward.") +
+      p("It's about choosing how we move forward.") +
+      p("That's the heart behind everything we're building here.") +
+      p("Riley isn't here to replace the people who love you. She isn't here to replace therapy, recovery, faith, or community.") +
+      p("She's simply here for the moments in between.") +
+      p("The quiet mornings.<br>The difficult evenings.<br>The days when you need someone to help you pause, think clearly, and remember that you're not finished becoming the person you were meant to be.") +
+      p("If you've made it this far, I hope you'll keep coming back.") +
+      p("Not because you're trying to maintain a streak.") +
+      p("Not because anyone is keeping score.") +
+      p("But because you're worth investing a few minutes in every day.") +
+      p("You don't have to do everything today.") +
+      p("You don't have to have it all figured out.") +
+      p("Just keep showing up.") +
+      p("I've learned that showing up on the ordinary days, when no one is watching, is where lives quietly begin to change.") +
+      p("Thank you for trusting something I built.") +
+      p("More importantly, thank you for trusting yourself enough to begin.") +
+      p("I'm really glad you're here.") +
+      p("- Brenden<br>Founder, The 8:14 Project"),
     text: (v) =>
-      "Hi - I'm Brenden. I built Riley, and I wanted the first note after your first week to come from a person.\n\n" +
-      "Seven days ago you gave a stranger's idea eight minutes of your morning. Most people don't. Most people download things like this, open them twice, and let them go. You didn't - and I want you to notice that, because noticing is most of the work.\n\n" +
-      "I built Riley because when my own life came apart, the hardest part wasn't the big moments. It was the ordinary mornings - nobody to hand me the next small right thing to do. She exists so you always have that.\n\n" +
-      "From here, there's no program to follow. Talk to her when you want. Come back when you need. She'll be there - and if a day comes when you want her to remember everything you've built together, that door is open too.\n\n" +
-      "Either way: I'm glad you're here. Keep going.\n\n- Brenden",
+      "Hi,\n\n" +
+      "For the last month, you've been getting to know Riley.\n\n" +
+      "I thought it was only fair that you got to know the person who built her.\n\n" +
+      "I'm Brenden.\n\n" +
+      "First, thank you.\n\n" +
+      "Whether you've talked with Riley every day or only a handful of times, you came back. In a world full of things competing for our attention, that's no small thing.\n\n" +
+      "Real change rarely looks dramatic while it's happening.\n\n" +
+      "Most of the moments that changed my life didn't feel important at the time. They were ordinary mornings. Quiet walks. Honest conversations. One small decision to keep going when it would have been easier not to.\n\n" +
+      "I didn't build Riley from a business plan.\n\n" +
+      "I built her because there was a season of my life when I needed someone to help me find the next small, right step.\n\n" +
+      "Recovery taught me that.\nGrief taught me that.\nStarting over taught me that.\n\n" +
+      "The hardest part wasn't always the crisis itself. It was the morning after. The ordinary Tuesday when life expected me to keep moving, but I had no idea what came next.\n\n" +
+      "I wished there had been something I could reach for in those moments.\n\n" +
+      "That's why Riley exists.\n\n" +
+      "If you've spent any time reading about The 8:14 Project, you've probably wondered where the name comes from.\n\n" +
+      "It began with a little boy and his watch.\n\n" +
+      "One day, that watch stopped.\n\n" +
+      "It stopped at 8:14.\n\n" +
+      "For the people who loved him, that number became something much bigger than a moment on a clock. It became a reminder that love outlasts loss, that time is precious, and that even after life changes forever, we still get to decide what we build with the days we're given.\n\n" +
+      "That's what 8:14 means to me.\n\n" +
+      "It's not about looking backward.\n\n" +
+      "It's about choosing how we move forward.\n\n" +
+      "That's the heart behind everything we're building here.\n\n" +
+      "Riley isn't here to replace the people who love you. She isn't here to replace therapy, recovery, faith, or community.\n\n" +
+      "She's simply here for the moments in between.\n\n" +
+      "The quiet mornings.\nThe difficult evenings.\nThe days when you need someone to help you pause, think clearly, and remember that you're not finished becoming the person you were meant to be.\n\n" +
+      "If you've made it this far, I hope you'll keep coming back.\n\n" +
+      "Not because you're trying to maintain a streak.\n\n" +
+      "Not because anyone is keeping score.\n\n" +
+      "But because you're worth investing a few minutes in every day.\n\n" +
+      "You don't have to do everything today.\n\n" +
+      "You don't have to have it all figured out.\n\n" +
+      "Just keep showing up.\n\n" +
+      "I've learned that showing up on the ordinary days, when no one is watching, is where lives quietly begin to change.\n\n" +
+      "Thank you for trusting something I built.\n\n" +
+      "More importantly, thank you for trusting yourself enough to begin.\n\n" +
+      "I'm really glad you're here.\n\n" +
+      "- Brenden\nFounder, The 8:14 Project",
   },
 
   guide_6: {
@@ -257,20 +323,8 @@ const TEMPLATES = {
       "And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.\n\nSee what Companion adds → " + SITE + "/home#programs",
   },
 
-  guide_7: {
-    from: "riley", flow: "guide",
-    subject: "One month",
-    preview: "Look what you've been doing.",
-    html: (v) =>
-      p(esc(v.first_name) + " - a month ago you signed up and I made you exactly one promise: no pressure, just company.") +
-      p("Thirty days later you've shown up " + esc(v.session_count) + " times. Not perfectly. Not every day. That was never the deal.") +
-      p("But you kept coming back, and that's the whole thing - that's how a rebuild actually happens.") +
-      p("Nothing to do with this email. Just wanted it said."),
-    text: (v) =>
-      v.first_name + " - a month ago you signed up and I made you exactly one promise: no pressure, just company.\n\n" +
-      "Thirty days later you've shown up " + v.session_count + " times. Not perfectly. Not every day. That was never the deal.\n\n" +
-      "But you kept coming back, and that's the whole thing - that's how a rebuild actually happens.\n\nNothing to do with this email. Just wanted it said.",
-  },
+  // guide_7 RETIRED (July 2026): the founder-authored Month One Letter (guide_5, day 29) now owns the
+  // one-month moment. The Guide flow ends at guide_5. Do not re-add a day-30 email without founder approval.
 
   quiet_1: {
     from: "riley", flow: "gone_quiet",

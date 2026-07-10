@@ -62,6 +62,24 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   per-platform account routing is a follow-up), and now records the real FeedHive error `detail` on failed jobs.
 - **Files:** `feedhive-publish.js`, `content-queue.js`. FEEDHIVE_MODE=draft unchanged (nothing auto-posts).
 
+### Comms restructure: founder Month-One letter (guide_5 @ day 29) + no upsell to paid + tier on send log
+- **Why:** Brenden finalized the founder letter and restructured the Guide flow around it. Still DARK; current
+  members remain walled off (`unsubscribed_lifecycle=true`).
+- **The founder letter (`guide_5`):** replaced the interim copy with Brenden's FINAL, founder-authored "Month
+  One" letter, verbatim, exact cadence (tight tercets via `<br>`, paragraph breaks via separate `p()`). The two
+  em-dashes converted to hyphens per the standing brand rule. `from: brenden`, `replyTo: support@`,
+  `author: founder`, subject "A note from the person who built Riley", NO CTA (sells nothing). Rendered
+  standalone + screenshot-verified for spacing/cadence before shipping.
+- **Timing:** `guide_5` moved from day 7 → **day 29** (active users only; Gone-Quiet owns the absent). It now
+  owns the one-month moment. **`guide_7` RETIRED** (Riley's old day-30 "One month" note removed from templates,
+  TRIGGERS, and the flow). The Guide flow now ends at guide_5. No day-7 email (Reset arc covers it, per spec).
+- **No upsell to paid (Option A):** `guide_6` (the Companion pitch, day 12) now sends **only to Guide tier** -
+  a Companion or Coach member never gets pitched a tier they already have. `guide_5` has NO tier gate, so every
+  client, regardless of tier, gets the founder letter.
+- **Tier on the send log:** new `email_sends.plan` column (migration 085); `evaluate-comms decide()` records
+  each recipient's tier so the operator can see which tier every send went to. `node --check` passes, 0 em-dashes.
+- **Files:** `comms-templates.js`, `evaluate-comms.js`, `supabase/migrations/085_email_sends_plan_column.sql`.
+
 ## 2026-07-09
 
 ### Riley Relationship Engine (slice 3-6): tenure-calibrated trust · pattern-noticing · milestones · deepening

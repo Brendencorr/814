@@ -134,7 +134,7 @@ exports.handler = async (event) => {
   });
 
   // Log a decision (send or suppression) to email_sends, and (if live) actually send.
-  async function decide(uid, email, key, msg, forceReason, logged) {
+  async function decide(uid, email, key, msg, forceReason, logged, plan) {
     let suppressed = true, reason = forceReason || null, resend_id = null;
     if (!forceReason) {
       if (!ENABLED) { reason = "comms_disabled"; }
@@ -148,7 +148,7 @@ exports.handler = async (event) => {
     // Don't re-insert the same suppressed decision every hour while dark (would bloat the log);
     // the real once-ever dedup lives in sentKeys (actual sends), never in the suppressed rows.
     if (suppressed && logged && logged.has(key)) { bump("suppressed_dupe:" + (reason || "?")); return; }
-    await sb.from("email_sends").insert({ user_id: uid, template_key: key, flow: msg.flow, resend_id, suppressed, suppression_reason: reason });
+    await sb.from("email_sends").insert({ user_id: uid, template_key: key, flow: msg.flow, resend_id, suppressed, suppression_reason: reason, plan: plan || null });
     if (logged) logged.add(key);
     bump(suppressed ? "suppressed:" + (reason || "?") : "sent:" + key);
   }
@@ -198,7 +198,7 @@ exports.handler = async (event) => {
       if (keys.has(key)) return false;         // once-per-template-ever (except reset_daily handled separately)
       if (tplOff(key)) return false;           // operator disabled this template in the dashboard
       const r = render(key, vars, urls, tplOverride[key]);
-      await decide(uid, prof.email, key, r, null, logged);
+      await decide(uid, prof.email, key, r, null, logged, plan);
       keys.add(key); fired = true; return true;
     };
 
@@ -223,16 +223,19 @@ exports.handler = async (event) => {
     // 3) GUIDE FLOW (runs while still "in touch" - i.e., not yet in win-back). The onboarding series
     // keeps refreshing the touch, so it completes on its calendar before Gone-Quiet can start.
     if (!fired && daysSinceTouch < QUIET_GAP) {
-      if (daysSinceSignup >= dayFor("guide_7", 30)) await send("guide_7");
-      else if (daysSinceSignup >= dayFor("guide_6", 12)) await send("guide_6");
-      else if (daysSinceSignup >= dayFor("guide_5", 7)) await send("guide_5");
+      // Month One founder letter (day 29) now owns the one-month moment; guide_7 retired. NO tier gate here -
+      // every client, regardless of tier, gets this letter (active users only; Gone-Quiet owns the absent above).
+      if (daysSinceSignup >= dayFor("guide_5", 29)) await send("guide_5");
+      // Companion pitch: Guide tier ONLY (Option A - never upsell a paid member the tier they already have).
+      // Paid members enter this branch and send nothing, so they never fall through to an earlier email.
+      else if (daysSinceSignup >= dayFor("guide_6", 12)) { if (plan === "guide") await send("guide_6"); }
       else if (resetDay >= dayFor("guide_4", 4) || daysSinceSignup >= dayFor("guide_4", 4)) await send("guide_4");
       // reset_daily: days 2–7, only if push not opted in, for the next uncompleted reset day.
       else if (resetStarted && resetDay >= 1 && resetDay < 7 && !st.push_opted_in && !tplOff("reset_daily")) {
         const n = resetDay + 1;
         const rd = render("reset_daily", { ...vars, n, module_title: "Day " + n, module_theme: "today's step" }, urls, tplOverride["reset_daily"]);
         // reset_daily is the ONE template allowed to repeat (once per day, gated by "already_today" above).
-        await decide(uid, prof.email, "reset_daily", rd, null, logged);
+        await decide(uid, prof.email, "reset_daily", rd, null, logged, plan);
         fired = true;
       }
       else if (resetDay >= 1) await send("guide_3");

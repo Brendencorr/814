@@ -19,6 +19,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 - **Task 3 (settings.html):** replaced the "Your data -> /dashboard#data" redirect row with a dedicated "Your data" card - Export, Delete data, and Delete account all one tap away. Export wires to the existing `auth-handler.js export_data` action (already existed; downloads `my-riley-data.json`). Delete data wires to `delete_data` action (clears data, keeps sign-in). Delete account unchanged (RileyDeleteAccount modal).
 - **Files:** `onboarding.html`, `pwa.js`, `settings.html`.
 
+### Mobile-readiness audit (all 38 pages) + fix the 2 real defects found
+- **Why:** Confirm the PWA/website works the SAME on mobile (375px) as desktop, no rendering/UX breakers.
+  Audited every client page 3 ways: baseline grep (viewport meta present on ALL 38), 3 parallel deep code
+  audits (marketing / core app / feature pages), and live mobile renders of home + login (screenshot-verified,
+  0 horizontal overflow). VERDICT: genuinely mobile-ready - fluid layouts, `overflow-x:hidden`, responsive
+  grids with mobile breakpoints, and the member sidebar becomes a `pwa.js` hamburger drawer at <=700px.
+- **Fixed (real breaker):** `conversations.html` had a hardcoded `grid-template-columns:280px 1fr` with no
+  mobile override → the message thread was crushed to a sliver on a phone. Added a `.cv-split` class that
+  stacks to 1 column (list capped 44vh) at <=700px. Now usable on mobile.
+- **Fixed (conditional defect, 16 pages):** the locked-feature `wall()` overlay used `left:220px` (the desktop
+  sidebar width), so on mobile (sidebar hidden) it started 220px in and squeezed the unlock card. Changed to
+  `left:0` (full-screen lock; the card already has a "Back to Home" escape, so desktop is fine + now identical).
+- **Reported, not fixed (owner's call):** marketing pages have no hamburger nav below 720px (section links only
+  in the footer) - UX gap, not a breaker. Optional polish: onboarding 0-10 ruler is tight (fits), chat-anon send
+  button 38px, brief.html two flex rows could add wrap. None block launch.
+- **Files:** `conversations.html` + 15 pages (wall() one-liner). No JS logic changed; all pass `node --check`.
+
 ### 2-week all-Riley launch campaign (28 curated posts) + pause the auto web-engine
 - **Why:** The launch should be a controlled, intentional Riley-promotion sequence, not the randomized
   web-topic pipeline. Operator wants 2 weeks of all-Riley posts (2/day) built + scheduled up front, reviewed

@@ -1013,7 +1013,7 @@ async function signOut() {
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;left:220px;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
+    ov.style.cssText='position:fixed;inset:0;left:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>

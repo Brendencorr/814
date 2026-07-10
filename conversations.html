@@ -84,7 +84,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:2px}
 @media(max-width:900px){.stat-row{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
-@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}}
+@media(max-width:700px){.layout{grid-template-columns:1fr}.sidebar{display:none}.content{padding:16px}.cv-split{grid-template-columns:1fr !important;height:auto !important}.cv-split>div:first-child{max-height:44vh}}
 
 .sb-tier{border-top:1px solid rgba(255,255,255,0.04)}
 .sb-tier-head{display:flex;align-items:center;gap:6px;padding:10px 20px;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.16em;transition:color .15s;user-select:none}
@@ -116,7 +116,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </div>
 <div class="content">
 
-<div style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 120px)">
+<div class="cv-split" style="display:grid;grid-template-columns:280px 1fr;gap:16px;height:calc(100vh - 120px)">
   <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.06);border-radius:4px;overflow-y:auto">
     <div style="padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:600;color:var(--parchment)">Riley Sessions</div>
     <div id="cv-list"></div>
@@ -297,7 +297,7 @@ function openSess(sid){
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
-    ov.style.cssText='position:fixed;inset:0;left:220px;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
+    ov.style.cssText='position:fixed;inset:0;left:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(8,7,6,0.92);backdrop-filter:blur(8px)';
     ov.innerHTML=`<div style="max-width:420px;text-align:center;padding:40px">
       <div style="font-size:44px;margin-bottom:20px">🔒</div>
       <div style="font-family:'DM Serif Display',serif;font-size:26px;color:#f5f0e8;margin-bottom:12px">${f.name} is locked</div>

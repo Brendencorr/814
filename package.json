@@ -7,9 +7,10 @@
   },
   "scripts": {
     "dev": "netlify dev",
-    "test": "node tests/golden/runner.js && node tests/crisis/runner.js",
+    "test": "node tests/golden/runner.js && node tests/crisis/runner.js && node tests/clarity/runner.js",
     "test:golden": "node tests/golden/runner.js",
-    "test:crisis": "node tests/crisis/runner.js"
+    "test:crisis": "node tests/crisis/runner.js",
+    "test:clarity": "node tests/clarity/runner.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^1.0.2",

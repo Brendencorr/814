@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — Phase B (part 1): the engine module + Stage-0 property tests (isolated, unwired)
+- **Why:** Build the actual F/P/D scoring math for Clarity v2.2 — the delicate, member-facing part — as a pure,
+  isolated, test-gated module BEFORE it touches anything live.
+- **What:** `netlify/functions/clarity-engine.js` — dependency-free (no Supabase) so tests import it directly.
+  Implements: Foundation (F1 steadiness / F2 rest / F3 fuel), Practice personal bands vs 28-day baseline + the
+  asymmetric ratchet, Direction (EMA7 vs EMA28 of core), sobriety lane density^0.8, freshness decay + provisional
+  state, First Light rise-only, hard-day band-widening, freeze snapshot, §7 input clamps. `tests/clarity/runner.js`
+  — the Stage-0 property suite (§13): **20/20 pass** (bounds, determinism/individual-fairness, monotonicity, the
+  documented non-monotonic rest plateau, band shape, direction sign, single-day outlier <12pt, ratchet asymmetry,
+  provisional, First Light rise-only, freeze, hard-day-never-lowers). Added to `npm test`.
+- **CTO decision:** the spec's `EMA7` for Foundation levels is realized as a 7-day MEAN — an EMA(α=0.25) let one
+  bad night swing a layer ~17pt, violating the §7/§15 "<12pt per day" acceptance criterion; the member-trust
+  robustness criterion wins. EMA is kept for Direction (trend). Calm/volatility stays intentionally reactive
+  (documented exception, like non-monotonic rest).
+- **Zero production impact:** nothing imports the engine yet. Next (Phase B pt 2): wire it into `state-engine.js`
+  as a dark, try/caught second write to the v2 columns; then Phase A.5 shadow-verify. Clarity stays DARK on v1.
+
 ### Check-in v2 UX fixes: time-aware, one merged screen, dynamic note response
 - **Why:** operator feedback on the new (Phase A) check-in — (1) at 8am it asked "Today was a hard day?"
   (nonsensical - morning reflects on yesterday); (2) the two grouped screens read as duplicates; (3) after the

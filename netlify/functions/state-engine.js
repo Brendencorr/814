@@ -212,3 +212,8 @@ exports.handler = async function (event) {
     explainer,
   });
 };
+
+// Exported for the Clarity v2.2 shadow-verify tool (Phase A.5) so it reconstructs the
+// SAME v1 signal bundle the live engine sees. `appDay` too, for the member-local date.
+exports.gatherSignals = gatherSignals;
+exports._appDay = appDay;

@@ -147,6 +147,10 @@ async function writeClarityV2Dark(supabase, userId, opts) {
 
   const result = engine.computeClarityV2(raw);
 
+  // Dry-run (Phase A.5 shadow-verify): compute + return, persist NOTHING. Same gather+math
+  // as the live dark write, so the verifier reports exactly what production would store.
+  if (opts.dryRun) return result;
+
   // ── persist: v2 columns on today's user_daily_state row (v1 already wrote it) ──
   try {
     await supabase.from("user_daily_state").update({

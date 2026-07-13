@@ -12,7 +12,7 @@
  */
 'use strict';
 
-const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
 const { validateConfig, effectiveConfig, nextAppDay } = require("./clarity-config-util");
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -111,6 +111,11 @@ exports.handler = async function (event) {
       };
       try { await sb.from("user_clarity_config").upsert(upsert, { onConflict: "user_id" }); }
       catch (e) { return json(500, { error: "save failed: " + e.message }); }
+      // §12 + §10 events: config took effect now; onboarding completed (custom vs defaults).
+      try {
+        emitEvent(sb, userId, "clarity_config_changed", { config_version: upsert.config_version, applied: "now", origin: "onboarding" });
+        emitEvent(sb, userId, "clarity_customize_completed", { mode: (config.enabled_practice && config.enabled_practice.length === 3 && !config.fuel_opt_out) ? "defaults" : "custom" });
+      } catch (e) {}
       return json(200, { ok: true, applied: "now", config, config_version: upsert.config_version, onboarding_stage: stage });
     }
 
@@ -123,6 +128,7 @@ exports.handler = async function (event) {
     };
     try { await sb.from("user_clarity_config").upsert(upsert, { onConflict: "user_id" }); }
     catch (e) { return json(500, { error: "save failed: " + e.message }); }
+    try { emitEvent(sb, userId, "clarity_config_changed", { applied: applyOn, origin: "update" }); } catch (e) {}
     return json(200, { ok: true, applied: applyOn, pending: config, onboarding_stage: stage });
   }
 

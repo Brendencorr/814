@@ -137,5 +137,33 @@ function round(n) { return n == null ? null : Math.round(n); }
   ok("hard day: never scores lower than the same day unflagged", hard.displayed >= soft.displayed, `soft=${soft.displayed} hard=${hard.displayed}`);
 })();
 
+// ── 13. Grief lane (§5): presence-based only — never scored on quality, never penalizes ──
+(function () {
+  // grief present → full presence credit (100) regardless of any "quality"
+  const present = E.computeClarityV2(baseInput({
+    enabledPractice: ["movement", "grief"],
+    practice: { movement: { v: 3, baseline: 3, floor: 1 }, grief: { v: 1 } },
+  }));
+  ok("grief: presence gives full credit", present.breakdown.practice.grief && present.breakdown.practice.grief.score === 100, JSON.stringify(present.breakdown.practice.grief));
+  // grief absent (v=0) → dim drops out, never a low/zero score dragging Practice down
+  const absent = E.computeClarityV2(baseInput({
+    enabledPractice: ["movement", "grief"],
+    practice: { movement: { v: 3, baseline: 3, floor: 1 }, grief: { v: 0 } },
+  }));
+  ok("grief: absence never scores (null, not a penalty)", absent.breakdown.practice.grief.score == null, JSON.stringify(absent.breakdown.practice.grief));
+  // grief absent must equal movement-only — it never drags Practice down
+  const moveOnly = E.computeClarityV2(baseInput({ enabledPractice: ["movement"], practice: { movement: { v: 3, baseline: 3, floor: 1 } } }));
+  ok("grief: absence doesn't change Practice vs movement-only", absent.P === moveOnly.P, `absent=${absent.P} moveOnly=${moveOnly.P}`);
+})();
+
+// ── 14. Habits floor (§4): a 0-100 engagement rate floors at 20 (=20% of active×7) ──
+(function () {
+  // v below the 20% floor bends but never craters; with baseline 60, lo=max(0.7·60,20)=42
+  const low = E.practiceDimScore(10, 60, 20, {});   // well under floor
+  ok("habits: sub-floor bends, never craters (>=30)", low >= 30 && low < 65, "" + low);
+  const atFloorRegion = E.practiceDimScore(50, 60, 20, {}); // inside band
+  ok("habits: in-band scores in the middle range", atFloorRegion >= 65 && atFloorRegion <= 85, "" + atFloorRegion);
+})();
+
 console.log(`\nClarity engine Stage-0: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

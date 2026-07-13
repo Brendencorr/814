@@ -108,7 +108,9 @@ function computeFoundation(inp, gaps) {
 function confFor(gapDays) { return Math.pow(0.5, (isNum(gapDays) ? gapDays : 0) / 6); }
 
 // ── §4 Practice (personal bands) + §9 First Light / hard-day band widening ─────────
-const DIM_FLOORS = { movement: 1, reflection: 1, habits: 0, program: 1, outside: 1, connection: 1 };
+// §4 dim floors (lo ≥ floor). movement/reflection/program/outside/connection are counts (floor 1);
+// habits is a 0-100 engagement rate, so its "20% of active×7" floor is exactly rate 20.
+const DIM_FLOORS = { movement: 1, reflection: 1, habits: 20, program: 1, outside: 1, connection: 1 };
 
 // One practice dim's 0-100 score given trailing-7d value v and baseline B.
 function practiceDimScore(v, B, floor, opts) {
@@ -140,9 +142,17 @@ function computePractice(inp) {
   const scored = [];
   enabled.forEach((dim) => {
     const d = (inp.practice && inp.practice[dim]) || {};
-    const floor = isNum(d.floor) ? d.floor : DIM_FLOORS[dim];
-    const s = practiceDimScore(d.v, d.baseline, floor, { firstLight: !!d.firstLight, hardDay: !!inp.hardDayToday });
     const c = confFor((inp.gaps || {})[dim]);
+    let s;
+    if (dim === "grief") {
+      // §5 grief lane: presence-based contribution ONLY — never scored on quality. There is no
+      // grieving correctly. Showing up (any presence signal) = full credit; absence just decays
+      // via freshness, it never penalizes. No baseline, no bands.
+      s = (isNum(d.v) && d.v > 0) ? 100 : null;
+    } else {
+      const floor = isNum(d.floor) ? d.floor : DIM_FLOORS[dim];
+      s = practiceDimScore(d.v, d.baseline, floor, { firstLight: !!d.firstLight, hardDay: !!inp.hardDayToday });
+    }
     perDim[dim] = { score: s, v: d.v, baseline: d.baseline, conf: c };
     if (s != null && c >= 0.1) scored.push({ s, c, w: 1 });
   });

@@ -15,6 +15,7 @@
 
 const engine = require("./clarity-engine");
 const { effectiveConfig } = require("./clarity-config-util");
+const { emitEvent } = require("./supabase-client");
 
 const dayISO = (d) => d.toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return dayISO(d); };
@@ -43,7 +44,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const win28 = daysAgoISO(28), win7 = daysAgoISO(7);
 
   // ── gather the v2-specific signals in parallel (bounded fan-out; Tier-1 only) ──
-  const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes] = await Promise.allSettled([
+  const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes, fitRes] = await Promise.allSettled([
     supabase.from("daily_checkins")
       .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,notes")
       .eq("user_id", userId).gte("checkin_date", win28).order("checkin_date", { ascending: true }),
@@ -53,6 +54,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
     supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
     supabase.from("user_profiles").select("created_at").eq("id", userId).maybeSingle(),
+    supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
   ]);
 
   const checkins = (ciRes.status === "fulfilled" && ciRes.value.data) || [];
@@ -73,6 +75,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const todayRow = checkins.filter((c) => c.checkin_date === today).slice(-1)[0] || null;
   const lastCheckinDate = checkins.length ? checkins[checkins.length - 1].checkin_date : null;
   const ckGap = gapDays(lastCheckinDate, today);           // freshness for Foundation/Practice
+  const hardToday2 = !!(hardToday || (todayRow && todayRow.hard_day === true));
 
   // membership day (§9 First Light: days 1-14 → rise-only + tiny practice thresholds)
   let membershipDays = null;
@@ -84,27 +87,40 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const foundationInp = {
     mood7: series("mood"),
     energy7: series("energy"),
-    heaviness7: series("heaviness"),
+    // §9: hard days are excluded from the σ7 volatility (calm) signal — a hard day never adds
+    // to "how volatile you've been." We drop heaviness from days the member flagged hard.
+    heaviness7: checkins.filter((c) => c.hard_day !== true).map((c) => num(c.heaviness)),
     sleepHours7: series("sleep_hours"),
     sleepQuality7: series("sleep_quality"),
     meals7d: isNum(sig.mealsThisWeek) ? sig.mealsThisWeek : 0,
     fuelOptOut: !!cfg.fuel_opt_out,
   };
 
+  // §7 movement plausibility: cap 2 sessions/day toward v (a 5-workout Saturday isn't 5 days
+  // of movement). Sum the per-day capped counts over the trailing 7 days.
+  const fitRows = (fitRes.status === "fulfilled" && fitRes.value.data) || [];
+  const perDay = {};
+  fitRows.forEach((r) => { const d = r.logged_date; if (d) perDay[d] = (perDay[d] || 0) + 1; });
+  const movementCapped = Object.keys(perDay).reduce((s, d) => s + Math.min(2, perDay[d]), 0);
+
   // ── Practice values = each member's own trailing-7d activity (unit-agnostic; bands
   // are relative to the personal baseline, so counts and rates both work) ──
   const countTrue = (rows, k) => rows.filter((r) => r[k] === true).length;
   const dimV = {
-    movement: isNum(sig.workoutsThisWeek) ? sig.workoutsThisWeek : null,
-    reflection: isNum(sig.reflectionsThisWeek) ? sig.reflectionsThisWeek : null,
+    movement: fitRows.length ? movementCapped : (isNum(sig.workoutsThisWeek) ? Math.min(sig.workoutsThisWeek, 14) : null),
+    reflection: isNum(sig.reflectionsThisWeek) ? Math.min(sig.reflectionsThisWeek, 14) : null, // §7 ≤2/day over 7d
     habits: isNum(sig.habitRate) ? sig.habitRate : null,
     outside: countTrue(last7, "outside"),
     connection: countTrue(last7, "connection"),
     program: sig.activeJourney ? 1 : 0,
+    // §5 grief lane presence: 1 if the member showed up (any check-in in the last 7 days).
+    grief: last7.length > 0 ? 1 : 0,
   };
-  const enabled = (Array.isArray(cfg.enabled_practice) && cfg.enabled_practice.length)
-    ? cfg.enabled_practice
+  let enabled = (Array.isArray(cfg.enabled_practice) && cfg.enabled_practice.length)
+    ? cfg.enabled_practice.slice()
     : ["movement", "habits", "reflection"];
+  // §5 grief lane: opt-in only (config.lanes.grief === true). Presence-based, never scored.
+  if (cfg.lanes && cfg.lanes.grief === true && enabled.indexOf("grief") === -1) enabled.push("grief");
 
   const practice = {};
   enabled.forEach((dim) => {
@@ -122,15 +138,29 @@ async function writeClarityV2Dark(supabase, userId, opts) {
 
   // ── prev displayed (rise-only) + freeze (§5 lapse-repair hold) ──
   const prevDisplayed = (prev && isNum(num(prev.clarity_v2))) ? num(prev.clarity_v2) : null;
-  let freeze = null;
-  if (prev && prev.frozen && prev.frozen_until) {
-    const until = Date.parse(prev.frozen_until);
-    if (!isNaN(until) && until > Date.now()) freeze = { active: true, snapshot: prev.frozen_snapshot || null };
+  const nowMs = Date.now();
+  const prevFrozenUntil = (prev && prev.frozen_until) ? Date.parse(prev.frozen_until) : NaN;
+  const wasFrozen = !!(prev && prev.frozen && !isNaN(prevFrozenUntil) && prevFrozenUntil > nowMs);
+  const unfrozeNow = !!(prev && prev.frozen && (isNaN(prevFrozenUntil) || prevFrozenUntil <= nowMs)); // just expired
+  // §5 slip detection: an ESTABLISHED member's sobriety streak just reset → freeze during
+  // lapse-repair. Never for a new member (membershipDays>14 required); never shames a slip.
+  const hasTracker = isNum(sig.soberDays);
+  const slipDetected = hasTracker && sig.soberDays <= 1 && prevDisplayed != null && isNum(membershipDays) && membershipDays > 14 && !wasFrozen;
+
+  let freeze = null, frozenUntilISO = null, frozenSnapshot = null, frozeNow = false;
+  if (wasFrozen) {
+    frozenSnapshot = prev.frozen_snapshot || { displayed: prevDisplayed };
+    frozenUntilISO = prev.frozen_until;
+    freeze = { active: true, snapshot: frozenSnapshot };
+  } else if (slipDetected) {
+    frozenSnapshot = { displayed: prevDisplayed };
+    frozenUntilISO = new Date(nowMs + 72 * 3600 * 1000).toISOString(); // hold ≤72h (§5)
+    freeze = { active: true, snapshot: frozenSnapshot };
+    frozeNow = true;
   }
 
   // ── sobriety lane (§5): OPT-IN. Auto-offered to members who track sobriety, but honored
   //    as opt-out when config.lanes.sobriety === false. Never forced; never Foundation. ──
-  const hasTracker = isNum(sig.soberDays);
   const laneOptOut = cfg.lanes && cfg.lanes.sobriety === false;
   const laneEnabled = hasTracker && !laneOptOut;
   const lane = laneEnabled
@@ -142,13 +172,13 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     practice,
     lane,
     coreHistory,
-    hardDayToday: !!(hardToday || (todayRow && todayRow.hard_day === true)),
+    hardDayToday: hardToday2,
     firstLight,
     prevDisplayed,
     freeze,
     gaps: {
       steadiness: ckGap, rest: ckGap, fuel: isNum(sig.mealsThisWeek) && sig.mealsThisWeek > 0 ? ckGap : (ckGap == null ? null : ckGap + 4),
-      movement: ckGap, habits: ckGap, reflection: ckGap, outside: ckGap, connection: ckGap, program: ckGap,
+      movement: ckGap, habits: ckGap, reflection: ckGap, outside: ckGap, connection: ckGap, program: ckGap, grief: ckGap,
     },
   });
 
@@ -170,15 +200,28 @@ async function writeClarityV2Dark(supabase, userId, opts) {
       v2_breakdown: result.breakdown,
       config_version: cfgVersion,
       frozen: !!result.frozen,
+      frozen_until: result.frozen ? frozenUntilISO : null,   // cleared on unfreeze
+      frozen_snapshot: result.frozen ? frozenSnapshot : null,
     }).eq("user_id", userId).eq("date", today);
   } catch (e) { console.warn("clarity-v2 state write failed (non-fatal):", e.message); }
+
+  // ── §12 canonical events (fire-and-forget; never block the write) ──
+  try {
+    emitEvent(supabase, userId, "clarity_recomputed", { displayed: result.displayed, provisional: result.provisional, frozen: !!result.frozen, config_version: cfgVersion });
+    if (result.provisional) emitEvent(supabase, userId, "clarity_provisional", { coverage: result.breakdown && result.breakdown.coverage });
+    if (hardToday2) emitEvent(supabase, userId, "hard_day_flagged", { date: today });
+    if (frozeNow) emitEvent(supabase, userId, "clarity_frozen", { until: frozenUntilISO, held_at: prevDisplayed });
+    if (unfrozeNow) emitEvent(supabase, userId, "clarity_unfrozen", {});
+    if (membershipDays === 1) emitEvent(supabase, userId, "first_light_started", {});
+    if (membershipDays === 15) emitEvent(supabase, userId, "first_light_ended", {});
+  } catch (e) {}
 
   // ── ratchet each scored Practice dim's baseline toward today's value (for NEXT time).
   // Scoring above used the PRE-update baseline ("distance traveled"); the bar then moves. ──
   try {
     const nowISO = new Date().toISOString();
     const ups = enabled
-      .filter((dim) => isNum(dimV[dim]))
+      .filter((dim) => dim !== "grief" && isNum(dimV[dim]))   // grief is presence-only — no baseline
       .map((dim) => {
         const b = baseMap[dim];
         const prevB = b && isNum(b.baseline) ? b.baseline : null;

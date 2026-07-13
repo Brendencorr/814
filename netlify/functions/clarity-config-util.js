@@ -23,6 +23,7 @@ function validateConfig(input) {
   const inLanes = input.lanes && typeof input.lanes === "object" ? input.lanes : {};
   const lanes = {};
   if (typeof inLanes.sobriety === "boolean") lanes.sobriety = inLanes.sobriety;
+  if (typeof inLanes.grief === "boolean") lanes.grief = inLanes.grief;   // §5 grief lane (presence-only)
   return { enabled_practice: enabled, fuel_opt_out: !!input.fuel_opt_out, lanes };
 }
 

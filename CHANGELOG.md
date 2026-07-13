@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity Score v2.2 — Phase A: schema + expanded check-in (DARK, additive)
+- **Why:** Rebuilding the member Clarity score from v1.0 (flat weighted avg) to the v2.2 three-layer
+  Foundation/Practice/Direction engine ("distance traveled, not distance from perfect"). Multi-session epic;
+  everything additive + DARK — v1 stays authoritative and untouched until an explicit cutover flag flip.
+  Full spec in `docs/CLARITY_SCORE_v2.2.md`; plan of record in `.claude/plans/typed-foraging-seahorse.md`.
+- **What (this phase):** migration `086_clarity_v2_schema.sql` (APPLIED) — additive, idempotent: `daily_checkins`
+  += energy/sleep_quality/heaviness/outside/connection/hard_day/craving; `user_daily_state` += v2 columns
+  (clarity_v2, provisional, f/p/d_score, frozen*, v2_breakdown, config_version) alongside untouched v1 columns;
+  new tables `user_clarity_config`, `user_dim_baselines`, `clarity_dims` (public-read 9-dim registry), `hard_dates`,
+  `clarity_life_events` (distinct from the existing emotional-calendar `life_events`), `clarity_weekly`; RLS owner-only;
+  seeded the cutover flag `site_content('clarity','engine')={engine:'v1'}` (DARK).
+- **Check-in expansion (`chat.html`) — the ONLY member-visible change this phase:** the Riley-led check-in now
+  captures the v2 fields via grouped screens (a `rcMultiScale` "quick reads" screen: energy + sleep hours + sleep
+  quality + heaviness; a `rcMultiTap` screen: got-outside / talked-to-a-human / hard-day) + a lane-gated craving
+  screen (sobriety only; craving>=4 surfaces the Emergency Craving Protocol). Kept ~20s via grouping; `postLock`
+  mandatory-lock, fail-open handlers, single `daily_checkins` upsert, and the `/checkin-scan` crisis pass all intact.
+  Escalation updated to the new 1-5 heaviness; hard-day tap also writes `hard_dates`.
+- **Unchanged for members:** dashboard/brief still show the v1 score (flag on `v1`); no engine wired yet (Phase B).
+
 ### Operator: Home member table + Client Overview search/filter bar
 - **Why:** operator Home showed rich-card rows (hard to scan 15 members quickly); Client Overview lacked name/email filters and no way to slice by paid vs free or by programs.
 - **Backend (`admin-home.js`, `admin-engagement.js`):** both functions now return per member: `first_name`/`last_name` (split from `full_name`, first token = first, rest = last; falls back to `preferred_name`), `paid` (boolean - true if tier is companion/coach/mentor, derived from the already-loaded `user_active_products`), `has_purchases` (boolean - one-time program purchases from `purchases` table; `admin-engagement` adds it as a single bulk scan to the existing `Promise.all`), `welcome_email_sent` (boolean|null - `email_log` kind=welcome status=sent), `coupon` (null - coupon/promo redemption is NOT stored in our DB; requires live per-member Stripe call which is too slow for a list - logged in function comments as a flag; add a webhook that mirrors `discount.coupon.id` onto `subscriptions.stripe_coupon_id` to enable). No N+1 queries added; no existing behavior changed.

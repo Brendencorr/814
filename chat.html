@@ -375,6 +375,13 @@ const CI_MOOD_Q = { morning:"How are you feeling this morning?", midday:"How's y
 const SLEEP_OPTS   = [['rough','Rough'],['light','Light'],['okay','Okay'],['well','Well'],['deep','Deeply']];
 const HEAVY_OPTS   = [['light','Light'],['manageable','Manageable'],['heavy','Heavy'],['crushing','Crushing']];
 const OVERALL_OPTS = [['1','Hard'],['2','Rough'],['3','Okay'],['4','Good'],['5','Great']];
+// ── Clarity v2 check-in fields (§2). 1-5 scales + sleep-hours buckets + craving. ──
+const ENERGY_OPTS  = [['1','Drained'],['2','Low'],['3','Okay'],['4','Good'],['5','Charged']];
+const SLEEPH_OPTS  = [['4.5','< 6h'],['6.5','6-7h'],['7.5','7-8h'],['8.5','8-9h'],['10','9h+']];   // → sleep_hours (representative)
+const SLEEPQ_OPTS  = [['1','Rough'],['2','Light'],['3','Okay'],['4','Well'],['5','Deep']];         // → sleep_quality
+const HEAVY5_OPTS  = [['1','Light'],['2','Manageable'],['3','Medium'],['4','Heavy'],['5','Crushing']]; // → heaviness
+const CRAVING_OPTS = [['0','None'],['1','Faint'],['2','Mild'],['3','Real'],['4','Strong'],['5','Intense']]; // → craving (lane)
+let RC_CRAVING_HIGH = false;
 // Focus-keyed goal question - the highest-value question. Each lane has a morning
 // (yesterday) form and a today form; midday/evening use the today form.
 const CI_GOAL = {
@@ -404,7 +411,7 @@ function ciEscalation(){
     if(moods.slice(0,5).filter(function(m){return m<=1;}).length>=2)return 'concern';
     var run=0; for(var i=0;i<moods.length;i++){ if(moods[i]<=2)run++; else break; }
     if(run>=3)return 'watch';
-    if(RC.heavy==='crushing' && RC.mood && RC.mood<=2)return 'watch';
+    if(RC.heaviness>=4 && RC.mood && RC.mood<=2)return 'watch';   // heaviness 4-5 = heavy/crushing
     return null;
   }catch(e){return null;}
 }
@@ -416,7 +423,8 @@ function resolveCard(){
   if(lane==='sobriety' && goal==='slip')  return {id:'slip', title:'A slip is a moment, not the story.', body:"You showed up here and told me the truth - that counts more than the slip does. Tomorrow we just make it a little smaller, together. Nothing to fix right now.", celebratory:false};
   if(low)                                 return {id:'reflect', title:'Just this, for now.', body:"No task right now. Take one slow breath with me, and notice one thing that was true today. That's enough.", celebratory:false};
   const rough = mood>0 && mood<=2;
-  if(lane==='sobriety' && (rough||goal==='hard_yes')) return {id:'craving', title:'When the pull comes', body:"A craving passes like a wave - usually under 15 minutes. If it hits: name it out loud, drink a full glass of water, and reach for someone (or me). You don't have to white-knuckle it alone.", celebratory:false};
+  // Emergency Craving Protocol - explicit craving >=4 takes priority (Clarity v2 §2).
+  if(lane==='sobriety' && (RC_CRAVING_HIGH || rough || goal==='hard_yes')) return {id:'craving', title:'When the pull comes', body:"A craving passes like a wave - usually under 15 minutes. If it hits: name it out loud, drink a full glass of water, and reach for someone (or me). You don't have to white-knuckle it alone.", celebratory:false};
   if(lane==='grief' && (rough||goal==='carried')) return {id:'grief_heavy', title:'No task - just this.', body:"Grief that carries you isn't failure; it's love with nowhere to go. Hand on your chest, one breath, and let today just be survived. That's the whole assignment.", celebratory:false};
   if(lane==='body' && goal==='not_yet') return {id:'reset8', title:'Eight minutes is a win.', body:"Not-yet is still today. If you've got eight minutes, the Reset Workout meets you exactly where your energy is - no equipment, no pressure.", cta:{label:'Start the 8-minute reset',href:'/workouts'}, celebratory:false};
   if(mood>=4 || goal==='yes')           return {id:'consolidate', title:'Name what worked.', body:"Good days teach us. Five seconds: what helped today? Say it plainly - that's the thing we protect and repeat.", celebratory:true};
@@ -432,7 +440,7 @@ async function checkinDoneToday(){
 function rcName(){ return ((document.getElementById('greeting')||{}).textContent || '').split('Hey, ')[1] || 'there'; }
 async function runDailyCheckin(){
   postLock('pending');                                   // mandatory: lock the popup close controls
-  RC = {};
+  RC = {}; RC_CRAVING_HIGH = false;
   const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
   if(_inp){ _inp.disabled=true; _inp.placeholder='Tap an answer above…'; } if(_snd) _snd.disabled=true;   // guide to the chips; the note step + rcHandoff re-enable
   const w = document.getElementById('welcome'); if(w) w.style.display='none';
@@ -459,14 +467,28 @@ function buildSteps(tod, lane){
   const g = CI_GOAL[lane] || CI_GOAL.other;
   const goalQ = tod==='morning' ? g.am : g.day;
   const inflQ = tod==='morning' ? "What shaped yesterday most?" : "What shaped that most?";
-  const sec = ciSecondary(tod);
-  return [
+  const steps = [
     { key:'mood', type:'mood', q:CI_MOOD_Q[tod] || CI_MOOD_Q.evening },
-    { key:sec.key, type:'choice', q:sec.q, opts:sec.opts },
+    // Grouped "quick reads" (Clarity v2 Foundation signals) - one screen, quick taps.
+    { type:'multiscale', q:"A few quick reads - tap what fits:", rows:[
+        { key:'energy',        label:"Energy",        opts:ENERGY_OPTS },
+        { key:'sleep_hours',   label:"Sleep",         opts:SLEEPH_OPTS },
+        { key:'sleep_quality', label:"Sleep quality", opts:SLEEPQ_OPTS },
+        { key:'heaviness',     label:"How heavy today felt", opts:HEAVY5_OPTS }
+    ] },
+    // Grouped taps (Practice: outside/connection) + compassion flag (never scored).
+    { type:'taps', q:"A couple quick things (tap any that are true):", taps:[
+        { key:'outside',    label:"Got outside" },
+        { key:'connection', label:"Talked to a human" },
+        { key:'hard_day',   label:"Today was a hard day" }
+    ] },
     { key:'goal', type:'choice', q:goalQ, sub:g.sub||'', opts:g.opts },
-    { key:'influences', type:'tags', q:inflQ, sub:"Pick anything that fits - up to 3.", tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC) },
-    { key:'note', type:'note', q:"Anything you want me to remember?", sub:"Optional - a sentence is enough.", optional:true }
+    { key:'influences', type:'tags', q:inflQ, sub:"Pick anything that fits - up to 3.", tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC) }
   ];
+  // Craving - sobriety lane only. >=4 surfaces the Emergency Craving Protocol.
+  if(lane==='sobriety') steps.push({ key:'craving', type:'craving', q:"How strong were cravings today?", opts:CRAVING_OPTS });
+  steps.push({ key:'note', type:'note', q:"Anything you want me to remember?", sub:"Optional - a sentence is enough.", optional:true });
+  return steps;
 }
 function rcAsk(i){
   if(i >= RC_STEPS.length){ rcFinish(); return; }
@@ -483,6 +505,22 @@ function rcAsk(i){
   } else if(q.type==='tags'){
     rcTags(q, function(sel){
       RC.influences = sel; if(sel.length) appendMsg('user', sel.join(', ')); rcAsk(i+1);
+    });
+  } else if(q.type==='multiscale'){
+    rcMultiScale(q.rows, function(picked){
+      Object.keys(picked).forEach(function(k){ RC[k] = picked[k]; });
+      rcAsk(i+1);
+    });
+  } else if(q.type==='taps'){
+    rcMultiTap(q.taps, function(picked){
+      Object.keys(picked).forEach(function(k){ RC[k] = picked[k]; });
+      rcAsk(i+1);
+    });
+  } else if(q.type==='craving'){
+    rcChips(q.opts, false, function(val,label){
+      appendMsg('user', label); RC.craving = parseInt(val,10);
+      if(RC.craving >= 4) RC_CRAVING_HIGH = true;   // surfaces the Emergency Craving Protocol card
+      rcAsk(i+1);
     });
   } else if(q.type==='note'){
     rcNote(function(text){
@@ -503,6 +541,65 @@ function rcChips(items, isMood, onPick){
     b.onclick = function(){ wrap.remove(); onPick(o[0], o[1]); };
     wrap.appendChild(b);
   });
+  box.appendChild(wrap); box.scrollTop = 999999;
+}
+// Grouped scales on ONE message (Clarity v2 "quick reads"): several labelled 1-5 rows,
+// one tap each, then Continue. Keeps the check-in ~20s by not adding sequential prompts.
+function rcMultiScale(rows, onDone){
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin:2px 0 6px 4px';
+  const picked = {};
+  rows.forEach(function(r){
+    const lbl = document.createElement('div');
+    lbl.textContent = r.label;
+    lbl.style.cssText = 'font-size:11px;color:var(--smoke);margin:4px 0 1px 2px';
+    wrap.appendChild(lbl);
+    const rowdiv = document.createElement('div');
+    rowdiv.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+    const btns = [];
+    r.opts.forEach(function(o){
+      const b = document.createElement('button');
+      b.textContent = o[1];
+      b.style.cssText = 'padding:7px 12px;font-size:12px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
+      b.onclick = function(){
+        picked[r.key] = o[0];
+        btns.forEach(function(x){ x.style.borderColor='rgba(201,168,76,0.25)'; x.style.background='rgba(255,255,255,0.04)'; x.style.color='var(--parchment)'; });
+        b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)';
+      };
+      btns.push(b); rowdiv.appendChild(b);
+    });
+    wrap.appendChild(rowdiv);
+  });
+  const cont = document.createElement('button');
+  cont.textContent = 'Continue';
+  cont.style.cssText = 'align-self:flex-start;margin-top:8px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer';
+  cont.onclick = function(){ wrap.remove(); onDone(picked); };
+  wrap.appendChild(cont);
+  box.appendChild(wrap); box.scrollTop = 999999;
+}
+// Grouped yes/no taps on ONE message (Practice toggles + compassion flag). Untapped = false.
+function rcMultiTap(taps, onDone){
+  const box = document.getElementById('messages');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px 4px;align-items:center';
+  const picked = {}; taps.forEach(function(t){ picked[t.key] = false; });
+  taps.forEach(function(t){
+    const b = document.createElement('button');
+    b.textContent = t.label;
+    b.style.cssText = 'padding:8px 14px;font-size:13px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
+    b.onclick = function(){
+      picked[t.key] = !picked[t.key];
+      if(picked[t.key]){ b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)'; }
+      else{ b.style.borderColor='rgba(201,168,76,0.25)'; b.style.background='rgba(255,255,255,0.04)'; b.style.color='var(--parchment)'; }
+    };
+    wrap.appendChild(b);
+  });
+  const done = document.createElement('button');
+  done.textContent = 'Continue';
+  done.style.cssText = 'padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer;margin-left:2px';
+  done.onclick = function(){ wrap.remove(); onDone(picked); };
+  wrap.appendChild(done);
   box.appendChild(wrap); box.scrollTop = 999999;
 }
 // Multi-select influence tags (up to 3) + a Done chip. Empty is allowed (nothing shaped it).
@@ -551,14 +648,23 @@ function rcNote(onDone){
   box.appendChild(wrap); box.scrollTop = 999999;
 }
 async function rcFinish(){
-  const tod = riToD();
-  const secKey = tod==='morning' ? 'sleep' : (tod==='midday' ? 'heavy' : 'overall');
   const row = {
     user_id:_uid, checkin_date:RC_TODAY, checkin_completed:true, sobriety_day:RC_SOBER,
-    secondary:{ key:secKey, value:(RC[secKey]!==undefined ? RC[secKey] : null) },
-    goal_answer:RC.goal||null, influences:RC.influences||[], daily_log:{ sleep:RC.sleep||null }
+    goal_answer:RC.goal||null, influences:RC.influences||[],
+    // Clarity v2 canonical fields (§2)
+    outside:!!RC.outside, connection:!!RC.connection, hard_day:!!RC.hard_day,
+    // Back-compat: keep `secondary`/`daily_log` populated for one release.
+    secondary:{ key:'heaviness', value:(RC.heaviness!=null ? RC.heaviness : null) },
+    daily_log:{ sleep:(RC.sleep_hours!=null ? RC.sleep_hours : null) }
   };
   if(RC.mood) row.mood = RC.mood;
+  if(RC.energy!=null)        row.energy        = parseInt(RC.energy,10);
+  if(RC.sleep_quality!=null) row.sleep_quality = parseInt(RC.sleep_quality,10);
+  if(RC.heaviness!=null)     row.heaviness     = parseInt(RC.heaviness,10);
+  if(RC.sleep_hours!=null)   row.sleep_hours   = parseFloat(RC.sleep_hours);
+  if(RC_LANE==='sobriety' && RC.craving!=null) row.craving = parseInt(RC.craving,10);
+  // Hard-day compassion flag → hard_dates (NEVER a score input; drives tone/band-widening only).
+  if(RC.hard_day){ try{ await _db.from('hard_dates').upsert({ user_id:_uid, date:RC_TODAY, source:'checkin_tap' },{onConflict:'user_id,date'}); }catch(e){} }
   // Reflection stored ONLY if the member opted in (onboarding privacy toggle). The crisis
   // scan below still runs on it either way - safety never depends on storage.
   if(RC.note && RC_NOTE_OK) row.notes = RC.note;

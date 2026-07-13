@@ -12,6 +12,19 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### M-2: legal entity name corrected to the registered name (The 814 Project, LLC d/b/a Riley)
+- **Why:** ToS, Privacy, and page/email footers named "The 8:14 Project, LLC," but the registered
+  Montana entity is "The 814 Project, LLC" (Filing C1656090). Naming an unregistered entity in the
+  contracts weakens the liability shield. Compliance finding M-2; Brenden chose the d/b/a Riley form.
+- **What:** replaced all 24 mentions of "The 8:14 Project, LLC" with "The 814 Project, LLC" across 11
+  files (terms, privacy, safety, all marketing-page footers, and the email footers in
+  comms-templates.js). Added "d/b/a Riley" at the two defining mentions and the two contact/notice
+  blocks in terms.html + privacy.html. The "8:14" origin story is untouched - only the legal entity
+  name changed.
+- 🔴 Recommend a counsel glance at the final wording. Files: terms.html, privacy.html, safety.html,
+  home.html, about.html, blog.html, help.html, data.html, resources.html, pillars.html,
+  netlify/functions/comms-templates.js.
+
 ### M-3 completion: route 9 inline-gated admin endpoints through hardened requireOperator
 - **Why.** The earlier M-3 work hardened `requireOperator()` in `supabase-client.js` (constant-time
   compare + CORS allow-list) and ~27 functions already call it, but these 9 admin endpoints still

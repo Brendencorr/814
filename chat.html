@@ -465,28 +465,32 @@ async function runDailyCheckin(){
 }
 function buildSteps(tod, lane){
   const g = CI_GOAL[lane] || CI_GOAL.other;
-  const goalQ = tod==='morning' ? g.am : g.day;
-  const inflQ = tod==='morning' ? "What shaped yesterday most?" : "What shaped that most?";
+  const isAM = tod==='morning';                 // morning check-in reflects on YESTERDAY / last night
+  const goalQ = isAM ? g.am : g.day;
+  const inflQ = isAM ? "What shaped yesterday most?" : "What shaped that most?";
   const steps = [
     { key:'mood', type:'mood', q:CI_MOOD_Q[tod] || CI_MOOD_Q.evening },
-    // Grouped "quick reads" (Clarity v2 Foundation signals) - one screen, quick taps.
-    { type:'multiscale', q:"A few quick reads - tap what fits:", rows:[
-        { key:'energy',        label:"Energy",        opts:ENERGY_OPTS },
-        { key:'sleep_hours',   label:"Sleep",         opts:SLEEPH_OPTS },
-        { key:'sleep_quality', label:"Sleep quality", opts:SLEEPQ_OPTS },
-        { key:'heaviness',     label:"How heavy today felt", opts:HEAVY5_OPTS }
-    ] },
-    // Grouped taps (Practice: outside/connection) + compassion flag (never scored).
-    { type:'taps', q:"A couple quick things (tap any that are true):", taps:[
-        { key:'outside',    label:"Got outside" },
+    // ONE grouped "quick check" (Clarity v2 signals) - scales + taps on one screen, time-aware wording.
+    { type:'quickcheck',
+      q: isAM ? "A few quick reads on last night and yesterday:" : "A few quick reads - tap what fits:",
+      scales:[
+        { key:'energy',        label:isAM?"Energy this morning":"Energy",  opts:ENERGY_OPTS },
+        { key:'sleep_hours',   label:"Sleep last night",                   opts:SLEEPH_OPTS },
+        { key:'sleep_quality', label:"How well you slept",                 opts:SLEEPQ_OPTS },
+        { key:'heaviness',     label:isAM?"How heavy yesterday felt":"How heavy today felt", opts:HEAVY5_OPTS }
+      ],
+      tapsLabel: isAM ? "And yesterday - tap any that are true:" : "And today - tap any that are true:",
+      taps:[
+        { key:'outside',    label:isAM?"Got outside yesterday":"Got outside" },
         { key:'connection', label:"Talked to a human" },
-        { key:'hard_day',   label:"Today was a hard day" }
-    ] },
+        { key:'hard_day',   label:isAM?"Yesterday was a hard day":"Today was a hard day" }
+      ]
+    },
     { key:'goal', type:'choice', q:goalQ, sub:g.sub||'', opts:g.opts },
     { key:'influences', type:'tags', q:inflQ, sub:"Pick anything that fits - up to 3.", tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC) }
   ];
   // Craving - sobriety lane only. >=4 surfaces the Emergency Craving Protocol.
-  if(lane==='sobriety') steps.push({ key:'craving', type:'craving', q:"How strong were cravings today?", opts:CRAVING_OPTS });
+  if(lane==='sobriety') steps.push({ key:'craving', type:'craving', q:isAM?"How strong were cravings yesterday?":"How strong were cravings today?", opts:CRAVING_OPTS });
   steps.push({ key:'note', type:'note', q:"Anything you want me to remember?", sub:"Optional - a sentence is enough.", optional:true });
   return steps;
 }
@@ -506,13 +510,8 @@ function rcAsk(i){
     rcTags(q, function(sel){
       RC.influences = sel; if(sel.length) appendMsg('user', sel.join(', ')); rcAsk(i+1);
     });
-  } else if(q.type==='multiscale'){
-    rcMultiScale(q.rows, function(picked){
-      Object.keys(picked).forEach(function(k){ RC[k] = picked[k]; });
-      rcAsk(i+1);
-    });
-  } else if(q.type==='taps'){
-    rcMultiTap(q.taps, function(picked){
+  } else if(q.type==='quickcheck'){
+    rcQuickCheck(q, function(picked){
       Object.keys(picked).forEach(function(k){ RC[k] = picked[k]; });
       rcAsk(i+1);
     });
@@ -543,14 +542,15 @@ function rcChips(items, isMood, onPick){
   });
   box.appendChild(wrap); box.scrollTop = 999999;
 }
-// Grouped scales on ONE message (Clarity v2 "quick reads"): several labelled 1-5 rows,
-// one tap each, then Continue. Keeps the check-in ~20s by not adding sequential prompts.
-function rcMultiScale(rows, onDone){
+// ONE grouped "quick check" screen: labelled 1-5 scale rows + yes/no taps + Continue.
+// Echoes a compact summary as a user bubble so answered rows don't read as empty duplicates.
+function rcQuickCheck(q, onDone){
   const box = document.getElementById('messages');
   const wrap = document.createElement('div');
   wrap.style.cssText = 'display:flex;flex-direction:column;gap:6px;margin:2px 0 6px 4px';
-  const picked = {};
-  rows.forEach(function(r){
+  const picked = {}; (q.taps||[]).forEach(function(t){ picked[t.key] = false; });
+  const echo = {};   // chosen display label per scale, for the summary
+  (q.scales||[]).forEach(function(r){
     const lbl = document.createElement('div');
     lbl.textContent = r.label;
     lbl.style.cssText = 'font-size:11px;color:var(--smoke);margin:4px 0 1px 2px';
@@ -563,7 +563,7 @@ function rcMultiScale(rows, onDone){
       b.textContent = o[1];
       b.style.cssText = 'padding:7px 12px;font-size:12px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
       b.onclick = function(){
-        picked[r.key] = o[0];
+        picked[r.key] = o[0]; echo[r.key] = o[1];
         btns.forEach(function(x){ x.style.borderColor='rgba(201,168,76,0.25)'; x.style.background='rgba(255,255,255,0.04)'; x.style.color='var(--parchment)'; });
         b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)';
       };
@@ -571,35 +571,40 @@ function rcMultiScale(rows, onDone){
     });
     wrap.appendChild(rowdiv);
   });
+  const tapBtns = [];
+  if(q.taps && q.taps.length){
+    const tl = document.createElement('div');
+    tl.textContent = q.tapsLabel || "Tap any that are true:";
+    tl.style.cssText = 'font-size:11px;color:var(--smoke);margin:8px 0 1px 2px';
+    wrap.appendChild(tl);
+    const tapRow = document.createElement('div');
+    tapRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px';
+    q.taps.forEach(function(t){
+      const b = document.createElement('button');
+      b.textContent = t.label;
+      b.style.cssText = 'padding:8px 13px;font-size:12px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
+      b.onclick = function(){
+        picked[t.key] = !picked[t.key];
+        if(picked[t.key]){ b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)'; }
+        else{ b.style.borderColor='rgba(201,168,76,0.25)'; b.style.background='rgba(255,255,255,0.04)'; b.style.color='var(--parchment)'; }
+      };
+      tapBtns.push({key:t.key,label:t.label}); tapRow.appendChild(b);
+    });
+    wrap.appendChild(tapRow);
+  }
   const cont = document.createElement('button');
   cont.textContent = 'Continue';
-  cont.style.cssText = 'align-self:flex-start;margin-top:8px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer';
-  cont.onclick = function(){ wrap.remove(); onDone(picked); };
+  cont.style.cssText = 'align-self:flex-start;margin-top:10px;padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer';
+  cont.onclick = function(){
+    wrap.remove();
+    // echo the member's answers so the screen reads as answered (Q → A), not a stray prompt
+    const parts = [];
+    (q.scales||[]).forEach(function(r){ if(echo[r.key]) parts.push(echo[r.key]); });
+    tapBtns.forEach(function(t){ if(picked[t.key]) parts.push(t.label); });
+    if(parts.length) appendMsg('user', parts.join(' · '));
+    onDone(picked);
+  };
   wrap.appendChild(cont);
-  box.appendChild(wrap); box.scrollTop = 999999;
-}
-// Grouped yes/no taps on ONE message (Practice toggles + compassion flag). Untapped = false.
-function rcMultiTap(taps, onDone){
-  const box = document.getElementById('messages');
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 6px 4px;align-items:center';
-  const picked = {}; taps.forEach(function(t){ picked[t.key] = false; });
-  taps.forEach(function(t){
-    const b = document.createElement('button');
-    b.textContent = t.label;
-    b.style.cssText = 'padding:8px 14px;font-size:13px;color:var(--parchment);border-radius:999px;border:1px solid rgba(201,168,76,0.25);background:rgba(255,255,255,0.04);cursor:pointer;transition:all .15s';
-    b.onclick = function(){
-      picked[t.key] = !picked[t.key];
-      if(picked[t.key]){ b.style.borderColor='var(--gold)'; b.style.background='var(--gold-dim)'; b.style.color='var(--gold-light)'; }
-      else{ b.style.borderColor='rgba(201,168,76,0.25)'; b.style.background='rgba(255,255,255,0.04)'; b.style.color='var(--parchment)'; }
-    };
-    wrap.appendChild(b);
-  });
-  const done = document.createElement('button');
-  done.textContent = 'Continue';
-  done.style.cssText = 'padding:8px 16px;font-size:13px;font-weight:600;color:var(--ink);border-radius:999px;border:none;background:var(--gold);cursor:pointer;margin-left:2px';
-  done.onclick = function(){ wrap.remove(); onDone(picked); };
-  wrap.appendChild(done);
   box.appendChild(wrap); box.scrollTop = 999999;
 }
 // Multi-select influence tags (up to 3) + a Done chip. Empty is allowed (nothing shaped it).
@@ -720,9 +725,49 @@ async function rcFinish(){
   // Riley gives one thing back (or the safety message), then hands into conversation.
   if(crisisLevel>=3){ appendMsg('riley', crisisResp || "I'm really glad you told me. You don't have to carry this alone - if it gets heavy, you can call or text 988 any time, day or night. I'm right here too."); rcHandoff(true); return; }
   if(crisisLevel>=2){ appendMsg('riley', "Thank you for being honest with me. That pull is real, and you don't have to face it by yourself. If it gets heavy, you can call or text 988 any time. I'm right here too."); rcHandoff(true); return; }
+  // If the member SHARED something (a note) and it's not a concerning trend, Riley responds to it
+  // for real - a genuine, contextual reply via the LLM - instead of a canned card. This is the
+  // "dynamic, learns from the client" handoff. Otherwise: the give-one-thing card + warm handoff.
+  if(RC.note && !RC_ESC){
+    await new Promise(function(r){ setTimeout(r, 700); });   // a beat, so it doesn't read as auto-reply
+    await rcRespondToNote(RC.note);
+    return;
+  }
   try{ window.trackEvent && window.trackEvent('give_one_thing_shown',{}); }catch(e){}
   // A brief considering-beat, then Riley hands back one thing as a gift card, then opens the floor.
   rcTypingBeat(900, function(){ rcGiftCard(card); rcAfter(); });
+}
+// Riley responds genuinely to what the member shared in their check-in note (the note is already
+// echoed as a user bubble). Streams a real reply from riley-chat, then leaves the floor open so
+// the member can keep talking about it. Fail-open to a warm line if the call fails.
+async function rcRespondToNote(note){
+  try{ window.trackEvent && window.trackEvent('checkin_note_reply',{}); }catch(e){}
+  try{ _history.push({ role:'user', content: note }); }catch(e){}
+  const box = document.getElementById('messages');
+  const typingWrap = document.createElement('div');
+  typingWrap.style.cssText = 'display:flex;justify-content:flex-start;margin:2px 0';
+  const bubble = document.createElement('div');
+  bubble.style.cssText = 'padding:11px 15px;border-radius:12px;font-size:14px;color:var(--smoke);background:#16130f;border:1px solid rgba(201,168,76,0.16);border-bottom-left-radius:4px;white-space:pre-wrap';
+  bubble.textContent = 'Riley is thinking…';
+  typingWrap.appendChild(bubble); box.appendChild(typingWrap); box.scrollTop = 999999;
+  let reply = '';
+  try{
+    const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
+    const res = await fetch(RILEY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message: note, messages:_history, session_id:_sessionId, token:_tok }) });
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const reader = res.body.getReader(); const decoder = new TextDecoder();
+    bubble.textContent = ''; bubble.style.color = 'var(--parchment)';
+    while(true){ const {done,value} = await reader.read(); if(done) break; reply += decoder.decode(value,{stream:true}); bubble.textContent = reply; box.scrollTop = 999999; }
+    if(!reply.trim()) throw new Error('empty');
+  }catch(e){
+    reply = "That means a lot - thank you for telling me. I'm right here whenever you want to say more about it.";
+    bubble.textContent = reply; bubble.style.color = 'var(--parchment)';
+  }
+  try{ _history.push({ role:'assistant', content: reply }); if(_history.length>40) _history = _history.slice(-40); saveLiveChat(); }catch(e){}
+  try{ showAiNote && showAiNote(); }catch(e){}
+  // Open the floor so the member can keep going.
+  const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
+  if(_inp){ _inp.disabled=false; _inp.placeholder='Message Riley…'; _inp.focus(); } if(_snd) _snd.disabled=false;
 }
 function rcCardCta(cta){
   const box = document.getElementById('messages');

@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Check-in v2 UX fixes: time-aware, one merged screen, dynamic note response
+- **Why:** operator feedback on the new (Phase A) check-in — (1) at 8am it asked "Today was a hard day?"
+  (nonsensical - morning reflects on yesterday); (2) the two grouped screens read as duplicates; (3) after the
+  member shared "great weekend camping with friends", Riley gave a canned card + generic "no rush..." line
+  instead of responding to what they said.
+- **What (`chat.html`):**
+  - **Time-aware:** morning check-in now frames the v2 fields around last night / yesterday (energy this morning,
+    sleep last night, "how heavy yesterday felt", "Got outside yesterday", "Yesterday was a hard day"); midday/
+    evening use today. Craving prompt time-framed too.
+  - **One screen:** merged the two grouped screens into a single `rcQuickCheck` (scales + taps together), which now
+    **echoes the member's answers** as a user bubble so an answered screen reads Q→A, not a stray prompt.
+    Removed `rcMultiScale`/`rcMultiTap`.
+  - **Dynamic note handoff:** when the member writes a check-in note (and it's not a concerning trend), Riley now
+    responds to it for real via the LLM (`rcRespondToNote` streams a genuine, contextual reply from riley-chat and
+    leaves the floor open) instead of the canned give-one-thing card + generic handoff. Escalation/crisis paths
+    unchanged; no-note check-ins keep the give-one-thing card.
+- Clarity v2 stays DARK; this is check-in UX only. Escalation updated to 1-5 heaviness (>=4).
 ### Promo-code capture - stamp coupon onto subscription + surface in admin (`059963e`)
 - **Why:** The operator "coupon" filter in Client Overview was always returning null because
   coupon redemption was never stored in the DB - it lived only in Stripe.

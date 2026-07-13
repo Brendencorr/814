@@ -208,7 +208,7 @@ function coachLockCard(slot,title,body){
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
   if(!(await coachEntitled('adaptive_workouts'))){
-    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week - included with Riley Coach ($34/mo). Your workout log below still works on Companion.');
+    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week - part of Riley Coach. Your workout log below still works on Companion.');
   }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
@@ -391,7 +391,7 @@ async function logWorkout(){
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
       tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Knowledge Graph',need:'Riley Coach'}
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

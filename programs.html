@@ -184,12 +184,13 @@ function rileyUnlockWaitlist(){
   const COACH=['knowledge_graph','adaptive_nutrition','adaptive_workouts','adaptive_plans','proactive_checkins','trend_analysis','story'];
   const plan=COACH.includes(feat)?'coach':'companion';
   const label=plan==='coach'?'Riley Coach':'Riley Companion';
+  const tagline=plan==='coach'?'Riley moves you forward.':'Riley walks with you.';
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,0.85);backdrop-filter:blur(5px);padding:20px';
   ov.innerHTML=`<div style="background:#141210;border:1px solid rgba(201,168,76,0.24);border-radius:14px;max-width:420px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6)">
     <div style="width:54px;height:54px;margin:0 auto 16px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 34px rgba(201,168,76,0.45)"></div>
     <div style="font-family:'DM Serif Display',serif;font-size:23px;color:#f5f0e8;margin-bottom:10px">Upgrade to ${label}</div>
-    <div id="rw-body" style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">Start your ${label} membership - cancel anytime, and your first payment is fully refundable within 30 days.</div>
+    <div id="rw-body" style="font-size:14px;color:#8a8578;line-height:1.65;margin-bottom:22px">${tagline} Start your ${label} membership - cancel anytime, and your first payment is fully refundable within 30 days.</div>
     <button id="rw-join" style="width:100%;padding:13px;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);color:#0a0908;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:10px">Continue to checkout →</button>
     <button id="rw-close" style="background:none;border:none;color:#8a8578;font-size:13px;cursor:pointer;padding:6px">Not now</button>
   </div>`;
@@ -420,7 +421,7 @@ async function buyProgram(key){
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
       tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Knowledge Graph',need:'Riley Coach'}
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

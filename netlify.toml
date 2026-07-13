@@ -392,6 +392,11 @@
   to = "/404.html"
   status = 404
   force = true
+[[redirects]]
+  from = "/POSITIONING.md"
+  to = "/404.html"
+  status = 404
+  force = true
 # Committed root SQL schema files must NOT be publicly downloadable — the repo root is the
 # publish dir, so /004_dashboard.sql etc. would otherwise serve the full schema. Force-404 them
 # like the internal *.md docs. (Longer term: move these into supabase/migrations/.)

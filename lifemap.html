@@ -129,7 +129,7 @@ async function knowledgeGraphEntitled(){
   }catch(e){return true;} // fail open - never block on a network hiccup
 }
 function lockedPage(){
-  document.querySelector('.content').innerHTML=`<div class="fcard" style="text-align:center;max-width:480px;margin:60px auto"><div style="font-size:40px;margin-bottom:14px;opacity:0.7">🔒</div><div class="ftitle" style="font-size:20px;margin-bottom:8px">Your Knowledge Graph</div><div class="fsub" style="margin-bottom:20px">Riley remembers who you're becoming - your wins, your why, your whole story - as a living map that deepens over time. Included with Riley Coach ($34/mo).</div><a href="/programs?unlock=knowledge_graph" class="btn btn-gold" style="text-decoration:none;padding:12px 26px">Unlock with Riley Coach →</a></div>`;
+  document.querySelector('.content').innerHTML=`<div class="fcard" style="text-align:center;max-width:480px;margin:60px auto"><div style="font-size:40px;margin-bottom:14px;opacity:0.7">🔒</div><div class="ftitle" style="font-size:20px;margin-bottom:8px">Your Life Map</div><div class="fsub" style="margin-bottom:20px">Riley remembers who you're becoming - your wins, your why, your whole story - as a living map that deepens over time. Part of Riley Coach.</div><a href="/programs?unlock=knowledge_graph" class="btn btn-gold" style="text-decoration:none;padding:12px 26px">Unlock with Riley Coach →</a></div>`;
 }
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
@@ -407,7 +407,7 @@ boot();
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
       tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Knowledge Graph',need:'Riley Coach'}
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

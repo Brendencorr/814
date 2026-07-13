@@ -16,7 +16,7 @@ const SUBSCRIPTIONS = [
   {
     riley_plan: "companion",
     name: "Riley Companion",
-    description: "Riley Companion membership - Riley remembers your conversations and carries them forward: the names, the dates that matter, what you told her you'd try. So you never start over. Cancel anytime.",
+    description: "Riley Companion - Riley walks with you. Riley remembers your conversations and carries them forward: the names, the dates that matter, what you said you'd try, so you never explain yourself twice. Cancel anytime.",
     prices: [
       { lookup_key: "companion_monthly", unit_amount: 1900,  interval: "month", nickname: "Companion · Monthly" },
       { lookup_key: "companion_annual",  unit_amount: 17500, interval: "year",  nickname: "Companion · Annual" },
@@ -25,7 +25,7 @@ const SUBSCRIPTIONS = [
   {
     riley_plan: "coach",
     name: "Riley Coach",
-    description: "Riley Coach membership - everything in Companion (Riley remembers everything), plus every interactive coached program where Riley builds a plan with you and adapts it each week. Cancel anytime.",
+    description: "Riley Coach - Riley moves you forward. Everything in Companion, plus every Riley-led coached program where Riley builds a plan with you and adapts it each week, and proactive check-ins Riley starts. Cancel anytime.",
     prices: [
       { lookup_key: "coach_monthly", unit_amount: 3400,  interval: "month", nickname: "Coach · Monthly" },
       { lookup_key: "coach_annual",  unit_amount: 35000, interval: "year",  nickname: "Coach · Annual" },

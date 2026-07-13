@@ -227,6 +227,18 @@ Dashboard writes/triggers via:
 Supabase tables used by dashboard (no RLS — anon key reads work):
 - echo_scores, pipeline_runs, published_posts, scout_history
 
+## Tier Positioning (CANONICAL — see POSITIONING.md)
+The tiers answer "how close do you want Riley?", not "how much do you get?" Money is secondary.
+Prices are unchanged ($19/$34); this is messaging only. Every plan includes every topic - the only
+thing that changes is how much of Riley is beside you. Verbatim taglines (must match everywhere):
+- Guide (free): **Riley shows you where you stand.**
+- Companion ($19/mo · $175/yr): **Riley walks with you.** (memory turns on → "never explain yourself twice")
+- Coach ($34/mo · $350/yr): **Riley moves you forward.** (adaptive plans + proactive + Life Map)
+The one member-facing name for the Coach memory pillar is **Life Map** (never "Knowledge Graph"). In-app
+upsell cards lead with value and carry NO inline price. Full copy deck + surface checklist: `POSITIONING.md`
+(force-404'd publicly). Tier blurbs also live in DB `products.blurb` + Riley's prompt (riley-chat.js) +
+Stripe (`stripe-catalog.js`, pushed live by re-running stripe-setup).
+
 ## Self-Improvement Logic
 - Scout reads echo_scores.best_pillar and format_winner before every run
 - Scout reads last 4 weeks of scout_history to avoid repeating topics

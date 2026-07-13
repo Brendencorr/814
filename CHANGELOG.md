@@ -12,6 +12,26 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Tier repositioning — "how close do you want Riley?" (messaging only, prices unchanged)
+- **Why:** The tiers read as feature-count ("what you get"). Repositioned to relationship depth so members
+  decide on what they get FROM Riley, not price (money secondary, Brenden-approved). Every plan already
+  unlocks every topic; only how much of Riley is beside you changes.
+- **What:** One canonical copy deck (`POSITIONING.md`, force-404'd) drives verbatim taglines everywhere:
+  Guide = "Riley shows you where you stand." · Companion = "Riley walks with you." (memory → never explain
+  yourself twice) · Coach = "Riley moves you forward." Applied to home.html tier cards + compare table; DB
+  `products.blurb` (reset_free/companion/coach); Riley's own prompt (riley-chat.js); Stripe catalog
+  (stripe-catalog.js); programs.html upgrade modal now leads with the plan tagline. Unified the Coach memory
+  pillar to ONE name **Life Map** (was "Knowledge Graph") across 17 app pages + Riley prompt + lifemap lock.
+  Dropped inline "$34/mo" from in-app lock cards (lifemap/workouts/nutrition) — value-forward; price lives on
+  the pricing page/checkout. Compare-table row "Long-term memory" → "Riley remembers you".
+- **Verified:** grep-clean (no old taglines, no stale inline prices in member HTML, no member-facing
+  "Knowledge Graph"); no em-dashes in new copy; riley-chat.js + stripe-catalog.js `node --check` pass.
+- **Left for Brenden:** re-run **stripe-setup** (operator) to push the new Companion/Coach descriptions to
+  LIVE Stripe; confirm Netlify deploy GREEN. Lifecycle emails (comms-templates.js) already embodied the
+  framing in first-person Riley voice — intentionally untouched. Prices unchanged.
+- **Files:** POSITIONING.md (new), netlify.toml, CLAUDE.md, home.html, netlify/functions/riley-chat.js,
+  netlify/functions/stripe-catalog.js, programs.html, lifemap.html, workouts.html, nutrition.html, + 14 more
+  pages (Life Map rename); DB `products.blurb` updated live (not in git).
 ### Fix: nav "Get Started" bypassed tier selection/checkout
 - **Why:** The upper-right "Get Started" button on every marketing page linked straight to /login -> Google
   -> onboarding, skipping the membership/plans choice entirely (users only saw tiers if they scrolled). Free

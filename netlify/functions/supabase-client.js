@@ -1,5 +1,22 @@
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 const { phCapture } = require('./posthog-server');
+
+// Origins allowed to read operator/pipeline responses cross-origin (M-3). The operator dashboard is
+// same-origin with the functions in normal use (so it works regardless of CORS); this allowlist just
+// stops a hostile page from reading an operator response cross-origin. Only applied to gate replies.
+const OPERATOR_ORIGINS = new Set([
+  'https://meetriley.us', 'https://www.meetriley.us',
+  'https://admin.meetriley.us', 'https://riley.meetriley.us',
+]);
+
+// Constant-time secret comparison (M-3). Hash both sides to a fixed length first so timingSafeEqual
+// never throws on a length mismatch and the comparison leaks neither the key nor its length.
+function safeEqual(a, b) {
+  const ha = crypto.createHash('sha256').update(String(a || '')).digest();
+  const hb = crypto.createHash('sha256').update(String(b || '')).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
 
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
@@ -72,15 +89,20 @@ function inQuietHours(timezone) {
 // that invoke their runner INLINE (e.g. content-daily-cron → runDaily) are unaffected - this only
 // gates the public HTTP handler. Usage: `const gate = requireOperator(event); if (gate) return gate;`
 function requireOperator(event) {
+  const h = (event && event.headers) || {};
+  const origin = h.origin || h.Origin || '';
   const CORS = {
-    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, x-operator-key',
     'Content-Type': 'application/json',
+    'Vary': 'Origin',
   };
+  // Reflect only allow-listed origins; a non-matching origin gets no ACAO (was wildcard '*').
+  if (OPERATOR_ORIGINS.has(origin)) CORS['Access-Control-Allow-Origin'] = origin;
   const expected = process.env.OPERATOR_KEY;
   if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: 'OPERATOR_KEY not configured' }) };
-  const provided = (event.headers && (event.headers['x-operator-key'] || event.headers['X-Operator-Key'])) || '';
-  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
+  const provided = h['x-operator-key'] || h['X-Operator-Key'] || '';
+  // Constant-time compare (was `!==`, which short-circuits and leaks timing).
+  if (!provided || !safeEqual(provided, expected)) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: 'Unauthorized' }) };
   return null;
 }
 

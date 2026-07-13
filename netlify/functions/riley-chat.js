@@ -859,11 +859,16 @@ async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
 // safety/follow-up with restricted access - NEVER surfaced in marketing
 // analytics or personalization. Service-key write; RLS blocks client reads.
 // Non-blocking and non-fatal: a logging failure never affects the member's reply.
-async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
-  if (!supabase || !userId) return;
+async function logCrisis(supabase, userId, sessionId, level, matches, snippet, anon) {
+  if (!supabase) return;
+  // H-3: log for a member (userId) OR an anonymous visitor (anon = { anonId, ipHash }). An anon
+  // crisis is keyed to the same anon_id/ip_hash used for the rate caps - never to identity.
+  if (!userId && !(anon && (anon.anonId || anon.ipHash))) return;
   try {
     await supabase.from("crisis_log").insert({
-      user_id:        userId,
+      user_id:        userId || null,
+      anon_id:        userId ? null : ((anon && anon.anonId) || null),
+      ip_hash:        userId ? null : ((anon && anon.ipHash) || null),
       session_id:     sessionId || null,
       level,
       matched_rules:  Array.isArray(matches) ? matches.slice(0, 8) : [],
@@ -871,10 +876,13 @@ async function logCrisis(supabase, userId, sessionId, level, matches, snippet) {
       followup_stage: 0,
       resolved:       false,
     });
-    // Surface to the operator safety queue via the profile flag (no content).
-    supabase.from("user_profiles")
-      .update({ last_crisis_at: new Date().toISOString(), last_crisis_level: level })
-      .eq("id", userId).then(() => {}, () => {});
+    // Surface to the operator safety queue via the profile flag (no content). Members only -
+    // an anonymous visitor has no profile row.
+    if (userId) {
+      supabase.from("user_profiles")
+        .update({ last_crisis_at: new Date().toISOString(), last_crisis_level: level })
+        .eq("id", userId).then(() => {}, () => {});
+    }
   } catch (e) { console.warn("logCrisis failed (non-fatal):", e.message); }
 }
 
@@ -1248,12 +1256,23 @@ exports.handler = async function (event) {
   const crisis      = detectCrisis(latestUserText);
   const isDiagnosis = detectDiagnosis(latestUserText);
 
+  // H-3: anonymous crisis identity. A stranger with no account can hit a crisis; we already give
+  // them the 988 response, and now we also log it + alert the operator, keyed to the same
+  // anon_id/ip_hash used for the rate caps (never identity). Computed here so the branches below
+  // can attribute an anonymous crisis instead of dropping it.
+  let anonKey = null;
+  if (!user_id) {
+    const rawAnon = typeof anon_id === "string" && anon_id.length > 0 ? anon_id.slice(0, 64) : null;
+    const iph = hashKey(getClientIp(event));
+    anonKey = { anonId: rawAnon || ("ip-" + iph), ipHash: iph };
+  }
+
   if (crisis.level === 3) {
     console.log("[riley-chat] LEVEL 3 crisis override fired:", crisis.matches);
     // AWAIT the safety writes - guarantee the crisis record + transcript persist
     // before the serverless container freezes on return. Each is internally
     // try/caught, so a Supabase hiccup still lets the crisis response through.
-    await logCrisis(supabase, user_id, session_id, 3, crisis.matches, latestUserText);
+    await logCrisis(supabase, user_id, session_id, 3, crisis.matches, latestUserText, anonKey);
     if (supabase && user_id && session_id) {
       await persistMessages(supabase, user_id, session_id, latestUserText, LEVEL3_RESPONSE);
       supabase.from("user_profiles")
@@ -1263,8 +1282,8 @@ exports.handler = async function (event) {
     // Notify the operator (email w/ client + convo). Awaited - there's no model
     // call on this path, so the ~1s send still gets the member their 988 reply
     // promptly while guaranteeing the alert goes out. Internally non-fatal.
-    if (supabase && user_id) {
-      await sendOperatorAlert(supabase, { userId: user_id, level: 3, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" });
+    if (supabase && (user_id || anonKey)) {
+      await sendOperatorAlert(supabase, { userId: user_id, anon: user_id ? null : anonKey, level: 3, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" });
     }
     // Return the deterministic crisis response - NO model call.
     return {
@@ -1285,18 +1304,20 @@ exports.handler = async function (event) {
   if (slip.isSlip) {
     const canonLine = await getCanonLapseLine(supabase);
     safetyDirective += lapseRepairDirective(canonLine) + "\n\n";
-    await logCrisis(supabase, user_id, session_id, 2, ["slip-disclosure", ...slip.matches], latestUserText);
+    await logCrisis(supabase, user_id, session_id, 2, ["slip-disclosure", ...slip.matches], latestUserText, anonKey);
     if (supabase && user_id) {
       markLapseActive(supabase, user_id);   // arm lapse_state on Staying Free (no-op if not enrolled)
-      sendOperatorAlert(supabase, { userId: user_id, level: 2, matches: ["slip-disclosure", ...slip.matches], excerpt: latestUserText, source: "riley-chat-lapse" }).catch(() => {});
+    }
+    if (supabase && (user_id || anonKey)) {
+      sendOperatorAlert(supabase, { userId: user_id, anon: user_id ? null : anonKey, level: 2, matches: ["slip-disclosure", ...slip.matches], excerpt: latestUserText, source: "riley-chat-lapse" }).catch(() => {});
     }
   } else if (crisis.level === 2) {
     safetyDirective += LEVEL2_DIRECTIVE + "\n\n";
-    await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText);
+    await logCrisis(supabase, user_id, session_id, 2, crisis.matches, latestUserText, anonKey);
     // Fire-and-forget - runs during the awaited model call below, so the
     // operator alert adds no latency to the member's Level-2 reply.
-    if (supabase && user_id) {
-      sendOperatorAlert(supabase, { userId: user_id, level: 2, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" }).catch(() => {});
+    if (supabase && (user_id || anonKey)) {
+      sendOperatorAlert(supabase, { userId: user_id, anon: user_id ? null : anonKey, level: 2, matches: crisis.matches, excerpt: latestUserText, source: "riley-chat" }).catch(() => {});
     }
   } else if (crisis.level === 1) {
     safetyDirective += LEVEL1_DIRECTIVE + "\n\n";

@@ -27,15 +27,20 @@ function esc(s) {
 }
 
 async function sendOperatorAlert(supabase, opts) {
-  const { userId, level, matches, excerpt, source } = opts || {};
+  const { userId, anon, level, matches, excerpt, source } = opts || {};
   const to = process.env.SAFETY_ALERT_EMAIL;
   const key = process.env.RESEND_API_KEY;
 
   if (!to || !key) {
-    console.log(`[safety-alert] would alert operator - level ${level}, user ${userId}, source ${source} (SAFETY_ALERT_EMAIL/RESEND_API_KEY not set)`);
+    console.log(`[safety-alert] would alert operator - level ${level}, ${userId ? "user " + userId : "anonymous visitor"}, source ${source} (SAFETY_ALERT_EMAIL/RESEND_API_KEY not set)`);
     return { skipped: true };
   }
-  if (!supabase || !userId) return { skipped: true };
+  // H-3: an anonymous visitor has no profile / no stored conversation - send the minimal anon alert.
+  if (!userId) {
+    if (!anon) return { skipped: true };
+    return sendAnonAlert({ to, key, anon, level, matches, excerpt, source });
+  }
+  if (!supabase) return { skipped: true };
 
   try {
     // Client info + recent conversation (the safety context the operator needs).
@@ -123,6 +128,68 @@ dashboard → Safety to mark this handled.`;
     console.warn("[safety-alert] failed (non-fatal):", e.message);
     return { ok: false };
   }
+}
+
+// H-3: anonymous-visitor safety alert. No profile, no stored conversation (anonymous chat is not
+// persisted). The operator still gets the excerpt + the anon key so a human is aware a stranger
+// hit a crisis and received the 988 response. Never throws.
+async function sendAnonAlert({ to, key, anon, level, matches, excerpt, source }) {
+  const label  = LEVEL_LABEL[level] || `Level ${level}`;
+  const urgent = level >= 3;
+  const anonId = (anon && anon.anonId) || "-";
+  const ipHash = (anon && anon.ipHash) || "-";
+  const trig   = (excerpt || "").slice(0, 400);
+  const rules  = Array.isArray(matches) ? matches.join(" · ") : "-";
+
+  const text =
+`${urgent ? "⚠ URGENT - " : ""}Safety flag: ${label} (anonymous visitor)
+
+Client: Anonymous visitor (no account)
+Anon key: ${anonId}
+IP hash: ${ipHash}
+Flagged via: ${source || "-"}
+What triggered it: ${trig}
+Detected by rules: ${rules}
+
+There is no stored conversation for an anonymous visitor. This person received the
+988 crisis response. Safety notification for follow-up awareness only - handle
+confidentially, do not forward.`;
+
+  const html =
+`<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:620px;margin:0 auto;color:#1a1a1a;line-height:1.6;font-size:14px">
+  <div style="background:${urgent ? "#7a2e2e" : "#8a6d2f"};color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;font-weight:700;font-size:15px">${urgent ? "⚠ URGENT - " : ""}Safety flag: ${esc(label)} (anonymous)</div>
+  <div style="border:1px solid #e3ddd4;border-top:none;border-radius:0 0 8px 8px;padding:18px">
+    <table style="font-size:13.5px;border-collapse:collapse;margin-bottom:14px">
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Client</td><td>Anonymous visitor (no account)</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Anon key</td><td>${esc(anonId)}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">IP hash</td><td>${esc(ipHash)}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Flagged via</td><td>${esc(source || "-")}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0;vertical-align:top">Triggered by</td><td>${esc(trig)}</td></tr>
+      <tr><td style="color:#888;padding:2px 12px 2px 0">Rules</td><td>${esc(rules)}</td></tr>
+    </table>
+    <div style="color:#999;font-size:11.5px;margin-top:8px">No stored conversation for an anonymous visitor. They received the 988 response. Handle confidentially, do not forward.</div>
+  </div>
+</div>`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4500);
+  try {
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: FROM_EMAIL, to: [to],
+        subject: `${urgent ? "⚠ URGENT " : ""}Safety flag - Anonymous visitor (${label})`,
+        html, text,
+      }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) { console.warn("[safety-alert] Resend(anon)", resp.status, (await resp.text()).slice(0, 160)); return { ok: false }; }
+    return { ok: true };
+  } catch (e) {
+    console.warn("[safety-alert] anon failed (non-fatal):", e.message);
+    return { ok: false };
+  } finally { clearTimeout(timer); }
 }
 
 module.exports = { sendOperatorAlert };

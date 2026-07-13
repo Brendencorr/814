@@ -12,6 +12,35 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### H-3 + M-3 compliance fixes: anonymous crisis logging/alerts + operator gate hardening
+- **H-3 (anonymous crises were invisible to the safety system).** The deterministic Level-3 988
+  response already fired for anonymous visitors, but `logCrisis()` early-returned without a user_id
+  and `sendOperatorAlert()` was gated on `user_id` - so a stranger's crisis produced NO crisis_log
+  row and NO operator alert (the population most likely to be testing whether Riley is safe). Now
+  anonymous crises are logged + alerted, keyed to the same `anon_id`/`ip_hash` already computed for
+  the rate caps - NEVER to identity.
+  - migration `090_crisis_log_anon.sql`: `crisis_log.user_id` now nullable + `anon_id`/`ip_hash`
+    columns + a CHECK that every row is attributable to a member or an anon key (APPLIED to prod).
+  - `riley-chat.js`: compute an `anonKey` before the crisis block; pass it to logCrisis + fire the
+    operator alert for anon at Levels 2/3 (member-only `markLapseActive` left member-only).
+  - `safety-alert.js`: new `sendAnonAlert()` - "Anonymous visitor" + anon key + excerpt, no profile
+    lookup (anon chat is not persisted, so there is no stored conversation to attach).
+  - `admin-safety.js`: the operator Safety queue now labels anon rows "Anonymous visitor" (was
+    mislabeled "Member") and surfaces the anon key.
+  - Post-hoc backstop scan for anon is DEFERRED - it would require storing anon excerpts, a retention
+    decision for counsel (which the finding itself flags).
+- **M-3 (operator gate hardening).** `requireOperator()` in `supabase-client.js`: the key compare is
+  now constant-time (`crypto.timingSafeEqual` over SHA-256 of each side, was `!==`); CORS is no
+  longer wildcard - the gate reflects an allow-list of meetriley origins only (success responses use
+  each function's own headers, so this only touches rejection replies). Per-IP rate limiting on key
+  guesses is scoped as a deliberate follow-up (needs an async refactor across ~25 call sites, or an
+  edge-layer limit - not something to rush pre-launch).
+- **Verified:** touched functions `node --check` clean; requireOperator unit-tested (correct key
+  opens gate, wrong key 401, ACAO reflects meetriley + omitted for other origins, no wildcard);
+  migration 090 confirmed live (user_id nullable, anon cols present, CHECK in place). Files:
+  `riley-chat.js`, `safety-alert.js`, `admin-safety.js`, `supabase-client.js`,
+  `supabase/migrations/090_crisis_log_anon.sql`.
+
 ### Clarity v2.2 — Phase D: monitoring cron + methodology page
 - **Why:** Watch the v2 engine over time (catch drift before/after cutover) and give members a
   plain-language, trust-building explanation of what Clarity is and - crucially - what it never does.

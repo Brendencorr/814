@@ -28,12 +28,13 @@ async function listFlags(supabase) {
   // Recent flags, newest first (open ones are what the queue/pop-up care about).
   const { data: logs, error } = await supabase
     .from("crisis_log")
-    .select("id,user_id,session_id,level,matched_rules,message_excerpt,followup_stage,resolved,operator_handled_at,operator_note,created_at")
+    .select("id,user_id,anon_id,ip_hash,session_id,level,matched_rules,message_excerpt,followup_stage,resolved,operator_handled_at,operator_note,created_at")
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw error;
 
-  const ids = [...new Set((logs || []).map(l => l.user_id))];
+  // H-3: anonymous crises have a null user_id - exclude those from the profile lookup.
+  const ids = [...new Set((logs || []).map(l => l.user_id).filter(Boolean))];
   const profMap = new Map();
   if (ids.length) {
     const { data: profs } = await supabase
@@ -46,12 +47,16 @@ async function listFlags(supabase) {
   const now = Date.now();
   const flags = (logs || []).map(l => {
     const p = profMap.get(l.user_id) || {};
+    const isAnon = !l.user_id;   // H-3: anonymous visitor - no profile
     const soberDays = p.sobriety_date ? soberDaysForMember(p.sobriety_date) : null;
     return {
       id: l.id,
       user_id: l.user_id,
-      name: p.preferred_name || p.full_name || "Member",
-      email: p.email || null,
+      anon: isAnon,
+      anon_id: l.anon_id || null,
+      ip_hash: l.ip_hash || null,
+      name: isAnon ? "Anonymous visitor" : (p.preferred_name || p.full_name || "Member"),
+      email: isAnon ? null : (p.email || null),
       sober_days: soberDays,
       last_active_at: p.last_active_at || null,
       level: l.level,

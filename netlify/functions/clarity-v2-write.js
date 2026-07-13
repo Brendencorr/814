@@ -44,7 +44,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const win28 = daysAgoISO(28), win7 = daysAgoISO(7);
 
   // ── gather the v2-specific signals in parallel (bounded fan-out; Tier-1 only) ──
-  const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes, fitRes] = await Promise.allSettled([
+  const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes, fitRes, leRes] = await Promise.allSettled([
     supabase.from("daily_checkins")
       .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,notes")
       .eq("user_id", userId).gte("checkin_date", win28).order("checkin_date", { ascending: true }),
@@ -55,6 +55,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
     supabase.from("user_profiles").select("created_at").eq("id", userId).maybeSingle(),
     supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
+    supabase.from("clarity_life_events").select("occurred_on,window_days,recalibrate").eq("user_id", userId).eq("recalibrate", true).gte("occurred_on", daysAgoISO(60)),
   ]);
 
   const checkins = (ciRes.status === "fulfilled" && ciRes.value.data) || [];
@@ -81,6 +82,16 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   let membershipDays = null;
   if (prof && prof.created_at) { const g = gapDays(dayISO(new Date(prof.created_at)), today); if (g != null) membershipDays = g + 1; }
   const firstLight = isNum(membershipDays) && membershipDays <= 14;
+
+  // §2 life-event recalibration: if the member flagged a big change and we're still inside its
+  // window (occurred_on .. +window_days), widen the Practice bands so Clarity meets them where
+  // they are now instead of cratering. Never lowers — same one-directional care as a hard day.
+  const lifeEvents = (leRes.status === "fulfilled" && leRes.value.data) || [];
+  const recalibrating = lifeEvents.some((e) => {
+    if (!e.occurred_on) return false;
+    const end = gapDays(e.occurred_on, today);
+    return end != null && end >= 0 && end <= (isNum(e.window_days) ? e.window_days : 14);
+  });
 
   // ── Foundation series (oldest→newest; engine slices last 7 non-null) ──
   const series = (k) => checkins.map((c) => num(c[k]));
@@ -173,6 +184,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     lane,
     coreHistory,
     hardDayToday: hardToday2,
+    recalibrating,
     firstLight,
     prevDisplayed,
     freeze,

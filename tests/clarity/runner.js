@@ -165,5 +165,13 @@ function round(n) { return n == null ? null : Math.round(n); }
   ok("habits: in-band scores in the middle range", atFloorRegion >= 65 && atFloorRegion <= 85, "" + atFloorRegion);
 })();
 
+// ── 15. Life-event recalibration (§2): widens bands like a hard day, never lowers ──
+(function () {
+  const low = { movement: { v: 1, baseline: 5, floor: 1 }, habits: { v: 1, baseline: 5, floor: 20 }, reflection: { v: 1, baseline: 5, floor: 1 } };
+  const normal = E.computeClarityV2(baseInput({ practice: JSON.parse(JSON.stringify(low)) }));
+  const recal = E.computeClarityV2(baseInput({ recalibrating: true, practice: JSON.parse(JSON.stringify(low)) }));
+  ok("recalibration: never scores lower than normal for the same low week", recal.displayed >= normal.displayed, `normal=${normal.displayed} recal=${recal.displayed}`);
+})();
+
 console.log(`\nClarity engine Stage-0: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

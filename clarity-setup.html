@@ -38,6 +38,8 @@
   .status{text-align:center;font-size:13px;margin-top:10px;min-height:18px}
   .status.ok{color:var(--green2)} .status.err{color:#e0a3a3} .status.info{color:var(--smoke)}
   .skel{opacity:.4;pointer-events:none}
+  .le-chip{background:#0f1620;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 14px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif}
+  .le-chip:hover{border-color:var(--gold)}
 </style>
 </head>
 <body>
@@ -68,6 +70,18 @@
   <div class="card skel" id="lanes">
     <div class="row" data-lane="sobriety" id="lane-sobriety" style="display:none"><div class="meta"><div class="t">Sobriety</div><div class="d">Measured by density, not streaks. Held steady - never shamed - during a hard stretch. Turn off any time.</div></div><div class="tog"></div></div>
     <div class="row" data-lane="grief"><div class="meta"><div class="t">Grief &amp; loss</div><div class="d">Presence only - we never score grief. There's no grieving correctly; showing up is the whole thing.</div></div><div class="tog"></div></div>
+  </div>
+
+  <div class="sec-label">Life changed recently?</div>
+  <div class="card" id="lifeevent" style="padding:16px 18px">
+    <div style="font-size:13px;color:var(--smoke);line-height:1.55;margin-bottom:13px">If something big shifted - a move, a loss, a job change - Clarity can meet you where you are now instead of holding you to your old normal, for a couple of weeks.</div>
+    <div id="le-chips" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="le-chip" data-k="move">Moved</button>
+      <button class="le-chip" data-k="loss">A loss</button>
+      <button class="le-chip" data-k="job_change">Job change</button>
+      <button class="le-chip" data-k="other">Something else</button>
+    </div>
+    <div id="le-done" style="display:none;font-size:13px;color:var(--green2);line-height:1.5;margin-top:4px">Noted. Clarity will meet you gently for the next couple of weeks.</div>
   </div>
 </div>
 
@@ -156,6 +170,15 @@ $('keep').addEventListener('click', async ()=>{
   if(HAS_LANE) config.lanes.sobriety=true;   // auto-offer default ON for trackers
   await saveConfig(config);
   $('keep').disabled=false;
+});
+
+// §2 life-event tag: log a big life change → Clarity recalibrates (widens bands) for window_days.
+document.getElementById('le-chips').addEventListener('click', async function(e){
+  const b=e.target.closest('.le-chip'); if(!b||!UID)return;
+  document.getElementById('le-chips').style.display='none';
+  document.getElementById('le-done').style.display='block';
+  try{ await SB.from('clarity_life_events').insert({user_id:UID, kind:b.dataset.k, occurred_on:TODAY, recalibrate:true, window_days:14}); }catch(err){}
+  try{ SB.rpc('log_engagement',{p_event_type:'clarity_life_event_tagged',p_event_data:{kind:b.dataset.k}}); }catch(err){}
 });
 
 load();

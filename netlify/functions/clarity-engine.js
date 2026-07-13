@@ -121,7 +121,9 @@ function practiceDimScore(v, B, floor, opts) {
   const b = isNum(B) && B > 0 ? B : Math.max(1, floor || 1); // no baseline yet → treat floor as baseline
   let lo = 0.7 * b;
   if (isNum(floor)) lo = Math.max(lo, floor);
-  if (opts.hardDay) lo = 0.5 * b;               // §9: hard day widens the band, never lowers
+  // §9 hard day / §2 life-event recalibration both WIDEN the band (never lower) so an upheaval
+  // meets the member where they are instead of cratering their score.
+  if (opts.hardDay || opts.recalibrate) lo = 0.5 * b;
   const hi = 1.15 * b;
   if (v >= hi) return clamp100(85 + 15 * Math.min(1, (v - hi) / Math.max(1e-9, hi)));
   if (v >= lo) return clamp100(65 + 20 * (v - lo) / Math.max(1e-9, hi - lo));
@@ -151,7 +153,7 @@ function computePractice(inp) {
       s = (isNum(d.v) && d.v > 0) ? 100 : null;
     } else {
       const floor = isNum(d.floor) ? d.floor : DIM_FLOORS[dim];
-      s = practiceDimScore(d.v, d.baseline, floor, { firstLight: !!d.firstLight, hardDay: !!inp.hardDayToday });
+      s = practiceDimScore(d.v, d.baseline, floor, { firstLight: !!d.firstLight, hardDay: !!inp.hardDayToday, recalibrate: !!inp.recalibrating });
     }
     perDim[dim] = { score: s, v: d.v, baseline: d.baseline, conf: c };
     if (s != null && c >= 0.1) scored.push({ s, c, w: 1 });

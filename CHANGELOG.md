@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — §2 weekly perceived-direction + life-event recalibration (final spec gaps)
+- **Why:** Close the last two §2 items: the weekly validation signal (§13 Stage-1 needs it) and the
+  life-event "meet you where you are" recalibration. Both tables existed; nothing wrote them.
+- **What:** (1) **Weekly card** (dashboard, v2 members, Sun/Mon member-local, once/week until answered):
+  "Compared to last week, this week felt lighter / about the same / heavier" + "one small win" →
+  `clarity_weekly` (owner-RLS upsert); event clarity_weekly_answered. This is the perceived-direction
+  correlate the drift cron already reads. (2) **Life-event recalibration**: a "Life changed recently?"
+  affordance in the setup pane (Moved / A loss / Job change / Something else) writes `clarity_life_events`
+  (recalibrate, window_days 14); `clarity-v2-write` reads active windows and passes `recalibrating` to the
+  engine, which WIDENS the Practice bands (lo→0.5B, same one-directional care as a hard day - never lowers).
+  Property test added (recal never scores lower). Stage-0 now 26/26. Files: dashboard.html,
+  clarity-setup.html, clarity-engine.js, clarity-v2-write.js, tests/clarity/runner.js.
 ### Clarity v2.2 — full three-touch onboarding (§10) + grief lane UI
 - **Why:** Complete the spec's onboarding flow correctly (the modal I'd built violated §10/§15.23
   "an in-screen card, not a modal that blocks the number") and expose the grief lane.

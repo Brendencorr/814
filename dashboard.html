@@ -724,6 +724,39 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
               }
             }
           }catch(e){} }
+
+          // ── Weekly perceived-direction + one small win (§2) — the validation-gold signal
+          // (§13 Stage-1). v2 members, on the weekend wrap (Sun/Mon member-local), once per
+          // week until answered. Writes clarity_weekly (owner-RLS); the weekly recap reads it. ──
+          try{
+            const _dow=new Date(TODAY+'T12:00:00').getDay();     // 0=Sun
+            if((_dow===0||_dow===1) && !document.getElementById('cl-week')){
+              const _wd=new Date(TODAY+'T12:00:00'); _wd.setDate(_wd.getDate()-_dow); const _weekOf=_wd.toLocaleDateString('en-CA');
+              let _has=false; try{ const _wr=await SB.from('clarity_weekly').select('week_of').eq('user_id',UID).eq('week_of',_weekOf).maybeSingle(); _has=!!(_wr&&_wr.data); }catch(e){}
+              if(!_has){
+                const _main2=document.querySelector('main.main'), _anchor2=document.getElementById('insight');
+                const oStyle='background:#0f1620;border:1px solid #1a2530;color:#e8e4de;border-radius:10px;padding:10px 14px;font-size:13px;cursor:pointer;font-family:inherit';
+                const c=document.createElement('div'); c.id='cl-week'; c.style.cssText='margin:0 0 16px;padding:18px 20px;background:#0a1018;border:1px solid #1a2530;border-radius:14px;color:var(--text,#e8e4de)';
+                c.innerHTML='<div style="font-size:15px;line-height:1.5;margin-bottom:12px">Compared to last week, this week felt:</div>'
+                  +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+                  +'<button class="cw-o" data-v="lighter" style="'+oStyle+'">Lighter</button>'
+                  +'<button class="cw-o" data-v="same" style="'+oStyle+'">About the same</button>'
+                  +'<button class="cw-o" data-v="heavier" style="'+oStyle+'">Heavier</button></div>'
+                  +'<input id="cw-win" maxlength="280" placeholder="One small win this week (optional)" style="width:100%;background:#0f1620;border:1px solid #1a2530;color:#e8e4de;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;margin-bottom:12px">'
+                  +'<button id="cw-save" style="background:#c9a84c;color:#0a0d12;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer">Save</button>';
+                if(_anchor2&&_anchor2.parentNode)_anchor2.parentNode.insertBefore(c,_anchor2); else if(_main2)_main2.insertBefore(c,_main2.firstChild);
+                let _pick=null;
+                c.querySelectorAll('.cw-o').forEach(function(b){ b.addEventListener('click',function(){ _pick=b.dataset.v; c.querySelectorAll('.cw-o').forEach(function(x){x.style.borderColor='#1a2530';}); b.style.borderColor='#c9a84c'; }); });
+                document.getElementById('cw-save').addEventListener('click',async function(){
+                  if(!_pick){ return; }
+                  const win=(document.getElementById('cw-win').value||'').trim().slice(0,280);
+                  try{ await SB.from('clarity_weekly').upsert({user_id:UID,week_of:_weekOf,perceived:_pick,small_win:win||null},{onConflict:'user_id,week_of'}); }catch(e){}
+                  track('clarity_weekly_answered',{perceived:_pick,has_win:!!win});
+                  c.innerHTML='<div style="font-size:14px;color:#5bc488;line-height:1.5">Thank you - noted for the week.'+(win?' That win is worth holding onto.':'')+'</div>'; setTimeout(function(){try{c.remove();}catch(e){}},2400);
+                });
+              }
+            }
+          }catch(e){}
         }
       }
     }catch(e){console.warn('clarity v2 view:',e);}

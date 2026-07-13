@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — spec-alignment fix: sobriety is an opt-in Focus Lane, NOT the Foundation
+- **Why:** Live review caught a real mismatch - the pane + methodology framed sobriety as "the
+  Foundation, always on, can't toggle off." Per spec §1/§5 it's an OPT-IN Focus Lane INSIDE Practice
+  (12 of P's 40), auto-offered to trackers but opt-out-able. Not everyone is in recovery; Clarity
+  must never assume it. (The engine MATH was already correct - lane in Practice, 12/40, density^0.8.)
+- **What:** (1) clarity-config-util validateConfig gains lanes:{sobriety:bool}; (2) clarity-v2-write
+  lane gating is now hasTracker && config.lanes.sobriety!==false (auto-on for trackers, honors opt-out) -
+  was force-on. (3) clarity-setup.html restructured into the spec's THREE sections (§10): Foundation
+  (locked - steadiness/rest always on, only Fuel toggles), What you're working on (practices, pick 3-5 +
+  live counter), Focus lanes (opt-in sobriety, shown only to trackers, toggleable). (4) clarity-method.html:
+  Foundation named as steadiness/rest/fuel; sobriety reframed as an opt-in lane in Practice; Never List
+  completed with canon items (never weight/calorie, never medication, never chat-sentiment). Engine
+  unchanged - Stage-0 still 20/20. Files: clarity-config-util.js, clarity-v2-write.js, clarity-setup.html,
+  clarity-method.html.
 ### Clarity v2.2 — customization UX pass (from Brenden's live test)
 - **Why:** Live feedback on the Phase C pane + entry: sobriety note with no matching control, nourishment
   split into its own confusing section, the top-banner entry was easy to miss, and no permanent way back.

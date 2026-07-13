@@ -46,22 +46,28 @@
   <h1>Personalize your Clarity</h1>
   <p class="lede">Clarity is about distance traveled, not distance from perfect. Choose what showing up looks like for <em>you</em> - only what you pick counts toward your score.</p>
 
-  <div class="sec-label">What counts toward your Clarity</div>
-  <div class="card skel" id="list">
-    <div class="row locked" id="row-sobriety" data-locked="1" style="display:none">
-      <div class="meta"><div class="t">Sobriety <span class="lock">Always on</span></div><div class="d">Your recovery is your foundation. It always counts and can't be switched off.</div></div>
-      <div class="tog"></div>
-    </div>
+  <div class="sec-label">Foundation - the basics every score shares</div>
+  <div class="card skel" id="foundation">
+    <div class="row locked" data-locked="1"><div class="meta"><div class="t">Steadiness <span class="lock">Always on</span></div><div class="d">How you're feeling - mood, energy, the weight of the day</div></div><div class="tog"></div></div>
+    <div class="row locked" data-locked="1"><div class="meta"><div class="t">Rest <span class="lock">Always on</span></div><div class="d">Your sleep</div></div><div class="tog"></div></div>
+    <div class="row" data-fuel="1"><div class="meta"><div class="t">Fuel</div><div class="d">Eating well. Not helpful for you right now? Turn it off - no food targets will appear anywhere.</div></div><div class="tog"></div></div>
+  </div>
+
+  <div class="sec-label">What you're working on <span id="counter" style="color:var(--smoke);font-weight:400;text-transform:none;letter-spacing:0">· 0 selected</span></div>
+  <div class="card skel" id="practice">
     <div class="row" data-dim="movement"><div class="meta"><div class="t">Movement</div><div class="d">A workout, a walk, a stretch - any activity counts</div></div><div class="tog"></div></div>
     <div class="row" data-dim="habits"><div class="meta"><div class="t">Your habits</div><div class="d">The small daily things you're building</div></div><div class="tog"></div></div>
     <div class="row" data-dim="reflection"><div class="meta"><div class="t">Reflection &amp; stillness</div><div class="d">A journal line, a check-in thought, meditation, breathwork</div></div><div class="tog"></div></div>
-    <div class="row" data-fuel="1"><div class="meta"><div class="t">Nourishment</div><div class="d">Eating well. Turn off if food isn't something you want measured right now.</div></div><div class="tog"></div></div>
     <div class="row" data-dim="program"><div class="meta"><div class="t">Your program</div><div class="d">Progress in a Riley program you're in</div></div><div class="tog"></div></div>
     <div class="row" data-dim="outside"><div class="meta"><div class="t">Getting outside</div><div class="d">Time outdoors, sun on your face</div></div><div class="tog"></div></div>
     <div class="row" data-dim="connection"><div class="meta"><div class="t">Staying connected</div><div class="d">Reaching out to another person</div></div><div class="tog"></div></div>
   </div>
+  <p class="note" id="pick-hint">Pick the 3-5 that fit your life right now.</p>
 
-  <p class="note">Pick the ways of showing up that fit your life. You can change this anytime in Settings.</p>
+  <div class="sec-label" id="lanes-label" style="display:none">Focus lanes - optional</div>
+  <div class="card skel" id="lanes" style="display:none">
+    <div class="row" data-lane="sobriety"><div class="meta"><div class="t">Sobriety</div><div class="d">Measured by density, not streaks. Held steady - never shamed - during a hard stretch. Turn off any time.</div></div><div class="tog"></div></div>
+  </div>
 </div>
 
 <div class="save">
@@ -79,34 +85,40 @@ const TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');
 const $=id=>document.getElementById(id);
 async function token(){try{const{data:{session}}=await SB.auth.getSession();return session&&session.access_token||null;}catch(e){return null;}}
 
+let HAS_LANE=false;
 function setRow(el,on){ if(el) el.classList.toggle('on',!!on); }
-document.addEventListener('click',e=>{ const r=e.target.closest('.row'); if(!r||r.dataset.locked)return; r.classList.toggle('on'); });
+function refreshCounter(){ const n=document.querySelectorAll('#practice .row.on').length; const c=$('counter'); if(c)c.textContent='· '+n+' selected'; const h=$('pick-hint'); if(h)h.textContent=(n<3?'Pick at least a few that fit your life - 3 to 5 is a good place to start.':n>5?'That is a lot to carry - 3 to 5 tends to feel best, but it is your call.':'Pick the 3-5 that fit your life right now.'); }
+document.addEventListener('click',e=>{ const r=e.target.closest('.row'); if(!r||r.dataset.locked)return; r.classList.toggle('on'); refreshCounter(); });
 
 async function load(){
   const{data:{session}}=await SB.auth.getSession();
   if(!session){ window.location.href='https://riley.meetriley.us'; return; }
   UID=session.user.id;
-  let cfg={enabled_practice:[],fuel_opt_out:false};
+  let cfg={enabled_practice:[],fuel_opt_out:false,lanes:{}};
   try{
     const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.access_token,action:'get',today:TODAY})});
     const j=await r.json(); if(j&&j.config)cfg=j.config; STAGE=(j&&j.onboarding_stage)||0;
   }catch(e){}
-  // Sobriety: shown as a locked, always-on row ONLY if the member actually tracks it.
-  try{ const s=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle(); if(s&&s.data){ const sr=$('row-sobriety'); sr.style.display='flex'; sr.classList.add('on'); } }catch(e){}
-  // First-time setup starts with the sensible defaults ON.
+  // Foundation: fuel is the only toggle (steadiness + rest are always on).
+  setRow(document.querySelector('#foundation .row[data-fuel]'), !cfg.fuel_opt_out);
+  // Practice: first-time setup starts with the sensible defaults ON.
   const first=!cfg.enabled_practice||!cfg.enabled_practice.length;
   const on=new Set(first?['movement','habits','reflection']:cfg.enabled_practice);
-  document.querySelectorAll('#list .row[data-dim]').forEach(row=>setRow(row,on.has(row.dataset.dim)));
-  setRow(document.querySelector('#list .row[data-fuel]'), !cfg.fuel_opt_out);
-  $('list').classList.remove('skel');
+  document.querySelectorAll('#practice .row[data-dim]').forEach(row=>setRow(row,on.has(row.dataset.dim)));
+  refreshCounter();
+  // Focus lanes (§5): OPT-IN. The sobriety lane is offered ONLY to members who track sobriety;
+  // auto-offered ON, but they can turn it off here. Never Foundation, never forced.
+  try{ const s=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle(); if(s&&s.data){ HAS_LANE=true; $('lanes-label').style.display=''; $('lanes').style.display=''; const lr=document.querySelector('#lanes .row[data-lane="sobriety"]'); const optedOut=cfg.lanes&&cfg.lanes.sobriety===false; setRow(lr, !optedOut); } }catch(e){}
+  ['foundation','practice','lanes'].forEach(id=>$(id).classList.remove('skel'));
   $('save').disabled=false; $('save').textContent='Save';
 }
 
 $('save').addEventListener('click', async ()=>{
   $('save').disabled=true; $('save').textContent='Saving…'; $('status').className='status info'; $('status').textContent='';
-  const enabled=[...document.querySelectorAll('#list .row[data-dim].on')].map(r=>r.dataset.dim);
-  const fuelOn=document.querySelector('#list .row[data-fuel]').classList.contains('on');
-  const config={enabled_practice:enabled, fuel_opt_out:!fuelOn};
+  const enabled=[...document.querySelectorAll('#practice .row[data-dim].on')].map(r=>r.dataset.dim);
+  const fuelOn=document.querySelector('#foundation .row[data-fuel]').classList.contains('on');
+  const config={enabled_practice:enabled, fuel_opt_out:!fuelOn, lanes:{}};
+  if(HAS_LANE){ config.lanes.sobriety = document.querySelector('#lanes .row[data-lane="sobriety"]').classList.contains('on'); }
   const onboarding=STAGE<2;
   try{
     const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await token(),action:'save',config,origin:onboarding?'onboarding':'update',today:TODAY,onboarding_stage:onboarding?2:STAGE})});

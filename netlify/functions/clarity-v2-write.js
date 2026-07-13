@@ -128,8 +128,11 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     if (!isNaN(until) && until > Date.now()) freeze = { active: true, snapshot: prev.frozen_snapshot || null };
   }
 
-  // ── sobriety lane ──
-  const laneEnabled = isNum(sig.soberDays);
+  // ── sobriety lane (§5): OPT-IN. Auto-offered to members who track sobriety, but honored
+  //    as opt-out when config.lanes.sobriety === false. Never forced; never Foundation. ──
+  const hasTracker = isNum(sig.soberDays);
+  const laneOptOut = cfg.lanes && cfg.lanes.sobriety === false;
+  const laneEnabled = hasTracker && !laneOptOut;
   const lane = laneEnabled
     ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
     : {};

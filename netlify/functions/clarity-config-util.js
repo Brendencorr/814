@@ -11,14 +11,19 @@
 // fuel is toggled separately via fuel_opt_out. Mirrors clarity_dims(layer='practice').
 const PRACTICE_DIMS = ["movement", "habits", "reflection", "program", "outside", "connection"];
 
-// Normalize + validate a config payload → { enabled_practice, fuel_opt_out }.
+// Normalize + validate a config payload → { enabled_practice, fuel_opt_out, lanes }.
 function validateConfig(input) {
   input = input || {};
   const seen = {};
   const enabled = (Array.isArray(input.enabled_practice) ? input.enabled_practice : [])
     .filter((d) => typeof d === "string" && PRACTICE_DIMS.indexOf(d) !== -1)
     .filter((d) => (seen[d] ? false : (seen[d] = true)));
-  return { enabled_practice: enabled, fuel_opt_out: !!input.fuel_opt_out };
+  // Focus lanes (§5) are opt-in. `sobriety` is the member's explicit choice; we auto-offer the
+  // lane ON to members who track sobriety, but they can opt out (stored as false).
+  const inLanes = input.lanes && typeof input.lanes === "object" ? input.lanes : {};
+  const lanes = {};
+  if (typeof inLanes.sobriety === "boolean") lanes.sobriety = inLanes.sobriety;
+  return { enabled_practice: enabled, fuel_opt_out: !!input.fuel_opt_out, lanes };
 }
 
 // The config in force right now. A staged change applies on/after its app-day (4am rollover);

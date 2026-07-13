@@ -25,6 +25,7 @@ const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 const { detectCrisis } = require("./crisis-detection");
 const { sendOperatorAlert } = require("./safety-alert");
 const { isTier1, computeDimensions, computeClarity, explainChange } = require("./clarity");
+const { writeClarityV2Dark } = require("./clarity-v2-write");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -192,6 +193,14 @@ exports.handler = async function (event) {
   };
   try { await supabase.from("user_daily_state").upsert(row, { onConflict: "user_id,date" }); }
   catch (e) { console.warn("state-engine upsert failed (non-fatal):", e.message); }
+
+  // ── Clarity v2.2 DARK shadow write (never displayed; flag still 'v1') ──────
+  // Runs AFTER the v1 upsert committed, fully swallowed — a v2 error can't touch v1.
+  // Skipped on a crisis cycle (clarity narration is suspended per §5.1).
+  if (!crisis.flag) {
+    try { await writeClarityV2Dark(supabase, userId, { today, prev, sig }); }
+    catch (e) { console.warn("clarity-v2 dark write failed (non-fatal):", e.message); }
+  }
 
   return json(200, {
     tier: 1,

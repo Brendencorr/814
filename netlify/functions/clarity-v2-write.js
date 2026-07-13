@@ -1,0 +1,187 @@
+/**
+ * clarity-v2-write.js — Clarity Score v2.2, the DARK shadow write (Phase B pt2).
+ *
+ * Called by state-engine.js AFTER the v1 upsert, inside a try/catch. This gathers the
+ * richer 28-day signals the v2 engine needs, computes the v2 score via the pure
+ * clarity-engine.js, ratchets each Practice dim's personal baseline, and writes the
+ * SEPARATE v2 columns on the same user_daily_state row (+ user_dim_baselines).
+ *
+ * SAFETY: 100% dark + non-fatal. Nothing here is displayed (the cutover flag is still
+ * 'v1'). Every failure is swallowed — a v2 exception can NEVER corrupt the v1 write,
+ * which already committed before this runs. Spec: docs/CLARITY_SCORE_v2.2.md.
+ */
+
+'use strict';
+
+const engine = require("./clarity-engine");
+
+const dayISO = (d) => d.toISOString().slice(0, 10);
+const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return dayISO(d); };
+const isNum = (x) => typeof x === "number" && !isNaN(x);
+const num = (x) => (x == null || x === "" ? null : (isNum(Number(x)) ? Number(x) : null));
+// whole-day gap between two YYYY-MM-DD strings (>=0)
+const gapDays = (fromISO, toISO) => {
+  if (!fromISO || !toISO) return null;
+  const a = Date.parse(fromISO + "T00:00:00Z"), b = Date.parse(toISO + "T00:00:00Z");
+  if (isNaN(a) || isNaN(b)) return null;
+  return Math.max(0, Math.round((b - a) / 86400000));
+};
+
+/**
+ * Compute + persist the v2 shadow for `userId` on `today`. `sig` is state-engine's
+ * already-gathered v1 signal bundle (reused so we don't re-query counts). Returns the
+ * engine result (for logging/shadow-verify) or null if it couldn't run.
+ */
+async function writeClarityV2Dark(supabase, userId, opts) {
+  opts = opts || {};
+  const today = opts.today;
+  const prev = opts.prev || null;      // most recent user_daily_state row (<= today)
+  const sig = opts.sig || {};
+  if (!supabase || !userId || !today) return null;
+
+  const win28 = daysAgoISO(28), win7 = daysAgoISO(7);
+
+  // ── gather the v2-specific signals in parallel (bounded fan-out; Tier-1 only) ──
+  const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes] = await Promise.allSettled([
+    supabase.from("daily_checkins")
+      .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,notes")
+      .eq("user_id", userId).gte("checkin_date", win28).order("checkin_date", { ascending: true }),
+    supabase.from("user_dim_baselines").select("dim,baseline,sample_days").eq("user_id", userId),
+    supabase.from("user_clarity_config").select("config,config_version").eq("user_id", userId).maybeSingle(),
+    supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
+      .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
+    supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
+    supabase.from("user_profiles").select("created_at").eq("id", userId).maybeSingle(),
+  ]);
+
+  const checkins = (ciRes.status === "fulfilled" && ciRes.value.data) || [];
+  if (!checkins.length) return null;                       // no v2 data at all → skip cleanly
+  const baselines = (baseRes.status === "fulfilled" && baseRes.value.data) || [];
+  const cfg = (cfgRes.status === "fulfilled" && cfgRes.value.data && cfgRes.value.data.config) || {};
+  const cfgVersion = (cfgRes.status === "fulfilled" && cfgRes.value.data && cfgRes.value.data.config_version) || 1;
+  const hist = (histRes.status === "fulfilled" && histRes.value.data) || [];
+  const hardToday = (hardRes.status === "fulfilled" && hardRes.value.data && hardRes.value.data.length > 0) || false;
+  const prof = (profRes.status === "fulfilled" && profRes.value.data) || null;
+
+  const baseMap = {};
+  baselines.forEach((b) => { baseMap[b.dim] = b; });
+  const last7 = checkins.filter((c) => c.checkin_date >= win7);
+  const todayRow = checkins.filter((c) => c.checkin_date === today).slice(-1)[0] || null;
+  const lastCheckinDate = checkins.length ? checkins[checkins.length - 1].checkin_date : null;
+  const ckGap = gapDays(lastCheckinDate, today);           // freshness for Foundation/Practice
+
+  // membership day (§9 First Light: days 1-14 → rise-only + tiny practice thresholds)
+  let membershipDays = null;
+  if (prof && prof.created_at) { const g = gapDays(dayISO(new Date(prof.created_at)), today); if (g != null) membershipDays = g + 1; }
+  const firstLight = isNum(membershipDays) && membershipDays <= 14;
+
+  // ── Foundation series (oldest→newest; engine slices last 7 non-null) ──
+  const series = (k) => checkins.map((c) => num(c[k]));
+  const foundationInp = {
+    mood7: series("mood"),
+    energy7: series("energy"),
+    heaviness7: series("heaviness"),
+    sleepHours7: series("sleep_hours"),
+    sleepQuality7: series("sleep_quality"),
+    meals7d: isNum(sig.mealsThisWeek) ? sig.mealsThisWeek : 0,
+    fuelOptOut: !!cfg.fuel_opt_out,
+  };
+
+  // ── Practice values = each member's own trailing-7d activity (unit-agnostic; bands
+  // are relative to the personal baseline, so counts and rates both work) ──
+  const countTrue = (rows, k) => rows.filter((r) => r[k] === true).length;
+  const dimV = {
+    movement: isNum(sig.workoutsThisWeek) ? sig.workoutsThisWeek : null,
+    reflection: isNum(sig.reflectionsThisWeek) ? sig.reflectionsThisWeek : null,
+    habits: isNum(sig.habitRate) ? sig.habitRate : null,
+    outside: countTrue(last7, "outside"),
+    connection: countTrue(last7, "connection"),
+    program: sig.activeJourney ? 1 : 0,
+  };
+  const enabled = (Array.isArray(cfg.enabled_practice) && cfg.enabled_practice.length)
+    ? cfg.enabled_practice
+    : ["movement", "habits", "reflection"];
+
+  const practice = {};
+  enabled.forEach((dim) => {
+    const b = baseMap[dim];
+    const sampleDays = (b && isNum(b.sample_days)) ? b.sample_days : 0;
+    practice[dim] = {
+      v: dimV[dim],
+      baseline: b && isNum(b.baseline) ? b.baseline : null,
+      firstLight: firstLight || sampleDays < 14,   // dim in its own first-light window
+    };
+  });
+
+  // ── Direction: history of daily core (oldest→newest) ──
+  const coreHistory = hist.map((h) => num(h.clarity_core)).filter(isNum);
+
+  // ── prev displayed (rise-only) + freeze (§5 lapse-repair hold) ──
+  const prevDisplayed = (prev && isNum(num(prev.clarity_v2))) ? num(prev.clarity_v2) : null;
+  let freeze = null;
+  if (prev && prev.frozen && prev.frozen_until) {
+    const until = Date.parse(prev.frozen_until);
+    if (!isNaN(until) && until > Date.now()) freeze = { active: true, snapshot: prev.frozen_snapshot || null };
+  }
+
+  // ── sobriety lane ──
+  const laneEnabled = isNum(sig.soberDays);
+  const lane = laneEnabled
+    ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
+    : {};
+
+  const raw = Object.assign({}, foundationInp, {
+    enabledPractice: enabled,
+    practice,
+    lane,
+    coreHistory,
+    hardDayToday: !!(hardToday || (todayRow && todayRow.hard_day === true)),
+    firstLight,
+    prevDisplayed,
+    freeze,
+    gaps: {
+      steadiness: ckGap, rest: ckGap, fuel: isNum(sig.mealsThisWeek) && sig.mealsThisWeek > 0 ? ckGap : (ckGap == null ? null : ckGap + 4),
+      movement: ckGap, habits: ckGap, reflection: ckGap, outside: ckGap, connection: ckGap, program: ckGap,
+    },
+  });
+
+  const result = engine.computeClarityV2(raw);
+
+  // ── persist: v2 columns on today's user_daily_state row (v1 already wrote it) ──
+  try {
+    await supabase.from("user_daily_state").update({
+      clarity_v2: result.displayed,
+      provisional: result.provisional,
+      clarity_core: result.core,
+      f_score: result.F,
+      p_score: result.P,
+      d_score: result.D,
+      v2_breakdown: result.breakdown,
+      config_version: cfgVersion,
+      frozen: !!result.frozen,
+    }).eq("user_id", userId).eq("date", today);
+  } catch (e) { console.warn("clarity-v2 state write failed (non-fatal):", e.message); }
+
+  // ── ratchet each scored Practice dim's baseline toward today's value (for NEXT time).
+  // Scoring above used the PRE-update baseline ("distance traveled"); the bar then moves. ──
+  try {
+    const nowISO = new Date().toISOString();
+    const ups = enabled
+      .filter((dim) => isNum(dimV[dim]))
+      .map((dim) => {
+        const b = baseMap[dim];
+        const prevB = b && isNum(b.baseline) ? b.baseline : null;
+        const newB = engine.updateBaseline(prevB, dimV[dim]);
+        const sampleDays = ((b && isNum(b.sample_days)) ? b.sample_days : 0) + 1;
+        return {
+          user_id: userId, dim, baseline: newB, sample_days: sampleDays,
+          first_light_started_on: (b && b.first_light_started_on) || today, updated_at: nowISO,
+        };
+      });
+    if (ups.length) await supabase.from("user_dim_baselines").upsert(ups, { onConflict: "user_id,dim" });
+  } catch (e) { console.warn("clarity-v2 baseline ratchet failed (non-fatal):", e.message); }
+
+  return result;
+}
+
+module.exports = { writeClarityV2Dark };

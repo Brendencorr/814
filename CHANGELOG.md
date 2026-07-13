@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — Phase B (part 2): DARK shadow write wired into state-engine
+- **Why:** Start computing v2 alongside v1 on every Tier-1 event, storing it in SEPARATE columns, so Phase A.5
+  can shadow-verify v2-vs-v1 on real member rows. Still 100% invisible (cutover flag is 'v1').
+- **What:** new `netlify/functions/clarity-v2-write.js` (`writeClarityV2Dark`) — gathers the richer 28-day
+  signals (energy/sleep_quality/heaviness/outside/connection/craving series + hard_dates + config + membership
+  day + core history + freeze state), calls the pure `clarity-engine`, ratchets each Practice dim's personal
+  baseline (`user_dim_baselines`), and writes the v2 columns (`clarity_v2`/`provisional`/`clarity_core`/
+  `f_score`/`p_score`/`d_score`/`v2_breakdown`/`config_version`/`frozen`) on today's `user_daily_state` row.
+  `state-engine.js`: one `require` + one guarded call AFTER the v1 upsert (skipped on crisis cycles).
+- **Safety:** fully dark + non-fatal — the call is wrapped in try/catch and runs only after the v1 upsert has
+  already committed, so a v2 exception can NEVER corrupt v1. Scoring uses the pre-update baseline ("distance
+  traveled"), then the baseline ratchets for next time. Verified with a mock-Supabase end-to-end smoke test
+  (sane 0-100 scores, exact α_up ratchet, correct column payload) + engine tests still 20/20. Files:
+  `netlify/functions/clarity-v2-write.js` (new), `netlify/functions/state-engine.js`.
+
 ### Clarity v2.2 — Phase B (part 1): the engine module + Stage-0 property tests (isolated, unwired)
 - **Why:** Build the actual F/P/D scoring math for Clarity v2.2 — the delicate, member-facing part — as a pure,
   isolated, test-gated module BEFORE it touches anything live.

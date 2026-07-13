@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Fix: nav "Get Started" bypassed tier selection/checkout
+- **Why:** The upper-right "Get Started" button on every marketing page linked straight to /login -> Google
+  -> onboarding, skipping the membership/plans choice entirely (users only saw tiers if they scrolled). Free
+  and paid alike were dropped into free signup with no checkout.
+- **What:** Repointed the nav "Get Started" button to the membership section (home: `#programs`; other pages:
+  `/home#programs`) so every visitor lands on the plan cards and chooses a tier first. Guide -> free signup;
+  Companion/Coach -> the existing data-cta path (waitlist now, Stripe checkout when payments go LIVE). Hero
+  "Start free" and the paid card CTAs were already correct and are unchanged. Files: home/about/blog/pillars/
+  resources/data/help/terms/privacy/safety.html.
+
 ### Clarity v2.2 — §2 weekly perceived-direction + life-event recalibration (final spec gaps)
 - **Why:** Close the last two §2 items: the weekly validation signal (§13 Stage-1 needs it) and the
   life-event "meet you where you are" recalibration. Both tables existed; nothing wrote them.

@@ -1037,3 +1037,19 @@
   from = "/"
   to = "/operator.html"
   status = 200
+
+# Security headers (M-1). Applied to every response. X-Frame-Options SAMEORIGIN + CSP
+# frame-ancestors 'self' stop cross-origin clickjacking (especially the chat) while
+# preserving the app's own same-origin iframes (the docked chat widget + the operator
+# site preview both load relative, same-origin srcs). A full script/style/connect CSP is
+# a deliberate follow-up: the pages are inline-heavy, so it needs a Report-Only rollout
+# tested against Supabase/PostHog/Stripe/Google Fonts before it can safely enforce.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), camera=(), microphone=(), payment=(self)"
+    Content-Security-Policy = "frame-ancestors 'self'"

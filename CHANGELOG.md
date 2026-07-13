@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### M-1: security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors)
+- **Why:** the app shipped no security headers (no _headers file, no [[headers]] in netlify.toml). For
+  a PWA holding recovery + mental-health conversations, frame-ancestors alone kills clickjacking on the
+  chat. Compliance finding M-1.
+- **What:** added a `[[headers]]` block for `/*` in netlify.toml: Strict-Transport-Security (1yr +
+  includeSubDomains + preload), X-Frame-Options SAMEORIGIN, X-Content-Type-Options nosniff,
+  Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy (geo/cam/mic off, payment self),
+  and Content-Security-Policy frame-ancestors 'self'. Verified ALL app framing is same-origin (chat
+  widget + operator site-preview both load relative srcs via location.origin), so SAMEORIGIN/'self'
+  does not break them.
+- A full script/style/connect CSP is DEFERRED as a Report-Only follow-up - the pages are inline-heavy
+  (onclick handlers + inline script/style everywhere), so an enforcing CSP needs 'unsafe-inline' or a
+  nonce refactor plus careful testing against Supabase/PostHog/Stripe/Google Fonts. File: netlify.toml.
+
 ### M-2: legal entity name corrected to the registered name (The 814 Project, LLC d/b/a Riley)
 - **Why:** ToS, Privacy, and page/email footers named "The 8:14 Project, LLC," but the registered
   Montana entity is "The 814 Project, LLC" (Filing C1656090). Naming an unregistered entity in the

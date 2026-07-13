@@ -12,6 +12,19 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Promo-code capture - stamp coupon onto subscription + surface in admin (`059963e`)
+- **Why:** The operator "coupon" filter in Client Overview was always returning null because
+  coupon redemption was never stored in the DB - it lived only in Stripe.
+- **What:** `stripe-webhook.js` now calls `captureCoupon()` after granting access on
+  `checkout.session.completed`. Reads `session.discounts[]` first; falls back to one Stripe GET
+  on the subscription object. Stamps `stripe_coupon_id` (internal) + `promo_code` (human code
+  the customer typed) onto the subscription row. Non-blocking / fault-tolerant - grant never fails.
+  `admin-home.js` + `admin-engagement.js` now read those columns from the DB instead of returning
+  hardcoded null. `operator.html` Client Overview filter bar has a new "Promo/coupon" dropdown
+  (has / none). Migration `087_subscription_coupon_capture.sql` = repo record (columns already applied).
+- **Files:** `stripe-webhook.js`, `admin-home.js`, `admin-engagement.js`, `operator.html`,
+  `supabase/migrations/087_subscription_coupon_capture.sql`
+
 ### Clarity Score v2.2 — Phase A: schema + expanded check-in (DARK, additive)
 - **Why:** Rebuilding the member Clarity score from v1.0 (flat weighted avg) to the v2.2 three-layer
   Foundation/Practice/Direction engine ("distance traveled, not distance from perfect"). Multi-session epic;

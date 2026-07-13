@@ -64,15 +64,17 @@
   </div>
   <p class="note" id="pick-hint">Pick the 3-5 that fit your life right now.</p>
 
-  <div class="sec-label" id="lanes-label" style="display:none">Focus lanes - optional</div>
-  <div class="card skel" id="lanes" style="display:none">
-    <div class="row" data-lane="sobriety"><div class="meta"><div class="t">Sobriety</div><div class="d">Measured by density, not streaks. Held steady - never shamed - during a hard stretch. Turn off any time.</div></div><div class="tog"></div></div>
+  <div class="sec-label" id="lanes-label">Focus lanes - optional, off unless you turn them on</div>
+  <div class="card skel" id="lanes">
+    <div class="row" data-lane="sobriety" id="lane-sobriety" style="display:none"><div class="meta"><div class="t">Sobriety</div><div class="d">Measured by density, not streaks. Held steady - never shamed - during a hard stretch. Turn off any time.</div></div><div class="tog"></div></div>
+    <div class="row" data-lane="grief"><div class="meta"><div class="t">Grief &amp; loss</div><div class="d">Presence only - we never score grief. There's no grieving correctly; showing up is the whole thing.</div></div><div class="tog"></div></div>
   </div>
 </div>
 
 <div class="save">
   <div class="inner">
     <button class="go" id="save" disabled>Loading…</button>
+    <button class="keep" id="keep" style="display:none;width:100%;margin-top:10px;background:transparent;border:none;color:var(--smoke);font-size:13px;cursor:pointer;padding:8px;font-family:'DM Sans',sans-serif">Keep the standard setup</button>
     <div class="status info" id="status"></div>
   </div>
 </div>
@@ -106,32 +108,54 @@ async function load(){
   const on=new Set(first?['movement','habits','reflection']:cfg.enabled_practice);
   document.querySelectorAll('#practice .row[data-dim]').forEach(row=>setRow(row,on.has(row.dataset.dim)));
   refreshCounter();
-  // Focus lanes (§5): OPT-IN. The sobriety lane is offered ONLY to members who track sobriety;
-  // auto-offered ON, but they can turn it off here. Never Foundation, never forced.
-  try{ const s=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle(); if(s&&s.data){ HAS_LANE=true; $('lanes-label').style.display=''; $('lanes').style.display=''; const lr=document.querySelector('#lanes .row[data-lane="sobriety"]'); const optedOut=cfg.lanes&&cfg.lanes.sobriety===false; setRow(lr, !optedOut); } }catch(e){}
+  // Focus lanes (§5): OPT-IN, off unless turned on. Sobriety is offered ONLY to members who
+  // track it (auto-offered ON, opt-out-able). Grief is offered to everyone (off by default).
+  try{ const s=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle(); if(s&&s.data){ HAS_LANE=true; $('lane-sobriety').style.display='flex'; const optedOut=cfg.lanes&&cfg.lanes.sobriety===false; setRow($('lane-sobriety'), !optedOut); } }catch(e){}
+  setRow(document.querySelector('#lanes .row[data-lane="grief"]'), !!(cfg.lanes&&cfg.lanes.grief===true));
   ['foundation','practice','lanes'].forEach(id=>$(id).classList.remove('skel'));
   $('save').disabled=false; $('save').textContent='Save';
+  // §10 Touch-2: "Keep the standard setup" is a one-tap valid completion during onboarding.
+  if(STAGE<2){ $('keep').style.display='block'; }
 }
 
-$('save').addEventListener('click', async ()=>{
-  $('save').disabled=true; $('save').textContent='Saving…'; $('status').className='status info'; $('status').textContent='';
+// Shared save. onboarding origin (stage<2) applies immediately; otherwise staged to next app-day.
+async function saveConfig(config){
+  $('status').className='status info'; $('status').textContent='';
+  const onboarding=STAGE<2;
+  const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await token(),action:'save',config,origin:onboarding?'onboarding':'update',today:TODAY,onboarding_stage:onboarding?2:STAGE})});
+  const j=await r.json();
+  if(j&&j.ok){
+    STAGE=Math.max(STAGE, j.onboarding_stage||2);
+    $('status').className='status ok'; $('status').textContent=j.applied==='now'?'Saved. This is live now.':'Saved. Takes effect tomorrow.';
+    setTimeout(()=>{window.location.href='/dashboard';},1400); return true;
+  } else if(j&&j.reason==='rate_limited'){
+    $('status').className='status info'; $('status').textContent='You adjusted this recently - you can change it again on '+(j.next_allowed||'soon')+'.';
+  } else { $('status').className='status err'; $('status').textContent='Could not save. Please try again.'; }
+  return false;
+}
+
+function readConfig(){
   const enabled=[...document.querySelectorAll('#practice .row[data-dim].on')].map(r=>r.dataset.dim);
   const fuelOn=document.querySelector('#foundation .row[data-fuel]').classList.contains('on');
   const config={enabled_practice:enabled, fuel_opt_out:!fuelOn, lanes:{}};
-  if(HAS_LANE){ config.lanes.sobriety = document.querySelector('#lanes .row[data-lane="sobriety"]').classList.contains('on'); }
-  const onboarding=STAGE<2;
-  try{
-    const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await token(),action:'save',config,origin:onboarding?'onboarding':'update',today:TODAY,onboarding_stage:onboarding?2:STAGE})});
-    const j=await r.json();
-    if(j&&j.ok){
-      STAGE=Math.max(STAGE, j.onboarding_stage||2);
-      $('status').className='status ok'; $('status').textContent=j.applied==='now'?'Saved. This is live now.':'Saved. Takes effect tomorrow.';
-      setTimeout(()=>{window.location.href='/dashboard';},1400);
-    } else if(j&&j.reason==='rate_limited'){
-      $('status').className='status info'; $('status').textContent='You adjusted this recently - you can change it again on '+(j.next_allowed||'soon')+'.';
-    } else { $('status').className='status err'; $('status').textContent='Could not save. Please try again.'; }
-  }catch(e){ $('status').className='status err'; $('status').textContent='Could not save. Please try again.'; }
+  if(HAS_LANE){ config.lanes.sobriety=$('lane-sobriety').classList.contains('on'); }
+  config.lanes.grief=document.querySelector('#lanes .row[data-lane="grief"]').classList.contains('on');
+  return config;
+}
+
+$('save').addEventListener('click', async ()=>{
+  $('save').disabled=true; $('save').textContent='Saving…';
+  await saveConfig(readConfig());
   $('save').disabled=false; $('save').textContent='Save';
+});
+
+$('keep').addEventListener('click', async ()=>{
+  $('keep').disabled=true;
+  // Standard setup = the sensible defaults written as the member's own config.
+  const config={enabled_practice:['movement','habits','reflection'], fuel_opt_out:false, lanes:{}};
+  if(HAS_LANE) config.lanes.sobriety=true;   // auto-offer default ON for trackers
+  await saveConfig(config);
+  $('keep').disabled=false;
 });
 
 load();

@@ -12,6 +12,19 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — full three-touch onboarding (§10) + grief lane UI
+- **Why:** Complete the spec's onboarding flow correctly (the modal I'd built violated §10/§15.23
+  "an in-screen card, not a modal that blocks the number") and expose the grief lane.
+- **What:** Dashboard onboarding is now IN-SCREEN CARDS that never obscure the score. **Touch 1**
+  (stage 0): card under the hero - "you can choose what it watches" [Customize now][Later];
+  Later defers (event clarity_customize_deferred, stage 1). **Touch 2** (stage 1 + the day's
+  check-in done): the pane opens automatically (once/session, never before the check-in, never
+  blocks chat). **Touch 3** (day-14): tune-up suggesting ONLY dims the member logged >=4 days in
+  the window (§15.26) - pre-named in the copy; accept adds them, adjust opens the pane, dismiss is
+  silent; no suggestions = silently complete (no nag). clarity-setup.html: Focus lanes now show a
+  **grief lane** (opt-in, presence-only) alongside the tracker-gated sobriety lane, plus a "Keep the
+  standard setup" one-tap completion (§10 Touch-2). Events: clarity_customize_shown/deferred,
+  clarity_tuneup_offered/accepted. Files: dashboard.html, clarity-setup.html.
 ### Clarity v2.2 — spec-alignment fix: sobriety is an opt-in Focus Lane, NOT the Foundation
 - **Why:** Live review caught a real mismatch - the pane + methodology framed sobriety as "the
   Foundation, always on, can't toggle off." Per spec §1/§5 it's an OPT-IN Focus Lane INSIDE Practice

@@ -651,35 +651,77 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
             if(_b.length){ document.getElementById('hero-breakdown').innerHTML=_b.map(x=>`<div class="hb-row"><span class="hb-label">${x[0]}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:#c9a84c" data-w="${Math.round(x[1])}"></div></div><span class="hb-val">${Math.round(x[1])}</span></div>`).join('');
               setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),220); }
           }
-          // Three-touch onboarding as a CENTERED MODAL (touch 1: first setup, stage 0 ·
-          // touch 3: day-14 tune-up). X / "Not now" and "Personalize" all record the stage
-          // so it never re-pops - after that it lives permanently in Settings. Only when the
-          // onboarding flag is on for this member - dark by default.
+          // Three-touch onboarding (§10) as IN-SCREEN CARDS that never obscure the score
+          // (§15.23). Touch 1 = first login (stage 0); Touch 3 = day-14 tune-up, suggestions
+          // drawn from actually-logged behavior (§15.26). Only when the onboarding flag is on.
           if(_ce.onboarding){ try{
             const _tok=await authToken();
-            const _cr=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,action:'get',today:TODAY})});
-            const _cj=await _cr.json(); const _stg=(_cj&&_cj.onboarding_stage)||0;
+            const _cj=await (await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,action:'get',today:TODAY})})).json();
+            const _stg=(_cj&&_cj.onboarding_stage)||0; const _cfg=(_cj&&_cj.config)||{};
             let _md=0; try{ const _pp=await SB.from('user_profiles').select('created_at').eq('id',UID).maybeSingle(); if(_pp&&_pp.data&&_pp.data.created_at){ _md=Math.floor((Date.now()-Date.parse(_pp.data.created_at))/86400000)+1; } }catch(e){}
-            const _show=_stg===0?'setup':((_stg===1||_stg===2)&&_md>=14&&_stg<3?'tuneup':null);
-            if(_show&&!document.getElementById('cl-modal')){
-              const _dismissStage=_show==='setup'?1:3;
-              const _title=_show==='setup'?'Make Clarity yours':'Two weeks in - a quick tune-up';
-              const _bodyTxt=_show==='setup'?'Clarity measures distance traveled, not distance from perfect. Take about 30 seconds to choose what showing up looks like for you - only what you pick counts toward your score.':'You have been at this two weeks. Want to fine-tune what counts toward your Clarity as your rhythm settles in?';
-              const _ov=document.createElement('div'); _ov.id='cl-modal';
-              _ov.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(3,5,8,0.66)';
-              _ov.innerHTML='<div style="max-width:400px;width:100%;background:#0a1018;border:1px solid #1a2530;border-radius:16px;padding:26px 24px 22px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,0.5)">'
-                +'<button id="cl-x" aria-label="Close" style="position:absolute;top:10px;right:12px;width:30px;height:30px;border:none;background:transparent;color:#8a94a0;font-size:22px;cursor:pointer;line-height:1">×</button>'
-                +'<div style="font-family:\'Playfair Display\',serif;font-weight:600;font-size:22px;color:#e8e4de;margin:2px 0 10px">'+_title+'</div>'
-                +'<div style="font-size:14px;color:#8a94a0;line-height:1.55;margin-bottom:20px">'+_bodyTxt+'</div>'
-                +'<button id="cl-go" style="display:block;width:100%;text-align:center;background:#c9a84c;color:#0a0d12;border:none;border-radius:12px;padding:14px;font-weight:600;font-size:15px;cursor:pointer">Personalize your Clarity</button>'
-                +'<button id="cl-later" style="display:block;width:100%;margin-top:10px;background:transparent;border:none;color:#8a94a0;font-size:13px;cursor:pointer;padding:8px">Not now</button>'
-                +'</div>';
-              document.body.appendChild(_ov);
-              const _mark=function(){ try{ fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,action:'seen',today:TODAY,onboarding_stage:_dismissStage})}); }catch(e){} };
-              const _close=function(){ _mark(); try{_ov.remove();}catch(e){} };
-              document.getElementById('cl-x').addEventListener('click',_close);
-              document.getElementById('cl-later').addEventListener('click',_close);
-              document.getElementById('cl-go').addEventListener('click',function(){ _mark(); window.location.href='/clarity-setup'; });
+            const _seen=function(stage,extra){ try{ fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({token:_tok,action:'seen',today:TODAY,onboarding_stage:stage},extra||{}))}); }catch(e){} };
+            const _anchor=document.getElementById('insight'), _main=document.querySelector('main.main');
+            const _insert=function(el){ if(_anchor&&_anchor.parentNode){_anchor.parentNode.insertBefore(el,_anchor);} else if(_main){_main.insertBefore(el,_main.firstChild);} };
+            const _cs='margin:0 0 16px;padding:18px 20px;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(74,124,89,0.08));border:1px solid rgba(201,168,76,0.35);border-radius:14px;color:var(--text,#e8e4de)';
+
+            // ── Touch 2 (§10): touch-1 was deferred (stage 1); the day's check-in is done →
+            // the pane opens automatically. Never before the check-in; once per session so it
+            // can't loop. "Keep the standard setup" on the pane is a valid one-tap completion. ──
+            if(_stg===1 && todayCI && !sessionStorage.getItem('cl_t2')){
+              sessionStorage.setItem('cl_t2','1'); track('clarity_customize_shown',{touch:2});
+              window.location.href='/clarity-setup';
+            } else if(_stg===0 && !document.getElementById('cl-card')){
+              // ── Touch 1: after the score renders, an in-screen card (never blocks the number) ──
+              track('clarity_customize_shown',{touch:1});
+              const c=document.createElement('div'); c.id='cl-card'; c.style.cssText=_cs;
+              c.innerHTML='<div style="font-size:15px;line-height:1.5;margin-bottom:14px">This is your Clarity - it just calculated from what you shared. Here\'s the part that matters: <strong>you can choose what it watches.</strong></div>'
+                +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><a href="/clarity-setup" style="background:#c9a84c;color:#0a0d12;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;text-decoration:none">Customize now</a><button id="cl-later" style="background:transparent;border:1px solid #1a2530;color:#8a94a0;border-radius:10px;padding:11px 18px;font-size:14px;cursor:pointer">Later</button></div>';
+              _insert(c);
+              document.getElementById('cl-later').addEventListener('click',function(){
+                _seen(1); track('clarity_customize_deferred',{});
+                c.innerHTML='<div style="font-size:14px;color:#8a94a0;line-height:1.5">No problem. Next time you sign in, we\'ll set it up together - about 30 seconds. You can always find it in Settings.</div>';
+                setTimeout(function(){try{c.remove();}catch(e){}},5000);
+              });
+            } else if(_stg>=1 && _stg<3 && _md>=14 && !document.getElementById('cl-card')){
+              // ── Touch 3: day-14 tune-up. Suggest ONLY dims the member actually logged >=4 days. ──
+              const already=new Set(_cfg.enabled_practice||[]);
+              const w14=dAgo(13);
+              const LAB={movement:'moving',reflection:'reflecting',outside:'getting outside',connection:'staying connected',habits:'keeping your habits'};
+              const suggested=[];
+              try{
+                const [fr,cr2,hr2]=await Promise.allSettled([
+                  SB.from('fitness_logs').select('logged_date').eq('user_id',UID).gte('logged_date',w14),
+                  SB.from('daily_checkins').select('checkin_date,notes,outside,connection').eq('user_id',UID).gte('checkin_date',w14),
+                  SB.from('habit_completions').select('completed_date').eq('user_id',UID).gte('completed_date',w14)
+                ]);
+                const g=r=>r.status==='fulfilled'&&r.value.data||[];
+                const days=arr=>new Set(arr).size;
+                const moveD=days(g(fr).map(x=>x.logged_date));
+                const cks=g(cr2);
+                const reflD=days(cks.filter(c=>c.notes&&String(c.notes).trim()).map(c=>c.checkin_date));
+                const outD=days(cks.filter(c=>c.outside===true).map(c=>c.checkin_date));
+                const connD=days(cks.filter(c=>c.connection===true).map(c=>c.checkin_date));
+                const habD=days(g(hr2).map(x=>x.completed_date));
+                const cand={movement:moveD,reflection:reflD,outside:outD,connection:connD,habits:habD};
+                Object.keys(cand).forEach(function(d){ if(cand[d]>=4 && !already.has(d)) suggested.push(d); });
+              }catch(e){}
+              if(!suggested.length){ _seen(3); }  // nothing to suggest → silently complete, no nag
+              else {
+                track('clarity_tuneup_offered',{dims:suggested});
+                const names=suggested.map(d=>LAB[d]);
+                const phrase=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+                const c=document.createElement('div'); c.id='cl-card'; c.style.cssText=_cs;
+                c.innerHTML='<div style="font-size:15px;line-height:1.5;margin-bottom:14px">You\'ve been <strong>'+phrase+'</strong> most days these past two weeks. Want Clarity to watch '+(names.length>1?'those':'that')+'?</div>'
+                  +'<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button id="cl-acc" style="background:#c9a84c;color:#0a0d12;border:none;border-radius:10px;padding:11px 18px;font-weight:600;font-size:14px;cursor:pointer">Yes, add '+(names.length>1?'them':'it')+'</button><a href="/clarity-setup" style="background:transparent;border:1px solid #1a2530;color:#8a94a0;border-radius:10px;padding:11px 18px;font-size:14px;text-decoration:none">Adjust</a><button id="cl-dis" style="background:transparent;border:none;color:#8a94a0;font-size:13px;cursor:pointer;padding:8px">Not now</button></div>';
+                _insert(c);
+                document.getElementById('cl-acc').addEventListener('click',async function(){
+                  const ne=(_cfg.enabled_practice||[]).concat(suggested);
+                  try{ await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,action:'save',config:{enabled_practice:ne,fuel_opt_out:!!_cfg.fuel_opt_out,lanes:_cfg.lanes||{}},origin:'update',today:TODAY,onboarding_stage:3})}); }catch(e){}
+                  track('clarity_tuneup_accepted',{dims:suggested});
+                  c.innerHTML='<div style="font-size:14px;color:#5bc488">Added. Clarity is watching those now.</div>'; setTimeout(function(){try{c.remove();}catch(e){}},2500);
+                });
+                document.getElementById('cl-dis').addEventListener('click',function(){ _seen(3); try{c.remove();}catch(e){} });
+              }
             }
           }catch(e){} }
         }

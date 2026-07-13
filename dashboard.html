@@ -380,6 +380,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/clarity-view.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 // "App day" rolls at 4am LOCAL, not midnight - a night owl checking in at 1am is still on
@@ -597,7 +598,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // ── CLARITY SCORE - prefer the persisted State Engine value; fall back to
     // the live client computation when the engine hasn't written state yet ──
-    let UDS=null;try{const _u=await SB.from('user_daily_state').select('clarity_score,clarity_note,crisis_flag').eq('user_id',UID).eq('date',TODAY).maybeSingle();UDS=_u&&_u.data||null;}catch(e){}
+    let UDS=null;try{const _u=await SB.from('user_daily_state').select('clarity_score,clarity_note,crisis_flag,clarity_v2,provisional,frozen,clarity_core,f_score,p_score,d_score,v2_breakdown,clarity_v2_note').eq('user_id',UID).eq('date',TODAY).maybeSingle();UDS=_u&&_u.data||null;}catch(e){}
     // Sobriety only counts toward Clarity for members actually tracking it -
     // an active sobriety_tracker row is the signal. Weights are rebalanced
     // (not just zeroed) so members who aren't in recovery can still reach 100.
@@ -632,6 +633,27 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Hero breakdown bars
     document.getElementById('hero-breakdown').innerHTML=factors.map(f=>`<div class="hb-row"><span class="hb-label">${f.key}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:${f.color}" data-w="${Math.round(f.val*100)}"></div></div><span class="hb-val">${Math.round(f.val*100)}</span></div>`).join('');
     setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),200);
+
+    // ── Clarity v2.2 override (DARK) — only when v2 is active for this member. The v1
+    //    hero above is untouched otherwise; under v2 all pages defer to the one engine. ──
+    try{
+      if(window.ClarityView){
+        const _ce=await ClarityView.resolveEngine(SB,UID);
+        if(_ce.engine==='v2'){
+          const _v=ClarityView.v2(UDS);
+          if(_v){
+            const _n=ClarityView.narrate(_v), _s=_v.provisional?null:_v.score;
+            document.getElementById('hero-title').textContent=_n.phrase;
+            document.getElementById('hero-msg').textContent=_n.note;
+            if(_s!=null){ countUp(document.getElementById('hero-score'),_s,1100); setTimeout(()=>ring.style.strokeDashoffset=402*(1-_s/100),100); }
+            else { document.getElementById('hero-score').textContent='·'; setTimeout(()=>ring.style.strokeDashoffset=402,100); }
+            const _b=[['Foundation',_v.F],['Practice',_v.P],['Direction',_v.D]].filter(x=>x[1]!=null);
+            if(_b.length){ document.getElementById('hero-breakdown').innerHTML=_b.map(x=>`<div class="hb-row"><span class="hb-label">${x[0]}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:#c9a84c" data-w="${Math.round(x[1])}"></div></div><span class="hb-val">${Math.round(x[1])}</span></div>`).join('');
+              setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),220); }
+          }
+        }
+      }
+    }catch(e){console.warn('clarity v2 view:',e);}
 
     // ── RILEY INSIGHT (smart, contextual) ──
     let insight=null;

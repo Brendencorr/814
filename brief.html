@@ -158,6 +158,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/clarity-view.js"></script>
 <script>
 
 const SB = supabase.createClient(
@@ -284,6 +285,30 @@ async function loadClarityScore(){
       </div>
     </div>`;
   }).join('');
+
+  // ── Clarity v2.2 override (DARK) — only when v2 is active for this member; the v1
+  //    render above stays untouched otherwise. This is where the 3 v1 formulas unify. ──
+  try{
+    if(window.ClarityView){
+      const _ce=await ClarityView.resolveEngine(SB,UID);
+      if(_ce.engine==='v2'){
+        const _u=await SB.from('user_daily_state').select(ClarityView.STATE_COLS).eq('user_id',UID).eq('date',TODAY).maybeSingle();
+        const _v=ClarityView.v2(_u&&_u.data);
+        if(_v){
+          const _n=ClarityView.narrate(_v), _s=_v.provisional?null:_v.score;
+          document.getElementById('cl-phrase').textContent=_n.phrase;
+          document.getElementById('cl-note').textContent=_n.note;
+          if(_s!=null){ document.getElementById('cl-pct').textContent=_s+'%'; document.getElementById('cl-ring').setAttribute('stroke-dashoffset',(125.7*(1-_s/100)).toFixed(1)); document.getElementById('cl-ring').setAttribute('stroke',_s>=80?'var(--green2)':'var(--gold)'); }
+          else { document.getElementById('cl-pct').textContent='·'; document.getElementById('cl-ring').setAttribute('stroke-dashoffset','125.7'); }
+          const _dims=[['Foundation',_v.F],['Practice',_v.P],['Direction',_v.D]].filter(x=>x[1]!=null).map(x=>({k:x[0],s:Math.round(x[1])}));
+          if(_dims.length){ document.getElementById('cl-dims').innerHTML=_dims.map(d=>{
+            const col=d.s>=70?'var(--green2)':d.s>=40?'var(--gold)':'var(--smoke)';
+            return`<div style="display:flex;flex-direction:column;gap:4px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;color:var(--smoke);font-family:'DM Mono',monospace;letter-spacing:0.04em">${d.k}</span><span style="font-size:10px;color:${col};font-family:'DM Mono',monospace">${d.s}%</span></div><div style="height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden"><div style="height:100%;width:${d.s}%;background:${col};border-radius:2px;transition:width 1s ease"></div></div></div>`;
+          }).join(''); }
+        }
+      }
+    }
+  }catch(e){console.warn('clarity v2 view (brief):',e);}
 }
 
 // ── MORNING BRIEF ─────────────────────────────────────────────────────────────

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personalize your Clarity · Riley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#06090e; --card:#0a1018; --border:#1a2530; --gold:#c9a84c; --sage:#4a7c59; --green2:#5bc488; --text:#e8e4de; --smoke:#8a94a0; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;padding:0 0 80px}
+  .wrap{max-width:560px;margin:0 auto;padding:28px 20px}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--smoke);text-decoration:none;font-size:13px;margin-bottom:22px}
+  h1{font-family:'Playfair Display',serif;font-weight:600;font-size:28px;letter-spacing:-0.01em;margin-bottom:10px}
+  .lede{color:var(--smoke);font-size:15px;margin-bottom:26px}
+  .sec-label{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin:26px 2px 12px;font-weight:600}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .row{display:flex;align-items:center;gap:14px;padding:15px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+  .row:last-child{border-bottom:none}
+  .row .meta{flex:1;min-width:0}
+  .row .t{font-size:15px;font-weight:500}
+  .row .d{font-size:12.5px;color:var(--smoke);margin-top:2px}
+  .tog{flex:none;width:44px;height:26px;border-radius:14px;background:#182029;position:relative;transition:background .18s;border:1px solid var(--border)}
+  .tog::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#4a5460;transition:transform .18s,background .18s}
+  .row.on .tog{background:rgba(90,196,136,0.22);border-color:var(--green2)}
+  .row.on .tog::after{transform:translateX(18px);background:var(--green2)}
+  .note{font-size:12.5px;color:var(--smoke);margin:14px 4px 0;display:flex;gap:8px}
+  .note b{color:var(--text);font-weight:600}
+  .save{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,transparent,var(--bg) 22%);padding:22px 20px 26px}
+  .save .inner{max-width:560px;margin:0 auto}
+  button.go{width:100%;background:var(--gold);color:#0a0d12;border:none;border-radius:12px;padding:15px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer}
+  button.go:disabled{opacity:.55;cursor:default}
+  .status{text-align:center;font-size:13px;margin-top:10px;min-height:18px}
+  .status.ok{color:var(--green2)} .status.err{color:#e0a3a3} .status.info{color:var(--smoke)}
+  .skel{opacity:.4;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/dashboard" id="back">‹ Back</a>
+  <h1>Personalize your Clarity</h1>
+  <p class="lede">Clarity is about distance traveled, not distance from perfect. Choose what showing up looks like for <em>you</em> - only what you pick counts toward your score.</p>
+
+  <div class="sec-label">What counts as showing up</div>
+  <div class="card skel" id="practice">
+    <div class="row" data-dim="movement"><div class="meta"><div class="t">Movement</div><div class="d">Any activity - a walk counts</div></div><div class="tog"></div></div>
+    <div class="row" data-dim="habits"><div class="meta"><div class="t">Your habits</div><div class="d">The small daily things you're building</div></div><div class="tog"></div></div>
+    <div class="row" data-dim="reflection"><div class="meta"><div class="t">Reflection</div><div class="d">A note, a journal line, a check-in thought</div></div><div class="tog"></div></div>
+    <div class="row" data-dim="program"><div class="meta"><div class="t">Your program</div><div class="d">Progress in a Riley program you're in</div></div><div class="tog"></div></div>
+    <div class="row" data-dim="outside"><div class="meta"><div class="t">Getting outside</div><div class="d">Time outdoors, sun on your face</div></div><div class="tog"></div></div>
+    <div class="row" data-dim="connection"><div class="meta"><div class="t">Staying connected</div><div class="d">Reaching out to another person</div></div><div class="tog"></div></div>
+  </div>
+
+  <div class="sec-label">Nourishment</div>
+  <div class="card skel" id="fuel-card">
+    <div class="row on" data-fuel="1"><div class="meta"><div class="t">Track nourishment</div><div class="d">Count eating well as part of Clarity. Turn off if food isn't something you want measured right now.</div></div><div class="tog"></div></div>
+  </div>
+
+  <p class="note"><b>Note:</b>&nbsp;if you're tracking sobriety, that always counts - it's the foundation, and it's never something you toggle off.</p>
+</div>
+
+<div class="save">
+  <div class="inner">
+    <button class="go" id="save" disabled>Loading…</button>
+    <div class="status info" id="status"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
+let UID=null, STAGE=0;
+const TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');
+const $=id=>document.getElementById(id);
+async function token(){try{const{data:{session}}=await SB.auth.getSession();return session&&session.access_token||null;}catch(e){return null;}}
+
+function setRow(el,on){ el.classList.toggle('on',!!on); }
+document.addEventListener('click',e=>{ const r=e.target.closest('.row'); if(!r)return; r.classList.toggle('on'); });
+
+async function load(){
+  const{data:{session}}=await SB.auth.getSession();
+  if(!session){ window.location.href='https://riley.meetriley.us'; return; }
+  UID=session.user.id;
+  let cfg={enabled_practice:[],fuel_opt_out:false};
+  try{
+    const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.access_token,action:'get',today:TODAY})});
+    const j=await r.json(); if(j&&j.config)cfg=j.config; STAGE=(j&&j.onboarding_stage)||0;
+  }catch(e){}
+  // default: first-time setup (no prior config) starts with the sensible defaults ON.
+  const first=!cfg.enabled_practice||!cfg.enabled_practice.length;
+  const on=new Set(first?['movement','habits','reflection']:cfg.enabled_practice);
+  document.querySelectorAll('#practice .row').forEach(row=>setRow(row,on.has(row.dataset.dim)));
+  setRow($('fuel-card').querySelector('.row'), !cfg.fuel_opt_out);
+  $('practice').classList.remove('skel'); $('fuel-card').classList.remove('skel');
+  $('save').disabled=false; $('save').textContent='Save';
+}
+
+$('save').addEventListener('click', async ()=>{
+  $('save').disabled=true; $('save').textContent='Saving…'; $('status').className='status info'; $('status').textContent='';
+  const enabled=[...document.querySelectorAll('#practice .row.on')].map(r=>r.dataset.dim);
+  const fuelOn=$('fuel-card').querySelector('.row').classList.contains('on');
+  const config={enabled_practice:enabled, fuel_opt_out:!fuelOn};
+  const onboarding=STAGE<2;
+  try{
+    const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await token(),action:'save',config,origin:onboarding?'onboarding':'update',today:TODAY,onboarding_stage:onboarding?2:STAGE})});
+    const j=await r.json();
+    if(j&&j.ok){
+      STAGE=Math.max(STAGE, j.onboarding_stage||2);
+      if(j.applied==='now'){ $('status').className='status ok'; $('status').textContent='Saved. This is live now.'; }
+      else{ $('status').className='status ok'; $('status').textContent='Saved. Takes effect tomorrow.'; }
+      setTimeout(()=>{window.location.href='/dashboard';},1400);
+    } else if(j&&j.reason==='rate_limited'){
+      $('status').className='status info'; $('status').textContent='You adjusted this recently - you can change it again on '+(j.next_allowed||'soon')+'.';
+    } else { $('status').className='status err'; $('status').textContent='Could not save. Please try again.'; }
+  }catch(e){ $('status').className='status err'; $('status').textContent='Could not save. Please try again.'; }
+  $('save').disabled=false; $('save').textContent='Save';
+});
+
+load();
+</script>
+</body>
+</html>

@@ -651,6 +651,21 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
             if(_b.length){ document.getElementById('hero-breakdown').innerHTML=_b.map(x=>`<div class="hb-row"><span class="hb-label">${x[0]}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:#c9a84c" data-w="${Math.round(x[1])}"></div></div><span class="hb-val">${Math.round(x[1])}</span></div>`).join('');
               setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),220); }
           }
+          // Three-touch onboarding entry (touch 1: first setup · touch 3: day-14 tune-up).
+          // Only when the onboarding flag is on for this member - dark by default.
+          if(_ce.onboarding){ try{
+            const _cr=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:await authToken(),action:'get',today:TODAY})});
+            const _cj=await _cr.json(); const _stg=(_cj&&_cj.onboarding_stage)||0;
+            let _md=0; try{ const _pp=await SB.from('user_profiles').select('created_at').eq('id',UID).maybeSingle(); if(_pp&&_pp.data&&_pp.data.created_at){ _md=Math.floor((Date.now()-Date.parse(_pp.data.created_at))/86400000)+1; } }catch(e){}
+            const _show=_stg<2?'setup':(_stg===2&&_md>=14?'tuneup':null);
+            const _main=document.querySelector('main.main');
+            if(_show&&_main&&!document.getElementById('cl-onboard')){
+              const _a=document.createElement('a'); _a.id='cl-onboard'; _a.href='/clarity-setup';
+              _a.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding:14px 16px;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(74,124,89,0.08));border:1px solid rgba(201,168,76,0.35);border-radius:12px;color:var(--text,#e8e4de);text-decoration:none;font-size:14px';
+              _a.innerHTML='<span>'+(_show==='setup'?'Personalize your Clarity - choose what showing up means for you.':'It has been two weeks - want to fine-tune what counts toward your Clarity?')+'</span><span style="color:#c9a84c;font-weight:600">›</span>';
+              _main.insertBefore(_a,_main.firstChild);
+            }
+          }catch(e){} }
         }
       }
     }catch(e){console.warn('clarity v2 view:',e);}

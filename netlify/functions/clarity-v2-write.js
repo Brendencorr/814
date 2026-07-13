@@ -14,6 +14,7 @@
 'use strict';
 
 const engine = require("./clarity-engine");
+const { effectiveConfig } = require("./clarity-config-util");
 
 const dayISO = (d) => d.toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return dayISO(d); };
@@ -47,7 +48,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
       .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,notes")
       .eq("user_id", userId).gte("checkin_date", win28).order("checkin_date", { ascending: true }),
     supabase.from("user_dim_baselines").select("dim,baseline,sample_days").eq("user_id", userId),
-    supabase.from("user_clarity_config").select("config,config_version").eq("user_id", userId).maybeSingle(),
+    supabase.from("user_clarity_config").select("config,config_version,pending_config,pending_apply_on").eq("user_id", userId).maybeSingle(),
     supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
     supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
@@ -57,8 +58,11 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const checkins = (ciRes.status === "fulfilled" && ciRes.value.data) || [];
   if (!checkins.length) return null;                       // no v2 data at all → skip cleanly
   const baselines = (baseRes.status === "fulfilled" && baseRes.value.data) || [];
-  const cfg = (cfgRes.status === "fulfilled" && cfgRes.value.data && cfgRes.value.data.config) || {};
-  const cfgVersion = (cfgRes.status === "fulfilled" && cfgRes.value.data && cfgRes.value.data.config_version) || 1;
+  // Honor a staged config change once its app-day arrives (§10 next-app-day apply).
+  const cfgRow = (cfgRes.status === "fulfilled" && cfgRes.value.data) || null;
+  const eff = effectiveConfig(cfgRow, today);
+  const cfg = eff.config || {};
+  const cfgVersion = eff.version || 1;
   const hist = (histRes.status === "fulfilled" && histRes.value.data) || [];
   const hardToday = (hardRes.status === "fulfilled" && hardRes.value.data && hardRes.value.data.length > 0) || false;
   const prof = (profRes.status === "fulfilled" && profRes.value.data) || null;

@@ -1,5 +1,5 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html,profile.html,settings.html,reset.html,home.html,program.html,int-program.html"
+  SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html,profile.html,settings.html,reset.html,home.html,program.html,int-program.html,clarity-setup.html,clarity-method.html"
   # OPERATOR_KEY is an operator-chosen password; we never hardcode it, so scanning
   # the build for its value only false-positives (and fails the build) when the
   # chosen password happens to match a common word in the code.

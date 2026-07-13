@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — Phase C: customization onboarding + config engine (DARK)
+- **Why:** Members choose what "showing up" means for them - which Practice dims count + whether
+  nourishment is tracked - so Clarity measures their own life, not a fixed template (§10).
+- **What:** `clarity-config.js` (member endpoint, token-auth) with get/save; `clarity-config-util.js`
+  (pure: validateConfig + effectiveConfig pending-promotion + nextAppDay). Guards: max 1 change/7d
+  (onboarding-origin exempt), normal changes apply NEXT app-day (4am), onboarding applies now,
+  config_version bumps on effect. `clarity-setup.html` = the customization pane (toggle Practice dims +
+  fuel opt-out; sobriety always counts, never toggleable). Dashboard shows a gated entry card (touch 1:
+  first setup · touch 3: day-14 tune-up) - only when the onboarding flag is on (dark by default).
+  `clarity-v2-write.js` now reads the pending-aware effective config. Migration 088 already added the
+  preview flag. Verified: config-util unit tests (validate/dedupe, promotion, next-app-day) + all inline
+  scripts syntax-clean. Files: clarity-config.js, clarity-config-util.js, clarity-setup.html,
+  clarity-v2-write.js, dashboard.html, netlify.toml.
+
 ### Age gate (18+) — H-2 compliance fix: enforce the 18+ representation, don't just claim it
 - **Why:** ToS §2 / Privacy §10 represent the Service as 18+, but nothing enforced it - Google OAuth signup +
   the 10-screen onboarding collected no age. Minor-protection provisions carry the heaviest obligations in every

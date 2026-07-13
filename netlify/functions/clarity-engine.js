@@ -64,7 +64,10 @@ function computeF1(mood7, energy7, heaviness7) {
   const m = mean7(mood7), e = mean7(energy7);
   const level = m != null ? ((m - 1) / 4) * 100 : null;
   const energyLvl = e != null ? ((e - 1) / 4) * 100 : null;
-  const calm = 100 * Math.max(0, 1 - stddev(heaviness7) / 1.5); // low volatility = calm
+  // §3 calm = 100·max(0, 1−σ7(heaviness)/1.5). σ7 is the SEVEN-day volatility, so slice to the
+  // last 7 present values (callers may pass a longer series; the write passes up to 28 days).
+  const hv7 = (heaviness7 || []).filter(isNum).slice(-7);
+  const calm = 100 * Math.max(0, 1 - stddev(hv7) / 1.5); // low volatility = calm
   // renormalize the 0.5/0.2/0.3 mix over whichever of level/energy are present (calm always present)
   const parts = [];
   if (level != null) parts.push([0.5, level]);

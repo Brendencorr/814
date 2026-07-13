@@ -173,5 +173,14 @@ function round(n) { return n == null ? null : Math.round(n); }
   ok("recalibration: never scores lower than normal for the same low week", recal.displayed >= normal.displayed, `normal=${normal.displayed} recal=${recal.displayed}`);
 })();
 
+// ── 16. σ7 window (§3): calm reflects only the LAST 7 heaviness values, not older history ──
+(function () {
+  // Same steady recent 7, but one series carries a volatile OLDER stretch. If σ7 is windowed
+  // correctly, the older noise is ignored and both F1s are equal.
+  const withOldNoise = E.computeF1([4,4,4,4,4,4,4], [4,4,4,4,4,4,4], [1,5,1,5,1, 3,3,3,3,3,3,3]);
+  const cleanOnly = E.computeF1([4,4,4,4,4,4,4], [4,4,4,4,4,4,4], [3,3,3,3,3,3,3]);
+  ok("σ7: older heaviness noise outside the last 7 days is ignored", near(withOldNoise, cleanOnly, 0.01), `withOld=${withOldNoise.toFixed(2)} clean=${cleanOnly.toFixed(2)}`);
+})();
+
 console.log(`\nClarity engine Stage-0: ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

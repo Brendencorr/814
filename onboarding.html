@@ -195,7 +195,65 @@ async function doneName(){
   if(!name){document.getElementById('i-name').style.borderColor='#8b3a3a';document.getElementById('i-name').focus();return;}
   A.preferred_name=name;FIRST=name.split(' ')[0];
   await save({preferred_name:name,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
-  swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">Let's start where you are.</div><div class="actions"><button class="btn" onclick="sBrings()">Continue</button></div>`);
+  swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">Let's start where you are.</div><div class="actions"><button class="btn" onclick="sAge()">Continue</button></div>`);
+}
+
+// ── Screen 2b · Age gate (18+) ─────────────────────────────────────────────────
+// Date of birth confirms adulthood BEFORE we collect any sensitive answers (grief /
+// sobriety live on the very next screen). We persist ONLY the confirmation + its
+// timestamp (age_18_plus / age_attested_at) alongside consent - never the birthdate.
+const DOB_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function ageFrom(y,m,d){ // m is 1-12
+  const t=new Date();let a=t.getFullYear()-y;
+  if(t.getMonth()+1<m||(t.getMonth()+1===m&&t.getDate()<d))a--;
+  return a;
+}
+function sAge(){
+  const yNow=new Date().getFullYear();
+  const ss="flex:1;min-width:0;padding:14px 12px;background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:4px;font-size:15px;color:var(--parchment)";
+  const mOpts=`<option value="">Month</option>`+DOB_MONTHS.map((n,i)=>`<option value="${i+1}"${A._dobM==i+1?' selected':''}>${n}</option>`).join('');
+  let dOpts=`<option value="">Day</option>`;for(let d=1;d<=31;d++)dOpts+=`<option value="${d}"${A._dobD==d?' selected':''}>${d}</option>`;
+  let yOpts=`<option value="">Year</option>`;for(let y=yNow;y>=1920;y--)yOpts+=`<option value="${y}"${A._dobY==y?' selected':''}>${y}</option>`;
+  swap(`<div class="section-label">A little about you</div>
+    <div class="riley-says">And your date of birth?</div>
+    <div class="riley-sub">Riley is built for adults. I'll only ask this once - and I keep just that you confirmed, never the date itself.</div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <select id="dob-m" style="${ss}">${mOpts}</select>
+      <select id="dob-d" style="${ss}">${dOpts}</select>
+      <select id="dob-y" style="${ss}">${yOpts}</select>
+    </div>
+    <div id="dob-err" style="color:var(--rust);font-size:13px;margin-top:12px;display:none">Please enter your full date of birth.</div>
+    <div class="actions"><button class="skip" onclick="sName()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneAge()">Continue</button></div>
+    ${dots(1)}`);
+}
+async function doneAge(){
+  const m=+document.getElementById('dob-m').value,d=+document.getElementById('dob-d').value,y=+document.getElementById('dob-y').value;
+  const err=document.getElementById('dob-err');
+  if(!m||!d||!y){err.textContent='Please enter your full date of birth.';err.style.display='block';return;}
+  const dt=new Date(y,m-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d){err.textContent="That date doesn't look right - please check it.";err.style.display='block';return;}
+  A._dobM=m;A._dobD=d;A._dobY=y; // in-memory only (re-render / back); never saved to the server
+  if(ageFrom(y,m,d)<18)return sUnder18();
+  await save({age_attested_at:new Date().toISOString(),age_18_plus:true},1);
+  try{window.trackEvent&&window.trackEvent('age_gate_passed',{});}catch(e){}
+  sBrings();
+}
+function sUnder18(){
+  try{window.trackEvent&&window.trackEvent('age_gate_denied',{});}catch(e){}
+  // Record the denial as a boolean only (no birthdate) - evidence that we gated and denied.
+  save({age_attested_at:new Date().toISOString(),age_18_plus:false},1);
+  el().innerHTML=`<div style="text-align:center">
+    <div class="rsun-lg" style="margin-bottom:22px"></div>
+    <div class="riley-says">Thank you for being honest.</div>
+    <div class="riley-sub" style="max-width:430px;margin:16px auto 0">Riley is built for adults 18 and older, so I'm not able to set you up with an account right now. That doesn't mean you're on your own.</div>
+    <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:16px 18px;margin:22px auto 0;max-width:430px;text-align:left;font-size:14px;line-height:1.75">
+      If you're carrying something heavy, please reach out to someone who can help right now:<br>
+      · <b>Call or text 988</b> - the Suicide &amp; Crisis Lifeline (US). Any time, free, confidential.<br>
+      · <b>Text HOME to 741741</b> - the Crisis Text Line.<br>
+      · If you're in immediate danger, call <b>911</b>.
+    </div>
+    <div style="font-size:12px;color:var(--smoke2);margin-top:20px">Entered your date of birth by mistake? <a href="#" onclick="sAge();return false;" style="color:var(--smoke)">Go back</a>.</div>
+  </div>`;
 }
 
 // ── Screen 3 · What brings you here (multi-select persona sorter + crisis scan) ─

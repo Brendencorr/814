@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Age gate (18+) — H-2 compliance fix: enforce the 18+ representation, don't just claim it
+- **Why:** ToS §2 / Privacy §10 represent the Service as 18+, but nothing enforced it - Google OAuth signup +
+  the 10-screen onboarding collected no age. Minor-protection provisions carry the heaviest obligations in every
+  state law reviewed (Oregon: private right of action at $1,000/violation). Compliance-review finding H-2.
+- **What:** date-of-birth gate in `onboarding.html`, placed RIGHT AFTER the name screen - BEFORE Screen 3 ("what
+  brings you here") collects any grief/sobriety answers - so a self-identified minor is denied before we store
+  anything sensitive. Month/Day/Year selects -> `ageFrom()` -> `sUnder18()` deny-and-explain (kind copy + 988 /
+  Crisis Text Line 741741 / 911 + a "go back" escape for a mistyped date). On pass: stamps `age_attested_at` +
+  `age_18_plus:true` next to `consent_at`/`consent_version`. We do NOT store the birthdate - only the confirmation
+  + timestamp (privacy-forward, Brenden's choice).
+- **DB:** migration `088_age_attestation.sql` adds `age_attested_at timestamptz` + `age_18_plus boolean` to
+  `user_profiles` (APPLIED to prod). Privacy §10 "Children" updated to describe the attestation.
+- **Verified:** inline JS syntax clean; age screen + deny screen + 18+ pass + empty-guard rendered & driven in a
+  throwaway browser harness (deleted, never committed); boundary correct (turns-18-today passes, exactly-17
+  denies); SAVE payloads confirmed (false/true, no DOB). Files: `onboarding.html`, `privacy.html`,
+  `supabase/migrations/088_age_attestation.sql`.
+
 ### Clarity v2.2 — Phase B (part 2): DARK shadow write wired into state-engine
 - **Why:** Start computing v2 alongside v1 on every Tier-1 event, storing it in SEPARATE columns, so Phase A.5
   can shadow-verify v2-vs-v1 on real member rows. Still 100% invisible (cutover flag is 'v1').

@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — Phase D: monitoring cron + methodology page
+- **Why:** Watch the v2 engine over time (catch drift before/after cutover) and give members a
+  plain-language, trust-building explanation of what Clarity is and - crucially - what it never does.
+- **What:** `clarity-drift-cron.js` (monthly, scheduled + operator-triggerable, gated + fail-open):
+  records the v2 distribution (n, mean, p10/50/90, provisional/frozen rates, mean F/P/D), WHO-5
+  convergent-validity Pearson r (same-day), perceived-direction agreement (weekly self-report vs
+  Direction), and month-over-month drift flags to `clarity_monitoring` (migration 089). Correlations
+  return null until ≥20 paired points (pre-launch = nulls, by design). `clarity-method.html` = member
+  methodology page: the three layers in plain words, hard-day/first-days/sobriety handling, and the
+  Never List (never a grade/diagnosis, never compares you to others, never punishes a hard day, never
+  shows raw math, never judges). netlify.toml cron "0 13 1 * *". Stage-0 property tests already 20/20.
+  Verified: cron syntax + pearson sanity + migration applied. Files: clarity-drift-cron.js,
+  clarity-method.html, supabase/migrations/089_clarity_monitoring.sql, netlify.toml.
+
 ### Clarity v2.2 — Phase C: customization onboarding + config engine (DARK)
 - **Why:** Members choose what "showing up" means for them - which Practice dims count + whether
   nourishment is tracked - so Clarity measures their own life, not a fixed template (§10).

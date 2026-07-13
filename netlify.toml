@@ -237,6 +237,12 @@
 [functions."plan-adapt-cron"]
   schedule = "0 13 * * 1"
 
+# Clarity v2.2 monitoring (§Phase D) — monthly, 1st at 13:00 UTC. Records the v2 score
+# distribution + WHO-5 / perceived-direction validity + month-over-month drift flags to
+# clarity_monitoring. READ-heavy, writes one row; gated + fail-open; never touches member state.
+[functions."clarity-drift-cron"]
+  schedule = "0 13 1 * *"
+
 # TEMPORARY 24h promo (2026-07-07, operator-requested): auto-comp every NEW signup to Coach
 # tier while the app_settings.auto_comp_coach_until window is open. A scheduled SWEEP every
 # 10 min — never touches the signup path. Inert once the window passes; REMOVE this block after.

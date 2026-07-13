@@ -12,6 +12,17 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Clarity v2.2 — customization UX pass (from Brenden's live test)
+- **Why:** Live feedback on the Phase C pane + entry: sobriety note with no matching control, nourishment
+  split into its own confusing section, the top-banner entry was easy to miss, and no permanent way back.
+- **What:** `clarity-setup.html` = ONE unified "What counts toward your Clarity" list (nourishment folded in as a
+  row; Movement/Reflection copy broadened to cover workouts/walks + journaling/meditation/breathwork; a **locked
+  "Sobriety - Always on"** row now renders for members who track it, so the note has a matching control). Dashboard
+  entry is now a **centered modal** (X / "Not now" / Personalize) instead of a banner - all three record the
+  onboarding stage via a new `clarity-config` `seen` action, so it **never re-pops**; first-run = stage 0, day-14
+  tune-up = stage<3. After dismiss/save it lives permanently in **Settings → Clarity** (new gated card:
+  Customize + How Clarity works), shown only to v2-engine members. Note: new *measurable* dims (each needs a data
+  signal) remain a future extension. Files: clarity-setup.html, dashboard.html, settings.html, clarity-config.js.
 ### H-3 + M-3 compliance fixes: anonymous crisis logging/alerts + operator gate hardening
 - **H-3 (anonymous crises were invisible to the safety system).** The deterministic Level-3 988
   response already fired for anonymous visitors, but `logCrisis()` early-returned without a user_id

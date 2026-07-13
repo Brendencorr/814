@@ -68,6 +68,22 @@ exports.handler = async function (event) {
     });
   }
 
+  // ── SEEN: record an onboarding-stage advance (modal dismissed / opened) without
+  //    touching config. Monotonic - never lowers the stage. ──
+  if (action === "seen") {
+    const row = await loadRow(sb, userId);
+    const want = Number.isInteger(body.onboarding_stage) ? body.onboarding_stage : 1;
+    const stage = Math.max((row && row.onboarding_stage) || 0, want);
+    try {
+      await sb.from("user_clarity_config").upsert({
+        user_id: userId, onboarding_stage: stage,
+        config: (row && row.config) || { enabled_practice: [], fuel_opt_out: false },
+        config_version: (row && row.config_version) || 1,
+      }, { onConflict: "user_id" });
+    } catch (e) { return json(200, { ok: false, error: e.message }); }
+    return json(200, { ok: true, onboarding_stage: stage });
+  }
+
   // ── SAVE: validate, rate-limit (7d, onboarding-exempt), stage or apply ──
   if (action === "save") {
     const config = validateConfig(body.config);

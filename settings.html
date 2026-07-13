@@ -66,6 +66,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="row"><div class="lbl">Sign out<div class="val">End this session</div></div><button class="linkbtn danger" id="signout">Sign out</button></div>
   </div>
 
+  <div class="card" id="clarity-card" style="display:none">
+    <h2>Clarity</h2>
+    <div class="cdesc">Your Clarity score, shaped around your life.</div>
+    <div class="row"><div class="lbl">Customize your Clarity<div class="val">Choose which practices count and whether nourishment is tracked</div></div><a class="linkbtn" href="/clarity-setup">Customize</a></div>
+    <div class="row"><div class="lbl">How Clarity works<div class="val">The three layers and what it never does</div></div><a class="linkbtn" href="/clarity-method">Learn</a></div>
+  </div>
+
   <div class="card">
     <h2>Your data</h2>
     <div class="cdesc">Your information is yours - take it or erase it, anytime.</div>
@@ -112,6 +119,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/clarity-view.js"></script>
 <script>
 const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
@@ -134,6 +142,8 @@ async function load(){
     if(prof && prof.is_admin){ const ac=$('admin-card'); if(ac) ac.style.display=''; }
     if(prof && prof.stripe_customer_id){ const bc=$('billing-card'); if(bc) bc.style.display=''; }   // show billing only if they have a Stripe account
   }catch(e){ setEmailToggle(true); setPushToggle(true); }
+  // Clarity customization: show for members on the v2 engine (preview or the public flag).
+  try{ if(window.ClarityView){ const _ce=await ClarityView.resolveEngine(SB,UID); if(_ce.engine==='v2'){ const cc=$('clarity-card'); if(cc) cc.style.display=''; } } }catch(e){}
 }
 
 // ── Notifications ──────────────────────────────────────────────────────────

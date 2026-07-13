@@ -1224,19 +1224,17 @@ function renderHome(d){
   W.chart_riley=svgBars(rileySlice,'var(--sage)','messages');
   W.pages=barList(d.top_pages,'page','var(--blue)','page');
   W.clicks=barList(d.top_clicks,'target','var(--amber)','click');
-  // Clients - the unified tracker mirrored on Home: newest members first, rendered with the SAME
-  // rich engRow (state, tier, mood, last-active + email status). Replaces the old "Latest sign-ups"
-  // and "Recent correspondence" widgets. Keeps the "Mark N seen" new-signup affordance.
+  // Clients - member table with structured columns for quick scanning.
+  // Columns: First | Last | Email | Paid | Sign-up date | Programs | Welcome email
   var sg=d.recent_signups||[];
+  _homeMemberRows=sg; // store for client-side sort
   if(!sg.length){ W.clients='<div class="em">No members yet - fills in as people join</div>'; }
   else{
     var lastSeen=localStorage.getItem('814_last_signup_seen')||'';
     window.__newestSignup=sg[0]&&sg[0].created_at;
     var freshN=sg.filter(function(s){return s.created_at&&(!lastSeen||s.created_at>lastSeen);}).length;
     var markBtn=freshN?'<div style="display:flex;justify-content:flex-end;margin-bottom:.4rem"><button onclick="markSignupsSeen()" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--muted);font-size:.68rem;cursor:pointer;padding:2px 9px">Mark '+freshN+' new seen</button></div>':'';
-    var homeClients=sg.slice(0,15);
-    _trackers['home']={ users: homeClients, seg: 'all' };
-    W.clients=markBtn+trackerHtml('home','Clients',homeClients.length);
+    W.clients=markBtn+memberTableHtml('home-mt',sg,'Clients',sg.length);
   }
   // ── lay out per saved order, minus hidden. Hero is always pinned first. ──
   var titles=Object.assign({},HOME_TITLES,{chart_logins:'Logins · '+R+' days',chart_riley:'Riley Engagement · '+R+' days'});
@@ -1251,7 +1249,96 @@ function renderHome(d){
   }
   document.getElementById('home-body').innerHTML=html;
   attachHomeDnD();
-  if(_trackers['home']&&document.getElementById('home-rows'))trackerFilter('home');
+  // Re-render the member table rows after the widget shell is in the DOM
+  if(_homeMemberRows&&document.getElementById('home-mt-rows'))memberTableFilter('home-mt');
+}
+
+// ── Member table (Home "Clients" widget) ─────────────────────────────────────
+// Scannable table with exact columns: First | Last | Email | Paid | Sign-up | Programs | Welcome email.
+// Client-side search (name + email) + optional sort by sign-up date.
+// prefix namespaces DOM ids so the table can coexist with other widgets.
+var _homeMemberRows=[];
+var _homeMtSort='signup_desc'; // default: newest first
+function memberTableHtml(prefix,rows,title,count){
+  var TH='style="padding:.5rem .65rem;font-size:.63rem;font-family:DM Mono,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left"';
+  var sortBtn=function(col,lbl){var active=(_homeMtSort===col+'_asc'||_homeMtSort===col+'_desc');var arrow=_homeMtSort===col+'_asc'?' ▲':_homeMtSort===col+'_desc'?' ▼':'';return '<span onclick="memberTableSort(\''+prefix+'\',\''+col+'\')" style="cursor:pointer;color:'+(active?'var(--gold)':'inherit')+'">'+lbl+(active?'<span style="font-size:.58rem">'+arrow+'</span>':'')+'</span>';};
+  return '<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.55rem">'+
+    '<div class="sh" style="margin:0">'+engEsc(title)+' ('+count+')</div>'+
+    '<input id="'+prefix+'-search" oninput="memberTableFilter(\''+prefix+'\')" placeholder="Search name or email..." style="'+CIN+';max-width:220px;margin:0">'+
+  '</div>'+
+  '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.78rem">'+
+    '<thead><tr>'+
+      '<th '+TH+'>'+sortBtn('first','First')+'</th>'+
+      '<th '+TH+'>'+sortBtn('last','Last')+'</th>'+
+      '<th '+TH+'>Email</th>'+
+      '<th '+TH+' style="text-align:center">Paid</th>'+
+      '<th '+TH+'>'+sortBtn('signup','Sign-up')+'</th>'+
+      '<th '+TH+' style="text-align:center">Programs</th>'+
+      '<th '+TH+' style="text-align:center">Welcome email</th>'+
+    '</tr></thead>'+
+    '<tbody id="'+prefix+'-rows"></tbody>'+
+  '</table></div>';
+}
+function memberTableSort(prefix,col){
+  var cur=_homeMtSort;
+  _homeMtSort=(cur===col+'_asc'?col+'_desc':col+'_asc');
+  // Re-render header + rows together by re-calling memberTableHtml
+  var el=document.getElementById(prefix+'-rows'); if(!el)return;
+  var rows=_homeMemberRows||[];
+  var qEl=document.getElementById(prefix+'-search'); var s=((qEl&&qEl.value)||'').toLowerCase();
+  el.innerHTML=memberTableRows(rows,s);
+  // Also refresh the sort indicators in the header (update the whole widget wrapper)
+  var wrap=el.closest('[id^="hw-"]')||el.parentElement;
+  // Just update sort arrows without re-rendering the whole widget
+  var ths=document.querySelectorAll('#'+prefix+'-rows');
+  // Simplified: rebuild header cells in place
+  var oldHead=el.previousElementSibling;
+  if(oldHead&&oldHead.tagName==='THEAD'){
+    var TH2='style="padding:.5rem .65rem;font-size:.63rem;font-family:DM Mono,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left"';
+    var sb=function(col2,lbl2){var a=(_homeMtSort===col2+'_asc'||_homeMtSort===col2+'_desc');var ar=_homeMtSort===col2+'_asc'?' ▲':_homeMtSort===col2+'_desc'?' ▼':'';return '<span onclick="memberTableSort(\''+prefix+'\',\''+col2+'\')" style="cursor:pointer;color:'+(a?'var(--gold)':'inherit')+'">'+lbl2+(a?'<span style="font-size:.58rem">'+ar+'</span>':'')+'</span>';};
+    oldHead.innerHTML='<tr><th '+TH2+'>'+sb('first','First')+'</th><th '+TH2+'>'+sb('last','Last')+'</th><th '+TH2+'>Email</th><th '+TH2+' style="text-align:center">Paid</th><th '+TH2+'>'+sb('signup','Sign-up')+'</th><th '+TH2+' style="text-align:center">Programs</th><th '+TH2+' style="text-align:center">Welcome email</th></tr>';
+  }
+}
+function memberTableFilter(prefix){
+  var rows=_homeMemberRows||[];
+  var qEl=document.getElementById(prefix+'-search'); var s=((qEl&&qEl.value)||'').toLowerCase();
+  var el=document.getElementById(prefix+'-rows'); if(el)el.innerHTML=memberTableRows(rows,s);
+}
+function memberTableRows(rows,searchStr){
+  // Apply search filter
+  var filtered=rows;
+  if(searchStr){filtered=rows.filter(function(u){return((u.first_name||'')+(u.last_name||'')+' '+(u.email||'')).toLowerCase().indexOf(searchStr)>=0;});}
+  // Apply sort
+  var sc=_homeMtSort;
+  filtered=filtered.slice().sort(function(a,b){
+    var dir=(sc.slice(-3)==='asc'?1:-1);
+    var col=sc.replace(/_asc$|_desc$/,'');
+    if(col==='first')return dir*((a.first_name||'').localeCompare(b.first_name||''));
+    if(col==='last') return dir*((a.last_name||'').localeCompare(b.last_name||''));
+    if(col==='signup'){var ta=a.created_at||'',tb=b.created_at||'';return dir*(ta<tb?-1:ta>tb?1:0);}
+    return 0;
+  });
+  if(!filtered.length)return '<tr><td colspan="7" style="padding:1.2rem;text-align:center;color:var(--muted2)">No clients match.</td></tr>';
+  var TD='style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle"';
+  var TDc='style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;text-align:center"';
+  return filtered.map(function(u){
+    var first=engEsc(u.first_name||'-');
+    var last=engEsc(u.last_name||'');
+    var email=engEsc(u.email||'-');
+    var paid=u.paid?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
+    var signup=u.created_at?new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'-';
+    var progs=(u.has_purchases||(u.programs>0))?'<span style="color:var(--gold);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
+    var wel=u.welcome_email_sent===true?'<span style="color:var(--green);font-weight:600">Yes</span>':u.welcome_email_sent===false?'<span style="color:var(--red)">No</span>':'<span style="color:var(--muted2)">-</span>';
+    return '<tr onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+
+      '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);font-weight:500">'+first+'</td>'+
+      '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)">'+last+'</td>'+
+      '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--muted);font-size:.73rem">'+email+'</td>'+
+      '<td '+TDc+'>'+paid+'</td>'+
+      '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--muted);font-size:.73rem;white-space:nowrap">'+signup+'</td>'+
+      '<td '+TDc+'>'+progs+'</td>'+
+      '<td '+TDc+'>'+wel+'</td>'+
+    '</tr>';
+  }).join('');
 }
 
 // ── Home widget layout (drag to reorder, hide/show; persisted per browser) ──
@@ -1466,9 +1553,11 @@ function engRow(u,mailKind){
   var av=u.avatar_url
     ?'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;overflow:hidden;border:1px solid var(--border)"><img src="'+x(u.avatar_url)+'" alt="" style="width:100%;height:100%;object-fit:cover"></div>'
     :'<div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;color:var(--gold);font-weight:600">'+initials+'</div>';
+  // Display full name: prefer first_name+last_name when available, fall back to u.name
+  var dispName=(u.first_name||u.last_name)?engEsc((u.first_name||'').trim()+((u.last_name)?(' '+u.last_name.trim()):'')):engEsc(u.name||'Member');
   return '<div onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer;padding:.65rem .9rem;border-bottom:1px solid var(--border);'+(attn?'border-left:3px solid var(--gold);':'')+'" onmouseover="this.style.background=\'var(--bg)\'" onmouseout="this.style.background=\'transparent\'">'+
     '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem">'+av+
-      '<div style="flex:1;min-width:0"><span style="color:var(--text);font-size:.85rem">'+engEsc(u.name)+'</span> <span style="font-size:.68rem;color:var(--muted2)">'+engEsc(u.email||'')+'</span></div>'+
+      '<div style="flex:1;min-width:0"><span style="color:var(--text);font-size:.85rem">'+dispName+'</span> <span style="font-size:.68rem;color:var(--muted2)">'+engEsc(u.email||'')+'</span></div>'+
       '<span style="display:inline-block;padding:.1rem .5rem;border:1px solid '+col+';border-radius:3px;font-size:.6rem;font-family:DM Mono,monospace;letter-spacing:.05em;text-transform:uppercase;color:'+col+'">'+u.state+'</span>'+
       engTierBadge(u.tier)+safety+(attn?'<span style="font-size:.58rem;color:var(--gold);border:1px solid var(--gold);border-radius:10px;padding:.08rem .4rem;white-space:nowrap">needs check-in</span>':'')+
     '</div>'+
@@ -1483,6 +1572,75 @@ function engRow(u,mailKind){
       (mail?'<span>'+mail+'</span>':'')+
     '</div>'+
   '</div>';
+}
+// ── Client Overview advanced filter state ────────────────────────────────────
+// State for the search + filter bar on the Client Overview tab. Client-side only.
+var _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
+function engFilterChange(field,val){ _engFilters[field]=val; engApplyFilters(); }
+function engFilterInput(val){ _engFilters.q=val; engApplyFilters(); }
+function engApplyFilters(){
+  var t=_trackers['eng']; if(!t)return;
+  var f=_engFilters, sq=f.q.toLowerCase();
+  var list=t.users.filter(function(u){
+    // Text search: first_name + last_name + name + email (case-insensitive)
+    if(sq){
+      var hay=((u.first_name||'')+(u.last_name||'')+' '+(u.name||'')+' '+(u.email||'')).toLowerCase();
+      if(hay.indexOf(sq)<0) return false;
+    }
+    // Paid filter
+    if(f.paid==='paid'&&!u.paid) return false;
+    if(f.paid==='unpaid'&&u.paid) return false;
+    // Programs filter
+    if(f.programs==='has'&&!(u.has_purchases||(u.programs>0))) return false;
+    if(f.programs==='none'&&(u.has_purchases||(u.programs>0))) return false;
+    return true;
+  });
+  // Signup date sort (newest/oldest)
+  if(f.signup==='newest'||f.signup==='oldest'){
+    var dir=f.signup==='newest'?-1:1;
+    list=list.slice().sort(function(a,b){var ta=a.created_at||'',tb=b.created_at||'';return dir*(ta<tb?-1:ta>tb?1:0);});
+  }
+  var mk=SEG_MAIL[t.seg]||null;
+  var el=document.getElementById('eng-rows');
+  if(el)el.innerHTML=list.length?list.map(function(u){return engRow(u,mk);}).join(''):'<div class="em" style="padding:1rem">No clients match.</div>';
+  var count=document.getElementById('eng-filter-count');
+  if(count)count.textContent='Showing '+list.length+' of '+t.users.length;
+}
+function engTrackerHtml(title,count){
+  var SEL='style="'+CIN+';margin:0;cursor:pointer;max-width:160px"';
+  return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.7rem">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.65rem">'+
+      '<div class="sh" style="margin:0">'+title+' (<span id="eng-filter-count">'+count+'</span>) <span style="color:var(--muted2);font-weight:400;font-size:.68rem">- click a client for their full profile</span></div>'+
+      '<button onclick="engClearFilters()" style="background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);font-size:.65rem;cursor:pointer;padding:2px 8px;font-family:DM Mono,monospace;letter-spacing:.05em">Clear filters</button>'+
+    '</div>'+
+    '<div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:.65rem">'+
+      '<input id="eng-filter-q" oninput="engFilterInput(this.value)" placeholder="Search name or email..." style="'+CIN+';max-width:220px;margin:0">'+
+      '<select onchange="engFilterChange(\'paid\',this.value)" id="eng-filter-paid" title="Paid status" '+SEL+'>'+
+        '<option value="all">All plans</option>'+
+        '<option value="paid">Paid only</option>'+
+        '<option value="unpaid">Free / Guide only</option>'+
+      '</select>'+
+      '<select onchange="engFilterChange(\'programs\',this.value)" id="eng-filter-programs" title="Programs" '+SEL+'>'+
+        '<option value="all">All programs</option>'+
+        '<option value="has">Has programs</option>'+
+        '<option value="none">No programs</option>'+
+      '</select>'+
+      '<select onchange="engFilterChange(\'signup\',this.value)" id="eng-filter-signup" title="Sign-up order" '+SEL+'>'+
+        '<option value="newest">Newest first</option>'+
+        '<option value="oldest">Oldest first</option>'+
+        '<option value="">Default (by activity)</option>'+
+      '</select>'+
+    '</div>'+
+    '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden" id="eng-rows"></div>'+
+  '</div>';
+}
+function engClearFilters(){
+  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
+  var fi=document.getElementById('eng-filter-q'); if(fi)fi.value='';
+  var fp=document.getElementById('eng-filter-paid'); if(fp)fp.value='all';
+  var fpr=document.getElementById('eng-filter-programs'); if(fpr)fpr.value='all';
+  var fs=document.getElementById('eng-filter-signup'); if(fs)fs.value='newest';
+  engApplyFilters();
 }
 function renderEngagement(d){
   var a=d.aggregate||{};
@@ -1503,18 +1661,20 @@ function renderEngagement(d){
   ].join('');
   var actChart='<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;margin-bottom:1.6rem"><div class="sh" style="margin:0 0 .2rem">App Activity · 14 days</div>'+svgBars(ser.app_opens||[],'var(--gold)',null)+'</div>';
   document.getElementById('eng-stats').innerHTML=hero+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem;margin-bottom:1rem">'+mc+'</div>'+actChart;
-  // One unified tracker: needs-attention rows (severity-sorted) floated to the top + highlighted,
-  // then everyone else. A "Filter by" dropdown + search filter the single list; picking a segment
-  // shows per-member whether that stage's email was sent (via SEG_MAIL) + a summary count.
+  // Needs-attention rows (severity-sorted) floated to the top + highlighted, then everyone else.
+  // The search + filter bar (text + paid + programs + signup-date sort) filters the merged list
+  // client-side. Picking a segment segment shows per-member whether that stage's email was sent.
   var na=d.needs_attention||[];
   na.forEach(function(u){ u._attn=true; });
   var attnIds={}; na.forEach(function(u){ attnIds[u.id]=true; });
   var users=d.users||[];
   var merged=na.concat(users.filter(function(u){ return !attnIds[u.id]; }));
   _trackers['eng']={ users: merged, seg: 'all' };
+  // Reset filter state when loading fresh data
+  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
   document.getElementById('eng-attention').innerHTML='';
-  document.getElementById('eng-table').innerHTML=trackerHtml('eng','Clients',merged.length);
-  trackerFilter('eng');
+  document.getElementById('eng-table').innerHTML=engTrackerHtml('All Clients',merged.length);
+  engApplyFilters();
 }
 function tgs(){document.getElementById('stpn').classList.toggle('open');renderOperatorPushSetting();loadIntegrations();}
 // Real integration status (Settings) - which Netlify env keys are wired. Booleans only, never values.

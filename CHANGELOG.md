@@ -10,6 +10,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-13
+
+### Operator: Home member table + Client Overview search/filter bar
+- **Why:** operator Home showed rich-card rows (hard to scan 15 members quickly); Client Overview lacked name/email filters and no way to slice by paid vs free or by programs.
+- **Backend (`admin-home.js`, `admin-engagement.js`):** both functions now return per member: `first_name`/`last_name` (split from `full_name`, first token = first, rest = last; falls back to `preferred_name`), `paid` (boolean - true if tier is companion/coach/mentor, derived from the already-loaded `user_active_products`), `has_purchases` (boolean - one-time program purchases from `purchases` table; `admin-engagement` adds it as a single bulk scan to the existing `Promise.all`), `welcome_email_sent` (boolean|null - `email_log` kind=welcome status=sent), `coupon` (null - coupon/promo redemption is NOT stored in our DB; requires live per-member Stripe call which is too slow for a list - logged in function comments as a flag; add a webhook that mirrors `discount.coupon.id` onto `subscriptions.stripe_coupon_id` to enable). No N+1 queries added; no existing behavior changed.
+- **Home tab - Clients widget:** replaced the engRow card list with a proper scannable table: columns exactly First | Last | Email | Paid (Yes/No) | Sign-up date | Programs (Yes/No) | Welcome email (Yes/No). Sortable by First/Last/Sign-up date (click column header). Client-side text search across name+email. Each row opens the member panel on click (same as before).
+- **Client Overview tab:** full names now shown in engRow (first_name + last_name when available, falls back to `name`). Replaced the old single search box with a full search+filter bar: text search (name+email), Paid filter (All/Paid only/Free only), Programs filter (All/Has programs/No programs), Sign-up sort (Newest/Oldest/Default). "Clear filters" button resets all. Filter state resets on each tab load. Existing features (member drill/detail, safety merge, billing panel, Add User, tier/state segment dropdown) all intact.
+- **Files:** `netlify/functions/admin-home.js`, `netlify/functions/admin-engagement.js`, `operator.html`.
+- **Verified:** both backend files pass `node --check`; operator.html JS passes syntax check; auth gates (401/503 on no/wrong key) unchanged; no other tabs touched.
+
+---
+
 ## 2026-07-10
 
 ### Brand ethos band added to member app dashboard (`aed2ca1`)

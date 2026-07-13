@@ -9,9 +9,10 @@
  *   aggregate: { total, active, cooling, dormant, new, brief_opens_7d,
  *                riley_msgs_7d, app_opens_7d, new_signups_7d, avg_brief_opens,
  *                reeng_emails_7d, win_backs_7d },
- *   users: [ {id, name, email, state, last_active_at, brief_open_count,
- *             riley_msg_count, session_count, sober_days, recent_mood,
- *             tier, products, active_program, last_crisis_level} ],
+ *   users: [ {id, first_name, last_name, name, email, state, last_active_at,
+ *             brief_open_count, riley_msg_count, session_count, sober_days,
+ *             recent_mood, tier, paid, products, has_purchases, active_program,
+ *             last_crisis_level, welcome_email_sent, coupon} ],
  *   needs_attention: [ same shape - dormant/cooling or low recent mood ]
  * }
  *
@@ -19,10 +20,27 @@
  * actually purchased (reads user_active_products, same expansion entitlements.js
  * uses - Guide/Companion/Coach imply every program). active_program pulls their
  * current curriculum enrollment + days completed from user_program_progress.
+ *
+ * coupon: null - not stored in DB; requires live per-member Stripe call (too
+ * slow for a list). Mirror Stripe discount.coupon.id via webhook to enable.
  */
 
 const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
 const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared tier + state resolvers
+
+/** Split full_name into { first_name, last_name }. Falls back to preferred_name as first. */
+function splitName(fullName, preferredName) {
+  const raw = (fullName || "").trim();
+  if (raw) {
+    const sp = raw.indexOf(" ");
+    if (sp < 0) return { first_name: raw, last_name: "" };
+    return { first_name: raw.slice(0, sp), last_name: raw.slice(sp + 1).trim() };
+  }
+  const pref = (preferredName || "").trim();
+  return { first_name: pref, last_name: "" };
+}
+
+const PAID_TIERS = new Set(["companion", "coach", "mentor"]);
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -47,7 +65,7 @@ exports.handler = async function (event) {
     const sevenAgoDay = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
     const fourteenAgoTs = new Date(now - 14 * 86400000).toISOString();
 
-    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes, emailRes] = await Promise.all([
+    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes, emailRes, purchRes] = await Promise.all([
       supabase.from("user_profiles")
         .select("id,full_name,preferred_name,email,avatar_url,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
         .eq("onboarding_completed", true)
@@ -73,12 +91,15 @@ exports.handler = async function (event) {
         .order("last_activity", { ascending: false })
         .limit(20000),
       // latest client email per user - one indexed scan of recent email_log rows
-      // (created_at DESC), grouped in JS. Fixed-size window → scales without a giant
-      // .in(5000 ids) URL. Users beyond the window show no chip (their panel has full history).
+      // (created_at DESC), grouped in JS. Fixed-size window scales without a giant .in(5000 ids) URL.
+      // Users beyond the window show no chip (their panel has full history).
       supabase.from("email_log")
         .select("user_id,status,subject,kind,created_at")
         .order("created_at", { ascending: false })
         .limit(10000),
+      // One-time program purchases - one full-table scan to build a Set of user_ids with any purchase.
+      // No N+1; scales fine (distinct user_ids, index on user_id).
+      supabase.from("purchases").select("user_id").limit(50000),
     ]);
 
     const users   = usersRes.data   || [];
@@ -88,6 +109,8 @@ exports.handler = async function (event) {
     const entRows = entRes.data     || [];
     const progRows= progRes.data    || [];
     const emailRows= emailRes.data  || [];
+    // Build a Set of user_ids who have any one-time purchase
+    const purchaserSet = new Set((purchRes.data || []).map(p => p.user_id).filter(Boolean));
 
     // Latest email per user (rows already newest-first) → { status, subject, kind, created_at }.
     const lastEmailByUser = {}, emailKindsByUser = {};
@@ -154,8 +177,16 @@ exports.handler = async function (event) {
       totalBriefOpens += u.brief_open_count || 0;
       const soberDays = u.sobriety_date ? soberDaysForMember(u.sobriety_date) : null;
       const owned = ownedByUser[u.id] || [];
+      const tier = currentTier(owned);
+      const names = splitName(u.full_name, u.preferred_name);
+      const emailKinds = emailKindsByUser[u.id] || {};
+      const welcomeSent = emailKinds["welcome"] === "sent" ? true : (emailKinds["welcome"] ? false : null);
       return {
         id: u.id,
+        // Structured name fields for the Home table and Client Overview filter UI
+        first_name: names.first_name,
+        last_name: names.last_name,
+        // Legacy single-name field kept for back-compat (engRow still uses u.name)
         name: (u.preferred_name || u.full_name || u.email || "Member"),
         email: u.email,
         avatar_url: u.avatar_url || null,
@@ -166,18 +197,23 @@ exports.handler = async function (event) {
         session_count: u.session_count || 0,
         sober_days: soberDays,
         recent_mood: latestMood[u.id] ?? null,
-        reengaged: !!u.reengagement_sent_at,             // currently lapsed + emailed
+        reengaged: !!u.reengagement_sent_at,
         reengaged_at: u.reengagement_sent_at || null,
         won_back: !!(lastEmailAt[u.id] && lastOpenAt[u.id] && lastOpenAt[u.id] > lastEmailAt[u.id]),
-        tier: currentTier(owned),
-        // Exclude reset_free (implied for everyone, not worth listing) and
-        // retired products (Coach/Companion's implies_all_programs expansion
-        // technically includes them, but they're dead SKUs - noisy to show).
+        tier,
+        // paid: true if the member has an active paid plan (companion, coach, mentor)
+        paid: PAID_TIERS.has(tier),
+        // Exclude reset_free (implied for everyone) and retired products (noisy to show).
         products: owned.filter(k => k !== "reset_free" && (prodByKey[k] || {}).status !== "retired").map(k => (prodByKey[k] || {}).display_name || k),
+        // has_purchases: true if any one-time purchase row exists in the purchases table
+        has_purchases: purchaserSet.has(u.id),
         active_program: activeProgramByUser[u.id] || null,
         last_crisis_level: u.last_crisis_level || null,
         last_email: lastEmailByUser[u.id] || null,
-        email_kinds: emailKindsByUser[u.id] || {},
+        email_kinds: emailKinds,
+        welcome_email_sent: welcomeSent,
+        // coupon: null - not stored in DB; requires live per-member Stripe call. See comment at top.
+        coupon: null,
       };
     });
 

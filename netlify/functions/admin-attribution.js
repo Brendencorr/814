@@ -15,7 +15,7 @@
  * }
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -31,11 +31,8 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "GET")    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
 
-  // Operator-only. Fail closed.
-  const expected = process.env.OPERATOR_KEY;
-  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY in the environment." }) };
-  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
-  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
+  // Operator gate: constant-time key check + CORS allow-list (M-3).
+  const gate = requireOperator(event); if (gate) return gate;
 
   try {
     const days = Math.min(180, Math.max(1, parseInt((event.queryStringParameters || {}).days, 10) || 30));

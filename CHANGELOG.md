@@ -12,6 +12,25 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### M-3 completion: route 9 inline-gated admin endpoints through hardened requireOperator
+- **Why.** The earlier M-3 work hardened `requireOperator()` in `supabase-client.js` (constant-time
+  compare + CORS allow-list) and ~27 functions already call it, but these 9 admin endpoints still
+  carried their OWN inline gate (`const provided = ...; if (provided !== expected) return 401`) - a
+  timing-leaky `!==` string compare AND a wildcard `Access-Control-Allow-Origin: *` on the reject
+  reply. Each now calls the shared gate, so the timing-safe compare + origin allow-list apply
+  everywhere and there is a single source of truth for operator auth.
+- **What.** In each file: added `requireOperator` to the `./supabase-client` require, and replaced the
+  inline OPERATOR_KEY-read + 503 + provided-read + 401 block with
+  `const gate = requireOperator(event); if (gate) return gate;`. OPTIONS preflight, method checks, the
+  `json()` helper, the module-level CORS const, and all business logic/success responses are unchanged.
+  Files: `admin-home.js`, `admin-content.js`, `admin-pricing.js`, `admin-safety.js`, `admin-users.js`,
+  `admin-programs.js`, `admin-attribution.js`, `admin-membership.js`, `admin-engagement.js`.
+- **Follow-up (separate).** Success responses on these endpoints still use `Access-Control-Allow-Origin: *`
+  from each function's own CORS const; tightening those to the allow-list is left as its own change so this
+  one stays a pure auth-gate consolidation.
+- **Verified.** All 9 `node --check` clean; each file has requireOperator twice (require + handler); no
+  `provided !== expected` or inline `process.env.OPERATOR_KEY` remains in any of the 9; no em-dashes added.
+
 ### Tier repositioning — "how close do you want Riley?" (messaging only, prices unchanged)
 - **Why:** The tiers read as feature-count ("what you get"). Repositioned to relationship depth so members
   decide on what they get FROM Riley, not price (money secondary, Brenden-approved). Every plan already

@@ -14,7 +14,7 @@
  *   coupon       - string|null: promo_code (human code) or stripe_coupon_id from subscriptions row;
  *                  null if no promo was applied. Populated by stripe-webhook on checkout.session.completed.
  */
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared with admin-engagement
 
 /** Split full_name into { first_name, last_name }. Falls back to preferred_name as first. */
@@ -39,11 +39,8 @@ const CORS = {
 
 exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
-  // Operator-only. Fail closed: without the secret, never serve member analytics/PII (names, emails).
-  const expected = process.env.OPERATOR_KEY;
-  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY." }) };
-  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
-  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
+  // Operator gate: constant-time key check + CORS allow-list (M-3).
+  const gate = requireOperator(event); if (gate) return gate;
   try {
     const db = getSupabaseClient();
     const q = event.queryStringParameters || {};

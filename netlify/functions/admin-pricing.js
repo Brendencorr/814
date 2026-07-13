@@ -23,7 +23,7 @@
  *   who currently holds product_key=key, active. Drill-down from the count.
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -115,10 +115,8 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "POST")    return json(405, { error: "Method not allowed" });
 
-  const expected = process.env.OPERATOR_KEY;
-  if (!expected) return json(503, { error: "Pricing manager not configured. Set OPERATOR_KEY in the environment." });
-  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
-  if (provided !== expected) return json(401, { error: "Unauthorized" });
+  // Operator gate: constant-time key check + CORS allow-list (M-3).
+  const gate = requireOperator(event); if (gate) return gate;
 
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Invalid JSON body" }); }

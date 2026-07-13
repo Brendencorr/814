@@ -26,7 +26,7 @@
  * rows that have a coupon - no per-member Stripe calls.
  */
 
-const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
+const { getSupabaseClient, soberDaysForMember, requireOperator } = require("./supabase-client");
 const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared tier + state resolvers
 
 /** Split full_name into { first_name, last_name }. Falls back to preferred_name as first. */
@@ -53,11 +53,8 @@ exports.handler = async function (event) {
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: CORS, body: "" };
   if (event.httpMethod !== "GET")    return { statusCode: 405, headers: CORS, body: JSON.stringify({ error: "Method not allowed" }) };
 
-  // Operator-only. Fail closed: no configured secret -> never serve user data.
-  const expected = process.env.OPERATOR_KEY;
-  if (!expected) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY in the environment." }) };
-  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
-  if (provided !== expected) return { statusCode: 401, headers: CORS, body: JSON.stringify({ error: "Unauthorized" }) };
+  // Operator gate: constant-time key check + CORS allow-list (M-3).
+  const gate = requireOperator(event); if (gate) return gate;
 
   try {
     const supabase = getSupabaseClient(); // SERVICE_KEY

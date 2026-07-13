@@ -15,7 +15,7 @@
  *   → returns users matching name or email (case-insensitive)
  */
 
-const { getSupabaseClient } = require("./supabase-client");
+const { getSupabaseClient, requireOperator } = require("./supabase-client");
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin":  "*",
@@ -31,11 +31,8 @@ exports.handler = async function (event) {
     return { statusCode: 405, headers: CORS_HEADERS, body: JSON.stringify({ error: "Method not allowed" }) };
   }
 
-  // Operator-only. Fail closed: no configured secret -> never serve user data.
-  const expected = process.env.OPERATOR_KEY;
-  if (!expected) return { statusCode: 503, headers: CORS_HEADERS, body: JSON.stringify({ error: "Not configured. Set OPERATOR_KEY in the environment." }) };
-  const provided = event.headers["x-operator-key"] || event.headers["X-Operator-Key"];
-  if (provided !== expected) return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: "Unauthorized" }) };
+  // Operator gate: constant-time key check + CORS allow-list (M-3).
+  const gate = requireOperator(event); if (gate) return gate;
 
   try {
     const supabase = getSupabaseClient(); // SERVICE_KEY - bypasses RLS

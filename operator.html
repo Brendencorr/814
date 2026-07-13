@@ -1575,7 +1575,7 @@ function engRow(u,mailKind){
 }
 // ── Client Overview advanced filter state ────────────────────────────────────
 // State for the search + filter bar on the Client Overview tab. Client-side only.
-var _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
+var _engFilters={ q:'', paid:'all', programs:'all', signup:'newest', coupon:'all' };
 function engFilterChange(field,val){ _engFilters[field]=val; engApplyFilters(); }
 function engFilterInput(val){ _engFilters.q=val; engApplyFilters(); }
 function engApplyFilters(){
@@ -1593,6 +1593,9 @@ function engApplyFilters(){
     // Programs filter
     if(f.programs==='has'&&!(u.has_purchases||(u.programs>0))) return false;
     if(f.programs==='none'&&(u.has_purchases||(u.programs>0))) return false;
+    // Coupon filter: "has" = coupon field is present and non-null/non-empty; "none" = no coupon.
+    if(f.coupon==='has'&&!u.coupon) return false;
+    if(f.coupon==='none'&&!!u.coupon) return false;
     return true;
   });
   // Signup date sort (newest/oldest)
@@ -1630,16 +1633,22 @@ function engTrackerHtml(title,count){
         '<option value="oldest">Oldest first</option>'+
         '<option value="">Default (by activity)</option>'+
       '</select>'+
+      '<select onchange="engFilterChange(\'coupon\',this.value)" id="eng-filter-coupon" title="Promo/coupon" '+SEL+'>'+
+        '<option value="all">All coupons</option>'+
+        '<option value="has">Has promo code</option>'+
+        '<option value="none">No promo code</option>'+
+      '</select>'+
     '</div>'+
     '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden" id="eng-rows"></div>'+
   '</div>';
 }
 function engClearFilters(){
-  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
+  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest', coupon:'all' };
   var fi=document.getElementById('eng-filter-q'); if(fi)fi.value='';
   var fp=document.getElementById('eng-filter-paid'); if(fp)fp.value='all';
   var fpr=document.getElementById('eng-filter-programs'); if(fpr)fpr.value='all';
   var fs=document.getElementById('eng-filter-signup'); if(fs)fs.value='newest';
+  var fc=document.getElementById('eng-filter-coupon'); if(fc)fc.value='all';
   engApplyFilters();
 }
 function renderEngagement(d){
@@ -1671,7 +1680,7 @@ function renderEngagement(d){
   var merged=na.concat(users.filter(function(u){ return !attnIds[u.id]; }));
   _trackers['eng']={ users: merged, seg: 'all' };
   // Reset filter state when loading fresh data
-  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest' };
+  _engFilters={ q:'', paid:'all', programs:'all', signup:'newest', coupon:'all' };
   document.getElementById('eng-attention').innerHTML='';
   document.getElementById('eng-table').innerHTML=engTrackerHtml('All Clients',merged.length);
   engApplyFilters();

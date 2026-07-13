@@ -21,8 +21,9 @@
  * uses - Guide/Companion/Coach imply every program). active_program pulls their
  * current curriculum enrollment + days completed from user_program_progress.
  *
- * coupon: null - not stored in DB; requires live per-member Stripe call (too
- * slow for a list). Mirror Stripe discount.coupon.id via webhook to enable.
+ * coupon: promo_code (human code the member typed) or stripe_coupon_id stamped by
+ * stripe-webhook on checkout.session.completed. One scan of active subscriptions
+ * rows that have a coupon - no per-member Stripe calls.
  */
 
 const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
@@ -65,7 +66,7 @@ exports.handler = async function (event) {
     const sevenAgoDay = new Date(now - 7 * 86400000).toISOString().slice(0, 10);
     const fourteenAgoTs = new Date(now - 14 * 86400000).toISOString();
 
-    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes, emailRes, purchRes] = await Promise.all([
+    const [usersRes, eventsRes, checkinsRes, prodRes, entRes, progRes, emailRes, purchRes, couponRes] = await Promise.all([
       supabase.from("user_profiles")
         .select("id,full_name,preferred_name,email,avatar_url,last_active_at,engagement_state,session_count,brief_open_count,last_brief_opened_at,riley_msg_count,sobriety_date,created_at,reengagement_sent_at,last_crisis_level")
         .eq("onboarding_completed", true)
@@ -100,6 +101,13 @@ exports.handler = async function (event) {
       // One-time program purchases - one full-table scan to build a Set of user_ids with any purchase.
       // No N+1; scales fine (distinct user_ids, index on user_id).
       supabase.from("purchases").select("user_id").limit(50000),
+      // Coupon/promo-code: one scan of active subscriptions that have a coupon stamped by the webhook.
+      // Only rows with a coupon; avoids scanning the full subscriptions table unnecessarily.
+      supabase.from("subscriptions")
+        .select("user_id,promo_code,stripe_coupon_id")
+        .eq("status", "active")
+        .not("stripe_coupon_id", "is", null)
+        .limit(50000),
     ]);
 
     const users   = usersRes.data   || [];
@@ -111,6 +119,11 @@ exports.handler = async function (event) {
     const emailRows= emailRes.data  || [];
     // Build a Set of user_ids who have any one-time purchase
     const purchaserSet = new Set((purchRes.data || []).map(p => p.user_id).filter(Boolean));
+    // couponById: promo_code (human code) preferred over stripe_coupon_id (internal id).
+    const couponById = {};
+    (couponRes.data || []).forEach(s => {
+      if (!couponById[s.user_id]) couponById[s.user_id] = s.promo_code || s.stripe_coupon_id || null;
+    });
 
     // Latest email per user (rows already newest-first) → { status, subject, kind, created_at }.
     const lastEmailByUser = {}, emailKindsByUser = {};
@@ -212,8 +225,8 @@ exports.handler = async function (event) {
         last_email: lastEmailByUser[u.id] || null,
         email_kinds: emailKinds,
         welcome_email_sent: welcomeSent,
-        // coupon: null - not stored in DB; requires live per-member Stripe call. See comment at top.
-        coupon: null,
+        // coupon: promo_code (human code) or stripe_coupon_id stamped by the webhook on checkout.
+        coupon: couponById[u.id] || null,
       };
     });
 

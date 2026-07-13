@@ -13,6 +13,7 @@
  *
  * Events handled:
  *   checkout.session.completed     → grant (subscription or one-time program) + store customer id
+ *                                    + capture stripe_coupon_id / promo_code if a discount was applied
  *   invoice.paid                   → renewal: extend the active sub's expiry
  *   customer.subscription.updated  → upgrade/downgrade: swap plan_id/term
  *   customer.subscription.deleted  → revoke
@@ -21,6 +22,61 @@
 const crypto = require("crypto");
 const { getSupabaseClient } = require("./supabase-client");
 const { PLAN_BY_LOOKUP } = require("./stripe-catalog");
+
+// Stripe REST helpers (reuse the pattern from stripe-checkout.js - no SDK needed).
+const STRIPE_BASE = "https://api.stripe.com/v1/";
+function stripeAuthHeader() { return { Authorization: "Bearer " + (process.env.STRIPE_SECRET_KEY || "") }; }
+async function stripeGet(path) {
+  try {
+    const r = await fetch(STRIPE_BASE + path, { headers: stripeAuthHeader() });
+    return r.json();
+  } catch (_) { return null; }
+}
+
+/**
+ * captureCoupon - non-blocking, fault-tolerant coupon capture for checkout.session.completed.
+ * Reads the discount from the session discounts array first; if not present, falls back to a
+ * single GET on the Stripe subscription object. Returns { stripe_coupon_id, promo_code } or
+ * {} if no discount was applied. Never throws.
+ */
+async function captureCoupon(session) {
+  try {
+    let couponId = null;
+    let promoCodeStr = null;
+
+    // Preferred path: discount embedded directly on the Checkout Session.
+    // Stripe populates session.discounts[] when allow_promotion_codes=true and a code is applied.
+    const discounts = Array.isArray(session.discounts) ? session.discounts : [];
+    const sessionDiscount = discounts[0] || null;
+    if (sessionDiscount && sessionDiscount.coupon && sessionDiscount.coupon.id) {
+      couponId = sessionDiscount.coupon.id;
+      // The promotion_code field on the discount object is a PromotionCode id (starts "promo_"),
+      // not the human-readable code. We resolve it below.
+      const promoId = sessionDiscount.promotion_code || null;
+      if (promoId && typeof promoId === "string") {
+        const pc = await stripeGet("promotion_codes/" + promoId);
+        if (pc && pc.code) promoCodeStr = pc.code;
+      }
+    } else if (session.subscription && typeof session.subscription === "string") {
+      // Fallback: fetch the Stripe subscription to read its applied discount.
+      const sub = await stripeGet("subscriptions/" + session.subscription + "?expand[]=discount.promotion_code");
+      if (sub && sub.discount && sub.discount.coupon && sub.discount.coupon.id) {
+        couponId = sub.discount.coupon.id;
+        const pc = sub.discount.promotion_code;
+        if (pc && typeof pc === "object" && pc.code) {
+          promoCodeStr = pc.code;
+        } else if (pc && typeof pc === "string") {
+          // promotion_code came back as an id despite expand - resolve it
+          const pcObj = await stripeGet("promotion_codes/" + pc);
+          if (pcObj && pcObj.code) promoCodeStr = pcObj.code;
+        }
+      }
+    }
+
+    if (!couponId) return {}; // no discount applied - leave columns null
+    return { stripe_coupon_id: couponId, promo_code: promoCodeStr || null };
+  } catch (_) { return {}; }
+}
 
 const DAY = 86400000;
 const json = (c, o) => ({ statusCode: c, headers: { "Content-Type": "application/json" }, body: JSON.stringify(o) });
@@ -84,6 +140,14 @@ exports.handler = async (event) => {
           const term = md.term || "monthly";
           await sb.from("subscriptions").insert({ user_id: uid, plan_id: md.plan, term, status: "active", source: "checkout", expires_at: graceISO(term) });
           await log("granted", { user_id: uid, plan_id: md.plan, term, email });
+          // Non-blocking coupon capture: stamp the promo/coupon onto the subscription row we just
+          // inserted. Runs after the grant is logged - a capture failure NEVER reverts the grant.
+          try {
+            const coupon = await captureCoupon(obj);
+            if (coupon.stripe_coupon_id) {
+              await sb.from("subscriptions").update(coupon).eq("user_id", uid).eq("status", "active");
+            }
+          } catch (_) {}
         } else { await log("needs_review", { user_id: uid, email, detail: "session had no plan/program metadata" }); }
         break;
       }

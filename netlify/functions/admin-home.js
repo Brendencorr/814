@@ -11,12 +11,8 @@
  *   paid         - boolean: true if tier is companion, coach, or mentor
  *   has_purchases - boolean: true if any row in purchases table
  *   welcome_email_sent - boolean|null: true if email_log has kind=welcome with status=sent
- *   coupon       - null (requires live Stripe call; not stored in DB - see FLAG below)
- *
- * FLAG: coupon/promo-code redemption is NOT stored in our DB. Stripe holds it on the
- * subscription/payment object (discount.coupon.id). A per-member Stripe call on a list
- * endpoint is too slow at scale. Return null until we add a DB webhook that mirrors
- * stripe_coupon_id onto the subscriptions row.
+ *   coupon       - string|null: promo_code (human code) or stripe_coupon_id from subscriptions row;
+ *                  null if no promo was applied. Populated by stripe-webhook on checkout.session.completed.
  */
 const { getSupabaseClient } = require("./supabase-client");
 const { currentTier, stateFromLastActive } = require("./tier-utils"); // shared with admin-engagement
@@ -75,6 +71,22 @@ exports.handler = async function (event) {
           (uap || []).forEach((r) => {
             (ownedByUser[r.user_id] ||= []).push(r.product_key);
             if (String(r.product_key).startsWith("prog_")) progCount[r.user_id] = (progCount[r.user_id] || 0) + 1;
+          });
+        } catch (_) {}
+      }
+      // Coupon/promo-code per user: read from subscriptions rows stamped by the webhook.
+      // promo_code is the human code the customer typed; fall back to stripe_coupon_id.
+      const couponById = {};
+      if (ids.length) {
+        try {
+          const { data: subs } = await db.from("subscriptions")
+            .select("user_id,promo_code,stripe_coupon_id")
+            .in("user_id", ids)
+            .eq("status", "active")
+            .not("stripe_coupon_id", "is", null);
+          (subs || []).forEach((s) => {
+            // One active sub per user; first one wins. Prefer human promo_code over internal id.
+            if (!couponById[s.user_id]) couponById[s.user_id] = s.promo_code || s.stripe_coupon_id || null;
           });
         } catch (_) {}
       }
@@ -141,10 +153,9 @@ exports.handler = async function (event) {
           last_email: lastEmailById[s.id] || null,
           email_kinds: emailKinds,
           welcome_email_sent: welcomeSent,
-          // coupon: not stored in DB - requires live Stripe call (too slow for a list).
-          // Set STRIPE_WEBHOOK to mirror discount.coupon.id onto subscriptions.stripe_coupon_id
-          // to enable this field. Returns null until then.
-          coupon: null,
+          // coupon: promo_code (human code) or stripe_coupon_id stamped by the webhook on checkout.
+          // null when no promo was applied or the member has no active subscription yet.
+          coupon: couponById[s.id] || null,
         };
       });
     } catch (_) { blob.recent_signups = []; }

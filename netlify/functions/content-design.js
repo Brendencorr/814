@@ -156,12 +156,11 @@ async function renderAsset({ ground, layout, format, eyebrow, headline }) {
 
   const story = format === "story";
   const M = 104;
-  // eyebrow (hook) or sun-dot (body)
-  if (layout === "hook" && eyebrow) {
+  // eyebrow only. (The old "sun-dot" for no-eyebrow posts was a flat gold circle - NOT an
+  // approved brand mark and not from the kit; removed. The one true sun lives in the bottom
+  // Riley lockup only.)
+  if (eyebrow) {
     drawTracked(ctx, String(eyebrow).toUpperCase(), W / 2, story ? 300 : 150, { size: 26, tracking: 26 * 0.34, fill: goldColor });
-  } else {
-    const r = 9, yd = story ? 240 : 206;
-    ctx.beginPath(); ctx.fillStyle = goldColor; ctx.arc(W / 2, yd, r, 0, Math.PI * 2); ctx.fill();
   }
   // headline
   const cy = story ? 830 : 620;

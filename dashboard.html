@@ -328,17 +328,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
-    <!-- v2.3 C: Track your day - Movement/Nourishment/Rest/Reflection live here now (removed from the nav,
-         never stranded). Logging works the same for every tier; tier only changes what Clarity does with it. -->
-    <div class="card" style="padding:15px 17px;margin-bottom:16px">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:11px">Track your day</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
-        <a href="/tracker"   style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">📖</span> Reflection<span id="refl-dot" style="display:none;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;align-items:center;justify-content:center;font-family:'DM Mono',monospace" title=""></span></a>
-        <a href="/workouts"  style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🤍</span> Movement</a>
-        <a href="/nutrition" style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🍃</span> Nourishment</a>
-        <a href="/sleep"     style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🌙</span> Rest</a>
-      </div>
-    </div>
+    <!-- Track-your-day merged into the combined "Track your day" cards BELOW the brief (loadExplore) - one
+         tier-aware section instead of small buttons + a duplicate "Everything you could unlock" upsell. -->
 
     <!-- v2.3 C: secondary features (not in the primary nav) - reachable from the Clarity home. -->
     <div style="display:flex;flex-wrap:wrap;gap:8px 18px;padding:0 4px 16px;font-size:12px">
@@ -350,10 +341,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
     <!-- For You Today - Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
-
-    <!-- Everything Riley Offers - reliable, entitlement-driven locked previews so
-         every member sees the full menu of what they could unlock (Coach hides it) -->
-    <div id="explore-slot"></div>
 
     <!-- TWO COL -->
     <div class="grid2">
@@ -383,6 +370,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
       </div>
     </div>
+
+    <!-- Combined "Track your day" cards - MOVED below the brief so the upgrade isn't pushed on login (Brenden). -->
+    <div id="explore-slot"></div>
   </div>
   <!-- Brand ethos - unattributed; stands as value, not testimonial -->
   <div class="app-ethos-band">
@@ -871,10 +861,8 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     //    surface as the tappable stat tiles above. Keep MOOD in state for the mood engine. ──
     if(todayCI?.mood){MOOD=todayCI.mood;}
 
-    // ── Pending-habits dot on the Reflection track button (Habits/Goals panels retired, Brenden) ──
-    const _pend=(habitsTotal>0?Math.max(0,habitsTotal-habitsDoneToday):0);
-    const _rd=document.getElementById('refl-dot');
-    if(_rd&&_pend>0){_rd.style.display='inline-flex';_rd.textContent=String(_pend);_rd.title=_pend+' habit'+(_pend>1?'s':'')+' left today';}
+    // ── Pending-habits count -> the Reflection card in the combined "Track your day" section (loadExplore) ──
+    window._pendHabits=(habitsTotal>0?Math.max(0,habitsTotal-habitsDoneToday):0);
 
     // ── PROGRAMS ──
     const pEl=document.getElementById('prog-list');
@@ -945,12 +933,12 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 // Shows every member (except Coach, who has it all) the full menu of what they
 // could unlock - so the value of upgrading is always visible on the Today page.
 const EXPLORE_FLAGSHIP=[
-  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Coach'},
-  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Coach'},
-  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Coach'},
-  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Coach'},
-  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach'},
-  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach'}
+  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Coach', href:'/tracker'},
+  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Coach', href:'/workouts'},
+  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Coach', href:'/nutrition'},
+  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Coach', href:'/sleep'},
+  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach', href:'/lifemap'},
+  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach', href:'/finance'}
 ];
 async function loadExplore(){
   try{
@@ -963,11 +951,18 @@ async function loadExplore(){
       ent=await r.json(); try{sessionStorage.setItem(k,JSON.stringify(ent));}catch(e){}
     }
     const has=f=>ent&&ent.features&&ent.features[f]&&ent.features[f].access===true;
-    const locked=EXPLORE_FLAGSHIP.filter(f=>!has(f.feat));
     const slot=document.getElementById('explore-slot');
-    if(!slot||!locked.length)return; // Coach / full members: nothing to upsell
-    const cards=locked.map(f=>'<div onclick="track(\'explore_unlock_click\',{feat:\''+f.feat+'\'});location.href=\'/programs?unlock='+f.feat+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.5),rgba(16,14,12,0.4));border:1px dashed rgba(201,168,76,0.28);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.28)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px;opacity:0.85">'+f.icon+'</span><span style="font-size:12px;opacity:0.7">🔒</span></div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Unlock with '+f.need+' →</div></div>').join('');
-    slot.innerHTML='<div style="margin:4px 0 24px"><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:4px">The full Riley experience</div><div style="font-family:\'DM Serif Display\',serif;font-size:20px;color:var(--parchment);margin-bottom:16px">Everything you could unlock</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px">'+cards+'</div></div>';
+    if(!slot)return;
+    const anyLocked=EXPLORE_FLAGSHIP.some(f=>!has(f.feat));
+    const pend=(typeof window._pendHabits==='number'?window._pendHabits:0);
+    const cards=EXPLORE_FLAGSHIP.map(function(f){
+      if(has(f.feat)){
+        const dot=(f.feat==='daily_checkin'&&pend>0)?'<span style="min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-family:\'DM Mono\',monospace" title="'+pend+' habit'+(pend>1?'s':'')+' left today">'+pend+'</span>':'<span style="font-size:14px;color:var(--smoke2)">→</span>';
+        return '<div onclick="location.href=\''+f.href+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.6),rgba(16,14,12,0.45));border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.4)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.07)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px">'+f.icon+'</span>'+dot+'</div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Open →</div></div>';
+      }
+      return '<div onclick="track(\'explore_unlock_click\',{feat:\''+f.feat+'\'});location.href=\'/programs?unlock='+f.feat+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.5),rgba(16,14,12,0.4));border:1px dashed rgba(201,168,76,0.28);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.28)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px;opacity:0.85">'+f.icon+'</span><span style="font-size:12px;opacity:0.7">🔒</span></div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Unlock with '+f.need+' →</div></div>';
+    }).join('');
+    slot.innerHTML='<div style="margin:4px 0 8px"><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:'+(anyLocked?'4px':'14px')+'">Track your day</div>'+(anyLocked?'<div style="font-size:12.5px;color:var(--smoke);line-height:1.5;margin-bottom:16px">Log what you\'re working on - and see what deepens with Riley Coach.</div>':'')+'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px">'+cards+'</div></div>';
   }catch(e){console.warn('explore (non-fatal):',e.message);}
 }
 

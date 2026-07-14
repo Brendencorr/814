@@ -96,7 +96,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB = supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let UID=null, STAGE=0, IS_FULL=false;
+let UID=null, STAGE=0, IS_FULL=false, DEFAULTS=['movement','habits','reflection'];
 // v2.3 B.1: free members TRACK (no bands/baselines, no 3-5 limit, no focus lanes - lanes are a
 // Companion "watching" concept). Companion members WATCH (the full v2.2 pane). Tier fetched in load().
 function applyTierFraming(){
@@ -131,14 +131,19 @@ async function load(){
   // Foundation: fuel is the only toggle (steadiness + rest are always on).
   setRow(document.querySelector('#foundation .row[data-fuel]'), !cfg.fuel_opt_out);
   // Practice: first-time setup starts with the sensible defaults ON.
+  // v2.3 A.4: persona-informed pre-toggles (NEVER gates - the full catalog is always shown). Griever
+  // swaps movement -> connection in the STARTING set + is offered the grief lane. Everyone else = universal.
+  let personaKeys=[]; try{ const pe=await SB.from('reset_enrollment').select('persona_keys').eq('user_id',UID).maybeSingle(); personaKeys=(pe&&pe.data&&pe.data.persona_keys)||[]; }catch(e){}
+  const isGriever=personaKeys.indexOf('griever')>=0;
+  DEFAULTS=isGriever?['connection','habits','reflection']:['movement','habits','reflection'];
   const first=!cfg.enabled_practice||!cfg.enabled_practice.length;
-  const on=new Set(first?['movement','habits','reflection']:cfg.enabled_practice);
+  const on=new Set(first?DEFAULTS:cfg.enabled_practice);
   document.querySelectorAll('#practice .row[data-dim]').forEach(row=>setRow(row,on.has(row.dataset.dim)));
   refreshCounter();
   // Focus lanes (§5): OPT-IN, off unless turned on. Sobriety is offered ONLY to members who
   // track it (auto-offered ON, opt-out-able). Grief is offered to everyone (off by default).
   try{ const s=await SB.from('sobriety_tracker').select('id').eq('user_id',UID).eq('is_active',true).maybeSingle(); if(s&&s.data){ HAS_LANE=true; $('lane-sobriety').style.display='flex'; const optedOut=cfg.lanes&&cfg.lanes.sobriety===false; setRow($('lane-sobriety'), !optedOut); } }catch(e){}
-  setRow(document.querySelector('#lanes .row[data-lane="grief"]'), !!(cfg.lanes&&cfg.lanes.grief===true));
+  setRow(document.querySelector('#lanes .row[data-lane="grief"]'), (first&&isGriever)?true:!!(cfg.lanes&&cfg.lanes.grief===true));
   ['foundation','practice','lanes'].forEach(id=>$(id).classList.remove('skel'));
   $('save').disabled=false; $('save').textContent='Save';
   // §10 Touch-2: "Keep the standard setup" is a one-tap valid completion during onboarding.
@@ -179,7 +184,7 @@ $('save').addEventListener('click', async ()=>{
 $('keep').addEventListener('click', async ()=>{
   $('keep').disabled=true;
   // Standard setup = the sensible defaults written as the member's own config.
-  const config={enabled_practice:['movement','habits','reflection'], fuel_opt_out:false, lanes:{}};
+  const config={enabled_practice:DEFAULTS.slice(), fuel_opt_out:false, lanes:{}};
   if(HAS_LANE) config.lanes.sobriety=true;   // auto-offer default ON for trackers
   await saveConfig(config);
   $('keep').disabled=false;

@@ -318,12 +318,29 @@
     } catch (e) {}
   }
 
+  // P2.8: mobile bottom tab bar (PWA / mobile, member app only). Talk to Riley IS the center - the breathing
+  // sun mark is the brand mark and the primary action, one object. Clarity + Life Map flank it.
+  function mobileBottomBar() {
+    if (document.getElementById('riley-bottombar')) return;
+    styleOnce('riley-bottombar-css', '#riley-bottombar{display:none}@media(max-width:760px){#riley-bottombar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9980;background:rgba(10,9,8,0.94);backdrop-filter:blur(14px);border-top:1px solid rgba(255,255,255,0.07);align-items:center;justify-content:space-around;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0))}body{padding-bottom:72px}}.rbb-item{display:flex;flex-direction:column;align-items:center;gap:3px;color:#8a8578;font-family:"DM Sans",sans-serif;font-size:9px;text-decoration:none;flex:1;text-align:center;background:none;border:none;cursor:pointer;padding:4px 0}.rbb-item.active{color:#c9a84c}.rbb-ico{font-size:19px;line-height:1}.rbb-sun{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);box-shadow:0 0 16px rgba(201,168,76,0.5);animation:rbbBreathe 5s ease-in-out infinite;margin-top:-16px;border:3px solid rgba(10,9,8,0.94)}#riley-bottombar.thinking .rbb-sun{animation-duration:1.3s}@keyframes rbbBreathe{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.07);opacity:1}}@media(prefers-reduced-motion:reduce){.rbb-sun{animation:none}}');
+    var path = location.pathname.replace(/\/+$/, '');
+    var bar = document.createElement('nav'); bar.id = 'riley-bottombar'; bar.setAttribute('aria-label', 'Primary');
+    bar.innerHTML =
+      '<a class="rbb-item' + (path === '/dashboard' ? ' active' : '') + '" href="/dashboard"><span class="rbb-ico">✨</span>Clarity</a>' +
+      '<button class="rbb-item" id="rbb-talk" type="button" aria-label="Talk to Riley"><span class="rbb-sun"></span></button>' +
+      '<a class="rbb-item' + (path === '/lifemap' ? ' active' : '') + '" href="/lifemap"><span class="rbb-ico">🗺️</span>Life Map</a>';
+    document.body.appendChild(bar);
+    var t = document.getElementById('rbb-talk');
+    if (t) t.onclick = function () { if (window.openRileyLayer) window.openRileyLayer({}); else location.href = '/chat'; };
+  }
+
   window.addEventListener('load', function () {
     setTimeout(function () {
       // P1.10.7: the floating "Chat with Riley" pill is RETIRED inside the member app (it duplicated the
       // nav + recast Riley as a support widget). It stays on the logged-out marketing site, where it's the
       // conversion path and there's no member nav. Member app pages carry the #sb-tiers nav mount; marketing does not.
       if (!onChatPage && !document.getElementById('sb-tiers')) chatPill();
+      if (!onChatPage && document.getElementById('sb-tiers')) mobileBottomBar();   // P2.8: mobile bottom bar (member app)
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)

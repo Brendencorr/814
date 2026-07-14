@@ -12,6 +12,15 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-14
 
+- **home: restored "Mentor - coming soon" teaser + fixed the section order** (per Brenden, 2026-07-14).
+  (1) Re-added the quiet one-line Mentor teaser at the bottom of the Membership section (verbatim from removal
+  commit `e387642`; NOT a third pricing column - no price/buy). This **reverses the v2.3.1 "marketing teaser
+  removed → dashboard-only" decision in the entry below**, per Brenden's explicit ask - so please don't re-remove
+  it without checking with him. The two PRICED cards stay Companion (free) + Coach ($19). File: `home.html`.
+  (2) Cleared stray `site_content` home section-`sort` values (written 15:27 today, Membership had none) that were
+  floating the Membership section to the top of the page - reverted home to the correct code section order. Live
+  data fix in `site_content`, no deploy.
+
 - `riley-v23` — **v2.3.1 tier DISPLAY rename** (Brenden): Guide→Companion (free), Companion→Coach ($19), Coach→Mentor (coming soon, dashboard-only). JUST display names; internal plan keys, entitlements, Stripe lookup_keys and DB values UNCHANGED (no migration; founding members keep full access). New `tier-labels.js` central map; nav plan-badge routes through an inline copy. Marketing coming-soon teaser removed → dashboard card. Files: riley-chat.js, tier-labels.js (new), stripe-catalog.js, comms-templates.js, riley-brain.js, admin-pricing.js, auth-handler.js, ~21 HTML pages, operator.html. 🔴 LEFT FOR BRENDEN: LIVE Stripe dashboard product rename — has a name collision + 4 active $350/yr payers on the old `riley_coach` product; his call (code is ready + dormant).
 
 ### Signup (follow-up): First + Last required on the magic-link form too

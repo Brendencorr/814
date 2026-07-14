@@ -70,6 +70,19 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const hardToday = (hardRes.status === "fulfilled" && hardRes.value.data && hardRes.value.data.length > 0) || false;
   const prof = (profRes.status === "fulfilled" && profRes.value.data) || null;
 
+  // v2.3 TIER SPLIT: free/Guide members score in FOUNDATION mode (Foundation + Direction only - "the
+  // universal score"); any active paid membership (Companion) scores in FULL mode (v2.2 formula, with
+  // personal bands + focus lanes - "the personal score"). Derived server-side so a foundation member's
+  // Practice/lane values are never computed into the stored row (which IS the API response).
+  let scoreMode = 'foundation';
+  try {
+    const { data: _msubs } = await supabase.from("subscriptions").select("plan_id,expires_at")
+      .eq("user_id", userId).eq("status", "active")
+      .in("plan_id", ["companion", "coach", "mentor", "concierge"]);
+    const _mnow = Date.now();
+    if ((_msubs || []).some((s) => !s.expires_at || new Date(s.expires_at).getTime() > _mnow)) scoreMode = 'full';
+  } catch (_) {}
+
   const baseMap = {};
   baselines.forEach((b) => { baseMap[b.dim] = b; });
   const last7 = checkins.filter((c) => c.checkin_date >= win7);
@@ -179,6 +192,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     : {};
 
   const raw = Object.assign({}, foundationInp, {
+    score_mode: scoreMode,
     enabledPractice: enabled,
     practice,
     lane,
@@ -209,7 +223,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
       f_score: result.F,
       p_score: result.P,
       d_score: result.D,
-      v2_breakdown: result.breakdown,
+      v2_breakdown: Object.assign({}, result.breakdown, { mode: result.mode }),
       config_version: cfgVersion,
       frozen: !!result.frozen,
       frozen_until: result.frozen ? frozenUntilISO : null,   // cleared on unfreeze
@@ -230,6 +244,9 @@ async function writeClarityV2Dark(supabase, userId, opts) {
 
   // ── ratchet each scored Practice dim's baseline toward today's value (for NEXT time).
   // Scoring above used the PRE-update baseline ("distance traveled"); the bar then moves. ──
+  // v2.3: FULL mode only. Foundation (free) members don't maintain Practice baselines; on upgrade the
+  // first full-mode write seeds each dim's baseline from current activity (an instant personal baseline).
+  if (scoreMode !== 'full') return result;
   try {
     const nowISO = new Date().toISOString();
     const ups = enabled

@@ -314,9 +314,7 @@ async function logWorkout(){
       {href:'/tracker', icon:'📖', label:'Reflection', feat:'daily_checkin'},
       {href:'/workouts', icon:'🤍', label:'Movement', feat:'tracker_fitness'},
       {href:'/nutrition', icon:'🍃', label:'Nourishment', feat:'tracker_nutrition'},
-      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'}
-    ]},
-    coach:    {label:'Coach',     items:[
+      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'},
       {href:'/finance', icon:'💰', label:'Financial Goals', feat:'tracker_finance'},
       {href:'/lifemap', icon:'🗺️', label:'Life Map', feat:'knowledge_graph'},
       {href:'/community', icon:'🤝', label:'Community', comingSoon:true}
@@ -327,7 +325,7 @@ async function logWorkout(){
     {href:'/programs', icon:'🗂️', label:'Program Add-ons'},
     {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
   ];
-  const TIER_ORDER = ['guide','companion','coach'];
+  const TIER_ORDER = ['guide','companion'];
   const PAGE_FEATURE = 'tracker_fitness';
 
   async function loadEnt(uid){

@@ -193,13 +193,18 @@ function computeDirection(coreHistory) {
 function computeClarityV2(raw) {
   const inp = clampInputs(raw);
   const gaps = inp.gaps || {};
+  // v2.3 TIER SPLIT: foundation mode (free/Guide) scores on Foundation + Direction only - no Practice
+  // layer, no personal bands or focus lanes ("the universal score"). full mode (Companion) is the v2.2
+  // formula, unchanged ("the personal score"). Default is full so existing callers are unaffected.
+  const mode = (raw && raw.score_mode === 'foundation') ? 'foundation' : 'full';
   const F = computeFoundation(inp, gaps);
-  const P = computePractice(inp);
+  const P = (mode === 'foundation') ? { P: null, perDim: {}, hasData: false } : computePractice(inp);
   const D = computeDirection(inp.coreHistory);
 
-  // core needs at least one of F/P; renormalize 40/40 over what's present.
+  // core: foundation uses Foundation alone; full renormalizes 40/40 over F/P present.
   let core = null;
-  if (F.F != null && P.P != null) core = (40 * F.F + 40 * P.P) / 80;
+  if (mode === 'foundation') core = (F.F != null) ? F.F : null;
+  else if (F.F != null && P.P != null) core = (40 * F.F + 40 * P.P) / 80;
   else if (F.F != null) core = F.F;
   else if (P.P != null) core = P.P;
 
@@ -227,9 +232,10 @@ function computeClarityV2(raw) {
     F: F.F == null ? null : round(F.F),
     P: P.P == null ? null : round(P.P),
     D: round(D),
+    mode,                                   // v2.3: 'foundation' (free) | 'full' (Companion)
     provisional: !!provisional,
     frozen: !!frozen,
-    breakdown: { foundation: { f1: F.f1, f2: F.f2, f3: F.f3 }, practice: P.perDim, coverage: Number(coverage.toFixed(3)) },
+    breakdown: { foundation: { f1: F.f1, f2: F.f2, f3: F.f3 }, practice: (mode === 'foundation' ? {} : P.perDim), coverage: Number(coverage.toFixed(3)) },
   };
 }
 

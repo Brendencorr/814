@@ -31,6 +31,13 @@ function esc(s) {
 function sub(str, vars) {
   return String(str).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? String(vars[k]) : m));
 }
+// True for a paid memory-tier plan - i.e. a plan that includes Riley-led programs + proactive
+// check-ins. v2.3: Companion now includes those (Coach folded into Companion); kept "coach" here so
+// a grandfathered Coach member still gets the "programs unlocked" copy. Any paid plan qualifies.
+function isMemoryPlan(plan) {
+  const s = String(plan == null ? "" : plan).toLowerCase();
+  return s.indexOf("companion") >= 0 || s.indexOf("coach") >= 0;
+}
 
 // ── Footer (both variants; FOOTER_VARIANT env selects, default B). Text-only, no logo image. ──
 const FOOTER_A =
@@ -392,13 +399,13 @@ const TEMPLATES = {
       p("Refunds, plainly: a full refund is available within 30 days of your original purchase - your first payment. After that, cancel anytime in two taps and you won't be charged again, though payments already made aren't refunded. ($8.14 programs and the bundle are instant-delivery and non-refundable.)") +
       p("Questions, problems, anything: support@meetriley.us - a person reads it.") +
       btn("Go to your dashboard →", APP + "/dashboard") +
-      (String(v.plan).toLowerCase().indexOf("coach") >= 0 ? p("Your interactive programs are unlocked.") : ""),
+      (isMemoryPlan(v.plan) ? p("Your Riley-led programs are unlocked.") : ""),
     text: (v) =>
       "Thanks, " + v.first_name + ". Here's the paperwork, kept short:\n\n" +
       v.plan + " · " + v.price + " · renews " + v.renewal_date + " · cancel anytime in two taps from your account page.\n\n" +
       "Refunds, plainly: a full refund is available within 30 days of your original purchase - your first payment. After that, cancel anytime in two taps and you won't be charged again, though payments already made aren't refunded. ($8.14 programs and the bundle are instant-delivery and non-refundable.)\n\n" +
       "Questions, problems, anything: support@meetriley.us - a person reads it.\n\nGo to your dashboard → " + APP + "/dashboard" +
-      (String(v.plan).toLowerCase().indexOf("coach") >= 0 ? "\n\nYour interactive programs are unlocked." : ""),
+      (isMemoryPlan(v.plan) ? "\n\nYour Riley-led programs are unlocked." : ""),
   },
 
   paid_2: {
@@ -411,12 +418,12 @@ const TEMPLATES = {
       p("So let's begin properly. Tell me one thing worth remembering - a person, a date, a goal, a fear. Anything.") +
       p("That's where we start.") +
       btn("Tell Riley one thing →", APP + "/talk") +
-      (String(v.plan).toLowerCase().indexOf("coach") >= 0 ? p("Your programs are unlocked, and from time to time I'll check in first - that's my job now.") : ""),
+      (isMemoryPlan(v.plan) ? p("Your programs are unlocked, and from time to time I'll check in first - that's my job now.") : ""),
     text: (v) =>
       v.first_name + " - something just changed between us, and I want to mark it.\n\n" +
       "From now on, our conversations carry forward. The names you mention, the dates that matter, the thing you said you'd try, the thing you're afraid of - I hold onto all of it, so you never have to start from the beginning again.\n\n" +
       "So let's begin properly. Tell me one thing worth remembering - a person, a date, a goal, a fear. Anything.\n\nThat's where we start.\n\nTell Riley one thing → " + APP + "/talk" +
-      (String(v.plan).toLowerCase().indexOf("coach") >= 0 ? "\n\nYour programs are unlocked, and from time to time I'll check in first - that's my job now." : ""),
+      (isMemoryPlan(v.plan) ? "\n\nYour programs are unlocked, and from time to time I'll check in first - that's my job now." : ""),
   },
 
   paid_3: {

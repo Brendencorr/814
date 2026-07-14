@@ -22,15 +22,7 @@ const SUBSCRIPTIONS = [
       { lookup_key: "companion_annual",  unit_amount: 17500, interval: "year",  nickname: "Companion · Annual" },
     ],
   },
-  {
-    riley_plan: "coach",
-    name: "Riley Coach",
-    description: "Riley Coach - Riley moves you forward. Everything in Companion, plus every Riley-led coached program where Riley builds a plan with you and adapts it each week, and proactive check-ins Riley starts. Cancel anytime.",
-    prices: [
-      { lookup_key: "coach_monthly", unit_amount: 3400,  interval: "month", nickname: "Coach · Monthly" },
-      { lookup_key: "coach_annual",  unit_amount: 35000, interval: "year",  nickname: "Coach · Annual" },
-    ],
-  },
+  // Coach subscription retired in v2.3 (folded into Companion). Its Stripe prices are ARCHIVED (not deleted) by the founder - never delete, history/reporting must survive.
 ];
 
 // ── One-time programs → Products with a single one-time Price. lookup_key = product_key (unique/stable).
@@ -41,11 +33,8 @@ const PROGRAMS = [
   { product_key: "prog_grief",             name: "Grief & Life Transitions (self-guided)", unit_amount: 814,  kind: "self_guided", description: "The full self-guided grief & life-transitions program - 14 modules at your own pace, no Riley and no tracking. Yours to keep with lifetime access. A one-time purchase." },
   { product_key: "prog_body",              name: "Body Rebuild (self-guided)",             unit_amount: 814,  kind: "self_guided", description: "The full self-guided body-rebuild program - 14 modules at your own pace, no Riley and no tracking. Yours to keep with lifetime access. A one-time purchase." },
   { product_key: "prog_bundle_selfguided", name: "Self-Guided Bundle - all 3",             unit_amount: 1814, kind: "bundle", description: "All three self-guided programs together - Sobriety, Grief & Life Transitions, and Body Rebuild - lifetime access, at a saving over buying them separately. A one-time purchase." },
-  // Riley-led coached programs ($18.14) - one-time, includes Riley coaching
-  { product_key: "prog_int_move_nourish",  name: "Move Nourish (Riley-led)",               unit_amount: 1814, kind: "interactive", description: "A Riley-led coached program on movement & nourishment - a Session Zero plus 14 guided sessions. Riley builds the plan with you and adapts it each week. One-time purchase, lifetime access." },
-  { product_key: "prog_int_grief",         name: "Living Forward (Riley-led)",             unit_amount: 1814, kind: "interactive", description: "A Riley-led coached program for moving forward through grief - a Session Zero plus 14 guided sessions, built with you and adapted each week. One-time purchase, lifetime access." },
-  { product_key: "prog_int_happiness",     name: "Building Happiness (Riley-led)",         unit_amount: 1814, kind: "interactive", description: "A Riley-led coached program for building lasting happiness - a Session Zero plus 14 guided sessions, built with you and adapted each week. One-time purchase, lifetime access." },
-  { product_key: "prog_int_staying_free",  name: "Staying Free (Riley-led)",               unit_amount: 1814, kind: "interactive", description: "A Riley-led coached program for staying free in recovery - a Session Zero plus 14 guided sessions, built with you and adapted each week. One-time purchase, lifetime access." },
+  // Riley-led coached programs (Move Nourish, Living Forward, Building Happiness, Staying Free) are
+  // no longer sold separately as of v2.3 - they are now INCLUDED in the Companion subscription.
 ];
 
 // ── Resolution maps ──
@@ -54,8 +43,9 @@ const PROGRAMS = [
 const PLAN_BY_LOOKUP = {
   companion_monthly: { plan: "companion", term: "monthly" },
   companion_annual:  { plan: "companion", term: "annual" },
-  coach_monthly:     { plan: "coach",     term: "monthly" },
-  coach_annual:      { plan: "coach",     term: "annual" },
+  // coach_monthly / coach_annual removed in v2.3 (Coach folded into Companion). Grandfathered coach
+  // subscriptions keep renewing on their ARCHIVED Stripe prices; renewal invoices with an unknown
+  // lookup_key simply fall back to the "monthly" term in the webhook (no plan swap).
 };
 
 // Program price lookup_key → program_id (product_key) the webhook grants as a one-time purchase.

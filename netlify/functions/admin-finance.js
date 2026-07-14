@@ -17,11 +17,11 @@ const CORS = {
 };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
 
-// Canonical pricing (PRICING memory): Companion $19/mo ($175/yr), Coach $34/mo ($350/yr). Mentor TBD.
+// Canonical pricing (PRICING memory): Companion $19/mo ($175/yr). Coach retired in v2.3 (folded into
+// Companion) but KEPT here - a grandfathered coach payer's revenue must still count in historical math.
 const PRICE = {
   companion: { monthly: 19, annual: 175 / 12 },
   coach:     { monthly: 34, annual: 350 / 12 },
-  mentor:    { monthly: 0,  annual: 0 },
 };
 const STATUSES = ["active", "upcoming", "optional", "retired"];
 const round2 = (n) => Math.round(n * 100) / 100;
@@ -30,7 +30,7 @@ async function summary(sb) {
   // ── Revenue: MRR from ACTIVE, NON-comped subscriptions (comps/weekend grants = $0). ──
   const { data: subs } = await sb.from("subscriptions").select("plan_id, term, status, comped, expires_at").eq("status", "active");
   const now = Date.now();
-  const breakdown = { companion: 0, coach: 0, mentor: 0 };
+  const breakdown = { companion: 0, coach: 0 };
   let mrr = 0;
   (subs || []).forEach((s) => {
     const live = !s.expires_at || new Date(s.expires_at).getTime() > now;

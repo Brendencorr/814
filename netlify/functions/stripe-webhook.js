@@ -154,8 +154,11 @@ exports.handler = async (event) => {
           } catch (_) {}
         } else if (md.plan) {
           const term = md.term || "monthly";
-          await sb.from("subscriptions").insert({ user_id: uid, plan_id: md.plan, term, status: "active", source: "checkout", expires_at: graceISO(term) });
-          await log("granted", { user_id: uid, plan_id: md.plan, term, email });
+          // v2.3: Coach is no longer sold (folded into Companion). Defensive normalization - if a
+          // "coach" plan somehow arrives (stale checkout link, replayed metadata), grant Companion.
+          const plan = md.plan === "coach" ? "companion" : md.plan;
+          await sb.from("subscriptions").insert({ user_id: uid, plan_id: plan, term, status: "active", source: "checkout", expires_at: graceISO(term) });
+          await log("granted", { user_id: uid, plan_id: plan, term, email });
           // Non-blocking coupon capture: stamp the promo/coupon onto the subscription row we just
           // inserted. Runs after the grant is logged - a capture failure NEVER reverts the grant.
           try {
@@ -166,7 +169,8 @@ exports.handler = async (event) => {
           } catch (_) {}
           try {
             const who = await memberInfo(sb, uid, email);
-            const planLabel = md.plan === "coach" ? "Riley Coach" : md.plan === "companion" ? "Riley Companion" : md.plan;
+            // Label the GRANTED plan (Coach retired in v2.3 - no longer advertised).
+            const planLabel = plan === "companion" ? "Riley Companion" : plan;
             await notifyOperator({ event: "new_sub", subject: `New paid subscription: ${who.name}`,
               lines: [["Member", who.name], ["Email", who.email], ["Plan", `${planLabel} (${term})`], ["Source", "Stripe checkout"]] });
           } catch (_) {}

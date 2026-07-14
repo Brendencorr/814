@@ -176,15 +176,15 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 
 (async()=>{ await boot(async()=>{ setTimeout(function(){ loadPrograms(); rileyUnlockWaitlist(); }, 0); }); })();
-// Waitlist takeover - every in-app "Unlock with Coach/Companion" CTA lands here as ?unlock=<feat>.
-// Coach & Companion are waitlist-only for now (Brenden grants access manually); Guide stays open.
+// Waitlist takeover - every in-app "Unlock with Companion" CTA lands here as ?unlock=<feat>.
+// Companion is waitlist-only for now (Brenden grants access manually); Guide stays open.
 // Matches the marketing-site waitlist copy. The member is logged in, so joining is one tap (we have their email).
 function rileyUnlockWaitlist(){
   const feat=new URLSearchParams(location.search).get('unlock'); if(!feat) return;
-  const COACH=['knowledge_graph','adaptive_nutrition','adaptive_workouts','adaptive_plans','proactive_checkins','trend_analysis','story'];
-  const plan=COACH.includes(feat)?'coach':'companion';
-  const label=plan==='coach'?'Riley Coach':'Riley Companion';
-  const tagline=plan==='coach'?'Riley moves you forward.':'Riley walks with you.';
+  // Companion is now everything - every unlock routes to Companion (Coach is a future tier, not purchasable).
+  const plan='companion';
+  const label='Riley Companion';
+  const tagline='Riley walks with you.';
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,0.85);backdrop-filter:blur(5px);padding:20px';
   ov.innerHTML=`<div style="background:#141210;border:1px solid rgba(201,168,76,0.24);border-radius:14px;max-width:420px;width:100%;padding:30px 28px;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,0.6)">

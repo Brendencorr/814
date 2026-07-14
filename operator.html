@@ -1490,7 +1490,7 @@ async function loadEngagement(btn){
     renderSafety(sd,'safety-body-eng');updateSafetyBadge(sd.open_count);markSafetySeen(sd);
   }catch(se){var sb=document.getElementById('safety-body-eng');if(sb)sb.innerHTML='<div class="em">Safety queue unavailable - '+engEsc(se.message)+'</div>';}
 }
-var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],mentor:['Mentor','var(--gold)'],alacarte:['À la carte','var(--sage)']};
+var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],alacarte:['À la carte','var(--sage)']};
 function engTierBadge(tier){
   var m=ENG_TIER_LABEL[tier];
   if(!m)return'';
@@ -2000,7 +2000,7 @@ async function pricingApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach',4:'Mentor'};
+var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach'};
 var STATUS_COLOR={draft:'var(--muted2)',locked:'var(--gold)',live:'var(--green)',retired:'var(--red)'};
 async function loadPricing(btn){
   gs('y',btn);
@@ -2102,7 +2102,7 @@ function renderPricing(products,limits,freeAccess){
   var fa='';
 
   // Three groups, by status + tier_level - no new fields needed:
-  //  · Live Programs - the membership ladder (tier_level > 0), Mentor included
+  //  · Live Programs - the membership ladder (tier_level > 0), shown
   //    even while status='draft' so the roadmap stays visible to the admin.
   //  · À La Carte - content-only products (tier_level 0) that are still live.
   //  · Retired - anything status='retired', regardless of tier.
@@ -2648,7 +2648,7 @@ function renderUserDetail(d){
   }
   var totalMsgs=sessions.reduce(function(a,s){return a+s.message_count;},0);
 
-  // ── TIER BANNER (v4 naming: Guide/Companion/Coach/Mentor) ──────────────────
+  // ── TIER BANNER (Guide/Companion; Coach = grandfathered/legacy) ────────────
   // Quick-glance display from the legacy programs_purchased text array; the
   // full membership picture (entitlements table, grant/revoke) is the
   // Membership & Entitlements panel further down this same view.
@@ -3032,7 +3032,9 @@ async function iseSaveCanon(btn){
   finally{ btn.disabled=false; }
 }
 
-var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach'],['mentor','Riley Mentor'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)'],['prog_int_move_nourish','Move Nourish - interactive ($18.14)'],['prog_int_grief','Living Forward - interactive ($18.14)'],['prog_int_happiness','Building Happiness - interactive ($18.14)'],['prog_int_staying_free','Staying Free - interactive ($18.14)']];
+// v2.3: Mentor removed entirely; Riley-led interactive programs are now INCLUDED in Companion (not
+// granted separately). Coach kept only as a legacy/grandfathered grant option. Self-guided + bundle stay.
+var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach (legacy)'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)']];
 async function loadMembershipPanel(userId){
   var el=document.getElementById('ud-membership');if(!el)return;
   try{
@@ -3470,7 +3472,7 @@ async function renderFinanceHome(){
   var el=document.getElementById('home-finance'); if(!el)return;
   try{
     var d=await finSummary();
-    var paid=d.revenue.breakdown.companion+d.revenue.breakdown.coach+d.revenue.breakdown.mentor;
+    var paid=d.revenue.breakdown.companion+d.revenue.breakdown.coach;
     var nc=d.net>=0?'var(--green)':'var(--red)';
     el.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1.4rem">'+
       finCard('Revenue · MRR',finMoney(d.revenue.mrr),paid+' paid subs','var(--green)')+
@@ -3487,7 +3489,7 @@ async function renderFinanceOverview(){
     var nc=d.net>=0?'var(--green)':'var(--red)';
     var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.3rem">'+
       finCard('Revenue · MRR',finMoney(d.revenue.mrr),'recurring/mo','var(--green)')+
-      finCard('Paid subscriptions',String(b.companion+b.coach+b.mentor),b.companion+' Companion · '+b.coach+' Coach')+
+      finCard('Paid subscriptions',String(b.companion+b.coach),b.companion+' Companion · '+b.coach+' Coach')+
       finCard('Program purchases',finMoney(d.revenue.programs.total),d.revenue.programs.count+' one-time')+
       finCard('Net / month',finMoney(d.net),d.net>=0?'in the black':'net burn',nc)+
     '</div>';

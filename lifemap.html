@@ -147,15 +147,35 @@ async function boot(){
   loadTimeline();loadStory();loadLegacy();
 }
 // ── Story Engine - "This is who you became" ─────────────────────────────────
+// ── P0.1: canonical live sober-day count for this page + token/legacy-scrub for stored prose.
+// {{sober_days}} (new tokenized docs) AND any baked "N,NNN days sober" (legacy docs) fill from the
+// ONE canonical function - so the User Manual / Story can never drift from the dashboard again.
+let LM_SOBER=null, LM_SOBER_LOADED=false;
+async function loadSober(){
+  if(LM_SOBER_LOADED)return; LM_SOBER_LOADED=true;
+  try{const {data}=await SB.from('sobriety_tracker').select('start_date').eq('user_id',UID).eq('is_active',true).order('start_date',{ascending:false}).limit(1).maybeSingle();
+    if(data&&data.start_date&&window.RileyDay)LM_SOBER=window.RileyDay.soberDays(data.start_date);}catch(e){}
+}
+function fillTokens(t){
+  if(!t||typeof t!=='string')return t;
+  if(LM_SOBER!=null){
+    const n=Number(LM_SOBER).toLocaleString();
+    return t.replace(/\{\{\s*sober_days\s*\}\}/gi,n)
+            .replace(/\b\d{1,3}(?:,\d{3})*\+?\s+days\s+sober\b/gi,n+' days sober')
+            .replace(/\bsober\s+(?:for\s+)?\d{1,3}(?:,\d{3})*\s+days\b/gi,'sober '+n+' days');
+  }
+  return t.replace(/\{\{\s*sober_days\s*\}\}\s*days\s*sober/gi,'').replace(/\{\{\s*sober_days\s*\}\}/gi,'');
+}
 async function loadStory(){
   const slot=document.getElementById('story-slot');if(!slot)return;
+  await loadSober();
   let doc=null;try{const {data}=await SB.from('member_docs').select('body').eq('user_id',UID).eq('doc_type','story').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();doc=data&&data.body;}catch(e){}
   if(doc&&doc.sections)renderStory(slot,doc);
   else slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📖</span><span class="ftitle">Your Story</span></div><div class="fsub">Every conversation becomes part of your story. Whenever you want, Riley writes the chapter - "this is who you became." It grows richer every month.</div><button class="btn btn-gold" onclick="generateStory()">Write my story so far →</button></div>`;
 }
 function renderStory(slot,doc){
-  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:14px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--gold2);margin-bottom:4px">${esc(s.heading||'')}</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.7">${esc(s.body||'')}</div></div>`).join('');
-  slot.innerHTML=`<div class="fcard" style="background:linear-gradient(160deg,rgba(30,26,20,0.7),rgba(16,14,12,0.5))"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📖</span><span class="ftitle">${esc(doc.title||'Your Story')}</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateStory()">↻ Rewrite</button></div>${secs}</div>`;
+  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:14px"><div style="font-family:'DM Serif Display',serif;font-size:15px;color:var(--gold2);margin-bottom:4px">${esc(fillTokens(s.heading||''))}</div><div style="font-size:13.5px;color:var(--parchment);line-height:1.7">${esc(fillTokens(s.body||''))}</div></div>`).join('');
+  slot.innerHTML=`<div class="fcard" style="background:linear-gradient(160deg,rgba(30,26,20,0.7),rgba(16,14,12,0.5))"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📖</span><span class="ftitle">${esc(fillTokens(doc.title||'Your Story'))}</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateStory()">↻ Rewrite</button></div>${secs}</div>`;
 }
 async function generateStory(){
   const slot=document.getElementById('story-slot');
@@ -204,14 +224,15 @@ async function loadInsights(){
 // ── Personal Operating Manual ("My User Manual") ────────────────────────────
 async function loadManual(){
   const slot=document.getElementById('manual-slot');if(!slot)return;
+  await loadSober();
   let doc=null;
   try{const {data}=await SB.from('member_docs').select('body').eq('user_id',UID).eq('doc_type','manual').eq('is_active',true).order('created_at',{ascending:false}).limit(1).maybeSingle();doc=data&&data.body;}catch(e){}
   if(doc&&doc.sections)renderManual(slot,doc);
   else slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📘</span><span class="ftitle">My User Manual</span></div><div class="fsub">Riley can write the manual to YOU that you've never written - how you work, what overwhelms you, how to be there for you. Built from everything she knows.</div><button class="btn btn-gold" onclick="generateManual()">Write my manual →</button></div>`;
 }
 function renderManual(slot,doc){
-  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:12px"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">${esc(s.title)}</div>${(s.items||[]).map(it=>`<div style="font-size:13px;color:var(--parchment);line-height:1.55;padding:1px 0">· ${esc(it)}</div>`).join('')}</div>`).join('');
-  slot.innerHTML=`<div class="fcard"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📘</span><span class="ftitle">My User Manual</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateManual()">↻ Refresh</button></div>${doc.summary?`<div style="font-size:13.5px;color:var(--parchment);line-height:1.65;font-style:italic;margin-top:4px">${esc(doc.summary)}</div>`:''}${secs}</div>`;
+  const secs=(doc.sections||[]).map(s=>`<div style="margin-top:12px"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:5px">${esc(fillTokens(s.title))}</div>${(s.items||[]).map(it=>`<div style="font-size:13px;color:var(--parchment);line-height:1.55;padding:1px 0">· ${esc(fillTokens(it))}</div>`).join('')}</div>`).join('');
+  slot.innerHTML=`<div class="fcard"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">📘</span><span class="ftitle">My User Manual</span></div><button class="btn btn-ghost" style="font-size:10px;padding:5px 12px" onclick="generateManual()">↻ Refresh</button></div>${doc.summary?`<div style="font-size:13.5px;color:var(--parchment);line-height:1.65;font-style:italic;margin-top:4px">${esc(fillTokens(doc.summary))}</div>`:''}${secs}</div>`;
 }
 async function generateManual(){
   const slot=document.getElementById('manual-slot');

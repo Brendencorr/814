@@ -12,6 +12,17 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-14
 
+- `riley-v23` — **P0 punch-list: sober-count single-source-of-truth + User Manual hygiene.** The dashboard
+  (2,430) and the stored Life Map User Manual (2,417) disagreed - a baked count in generated prose. Every
+  LIVE surface already reads the ONE canonical fn (client `RileyDay.soberDays` / server `soberDaysForMember`);
+  the fix targets STORED prose: member-doc generation now emits the `{{sober_days}}` token (never a literal),
+  and `lifemap.html` fills it live + scrubs any legacy baked "N,NNN days sober" at render. Generation prompt
+  hygiene (OMIT empty sections - no "share more" scaffolding; Riley is "I"/"she" never "we"; plain hyphens) +
+  a deterministic scrub lint (`lintDoc`). Regression `tests/sober/ssot-test.js` 11/11 (client==server across
+  the 4am boundary + a tz edge). Files: member-doc-background.js, lifemap.html, tests/sober/ssot-test.js,
+  PUNCHLIST.md (execution tracker, 404-guarded), netlify.toml. Flagged: existing stored docs corrected at
+  render not rewritten in DB; daily-brief/plan left (self-healing). P1/P2 punch-list items follow.
+
 - **home: restored "Mentor - coming soon" teaser + fixed the section order** (per Brenden, 2026-07-14).
   (1) Re-added the quiet one-line Mentor teaser at the bottom of the Membership section (verbatim from removal
   commit `e387642`; NOT a third pricing column - no price/buy). This **reverses the v2.3.1 "marketing teaser

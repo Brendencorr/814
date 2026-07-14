@@ -605,6 +605,9 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const dateStreak=(()=>{const s=[...checkins].sort((a,b)=>b.checkin_date.localeCompare(a.checkin_date));let n=0,exp=TODAY;for(const d of s){if(d.checkin_date===exp){n++;const p=new Date(exp);p.setDate(p.getDate()-1);exp=p.toLocaleDateString('en-CA');}else break;}return n;})();
     const sleepLast=checkins.find(c=>c.sleep_hours)?.sleep_hours||null;
     const moodToday=todayCI?.mood||null;
+    // P2.6: on a hard day (short sleep or low mood, and not quiet hours), soften the greeting warm-line to
+    // the gentler pool - the tone Riley Suggests already models ("Slower is still forward today.").
+    try{ var _h2=new Date().getHours(); if(!(_h2>=22||_h2<5) && ((sleepLast&&sleepLast<6)||(moodToday&&moodToday<=2))){ var _w2=document.querySelector('.riley-warm'); if(_w2){ var _g2=["Slower is still forward today.","However today feels - we'll meet it together.","No agenda - just be here.","Gentle is allowed today.","One small thing is enough today."]; _w2.textContent=_g2[new Date().getDate()%_g2.length]; } } }catch(e){}
     const goalsOnTrack=goals.filter(g=>g.target_value>0&&g.current_value/g.target_value>=0.5).length;
     const habitsTotal=habits.length,habitsDoneToday=habits.filter(h=>habitDone.has(h.id)).length;
 

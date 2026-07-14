@@ -5,40 +5,70 @@
  * operator a copy of the client info + recent conversation so a human can
  * follow up. This IS the safety workflow the Trust architecture §1.4 carves
  * out - it is the ONLY place crisis content leaves the system, and it goes to
- * one controlled address (SAFETY_ALERT_EMAIL), never to analytics or marketing.
+ * one controlled address, never to analytics or marketing.
+ *
+ * Recipient (in order): SAFETY_ALERT_EMAIL, then OPERATOR_ALERT_EMAIL, then the
+ * founder inbox (operator-email.OPERATOR_EMAIL). A crisis alert must NEVER be
+ * silently dropped for lack of a configured address - so there is always one.
+ *
+ * Every send is logged to email_log (kind='safety_alert', METADATA ONLY - level +
+ * source, never the crisis content), so "did the alert fire?" is auditable in the
+ * operator dashboard. Logging is best-effort and never blocks the alert.
  *
  * Config (Netlify env):
- *   SAFETY_ALERT_EMAIL - where alerts go (the operator's inbox). Required.
+ *   SAFETY_ALERT_EMAIL / OPERATOR_ALERT_EMAIL - where alerts go (optional; founder fallback).
  *   RESEND_API_KEY     - email provider. Required to actually send.
  *   SAFETY_ALERT_FROM  - optional From (defaults to Riley <riley@meetriley.us>).
  *
- * If either required var is missing, it logs who WOULD be alerted and returns
- * cleanly - never throws, never blocks the member's crisis response.
- *
- * Export: sendOperatorAlert(supabase, { userId, level, matches, excerpt, source })
+ * Export: sendOperatorAlert(supabase, { userId, anon, level, matches, excerpt, source })
  */
 
 const { soberDaysForMember } = require("./supabase-client");
+const { OPERATOR_EMAIL } = require("./operator-email");
 const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
 const LEVEL_LABEL = { 2: "Relapse risk (Level 2)", 3: "ACTIVE CRISIS / self-harm risk (Level 3)" };
+
+// The alert destination. Always resolves to a real address (never null) so a crisis alert
+// cannot be skipped for lack of config. Set SAFETY_ALERT_EMAIL to override the founder default.
+const ALERT_TO = process.env.SAFETY_ALERT_EMAIL || process.env.OPERATOR_ALERT_EMAIL || OPERATOR_EMAIL;
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+// Audit row for the operator dashboard. METADATA ONLY - never the crisis excerpt/conversation.
+async function logSafetyAlert(supabase, { to, userId, level, source, status, providerId, error }) {
+  try {
+    if (!supabase) return;
+    await supabase.from("email_log").insert({
+      user_id: userId || null,
+      to_email: String(to || "").toLowerCase(),
+      kind: "safety_alert",
+      subject: `Safety flag - level ${level}`,
+      status,                         // 'sent' | 'failed'
+      provider: "resend",
+      provider_id: providerId || null,
+      error: error || null,
+      meta: { level, source: source || null },
+    });
+  } catch (_) { /* swallow - logging must never affect the alert */ }
+}
+
 async function sendOperatorAlert(supabase, opts) {
   const { userId, anon, level, matches, excerpt, source } = opts || {};
-  const to = process.env.SAFETY_ALERT_EMAIL;
+  const to = ALERT_TO;
   const key = process.env.RESEND_API_KEY;
 
-  if (!to || !key) {
-    console.log(`[safety-alert] would alert operator - level ${level}, ${userId ? "user " + userId : "anonymous visitor"}, source ${source} (SAFETY_ALERT_EMAIL/RESEND_API_KEY not set)`);
+  if (!key) {
+    // Only reason we can't send: no email provider. Loud console so it surfaces in logs.
+    console.error(`[safety-alert] CANNOT SEND crisis alert (RESEND_API_KEY not set) - level ${level}, ${userId ? "user " + userId : "anonymous visitor"}, source ${source}`);
+    await logSafetyAlert(supabase, { to, userId, level, source, status: "failed", error: "resend_not_configured" });
     return { skipped: true };
   }
   // H-3: an anonymous visitor has no profile / no stored conversation - send the minimal anon alert.
   if (!userId) {
     if (!anon) return { skipped: true };
-    return sendAnonAlert({ to, key, anon, level, matches, excerpt, source });
+    return sendAnonAlert({ supabase, to, key, anon, level, matches, excerpt, source });
   }
   if (!supabase) return { skipped: true };
 
@@ -121,11 +151,19 @@ dashboard → Safety to mark this handled.`;
         }),
         signal: controller.signal,
       });
-      if (!resp.ok) { console.warn("[safety-alert] Resend", resp.status, (await resp.text()).slice(0, 160)); return { ok: false }; }
+      if (!resp.ok) {
+        const detail = (await resp.text().catch(() => "")).slice(0, 160);
+        console.warn("[safety-alert] Resend", resp.status, detail);
+        await logSafetyAlert(supabase, { to, userId, level, source, status: "failed", error: `resend_http_${resp.status}` });
+        return { ok: false };
+      }
+      const jid = await resp.json().then(j => j && j.id).catch(() => null);
+      await logSafetyAlert(supabase, { to, userId, level, source, status: "sent", providerId: jid });
       return { ok: true };
     } finally { clearTimeout(timer); }
   } catch (e) {
     console.warn("[safety-alert] failed (non-fatal):", e.message);
+    await logSafetyAlert(supabase, { to, userId, level, source, status: "failed", error: "resend_error" });
     return { ok: false };
   }
 }
@@ -133,7 +171,7 @@ dashboard → Safety to mark this handled.`;
 // H-3: anonymous-visitor safety alert. No profile, no stored conversation (anonymous chat is not
 // persisted). The operator still gets the excerpt + the anon key so a human is aware a stranger
 // hit a crisis and received the 988 response. Never throws.
-async function sendAnonAlert({ to, key, anon, level, matches, excerpt, source }) {
+async function sendAnonAlert({ supabase, to, key, anon, level, matches, excerpt, source }) {
   const label  = LEVEL_LABEL[level] || `Level ${level}`;
   const urgent = level >= 3;
   const anonId = (anon && anon.anonId) || "-";
@@ -184,10 +222,18 @@ confidentially, do not forward.`;
       }),
       signal: controller.signal,
     });
-    if (!resp.ok) { console.warn("[safety-alert] Resend(anon)", resp.status, (await resp.text()).slice(0, 160)); return { ok: false }; }
+    if (!resp.ok) {
+      const detail = (await resp.text().catch(() => "")).slice(0, 160);
+      console.warn("[safety-alert] Resend(anon)", resp.status, detail);
+      await logSafetyAlert(supabase, { to, userId: null, level, source, status: "failed", error: `resend_http_${resp.status}` });
+      return { ok: false };
+    }
+    const jid = await resp.json().then(j => j && j.id).catch(() => null);
+    await logSafetyAlert(supabase, { to, userId: null, level, source, status: "sent", providerId: jid });
     return { ok: true };
   } catch (e) {
     console.warn("[safety-alert] anon failed (non-fatal):", e.message);
+    await logSafetyAlert(supabase, { to, userId: null, level, source, status: "failed", error: "resend_error" });
     return { ok: false };
   } finally { clearTimeout(timer); }
 }

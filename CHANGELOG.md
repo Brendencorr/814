@@ -12,6 +12,33 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Operator data correctness + missing signup/cancel/refund/crisis alerts (verify-against-DB fix)
+- **Why:** Operator reported paid members showing as unpaid and emailed members showing as not, plus never
+  receiving signup/cancel/refund/crisis emails. Verified against the live DB: data was correct, the reads
+  and the alert wiring were not.
+- **Root causes found:** (1) `admin-home.js` + `admin-engagement.js` derive tier/paid from the entitlement
+  view `user_active_products` ONLY; a Stripe-checkout Companion/Coach lands in `subscriptions` but not that
+  view - so payers rendered as "guide/unpaid" even though `entitlements.js` (member gate) bridges from
+  subscriptions and DOES unlock them. Single-source-of-truth violation. (2) The operator "Welcome email"
+  column tracked *welcome* only; self-signups never get one, so members with 5-6 briefs read as "never
+  emailed". (3) No operator EMAIL on signup (push only) / cancel / refund - the Stripe webhook notified
+  no one. (4) `safety-alert.js` emailed `SAFETY_ALERT_EMAIL` and **silently skipped if unset** - almost
+  certainly why the one real crisis (Jul 3, L2) never alerted.
+- **Fixes:** admin-home/admin-engagement now apply the SAME subscriptions→owned bridge entitlements.js uses
+  (payers show paid) + expose `emailed` (any email); operator "Welcome email" column → "Emailed" (any email).
+  New `operator-email.js` choke point (`notifyOperator`) with a GUARANTEED address
+  (`OPERATOR_ALERT_EMAIL`|`SAFETY_ALERT_EMAIL`|brenden@meetriley.us), logged to email_log by construction;
+  wired into signup (auth-handler) + webhook (new sub / program purchase / cancel / refund / dispute).
+  `safety-alert.js` now defaults to that same guaranteed address (never silently skips) and logs every alert
+  to email_log (kind='safety_alert', METADATA ONLY - no crisis content). New operator-gated
+  `admin-test-alert.js` + a "Send test alert" button in the Safety Queue to prove the pipeline live anytime.
+  Removed a would-be double welcome (lifecycle guide flow already sends the member welcome).
+- **Left for Brenden:** confirm **brenden@meetriley.us** is a deliverable mailbox (alerts default there);
+  optionally set `OPERATOR_ALERT_EMAIL` / `SAFETY_ALERT_EMAIL` in Netlify to override; click **Send test
+  alert** in the operator Safety Queue to confirm delivery end-to-end.
+- **Files:** netlify/functions/operator-email.js (new), admin-test-alert.js (new), safety-alert.js,
+  stripe-webhook.js, auth-handler.js, admin-home.js, admin-engagement.js, operator.html.
+
 ### M-1: security headers (HSTS, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors)
 - **Why:** the app shipped no security headers (no _headers file, no [[headers]] in netlify.toml). For
   a PWA holding recovery + mental-health conversations, frame-ancestors alone kills clickjacking on the

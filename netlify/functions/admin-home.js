@@ -71,6 +71,24 @@ exports.handler = async function (event) {
           });
         } catch (_) {}
       }
+      // Bridge active subscriptions → owned (SAME resolution entitlements.js uses for the member).
+      // A Stripe-checkout Companion/Coach lands in `subscriptions` but not always in user_active_products,
+      // so without this a PAYING member renders as unpaid here even though their app correctly unlocks.
+      // Fault-tolerant: a failure just leaves tier as-is.
+      if (ids.length) {
+        try {
+          const now = Date.now();
+          const { data: tierSubs } = await db.from("subscriptions")
+            .select("user_id, plan_id, expires_at").in("user_id", ids).eq("status", "active");
+          (tierSubs || []).forEach((s) => {
+            const live = !s.expires_at || new Date(s.expires_at).getTime() > now;
+            if (live && (s.plan_id === "companion" || s.plan_id === "coach" || s.plan_id === "mentor")) {
+              const arr = (ownedByUser[s.user_id] ||= []);
+              if (!arr.includes(s.plan_id)) arr.push(s.plan_id);
+            }
+          });
+        } catch (_) {}
+      }
       // Coupon/promo-code per user: read from subscriptions rows stamped by the webhook.
       // promo_code is the human code the customer typed; fall back to stripe_coupon_id.
       const couponById = {};
@@ -149,6 +167,9 @@ exports.handler = async function (event) {
           events_7d: eventsById[s.id] || 0,
           last_email: lastEmailById[s.id] || null,
           email_kinds: emailKinds,
+          // emailed: have we sent this member ANY email (brief/lifecycle/welcome)? Drives the "Emailed"
+          // column - so someone who got 6 briefs but no welcome no longer reads as "never emailed".
+          emailed: !!lastEmailById[s.id],
           welcome_email_sent: welcomeSent,
           // coupon: promo_code (human code) or stripe_coupon_id stamped by the webhook on checkout.
           // null when no promo was applied or the member has no active subscription yet.

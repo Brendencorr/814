@@ -141,6 +141,21 @@ exports.handler = async function (event) {
     prodDefs.forEach(p => { prodByKey[p.product_key] = p; });
     const ownedByUser = {};
     entRows.forEach(r => { (ownedByUser[r.user_id] ||= []).push(r.product_key); });
+    // Bridge active subscriptions → owned (SAME resolution entitlements.js uses for the member). A
+    // Stripe-checkout Companion/Coach lands in `subscriptions` but not always in user_active_products;
+    // without this a PAYING member shows as unpaid here while their app correctly unlocks their tier.
+    try {
+      const nowMs = Date.now();
+      const { data: tierSubs } = await supabase.from("subscriptions")
+        .select("user_id, plan_id, expires_at").eq("status", "active").limit(50000);
+      (tierSubs || []).forEach(s => {
+        const live = !s.expires_at || new Date(s.expires_at).getTime() > nowMs;
+        if (live && (s.plan_id === "companion" || s.plan_id === "coach" || s.plan_id === "mentor")) {
+          const arr = (ownedByUser[s.user_id] ||= []);
+          if (!arr.includes(s.plan_id)) arr.push(s.plan_id);
+        }
+      });
+    } catch (_) {}
     // First active curriculum enrollment per user (rows already newest-first).
     const activeProgramByUser = {};
     progRows.forEach(r => {
@@ -221,6 +236,8 @@ exports.handler = async function (event) {
         last_crisis_level: u.last_crisis_level || null,
         last_email: lastEmailByUser[u.id] || null,
         email_kinds: emailKinds,
+        // emailed: any email sent to this member (brief/lifecycle/welcome) - drives the "Emailed" indicator.
+        emailed: !!lastEmailByUser[u.id],
         welcome_email_sent: welcomeSent,
         // coupon: promo_code (human code) or stripe_coupon_id stamped by the webhook on checkout.
         coupon: couponById[u.id] || null,

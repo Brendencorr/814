@@ -81,6 +81,17 @@ async function getSession(supabase, body) {
         tag: "new-signup",
       });
     } catch (_) {}
+    // Operator EMAIL alert to the founder (logged in email_log) - the durable channel that does
+    // not depend on a registered push device. Guaranteed address via operator-email. Never breaks signup.
+    try {
+      const { notifyOperator } = require("./operator-email");
+      const whoE = newProfile.full_name || (user.email || "").split("@")[0] || "New member";
+      await notifyOperator({ event: "signup", subject: `New signup: ${whoE}`,
+        lines: [["Member", whoE], ["Email", user.email || "-"], ["Plan", "Riley Guide (free)"], ["Joined", new Date().toISOString()]] });
+    } catch (_) {}
+    // NOTE: the customer's welcome email is owned by the lifecycle "guide" flow (guide_1,
+    // "Welcome to Riley - your first 8 minutes are ready") - do NOT also send email-welcome here or
+    // members get two welcomes. operator-added members still get email-welcome via admin-create-user.
     return json(200, { user: { id: user.id, email: user.email, ...newProfile }, messages: [] });
   }
 

@@ -1274,7 +1274,7 @@ function memberTableHtml(prefix,rows,title,count){
       '<th '+TH+' style="text-align:center">Paid</th>'+
       '<th '+TH+'>'+sortBtn('signup','Sign-up')+'</th>'+
       '<th '+TH+' style="text-align:center">Programs</th>'+
-      '<th '+TH+' style="text-align:center">Welcome email</th>'+
+      '<th '+TH+' style="text-align:center">Emailed</th>'+
     '</tr></thead>'+
     '<tbody id="'+prefix+'-rows"></tbody>'+
   '</table></div>';
@@ -1296,7 +1296,7 @@ function memberTableSort(prefix,col){
   if(oldHead&&oldHead.tagName==='THEAD'){
     var TH2='style="padding:.5rem .65rem;font-size:.63rem;font-family:DM Mono,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);border-bottom:1px solid var(--border);white-space:nowrap;text-align:left"';
     var sb=function(col2,lbl2){var a=(_homeMtSort===col2+'_asc'||_homeMtSort===col2+'_desc');var ar=_homeMtSort===col2+'_asc'?' ▲':_homeMtSort===col2+'_desc'?' ▼':'';return '<span onclick="memberTableSort(\''+prefix+'\',\''+col2+'\')" style="cursor:pointer;color:'+(a?'var(--gold)':'inherit')+'">'+lbl2+(a?'<span style="font-size:.58rem">'+ar+'</span>':'')+'</span>';};
-    oldHead.innerHTML='<tr><th '+TH2+'>'+sb('first','First')+'</th><th '+TH2+'>'+sb('last','Last')+'</th><th '+TH2+'>Email</th><th '+TH2+' style="text-align:center">Paid</th><th '+TH2+'>'+sb('signup','Sign-up')+'</th><th '+TH2+' style="text-align:center">Programs</th><th '+TH2+' style="text-align:center">Welcome email</th></tr>';
+    oldHead.innerHTML='<tr><th '+TH2+'>'+sb('first','First')+'</th><th '+TH2+'>'+sb('last','Last')+'</th><th '+TH2+'>Email</th><th '+TH2+' style="text-align:center">Paid</th><th '+TH2+'>'+sb('signup','Sign-up')+'</th><th '+TH2+' style="text-align:center">Programs</th><th '+TH2+' style="text-align:center">Emailed</th></tr>';
   }
 }
 function memberTableFilter(prefix){
@@ -1328,7 +1328,7 @@ function memberTableRows(rows,searchStr){
     var paid=u.paid?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
     var signup=u.created_at?new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'-';
     var progs=(u.has_purchases||(u.programs>0))?'<span style="color:var(--gold);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
-    var wel=u.welcome_email_sent===true?'<span style="color:var(--green);font-weight:600">Yes</span>':u.welcome_email_sent===false?'<span style="color:var(--red)">No</span>':'<span style="color:var(--muted2)">-</span>';
+    var wel=(u.emailed||u.welcome_email_sent===true)?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
     return '<tr onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+
       '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);font-weight:500">'+first+'</td>'+
       '<td '+TD+' style="padding:.55rem .65rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)">'+last+'</td>'+
@@ -1739,11 +1739,25 @@ async function loadSafety(btn){
     el.innerHTML='<div class="em">'+msg+'</div>';
   }
 }
+// Fire a real end-to-end test of the alert pipeline (operator email + crisis alert) → operator inbox.
+async function sendTestAlert(btn){
+  if(btn){btn.disabled=true;btn.textContent='Sending…';}
+  try{
+    var d=await opGet('/admin-test-alert');
+    var to=(d&&d.recipient)||'the operator inbox';
+    var okOp=!!(d&&d.operator_alert&&(d.operator_alert.sent||d.operator_alert.status==='sent'));
+    var okSafe=!!(d&&d.safety_alert&&(d.safety_alert.ok||d.safety_alert.status==='sent'));
+    if(!d||!d.resend_configured){ alert('Email provider (RESEND_API_KEY) is not configured in Netlify - no test could be sent.'); }
+    else if(okOp&&okSafe){ alert('Sent 2 test emails to '+to+':\n  • operator alert (signup/cancel/refund channel)\n  • crisis alert (safety channel)\n\nIf both land in that inbox, the alert pipeline is live.'); }
+    else { alert('Test ran, but a send may have failed.\nRecipient: '+to+'\nOperator alert: '+JSON.stringify(d&&d.operator_alert)+'\nCrisis alert: '+JSON.stringify(d&&d.safety_alert)); }
+  }catch(e){ alert('Test failed: '+((e&&e.message)||e)); }
+  if(btn){btn.disabled=false;btn.innerHTML='Send test alert &rarr;';}
+}
 function renderSafety(d,target){
   var flags=(d&&d.flags)||[];
   var open=flags.filter(function(f){return !f.handled;});
   var done=flags.filter(function(f){return f.handled;});
-  var h='<div style="display:flex;align-items:baseline;gap:.8rem;margin-bottom:1rem"><div class="cl" style="margin:0">Safety Queue</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+open.length+' open · '+flags.length+' total</div></div>';
+  var h='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem"><div class="cl" style="margin:0">Safety Queue</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+open.length+' open · '+flags.length+' total</div><button onclick="sendTestAlert(this)" title="Send a test operator alert + test crisis alert to the operator inbox, to prove alert emails are live" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.7rem;padding:.35rem .7rem;border-radius:6px;cursor:pointer">Send test alert &rarr;</button></div>';
   if(flags.length){
     var l3=flags.filter(function(f){return f.level>=3;}).length;
     var l2=flags.length-l3;

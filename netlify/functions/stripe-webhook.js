@@ -22,6 +22,7 @@
 const crypto = require("crypto");
 const { getSupabaseClient } = require("./supabase-client");
 const { PLAN_BY_LOOKUP } = require("./stripe-catalog");
+const { notifyOperator } = require("./operator-email");
 
 // Stripe REST helpers (reuse the pattern from stripe-checkout.js - no SDK needed).
 const STRIPE_BASE = "https://api.stripe.com/v1/";
@@ -100,6 +101,16 @@ async function uidByCustomer(sb, customer) {
   try { const { data } = await sb.from("user_profiles").select("id").eq("stripe_customer_id", customer).maybeSingle(); return data ? data.id : null; }
   catch (e) { return null; }
 }
+// Member display info (name + email) for operator alerts. Never throws.
+async function memberInfo(sb, uid, fallbackEmail) {
+  const out = { name: "Member", email: fallbackEmail || "-" };
+  try {
+    if (!uid) return out;
+    const { data } = await sb.from("user_profiles").select("preferred_name,full_name,email").eq("id", uid).maybeSingle();
+    if (data) { out.name = data.preferred_name || data.full_name || data.email || fallbackEmail || "Member"; out.email = data.email || fallbackEmail || "-"; }
+  } catch (_) {}
+  return out;
+}
 // Resolve a Stripe price's lookup_key from a subscription-item / invoice-line object.
 function lookupOf(item) { return item && item.price && item.price.lookup_key; }
 
@@ -136,6 +147,11 @@ exports.handler = async (event) => {
         if (md.product_type === "program" && md.program) {
           await sb.from("purchases").insert({ user_id: uid, program_id: md.program });
           await log("granted", { user_id: uid, program_id: md.program, term: "one_time", email });
+          try {
+            const who = await memberInfo(sb, uid, email);
+            await notifyOperator({ event: "purchase", subject: `Program purchase: ${who.name}`,
+              lines: [["Member", who.name], ["Email", who.email], ["Program", md.program], ["Type", "One-time purchase"]] });
+          } catch (_) {}
         } else if (md.plan) {
           const term = md.term || "monthly";
           await sb.from("subscriptions").insert({ user_id: uid, plan_id: md.plan, term, status: "active", source: "checkout", expires_at: graceISO(term) });
@@ -147,6 +163,12 @@ exports.handler = async (event) => {
             if (coupon.stripe_coupon_id) {
               await sb.from("subscriptions").update(coupon).eq("user_id", uid).eq("status", "active");
             }
+          } catch (_) {}
+          try {
+            const who = await memberInfo(sb, uid, email);
+            const planLabel = md.plan === "coach" ? "Riley Coach" : md.plan === "companion" ? "Riley Companion" : md.plan;
+            await notifyOperator({ event: "new_sub", subject: `New paid subscription: ${who.name}`,
+              lines: [["Member", who.name], ["Email", who.email], ["Plan", `${planLabel} (${term})`], ["Source", "Stripe checkout"]] });
           } catch (_) {}
         } else { await log("needs_review", { user_id: uid, email, detail: "session had no plan/program metadata" }); }
         break;
@@ -173,12 +195,23 @@ exports.handler = async (event) => {
         const uid = await uidByCustomer(sb, obj.customer);
         if (uid) await sb.from("subscriptions").update({ status: "canceled", expires_at: new Date().toISOString() }).eq("user_id", uid).eq("status", "active");
         await log(uid ? "revoked" : "unmatched", { user_id: uid, detail: "subscription canceled" });
+        try {
+          const who = await memberInfo(sb, uid, null);
+          await notifyOperator({ event: "cancel", subject: `Subscription canceled: ${who.name}`,
+            lines: [["Member", who.name], ["Email", who.email], ["Event", "Subscription canceled"], ["Access", "Reverts to Guide"]] });
+        } catch (_) {}
         break;
       }
       case "charge.refunded": { // refund → revoke
         const uid = await uidByCustomer(sb, obj.customer);
         if (uid) await sb.from("subscriptions").update({ status: "canceled", expires_at: new Date().toISOString() }).eq("user_id", uid).eq("status", "active");
         await log(uid ? "revoked" : "unmatched", { user_id: uid, detail: "refunded" });
+        try {
+          const who = await memberInfo(sb, uid, (obj.billing_details && obj.billing_details.email) || null);
+          const amt = typeof obj.amount_refunded === "number" ? `$${(obj.amount_refunded / 100).toFixed(2)}` : "-";
+          await notifyOperator({ event: "refund", subject: `Refund issued: ${who.name}`,
+            lines: [["Member", who.name], ["Email", who.email], ["Refund", amt], ["Access", "Reverts to Guide"]] });
+        } catch (_) {}
         break;
       }
       case "invoice.payment_failed": { // renewal card declined - KEEP access during Stripe's automatic

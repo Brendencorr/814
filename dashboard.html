@@ -52,6 +52,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .main{overflow-y:auto}
 .topbar{padding:18px 28px;background:rgba(8,7,6,0.5);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
 .greeting{font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment)}
+/* P2.7 quiet hours: after ~10pm local the day-work recedes; the clarity hero (sun) + greeting stay. */
+body.quiet-hours{background:#070605}
+body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,body.quiet-hours #track-top-slot,body.quiet-hours #prog-list{opacity:0.5;transition:opacity .6s ease}
 .tb-date{font-size:11px;color:var(--smoke);margin-top:2px;font-family:'DM Mono',monospace;letter-spacing:0.04em}
 .tb-actions{display:flex;gap:8px}
 .tbtn{padding:8px 17px;font-size:11px;font-weight:600;cursor:pointer;border:none;border-radius:3px;transition:all .2s;text-decoration:none;display:inline-block;letter-spacing:0.04em}
@@ -543,14 +546,17 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const avatarUrl=meta.avatar_url||meta.picture||'';
     const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
     const h=new Date().getHours();
+    // P2.7: quiet hours (10pm-5am member-local) soften the screen - the 2am member should never get the 7am screen.
+    const quietHours=(h>=22||h<5);
+    if(quietHours)document.body.classList.add('quiet-hours');
     const tod=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
-    document.getElementById('greeting').textContent=tod+', '+firstName+'.';
+    document.getElementById('greeting').textContent=quietHours?('Still up, '+firstName+'?'):(tod+', '+firstName+'.');
     // Warm sub-greeting - seasonally aware
     const season=getSeason();
     const seasonWarms=SEASON_WARMS[season]||[];
     const baseWarms=["I'm glad you're here.","Take a breath. You made it today.","However today feels - we'll meet it together.","It's good to see you.","One quiet moment, then we begin."];
     const allWarms=[...baseWarms,...seasonWarms];
-    const warmLine=allWarms[new Date().getDate()%allWarms.length];
+    const warmLine=quietHours?"I'm here. No agenda.":allWarms[new Date().getDate()%allWarms.length];
     const greetEl=document.getElementById('greeting');
     greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">- Riley</div>');
     document.getElementById('tbdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();

@@ -213,7 +213,7 @@ async function updateProfile(supabase, body) {
 // crisis_log is intentionally EXCLUDED - it's restricted safety data handled
 // only inside the safety workflow (Trust architecture §1.4), not self-service.
 const USER_DATA_TABLES = [
-  "daily_checkins", "riley_conversations", "riley_memory", "user_goals",
+  "daily_checkins", "riley_conversations", "conversation_titles", "riley_memory", "user_goals",
   "habits", "habit_completions", "sobriety_tracker", "life_events",
   "important_dates", "user_program_progress", "engagement_events",
 ];
@@ -294,7 +294,7 @@ const ACCOUNT_DELETE_TABLES = [
   "habit_completions", "habits", "important_dates", "journey_step_completions",
   "legacy_vault", "life_events", "life_map", "member_docs", "notification_consents",
   "nutrition_logs", "profile_details", "purchases", "recommendation_history",
-  "reset_enrollment", "reset_progress", "riley_conversations", "riley_memory",
+  "reset_enrollment", "reset_progress", "riley_conversations", "conversation_titles", "riley_memory",
   "sleep_logs", "sobriety_checkins", "sobriety_tracker", "subscriptions",
   "usage_counters", "user_daily_state", "user_goals", "user_program_progress",
   "week_one_letters", "wellness_baseline", "wellness_plans", "wellness_profile",

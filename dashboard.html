@@ -328,8 +328,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
-    <!-- Track-your-day merged into the combined "Track your day" cards BELOW the brief (loadExplore) - one
-         tier-aware section instead of small buttons + a duplicate "Everything you could unlock" upsell. -->
+    <!-- "Track your day" cards render HERE (top) for members who have everything unlocked (Coach) - their
+         daily tracker hub stays up top for quick logging. For FREE members (some features locked) it
+         renders BELOW the brief instead (#explore-slot), so the upgrade isn't pushed on login. loadExplore
+         picks the slot by tier. (Brenden: move-below-brief is Companion-only.) -->
+    <div id="track-top-slot"></div>
 
     <!-- v2.3 C: secondary features (not in the primary nav) - reachable from the Clarity home. -->
     <div style="display:flex;flex-wrap:wrap;gap:8px 18px;padding:0 4px 16px;font-size:12px">
@@ -951,9 +954,13 @@ async function loadExplore(){
       ent=await r.json(); try{sessionStorage.setItem(k,JSON.stringify(ent));}catch(e){}
     }
     const has=f=>ent&&ent.features&&ent.features[f]&&ent.features[f].access===true;
-    const slot=document.getElementById('explore-slot');
-    if(!slot)return;
     const anyLocked=EXPLORE_FLAGSHIP.some(f=>!has(f.feat));
+    // Free members (something locked): render BELOW the brief so the upgrade isn't pushed on login.
+    // Paid members (all unlocked): keep the tracker hub UP TOP for quick logging. (Brenden: Companion-only move)
+    const slot=document.getElementById(anyLocked?'explore-slot':'track-top-slot');
+    const other=document.getElementById(anyLocked?'track-top-slot':'explore-slot');
+    if(other)other.innerHTML='';
+    if(!slot)return;
     const pend=(typeof window._pendHabits==='number'?window._pendHabits:0);
     const cards=EXPLORE_FLAGSHIP.map(function(f){
       if(has(f.feat)){

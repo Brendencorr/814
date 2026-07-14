@@ -185,7 +185,7 @@ function render(){
   let html = pushCard() + dots();
 
   // Riley's framing line
-  html += `<div class="riley-line"><span style="font-size:19px;flex-shrink:0">💛</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley</div><div style="font-size:14px;color:var(--parchment);line-height:1.65;font-style:italic">${esc(day.theme_line||'')}</div></div></div>`;
+  html += `<div class="riley-line"><span style="font-size:19px;flex-shrink:0">💛</span><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:5px">Riley</div><div style="font-size:14px;color:var(--parchment);line-height:1.65;font-style:italic">${esc(DATA.memory_opener || day.theme_line || '')}</div></div></div>`;
 
   html += `<div style="font-family:'DM Serif Display',serif;font-size:30px;color:var(--parchment);margin-bottom:6px">${esc(day.theme)}</div>`;
   html += `<div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--smoke);letter-spacing:0.06em;margin-bottom:26px">MORNING ACTION &nbsp;·&nbsp; EVENING CLOSE &nbsp;·&nbsp; 8:14 A DAY</div>`;

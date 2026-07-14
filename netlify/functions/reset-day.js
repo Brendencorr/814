@@ -45,6 +45,44 @@ Many people are two or three at once - include all that clearly fit. Return ONLY
   } catch (e) { return []; }
 }
 
+// 0.3 MEMORY MOMENTS: for Day 2-7, open by referencing what the member actually said on earlier days
+// (their Day-1 sentence + saved reset reflections). Day 4-5 draws a cross-day thread; Day 7 recaps
+// "what I've learned about you this week" before the tier recommendation. NEVER fabricates a memory -
+// returns null if there's nothing specific to reference, and fails open (any error -> null -> no opener).
+async function generateMemoryOpener(supabase, userId, dayNum, day1Sentence) {
+  try {
+    if (dayNum < 2 || !process.env.ANTHROPIC_API_KEY) return null;
+    const { data: mem } = await supabase.from("riley_memory")
+      .select("content, created_at").eq("user_id", userId).eq("source", "reset_reflection")
+      .eq("is_active", true).order("created_at", { ascending: true }).limit(12);
+    const bits = [];
+    if (day1Sentence) bits.push("Day 1 (what they were carrying): " + day1Sentence);
+    (mem || []).forEach((m) => { if (m.content) bits.push(String(m.content)); });
+    if (!bits.length) return null; // nothing specific to reference -> no callback, never fabricate
+
+    const dayGuide = dayNum >= 7
+      ? "This is Day 7, the final day. Open with a short, warm 'here is what I've come to know about you this week' - name 2-3 specific things THEY said (their words, a pattern, a win), then land on quiet hope. It comes right before we suggest what's next, so make it feel like being truly seen."
+      : (dayNum === 4 || dayNum === 5)
+        ? "Reference something specific they said on an earlier day, and if two things connect across different days, gently draw that thread together."
+        : "Reference something specific they said on a previous day, woven in naturally.";
+
+    const sys = `You are Riley - warm, plain, honest. Write the OPENING line(s) for today's 8:14 Reset check-in. ${dayGuide}
+Rules: 1-2 short sentences (Day 7 up to 3). Use THEIR actual words and themes - never invent a memory. Never say "my memory", "I retrieved", or anything system-like - just speak like a friend who remembers. No therapy-speak, no toxic positivity. Plain hyphens only, never em-dashes. If the material is too thin to reference honestly, return an empty string.`;
+    const usr = "Their own words from the Reset so far:\n" + bits.join("\n") + `\n\nWrite Riley's opening for Day ${dayNum}.`;
+
+    const r = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 170, system: sys, messages: [{ role: "user", content: usr }] }),
+    });
+    if (!r.ok) return null;
+    const d = await r.json();
+    let out = (d.content && d.content[0] && d.content[0].text || "").trim();
+    out = out.replace(/—/g, "-").replace(/–/g, "-"); // brand rule: no em/en dashes
+    return out.length > 3 ? out.slice(0, 500) : null;
+  } catch (_) { return null; }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: CORS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
@@ -119,7 +157,11 @@ exports.handler = async (event) => {
       }
     }
 
-    return json(200, { day: content, variants, progress, personas, day1_sentence });
+    // 0.3: a grounded "I remember what you said" opener for Day 2+ (null if nothing to reference).
+    let memory_opener = null;
+    if (userId && dayNum >= 2) memory_opener = await generateMemoryOpener(supabase, userId, dayNum, day1_sentence);
+
+    return json(200, { day: content, variants, progress, personas, day1_sentence, memory_opener });
   } catch (e) {
     console.error("reset-day:", e.message);
     return json(500, { error: e.message });

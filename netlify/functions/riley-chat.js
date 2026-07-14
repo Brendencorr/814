@@ -830,6 +830,29 @@ async function getContentContext(supabase) {
   } catch { return ""; }
 }
 
+// A.2: turn an applyClarityConfigChange() result into a warm instruction Riley weaves into her reply.
+function clarityConfigNote(res, intent) {
+  if (!res) return null;
+  const T = { movement: "movement", habits: "your habits", reflection: "reflection", program: "your program", outside: "getting outside", connection: "staying connected", fuel: "fuel (food)", sobriety: "the sobriety lane", grief: "the grief lane" };
+  const name = T[res.target || (intent && intent.target)] || (intent && intent.target) || "that";
+  if (res.status === "applied") {
+    if (res.targetType === "fuel" && res.op === "disable") return "CLARITY UPDATE (weave in warmly, care-framed, ZERO diet/ED language): the member turned off fuel. Confirm gently that no food targets or suggestions will appear anywhere, and it takes effect at the next 4am reset (tomorrow).";
+    const verb = res.op === "disable" ? "stop counting" : "start counting";
+    const fl = res.first_light ? " Newly added - frame it kindly: you'll start watching it gently, and the first two weeks only count upward." : "";
+    return "CLARITY UPDATE (weave into your reply naturally, warm and plain, no jargon): you've set Clarity to " + verb + " " + name + ". It takes effect at the next 4am reset (tomorrow) - say that plainly." + fl;
+  }
+  if (res.status === "rate_limited") return "CLARITY UPDATE: the member already changed their Clarity setup this week (one change per 7 days keeps the score honest). Warmly OFFER to queue it: \"I can make that change on " + res.next_allowed + " - want me to?\" Do not claim it's applied now.";
+  if (res.status === "needs_rest") return "CLARITY UPDATE: they're already tracking 5 things (the sweet spot). To add " + name + ", gently ask which one they'd like to rest first.";
+  if (res.status === "companion_only") return "CLARITY UPDATE: this is a free member asking to change what Clarity WATCHES (" + name + "). Give the honest one-liner ONCE, no push: on the free plan they can TRACK anything and Clarity always keeps the universal basics; the personal watching layer (their own baselines + focus lanes) comes with Companion.";
+  if (res.status === "query") {
+    const cfg = res.config || {};
+    const dims = (cfg.enabled_practice || []).map((d) => T[d] || d).join(", ") || "the basics";
+    const lanes = Object.keys(cfg.lanes || {}).filter((k) => cfg.lanes[k]).map((k) => T[k] || k).join(", ");
+    return "CLARITY UPDATE: the member asked what Clarity is watching. Tell them plainly and warmly: the basics (steadiness, rest" + (cfg.fuel_opt_out ? "" : ", fuel") + ") plus what they're working on: " + dims + (lanes ? "; focus lane(s): " + lanes : "") + ". Remind them they can change it any time just by telling you.";
+  }
+  return null;
+}
+
 async function buildSystemPrompt(supabase, userId, queryText) {
   const [profile, clientData, contentCtx] = await Promise.all([
     userId ? getUserProfile(supabase, userId) : Promise.resolve(null),
@@ -1327,6 +1350,25 @@ exports.handler = async function (event) {
   }
   if (isDiagnosis) safetyDirective += DIAGNOSIS_DIRECTIVE + "\n\n";
   if (safetyDirective) systemPrompt = safetyDirective + "----\n\n" + systemPrompt;
+
+  // A.2: conversational Clarity config - the member can change what Clarity tracks/watches just by
+  // asking Riley ("stop counting my meditation", "what is clarity watching?"). Applied through the SAME
+  // config system as the pane (1 change / 7 days budget, next-4am-rollover apply, versioning, event
+  // source:'chat'). Prepending a note makes systemPrompt differ from the cached concat, so this turn
+  // uses the uncached path and Riley sees the note. Fully non-fatal.
+  if (crisis.level === 0 && supabase && user_id) {
+    try {
+      const { detectClarityConfigIntent, applyClarityConfigChange } = require("./clarity-intent");
+      const cfgIntent = detectClarityConfigIntent(latestUserText);
+      if (cfgIntent) {
+        const isFull = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
+        const today = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10); // 4am member-day
+        const res = await applyClarityConfigChange(supabase, user_id, today, cfgIntent, isFull);
+        const note = clarityConfigNote(res, cfgIntent);
+        if (note) systemPrompt = note + "\n\n----\n\n" + systemPrompt;
+      }
+    } catch (_) {}
+  }
 
   // ── RILEY GUIDE CHAT CAP (v4 pricing) - capped, never hidden ────────────────
   // Crisis support ALWAYS overrides the cap - this check only runs when no

@@ -104,7 +104,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <div class="layout">
 <aside class="sidebar">
   <div class="sb-logo"><div class="sb-logo-mark"><span class="sb-logo-sun"></span>Riley<span>.</span></div></div>
-  <a href="/dashboard" class="sni"><span class="sni-icon">🌅</span>Today</a>
+  <a href="/dashboard" class="sni"><span class="sni-icon">✨</span>Clarity</a>
   <div id="sb-tiers"></div>
   <div class="sb-spacer"></div>
   <div class="sb-user"><div class="sb-av" id="sb-av">?</div><div><div class="sb-name" id="sb-name">…</div><div class="sb-plan" id="sb-plan">Live With Purpose.</div></div><button class="sb-out" onclick="doSignOut()" title="Sign out">↪</button></div>
@@ -428,27 +428,16 @@ function markActionDone(el){
 <script>
 /* ── SIDEBAR + ENTITLEMENT GATING (shared) ────────────────────────────────── */
 (function(){
-  const TIER_NAV = {
-    guide:    {label:'Guide',     items:[
-      {href:'/reset', icon:'🌱', label:'The 8:14 Reset'},
-      {href:'/conversations', icon:'💭', label:'Conversations'}
-    ]},
-    companion:{label:'Companion', items:[
-      {href:'/tracker', icon:'📖', label:'Reflection', feat:'daily_checkin'},
-      {href:'/workouts', icon:'🤍', label:'Movement', feat:'tracker_fitness'},
-      {href:'/nutrition', icon:'🍃', label:'Nourishment', feat:'tracker_nutrition'},
-      {href:'/sleep', icon:'🌙', label:'Rest', feat:'tracker_sleep'},
-      {href:'/finance', icon:'💰', label:'Financial Goals', feat:'tracker_finance'},
-      {href:'/lifemap', icon:'🗺️', label:'Life Map', feat:'knowledge_graph'},
-      {href:'/community', icon:'🤝', label:'Community', comingSoon:true}
-    ]}
-  };
-  const RESOURCES = [
+  // v2.3 C: flat, clarity-centric nav. The hardcoded "Clarity" link above is the home;
+  // Movement/Nourishment/Rest/Reflection are reachable as rows on the Clarity (Today) page.
+  const NAV = [
+    {href:'/chat', icon:'💬', label:'Talk to Riley'},
+    {href:'/lifemap', icon:'🗺️', label:'Life Map'},
+    {href:'/programs', icon:'🗂️', label:'Programs'},
     {href:'/library', icon:'📚', label:'Library'},
-    {href:'/programs', icon:'🗂️', label:'Program Add-ons'},
-    {href:'/calendar', icon:'📅', label:'Calendar', feat:'tracker_calendar'}
+    {href:'/settings', icon:'⚙️', label:'Account'}
   ];
-  const TIER_ORDER = ['guide','companion'];
+  const TIER_NAV = {}; const RESOURCES = []; const TIER_ORDER = [];  // retired (kept as no-ops for any stray refs)
   const PAGE_FEATURE = 'adaptive_programming';
 
   async function loadEnt(uid){
@@ -475,22 +464,9 @@ function markActionDone(el){
   function renderSidebar(ent){
     const mount=document.getElementById('sb-tiers');
     if(!mount)return;
-    const myIdx=tierIdx(ent.tier||'guide');
-    let html='';
-    TIER_ORDER.forEach((key,idx)=>{
-      const tier=TIER_NAV[key];
-      const tierLocked=idx>myIdx;
-      const items=tier.items.map(it=>navItem(it, tierLocked && !it.comingSoon)).join('');
-      const open=idx<=myIdx;
-      html+=`<div class="sb-tier"><div class="sb-tier-head${open?' open':''}${tierLocked?' locked':''}" onclick="sbToggleTier(this)">${tier.label}${tierLocked?'<span class="sb-tier-lock">🔒</span>':''}<span class="sb-chev">▸</span></div><div class="sb-tier-items${open?' open':''}">${items}</div></div>`;
-    });
-    const resItems=RESOURCES.map(it=>navItem(it, it.feat ? !can(ent,it.feat) : false)).join('');
-    html+=`<div class="sb-tier"><div class="sb-tier-head open" onclick="sbToggleTier(this)">Additional Resources<span class="sb-chev">▸</span></div><div class="sb-tier-items open">${resItems}</div></div>`;
-    mount.innerHTML=html;
-    mount.querySelectorAll('a[data-upsell="1"]').forEach(a=>{
-      a.addEventListener('click',e=>{e.preventDefault();window.location.href='/programs?unlock='+(a.dataset.feat||'');});
-    });
-    document.querySelectorAll('.sidebar > a.sni').forEach(a=>{
+    // v2.3 C: flat nav render (no tier sections). navItem renders an .sni link with active state.
+    mount.innerHTML=NAV.map(it=>navItem(it,false)).join('');
+    document.querySelectorAll('.sidebar a.sni, #sb-tiers a.sni').forEach(a=>{
       const p=location.pathname.replace(/\/$/,'')||'/dashboard';
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });

@@ -336,8 +336,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- v2.3 C: secondary features (not in the primary nav) - reachable from the Clarity home. -->
     <div style="display:flex;flex-wrap:wrap;gap:8px 18px;padding:0 4px 16px;font-size:12px">
       <a href="/reset" style="color:var(--smoke);text-decoration:none">🌱 The 8:14 Reset</a>
-      <a href="/finance" style="color:var(--smoke);text-decoration:none">💰 Financial Goals</a>
-      <a href="/calendar" style="color:var(--smoke);text-decoration:none">📅 Calendar</a>
       <a href="/conversations" style="color:var(--smoke);text-decoration:none">💭 Past conversations</a>
     </div>
 
@@ -864,7 +862,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 
     // ── PROGRAMS ──
     const pEl=document.getElementById('prog-list');
-    if(progs.length)pEl.innerHTML=progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const slug=pr.slug||'';return `<a href="/journey${slug?'?slug='+slug:''}" class="prog" style="text-decoration:none;color:inherit;cursor:pointer"><div class="prog-ico">${pr.emoji||'🎯'}</div><div style="flex:1"><div class="prog-n">${esc(pr.title||e.program_name||'Program')}</div><div class="prog-s">${pct>=100?'Complete ✓':'Day '+d+' of '+t+' · Continue →'}</div></div><div class="prog-p" style="${pct>=100?'color:var(--green2)':''}">${pct>=100?'✓':pct+'%'}</div></a>`;}).join('');
+    if(progs.length)pEl.innerHTML=progs.map(e=>{const pr=e.programs||{};const d=e.days_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const slug=pr.slug||'';return `<a href="/journey${slug?'?slug='+slug:''}" class="prog" style="text-decoration:none;color:inherit;cursor:pointer"><div class="prog-ico">${pr.emoji||'🎯'}</div><div style="flex:1"><div class="prog-n">${esc(pr.title||e.program_name||'Program')}</div><div class="prog-s">${pct>=100?'Complete ✓':(d>=1?('Day '+d+' of '+t+' · Continue →'):'Ready to begin - Day 1 is waiting.')}</div></div><div class="prog-p" style="${pct>=100?'color:var(--green2)':'color:var(--smoke2)'}">${pct>=100?'✓':'›'}</div></a>`;}).join('');
 
 
     // MILESTONE
@@ -1366,7 +1364,6 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
       tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
       tracker_calendar:{name:'Calendar',need:'Riley Coach'},
       knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };

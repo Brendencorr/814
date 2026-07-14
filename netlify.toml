@@ -362,6 +362,19 @@
   from = "https://riley.meetriley.us/memory/"
   to = "/memory.html"
   status = 200
+# P1.2: the Financial Goals TOOL moved to the Mentor tier. The /finance route is retired from Companion +
+# Coach; finance.html and all member data are preserved (the feature returns with Mentor). force=true so
+# this wins over the still-present finance.html file. Riley keeps money-stress awareness in conversation.
+[[redirects]]
+  from = "/finance"
+  to = "/dashboard"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/finance/*"
+  to = "/dashboard"
+  status = 302
+  force = true
 # Synthetic health endpoint for uptime monitoring (Spec §10).
 [[redirects]]
   from = "/api/health-chat"

@@ -181,7 +181,7 @@ async function load(){
   TOKEN=session.access_token;
   try{
     const r=await fetch('/.netlify/functions/program-content',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'get',token:TOKEN,program_key:PKEY})});
-    if(r.status===403){ $('content').innerHTML='<div class="state">You don\'t have this program yet.<br><br><a href="/programs">See Program Add-ons →</a></div>'; return; }
+    if(r.status===403){ $('content').innerHTML='<div class="state">You don\'t have this program yet.<br><br><a href="/programs">See Your Programs →</a></div>'; return; }
     if(r.status===404){ $('content').innerHTML='<div class="state">This program is coming soon.<br><br><a href="/programs">Browse programs →</a></div>'; return; }
     const d=await r.json();
     if(d.error) throw new Error(d.error);

@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-14
 
+- `riley-v23` — **Member-app UX punch-list P1/P2 (July 14 walkthrough).** Shipped in order across ~10 commits
+  (see PUNCHLIST.md tracker, 404-guarded): P1.1 removed the FOUNDATION/PRACTICE/DIRECTION numeric row (canon:
+  never show the decomposition). P1.2 Financial Goals -> Mentor (removed card/chip/quick-link/lock-preview
+  everywhere; `/finance` -> `/dashboard` forced redirect; data preserved; Riley keeps money-in-conversation).
+  P1.3 Legacy Vault + P1.4 Life Balance wheel removed from Life Map (vault data preserved). P1.5 six large tool
+  cards -> one compact chip row (Financial dropped). P1.6 empty dims warm-framed. P1.11 Life Map crown-jewels-first
+  + empties collapse. P1.10.7 retired the in-app chat pill (kept on marketing). Nav order Talk-to-Riley-first.
+  P2.1 no "Day 0", P2.2 no % on program cards, P2.4 labeled bell, P2.5 "Your Programs", P2.7 quiet-hours,
+  P2b.9 hero eyebrow "Rebuild. One day at a time.", P2b.10 retired Four Pillars from primary nav. Files: many
+  member HTML pages, pwa.js, member-doc-background.js, netlify.toml. 🔴 FLAGGED for a dedicated build: P1.9
+  dashboard voice-block+composer + P1.10 the persistent conversation LAYER (coordinate with the `/talk` work);
+  P2.3 auto-title convos; P2.8 mobile sun bottom-bar; P1.8 brief email-toggle. Founder picks: P2b.9 wording,
+  P2b.10 retire-vs-fold.
+
 - `riley-v23` — **P0 punch-list: sober-count single-source-of-truth + User Manual hygiene.** The dashboard
   (2,430) and the stored Life Map User Manual (2,417) disagreed - a baked count in generated prose. Every
   LIVE surface already reads the ONE canonical fn (client `RileyDay.soberDays` / server `soberDaysForMember`);

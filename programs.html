@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Riley">
-<title>Program Add-ons - Riley</title>
+<title>Your Programs - Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -120,7 +120,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </aside>
 <main class="main">
 <div class="topbar">
-  <div><div class="tb-title" id="tb-greeting">Program Add-ons</div><div class="tb-sub" id="tb-date"></div></div>
+  <div><div class="tb-title" id="tb-greeting">Your Programs</div><div class="tb-sub" id="tb-date"></div></div>
   
 </div>
 <div class="content">
@@ -128,7 +128,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <div class="pg-eyebrow">Included with your plan</div>
 <div id="pg-included" class="pg-grid" style="margin-bottom:4px"></div>
 
-<div class="pg-eyebrow" style="margin-top:34px">Program Add-ons</div>
+<div class="pg-eyebrow" style="margin-top:34px">Your Programs</div>
 <div id="pg-addons"></div>
 <div class="alert" id="pg-alert" style="max-width:400px;margin-top:12px"></div>
 
@@ -224,7 +224,7 @@ async function loadPrograms_LEGACY_UNUSED(){ /* superseded by the program-list l
   if(!active.length){acEl.innerHTML='<div class="card"><div class="empty" style="padding:20px 0">No active programs - enroll below.</div></div>';}
   else{acEl.innerHTML=active.map(e=>{const pr=e.programs||{};const d=e.days_completed||e.day_completed||0;const t=pr.duration_days||1;const pct=Math.min(100,Math.round(d/t*100));const fin=pct>=100;
     const slug=pr.slug||'';
-    return`<div class="card"><div style="font-size:36px;margin-bottom:10px">${pr.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(pr.title||e.program_name||'Program')}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:14px">Day ${d} of ${t} · ${fin?'Complete ✓':'Active'}</div><div class="pbar" style="height:6px;margin-bottom:10px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:'DM Mono',monospace;font-size:22px;color:${fin?'var(--green2)':'var(--gold)'}">${fin?'✓':pct+'%'}</span>${fin?'<a href="/roadmap" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">View Timeline</a>':'<a href="/journey'+(slug?'?slug='+slug:'')+'" class="btn btn-gold" style="font-size:11px;padding:6px 14px">Open Today\'s Step →</a>'}</div></div>`;
+    return`<div class="card"><div style="font-size:36px;margin-bottom:10px">${pr.emoji||'🎯'}</div><div style="font-family:'DM Serif Display',serif;font-size:16px;margin-bottom:4px">${esc(pr.title||e.program_name||'Program')}</div><div style="font-size:12px;color:var(--smoke);margin-bottom:14px">${d>=1?('Day '+d+' of '+t+' · '+(fin?'Complete ✓':'Active')):'Ready to begin - Day 1 is waiting.'}</div><div class="pbar" style="height:6px;margin-bottom:10px"><div class="pbf ${fin?'g':''}" style="width:${pct}%"></div></div><div style="display:flex;justify-content:flex-end;align-items:center">${fin?'<a href="/roadmap" class="btn btn-ghost" style="font-size:11px;padding:6px 14px">View Timeline</a>':'<a href="/journey'+(slug?'?slug='+slug:'')+'" class="btn btn-gold" style="font-size:11px;padding:6px 14px">Open Today\'s Step →</a>'}</div></div>`;
   }).join('');}
   const avEl=document.getElementById('pg-avail');
   const avail=all.filter(p=>!eIds.has(p.id));
@@ -277,7 +277,7 @@ async function loadPrograms(){
     : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet - Coach includes all the self-guided programs.</div>';
   const av=data.available||[];
   if(addEl){
-    if(!av.length){ addEl.innerHTML='<div style="font-size:13px;color:var(--smoke)">You have every program. 🎉</div>'; return; }
+    if(!av.length){ addEl.innerHTML='<div style="font-size:13px;color:var(--smoke)">Every program is yours - included with Coach.</div>'; return; }
     var selfG=av.filter(function(p){return pgFamily(p.kind)==='self';});
     var rileyL=av.filter(function(p){return pgFamily(p.kind)==='riley';});
     addEl.innerHTML =

@@ -1455,7 +1455,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
      (on every page), so the old dashboard-only inline popup was removed to avoid a double intercept. -->
 <script>
 /* Admin tier-preview toggle - visible only to master admins (entitlements.admin).
-   Flips the whole home between Guide / Companion / Coach by re-fetching entitlements
+   Flips the whole home between Companion / Coach / Mentor (display); preview keys stay guide/companion/coach by re-fetching entitlements
    with a preview_tier (honored server-side for admins only). */
 (function(){
   window.setPreviewTier=function(t){

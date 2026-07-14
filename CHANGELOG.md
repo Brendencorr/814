@@ -12,6 +12,8 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-14
 
+- `riley-v23` — **v2.3.1 tier DISPLAY rename** (Brenden): Guide→Companion (free), Companion→Coach ($19), Coach→Mentor (coming soon, dashboard-only). JUST display names; internal plan keys, entitlements, Stripe lookup_keys and DB values UNCHANGED (no migration; founding members keep full access). New `tier-labels.js` central map; nav plan-badge routes through an inline copy. Marketing coming-soon teaser removed → dashboard card. Files: riley-chat.js, tier-labels.js (new), stripe-catalog.js, comms-templates.js, riley-brain.js, admin-pricing.js, auth-handler.js, ~21 HTML pages, operator.html. 🔴 LEFT FOR BRENDEN: LIVE Stripe dashboard product rename — has a name collision + 4 active $350/yr payers on the old `riley_coach` product; his call (code is ready + dormant).
+
 ### Signup (follow-up): First + Last required on the magic-link form too
 - **Why:** First/Last must be required REGARDLESS of signup method. Google OAuth already supplies them;
   the magic-link (email OTP) form on login.html only collected an email. Now it collects First + Last too,

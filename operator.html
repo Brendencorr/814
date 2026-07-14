@@ -1753,11 +1753,28 @@ async function sendTestAlert(btn){
   }catch(e){ alert('Test failed: '+((e&&e.message)||e)); }
   if(btn){btn.disabled=false;btn.innerHTML='Send test alert &rarr;';}
 }
+// v2.3 Batch 0.1: run the 4-step crisis pipeline self-test (detection, 988 response, queue write, operator alert).
+async function testCrisisPipeline(btn){
+  if(btn){btn.disabled=true;btn.textContent='Testing…';}
+  try{
+    var d=await opGet('/admin-crisis-selftest');
+    var s=(d&&d.steps)||{};
+    var line=function(k,label){var x=s[k]||{};return (x.ok?'✓ ':'✗ ')+label+(x.detail?' - '+x.detail:'');};
+    var msg='Crisis pipeline self-test '+(d&&d.ok?'PASSED':'has a FAILURE')+':\n\n'
+      +line('detection','1. Detection fires (level 3)')+'\n'
+      +line('response_988','2. 988 response returned')+'\n'
+      +line('queue_write','3. Written to safety queue (test)')+'\n'
+      +line('operator_alert','4. Operator alert email sent')+'\n\n'
+      +(d&&d.resend_configured?'':'(RESEND_API_KEY not set - alert email cannot send)');
+    alert(msg);
+  }catch(e){ alert('Crisis self-test failed: '+((e&&e.message)||e)); }
+  if(btn){btn.disabled=false;btn.textContent='Test crisis pipeline';}
+}
 function renderSafety(d,target){
   var flags=(d&&d.flags)||[];
   var open=flags.filter(function(f){return !f.handled;});
   var done=flags.filter(function(f){return f.handled;});
-  var h='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem"><div class="cl" style="margin:0">Safety Queue</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+open.length+' open · '+flags.length+' total</div><button onclick="sendTestAlert(this)" title="Send a test operator alert + test crisis alert to the operator inbox, to prove alert emails are live" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.7rem;padding:.35rem .7rem;border-radius:6px;cursor:pointer">Send test alert &rarr;</button></div>';
+  var h='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1rem"><div class="cl" style="margin:0">Safety Queue</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+open.length+' open · '+flags.length+' total</div><button onclick="sendTestAlert(this)" title="Send a test operator alert + test crisis alert to the operator inbox, to prove alert emails are live" style="margin-left:auto;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.7rem;padding:.35rem .7rem;border-radius:6px;cursor:pointer">Send test alert &rarr;</button><button onclick="testCrisisPipeline(this)" title="Run a synthetic crisis end to end (detection, 988 response, queue write, operator alert) and report pass/fail" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:.7rem;padding:.35rem .7rem;border-radius:6px;cursor:pointer;margin-left:.4rem">Test crisis pipeline</button></div>';
   if(flags.length){
     var l3=flags.filter(function(f){return f.level>=3;}).length;
     var l2=flags.length-l3;

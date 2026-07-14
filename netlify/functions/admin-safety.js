@@ -29,6 +29,7 @@ async function listFlags(supabase) {
   const { data: logs, error } = await supabase
     .from("crisis_log")
     .select("id,user_id,anon_id,ip_hash,session_id,level,matched_rules,message_excerpt,followup_stage,resolved,operator_handled_at,operator_note,created_at")
+    .eq("is_test", false)   // v2.3: hide synthetic crisis-pipeline self-test events from the real queue
     .order("created_at", { ascending: false })
     .limit(100);
   if (error) throw error;

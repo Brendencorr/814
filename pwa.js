@@ -300,7 +300,10 @@
 
   window.addEventListener('load', function () {
     setTimeout(function () {
-      if (!onChatPage) chatPill();                         // Chat pill - but NOT on the chat page itself
+      // P1.10.7: the floating "Chat with Riley" pill is RETIRED inside the member app (it duplicated the
+      // nav + recast Riley as a support widget). It stays on the logged-out marketing site, where it's the
+      // conversion path and there's no member nav. Member app pages carry the #sb-tiers nav mount; marketing does not.
+      if (!onChatPage && !document.getElementById('sb-tiers')) chatPill();
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)

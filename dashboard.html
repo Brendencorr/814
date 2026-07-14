@@ -345,34 +345,25 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- For You Today - Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
-    <!-- TWO COL -->
-    <div class="grid2">
-      <div>
-        <!-- "Riley's Read" merged into the "Riley Suggests" card (Beat 2) - one insight card, not two (Brenden). -->
-        <div id="insight" style="display:none"></div>
-        <!-- Brief -->
-        <div class="brief">
+    <!-- Single full-width column (Brenden): brief -> Active Programs -> Recent Conversations, stacked. -->
+    <!-- "Riley's Read" merged into the "Riley Suggests" card (Beat 2) - one insight card, not two. -->
+    <div id="insight" style="display:none"></div>
+    <div id="habit-list" style="display:none"></div><div id="goal-list" style="display:none"></div>
+    <!-- Brief -->
+    <div class="brief">
           <div class="brief-head">
             <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals - in your inbox by 6:00 AM.</div></div>
             <div id="bc-regen-wrap" style="text-align:right;flex-shrink:0;padding-left:16px;display:none"><button onclick="genDashBrief(true)" id="bc-regen" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--smoke2);padding:5px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em">↻ Regenerate</button></div>
           </div>
           <div id="brief-body" style="padding:4px 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
         </div>
-        <!-- Conversations -->
+        <!-- Active Programs (full-width, right below the brief) -->
+        <div class="panel" style="margin-bottom:16px"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
+        <!-- Recent Conversations (full-width) -->
         <div class="panel">
           <div class="p-head"><div class="p-title">Recent Conversations</div><a href="/conversations" class="p-action">VIEW ALL →</a></div>
           <div id="conv-list"><div class="empty">Loading…</div></div>
         </div>
-      </div>
-      <div>
-        <!-- "How are you feeling?" (mood) + "Sobriety Streak" panels retired as duplicates:
-             mood is now captured in the Riley chat check-in, and both mood + sobriety surface
-             as tappable stat tiles at the top of the page (see DYNAMIC STAT TILES). -->
-        <!-- Today's Habits + Weekly Goals panels retired (Brenden): logging lives in "Track your day"; a dot on the Reflection button flags pending habits. -->
-        <div id="habit-list" style="display:none"></div><div id="goal-list" style="display:none"></div>
-        <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
-      </div>
-    </div>
 
     <!-- Combined "Track your day" cards - MOVED below the brief so the upgrade isn't pushed on login (Brenden). -->
     <div id="explore-slot"></div>

@@ -10,6 +10,28 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-14
+
+### Signup: First + Last + Email required at onboarding; optional nickname
+- **Why:** Brenden wants First, Last, and Email mandatory at signup, with a "what should I call you"
+  nickname optional. Signup is Google OAuth + magic-link (no signup form) and both already require an
+  email, so the enforcement point for First/Last is onboarding Screen 2 (pre-filled from Google).
+- **What:**
+  - migration `094_member_name_fields.sql`: `first_name` + `last_name` on user_profiles (nullable at the
+    DB - the onboarding UI enforces them; existing pre-change profiles stay valid). APPLIED to prod.
+  - `onboarding.html` Screen 2: was a single "what should I call you" field -> now First (required) +
+    Last (required), pre-filled from Google given/family name (or split full_name; blank for magic-link),
+    email shown read-only, plus an OPTIONAL nickname. `preferred_name` stays the nickname and DEFAULTS to
+    first_name when skipped, so every existing consumer of preferred_name works unchanged. full_name is
+    kept in sync as "First Last".
+  - `auth-handler.js`: profile auto-create now splits Google's name into first_name/last_name; added them
+    to the allowed update fields + the account-clear map.
+- **Verified:** migration live (columns present); onboarding inline JS syntax clean; name screen rendered
+  + driven in a harness - required First/Last guard fires, no-nickname defaults preferred_name to the first
+  name, an explicit nickname is kept distinct. Files: onboarding.html, auth-handler.js, migration 094.
+- Note: existing pre-change members have null first/last (fine - mostly test accounts; could backfill from
+  full_name later). login.html unchanged (email is already required on both signup paths).
+
 ## 2026-07-13
 
 ### Riley v2.3 - two-tier restructure + Clarity tier split (multi-commit; see V2.3_BUILD_LOG.md)

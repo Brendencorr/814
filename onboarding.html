@@ -181,20 +181,42 @@ function renderWelcome(){
 }
 
 // ── Screen 2 · Name ────────────────────────────────────────────────────────────
+// First + Last are REQUIRED (email is already required by both signup paths). preferred_name is the
+// OPTIONAL nickname - it defaults to first_name when skipped, so Riley always has a name to use.
+function splitName(s){s=(s||'').trim();if(!s)return{first:'',last:''};var p=s.split(/\s+/);return{first:p[0],last:p.slice(1).join(' ')};}
 function sName(){
+  const meta=(USER&&USER.user_metadata)||{};
+  const g=splitName(A.full_name||meta.full_name||meta.name||'');
+  const first=A.first_name||meta.given_name||g.first||'';
+  const last=A.last_name||meta.family_name||g.last||'';
+  const nick=(A.preferred_name&&A.preferred_name!==A.first_name)?A.preferred_name:'';
   swap(`<div class="section-label">A little about you</div>
-    <div class="riley-says">Hi. What should I call you?</div>
-    <div class="riley-sub">Just your first name is perfect.</div>
-    <input type="text" id="i-name" placeholder="Your name" value="${esc(A.preferred_name||FIRST||'')}" autofocus>
+    <div class="riley-says">First, the basics.</div>
+    <div class="riley-sub">Your name and email are just how I know you and keep your account yours - private, never shared.</div>
+    <div class="row">
+      <div><label class="fld">First name</label><input type="text" id="i-first" placeholder="First" value="${esc(first)}" autofocus></div>
+      <div><label class="fld">Last name</label><input type="text" id="i-last" placeholder="Last" value="${esc(last)}"></div>
+    </div>
+    <label class="fld">Email</label>
+    <input type="text" id="i-email" value="${esc((USER&&USER.email)||'')}" readonly style="opacity:.6;cursor:default">
+    <label class="fld">What should I call you? <span style="text-transform:none;letter-spacing:0;color:var(--smoke)">- optional</span></label>
+    <input type="text" id="i-nick" placeholder="A nickname, if you'd like" value="${esc(nick)}">
+    <div id="name-err" style="color:var(--rust);font-size:13px;margin:2px 0 0;display:none">Please enter your first and last name.</div>
     <div class="actions"><button class="skip" onclick="renderWelcome()" style="margin-right:auto">← Back</button><button class="btn" onclick="doneName()">Continue</button></div>
     ${dots(1)}`);
-  setTimeout(()=>{const n=document.getElementById('i-name');if(n)n.focus();},350);
+  setTimeout(()=>{const n=document.getElementById('i-first');if(n)n.focus();},350);
 }
 async function doneName(){
-  const name=document.getElementById('i-name').value.trim();
-  if(!name){document.getElementById('i-name').style.borderColor='#8b3a3a';document.getElementById('i-name').focus();return;}
-  A.preferred_name=name;FIRST=name.split(' ')[0];
-  await save({preferred_name:name,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
+  const first=document.getElementById('i-first').value.trim();
+  const last=document.getElementById('i-last').value.trim();
+  const nick=document.getElementById('i-nick').value.trim();
+  const err=document.getElementById('name-err');
+  if(!first||!last){err.style.display='block';const bad=document.getElementById(first?'i-last':'i-first');if(bad){bad.style.borderColor='#8b3a3a';bad.focus();}return;}
+  A.first_name=first;A.last_name=last;
+  A.preferred_name=nick||first;   // nickname optional; default to first name so Riley always has a name
+  A.full_name=first+' '+last;
+  FIRST=A.preferred_name.split(' ')[0];
+  await save({first_name:first,last_name:last,full_name:A.full_name,preferred_name:A.preferred_name,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone},1);
   swap(`<div class="riley-says">Thanks, ${esc(FIRST)}. It's nice to meet you.</div><div class="riley-sub">Let's start where you are.</div><div class="actions"><button class="btn" onclick="sAge()">Continue</button></div>`);
 }
 

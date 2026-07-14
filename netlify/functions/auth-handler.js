@@ -50,10 +50,16 @@ async function getSession(supabase, body) {
 
   // Auto-create profile on first sign-in
   if (profileError?.code === "PGRST116" || !profile) {
+    const _full  = user.user_metadata?.full_name || user.user_metadata?.name || null;
+    const _parts = (_full || "").trim().split(/\s+/).filter(Boolean);
     const newProfile = {
       id:        user.id,
       email:     user.email,
-      full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+      full_name: _full,
+      // First/Last are required at onboarding; pre-fill from Google here so the member just confirms.
+      // A magic-link signup carries no name (email only) - these stay null until onboarding collects them.
+      first_name: user.user_metadata?.given_name  || _parts[0] || null,
+      last_name:  user.user_metadata?.family_name || (_parts.length > 1 ? _parts.slice(1).join(" ") : null),
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     };
     await supabase.from("user_profiles").upsert(newProfile);
@@ -178,7 +184,7 @@ async function updateProfile(supabase, body) {
   if (user.id !== user_id) throw new Error("Token / user_id mismatch");
 
   // Only allow safe fields to be updated
-  const allowed = ["full_name", "sobriety_date", "programs_purchased", "community_member", "avatar_url"];
+  const allowed = ["full_name", "first_name", "last_name", "preferred_name", "sobriety_date", "programs_purchased", "community_member", "avatar_url"];
   const update = {};
   for (const key of allowed) {
     if (key in fields) update[key] = fields[key];
@@ -218,7 +224,7 @@ const PROFILE_CLEAR = {
   preferred_name: null, pronouns: null, birthday: null, city: null,
   why_here: null, why_here_detail: null, one_year_vision: null, human_os: null,
   primary_goals: null, communication_style: null, preferred_encouragement: null,
-  sobriety_date: null, sobriety_interest: false, avatar_url: null, full_name: null,
+  sobriety_date: null, sobriety_interest: false, avatar_url: null, full_name: null, first_name: null, last_name: null,
   onboarding_completed: false, onboarding_step: 0, phase2_progress: null,
 };
 

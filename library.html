@@ -109,6 +109,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 .lib-t{font-family:'DM Serif Display',serif;font-size:16px;color:var(--parchment);line-height:1.35;margin-bottom:3px}
 .lib-m{font-size:11px;color:var(--gold);font-family:'DM Mono',monospace;letter-spacing:0.03em;text-transform:lowercase}
 .lib-d{font-size:13px;color:var(--smoke);line-height:1.55;margin-top:6px}
+.lib-ask{display:inline-block;margin-top:8px;padding:0;font-size:11px;font-family:'DM Sans',sans-serif;color:var(--gold);background:none;border:none;cursor:pointer;letter-spacing:0.02em}
+.lib-ask:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -195,13 +197,18 @@ let LIB_TAGS=null;
 async function libTok(){ return (await SB.auth.getSession()).data.session?.access_token||null; }
 async function logTap(context,tag,contentId){ try{ await SB.from('client_tag_events').insert({client_id:UID,tag:tag||null,context:context,content_id:contentId||null}); }catch(e){} }
 
+// P1.10.6: open the Riley conversation layer with this item as context. Falls back to /chat.
+function askRiley(ctx){ if(window.openRileyLayer)window.openRileyLayer({message:ctx}); else location.href='/chat'; }
+
 function libCard(it){
   const dur=it.duration?(it.duration+' min · '):'';
   const meta=esc((it.creator||'')+((it.creator&&it.type)?' · ':'')+(it.type||''));
   const d=it.description?('<div class="lib-d">'+esc(String(it.description).slice(0,140))+'</div>'):'';
+  const askAttr=esc('Can we talk about "'+String(it.title||'this')+'"?').replace(/"/g,'&quot;');
+  const ask='<button type="button" class="lib-ask" onclick="event.preventDefault();event.stopPropagation();askRiley(this.getAttribute(\'data-ctx\'));" data-ctx="'+askAttr+'">💬 Ask Riley about this</button>';
   return '<a class="lib-item" href="'+esc(it.url||'#')+'" target="_blank" rel="noopener" onclick="logTap(\'asset_click\',null,\''+esc(it.id)+'\')">'+
     '<div class="lib-ic">'+(ICON[it.type]||'✨')+'</div>'+
-    '<div class="lib-body"><div class="lib-t">'+esc(it.title)+'</div><div class="lib-m">'+dur+meta+'</div>'+d+'</div></a>';
+    '<div class="lib-body"><div class="lib-t">'+esc(it.title)+'</div><div class="lib-m">'+dur+meta+'</div>'+d+ask+'</div></a>';
 }
 function renderItems(items){
   const box=document.getElementById('lib-results');

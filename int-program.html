@@ -115,6 +115,8 @@ const PKEY=new URLSearchParams(location.search).get('p')||'';
 let TOKEN=null, STATE=null, VIEW='map';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// P1.10.6: open the Riley conversation layer with this session as context. Falls back to /chat.
+function askRiley(ctx){ if(window.openRileyLayer)window.openRileyLayer({message:ctx}); else location.href='/chat'; }
 function mdLite(raw){
   if(!raw) return '';
   const lines=String(raw).split('\n'); let html='',list=null;
@@ -261,6 +263,8 @@ async function openSession(n){
 }
 function renderSession(d){
   const s=d.session, n=s.session_number, ws=s.work_spec||{}, opts=s.commit_options||[];
+  const sLabel=(n===0?'Session Zero':'Session '+n)+' - "'+String(s.title||'')+'"';
+  const askCtx=esc('I\'m on '+sLabel+' in '+programTitle()+'. Can we talk about it?');
   let html='';
   html+='<div class="sphase">'+esc(s.phase||'')+' · Session '+(n===0?'Zero':n)+'</div>';
   html+='<h1 class="stitle">'+esc(s.title)+(s.is_milestone?'<span class="ms">Milestone</span>':'')+'</h1>';
@@ -299,6 +303,9 @@ function renderSession(d){
   html+='<input type="datetime-local" id="commitwhen">';
   html+='<button class="btn" id="commitbtn" onclick="doCommit('+n+')">'+(n>=14?'Finish the program →':'Commit & close this session →')+'</button>';
   html+='<div class="saved" id="commitmsg"></div></div>';
+
+  // Ask Riley about this session (opens the conversation layer with context)
+  html+='<div style="margin:14px 0 0"><button type="button" onclick="askRiley(this.getAttribute(\'data-ctx\'))" data-ctx="'+askCtx+'" style="font-size:11px;color:var(--gold);cursor:pointer;background:none;border:none;padding:0;font-family:inherit;letter-spacing:0.02em">💬 Ask Riley about this</button></div>';
 
   // Talk this through with Riley - the session, conversationally. Cap-exempt (context carries enrollment_id).
   CHAT_MSGS=[];

@@ -90,6 +90,8 @@ const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_pu
 let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),ENROLL=null,STEP=null,PROGRAM=null;   // "app day": 4am-local rollover (matches the daily check-in)
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function qs(k){return new URLSearchParams(location.search).get(k);}
+// P1.10.6: open the Riley conversation layer with this step as context. Falls back to /chat.
+function askRiley(ctx){ if(window.openRileyLayer)window.openRileyLayer({message:ctx}); else location.href='/chat'; }
 
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
@@ -161,6 +163,8 @@ async function loadJourney(){
 
 function renderStep(step,day,dur,alreadyDone){
   const pct=Math.round((day-1)/dur*100);
+  const pName=(PROGRAM&&(PROGRAM.tagline||PROGRAM.title))||'my journey';
+  const askCtx=esc('I\'m on Day '+day+' of '+pName+' - "'+String(step.title||'')+'". Can we talk about it?').replace(/"/g,'&quot;');
   const ct={breathwork:'🫁',walk:'🚶',journal_prompt:'📖',music:'🎵',podcast:'🎧',recipe:'🍳',workout:'🏋️',community_prompt:'🤝',celebration:'✨'};
   const recs=(step.recommended_content_types||[]).map(t=>`<span style="display:inline-flex;align-items:center;gap:5px;padding:5px 11px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;font-size:11px;color:var(--smoke)">${ct[t]||'•'} ${t.replace(/_/g,' ')}</span>`).join('');
   document.getElementById('content').innerHTML=`
@@ -197,6 +201,9 @@ function renderStep(step,day,dur,alreadyDone){
         ? '<div style="display:flex;align-items:center;gap:8px;color:var(--green2);font-size:13px;font-weight:500"><span>✓</span> Day '+day+' complete. Come back tomorrow for the next step.</div>'
         : '<button class="btn btn-gold" id="complete-btn" style="font-size:13px;padding:11px 26px" onclick="completeStep('+day+')">Complete Day '+day+' →</button>'}
     </div>
+
+    <!-- Ask Riley about this step -->
+    <div style="margin-top:16px"><button type="button" onclick="askRiley(this.getAttribute('data-ctx'))" data-ctx="${askCtx}" style="font-size:11px;color:var(--gold);cursor:pointer;background:none;border:none;padding:0;font-family:'DM Sans',sans-serif;letter-spacing:0.02em">💬 Ask Riley about this</button></div>
   `;
 }
 

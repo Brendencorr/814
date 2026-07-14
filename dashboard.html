@@ -113,6 +113,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .tc-trend{font-size:10px;font-family:'DM Mono',monospace}
 .tc-up{color:var(--green2)}.tc-down{color:var(--rust2)}.tc-flat{color:var(--smoke)}
 .tc-value{font-family:'DM Serif Display',serif;font-size:30px;color:var(--parchment);line-height:1;margin-bottom:2px}
+.tc-empty-line{font-size:13px;color:var(--smoke);font-style:italic;line-height:1.35;margin:8px 0 3px}
 .tc-sub{font-size:10px;color:var(--smoke)}
 .tc-chart{position:absolute;bottom:0;left:0;right:0;height:32px;opacity:0.85}
 .tc-go{position:absolute;top:14px;right:15px;font-size:15px;line-height:1;color:var(--smoke2);transition:color .2s,transform .2s}
@@ -328,10 +329,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
-    <!-- "Track your day" cards render HERE (top) for members who have everything unlocked (Coach) - their
-         daily tracker hub stays up top for quick logging. For FREE members (some features locked) it
-         renders BELOW the brief instead (#explore-slot), so the upgrade isn't pushed on login. loadExplore
-         picks the slot by tier. (Brenden: move-below-brief is Companion-only.) -->
+    <!-- P1.5: compact tool chips (Check-In / Movement / Nourishment / Rest / Life Map / Calendar) render
+         here - one quiet row, all tiers. loadExplore fills it. -->
     <div id="track-top-slot"></div>
 
     <!-- v2.3 C: secondary features (not in the primary nav) - reachable from the Clarity home. -->
@@ -352,7 +351,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- Brief -->
     <div class="brief">
           <div class="brief-head">
-            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals - in your inbox by 6:00 AM.</div></div>
+            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals.</div></div>
             <div id="bc-regen-wrap" style="text-align:right;flex-shrink:0;padding-left:16px;display:none"><button onclick="genDashBrief(true)" id="bc-regen" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--smoke2);padding:5px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em">↻ Regenerate</button></div>
           </div>
           <div id="brief-body" style="padding:4px 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
@@ -365,8 +364,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
           <div id="conv-list"><div class="empty">Loading…</div></div>
         </div>
 
-    <!-- Combined "Track your day" cards - MOVED below the brief so the upgrade isn't pushed on login (Brenden). -->
-    <div id="explore-slot"></div>
   </div>
   <!-- Brand ethos - unattributed; stands as value, not testimonial -->
   <div class="app-ethos-band">
@@ -460,6 +457,8 @@ function alertTimeAgo(iso){
 function renderAlerts(unread){
   var badge=document.getElementById('abadge');
   if(badge){if(unread>0){badge.textContent=unread>9?'9+':String(unread);badge.style.display='flex';}else{badge.style.display='none';}}
+  // P2.4: no mystery numbers - the bell badge is the unread-notification count; say so on hover.
+  var bell=document.getElementById('abell'); if(bell)bell.title=unread>0?(unread+' unread notification'+(unread>1?'s':'')):'Notifications';
   var list=document.getElementById('alist');if(!list)return;
   if(!ALERTS.length){list.innerHTML='<div class="aempty">No notifications yet.<br>New additions to your library will show up here.</div>';return;}
   list.innerHTML=ALERTS.map(function(a){
@@ -648,9 +647,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
             document.getElementById('hero-msg').textContent=_n.note;
             if(_s!=null){ countUp(document.getElementById('hero-score'),_s,1100); setTimeout(()=>ring.style.strokeDashoffset=402*(1-_s/100),100); }
             else { document.getElementById('hero-score').textContent='·'; setTimeout(()=>ring.style.strokeDashoffset=402,100); }
-            const _b=[['Foundation',_v.F],['Practice',_v.P],['Direction',_v.D]].filter(x=>x[1]!=null);
-            if(_b.length){ document.getElementById('hero-breakdown').innerHTML=_b.map(x=>`<div class="hb-row"><span class="hb-label">${x[0]}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:#c9a84c" data-w="${Math.round(x[1])}"></div></div><span class="hb-val">${Math.round(x[1])}</span></div>`).join('');
-              setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),220); }
+            // P1.1: raw layer numbers (FOUNDATION/PRACTICE/DIRECTION) removed - canon (Clarity v2.2 spec
+            // section 14) rejects showing the decomposition on the dashboard. The hero shows the Clarity
+            // number + narration only; the layers live as NARRATION in the Clarity detail view.
+            const _hb=document.getElementById('hero-breakdown'); if(_hb){_hb.innerHTML='';_hb.style.display='none';}
           }
           // Three-touch onboarding (§10) as IN-SCREEN CARDS that never obscure the score
           // (§15.23). Touch 1 = first login (stage 0); Touch 3 = day-14 tune-up, suggestions
@@ -777,6 +777,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const hasFeat=k=>!!(ENT&&ENT.features&&ENT.features[k]&&ENT.features[k].access===true);
     function tileCard(label,value,sub,sparkData,color,id,href){
       const arrow=sparkData.length>=2?(sparkData[sparkData.length-1]>sparkData[0]?'<span class="tc-trend tc-up">▲</span> ':sparkData[sparkData.length-1]<sparkData[0]?'<span class="tc-trend tc-down">▼</span> ':''):'';
+      if(value==='-'||value==null||value===''){
+        // P1.6: this dim is enabled but nothing's logged yet - warm framing, never a bare dash.
+        return `<a class="tcard" href="${href}"><span class="tc-go">›</span><div class="tc-head"><span class="tc-label">${label}</span></div><div class="tc-empty-line">nothing logged yet</div><div class="tc-sub" style="color:var(--gold);opacity:0.8">Log it →</div></a>`;
+      }
       return `<a class="tcard" href="${href}"><span class="tc-go">›</span><div class="tc-head"><span class="tc-label">${label}</span></div><div class="tc-value">${value}</div><div class="tc-sub">${arrow}${sub}</div><div class="tc-chart">${sparkData.length?areaSpark(id,sparkData,color):''}</div></a>`;
     }
     // Sobriety: a full ring means nothing (you can't be "partly" N-days sober). Show the
@@ -926,13 +930,16 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 // ── EVERYTHING RILEY OFFERS - reliable, entitlement-driven locked previews ────
 // Shows every member (except Coach, who has it all) the full menu of what they
 // could unlock - so the value of upgrading is always visible on the Today page.
-const EXPLORE_FLAGSHIP=[
-  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Coach', href:'/tracker'},
-  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Coach', href:'/workouts'},
-  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Coach', href:'/nutrition'},
-  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Coach', href:'/sleep'},
-  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach', href:'/lifemap'},
-  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach', href:'/finance'}
+// P1.5: compact tool chips (was six large cards). One quiet row up top - "access without architecture".
+// Financial Goals dropped (-> Mentor, P1.2); Calendar joins the row. Renders for every tier; a subtle
+// lock marks what a free member hasn't unlocked (routes to /programs), never a hard upsell.
+const TOOL_CHIPS=[
+  {feat:'daily_checkin',     icon:'📖', label:'Check-In',    href:'/tracker'},
+  {feat:'tracker_fitness',   icon:'🤍', label:'Movement',    href:'/workouts'},
+  {feat:'tracker_nutrition', icon:'🍃', label:'Nourishment', href:'/nutrition'},
+  {feat:'tracker_sleep',     icon:'🌙', label:'Rest',        href:'/sleep'},
+  {feat:'knowledge_graph',   icon:'🗺️', label:'Life Map',    href:'/lifemap'},
+  {feat:'tracker_calendar',  icon:'📅', label:'Calendar',    href:'/calendar'}
 ];
 async function loadExplore(){
   try{
@@ -945,23 +952,18 @@ async function loadExplore(){
       ent=await r.json(); try{sessionStorage.setItem(k,JSON.stringify(ent));}catch(e){}
     }
     const has=f=>ent&&ent.features&&ent.features[f]&&ent.features[f].access===true;
-    const anyLocked=EXPLORE_FLAGSHIP.some(f=>!has(f.feat));
-    // Free members (something locked): render BELOW the brief so the upgrade isn't pushed on login.
-    // Paid members (all unlocked): keep the tracker hub UP TOP for quick logging. (Brenden: Companion-only move)
-    const slot=document.getElementById(anyLocked?'explore-slot':'track-top-slot');
-    const other=document.getElementById(anyLocked?'track-top-slot':'explore-slot');
-    if(other)other.innerHTML='';
-    if(!slot)return;
+    const slot=document.getElementById('track-top-slot'); if(!slot)return;
+    const other=document.getElementById('explore-slot'); if(other)other.innerHTML='';
     const pend=(typeof window._pendHabits==='number'?window._pendHabits:0);
-    const cards=EXPLORE_FLAGSHIP.map(function(f){
-      if(has(f.feat)){
-        const dot=(f.feat==='daily_checkin'&&pend>0)?'<span style="min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-family:\'DM Mono\',monospace" title="'+pend+' habit'+(pend>1?'s':'')+' left today">'+pend+'</span>':'<span style="font-size:14px;color:var(--smoke2)">→</span>';
-        return '<div onclick="location.href=\''+f.href+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.6),rgba(16,14,12,0.45));border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.4)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.07)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px">'+f.icon+'</span>'+dot+'</div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Open →</div></div>';
-      }
-      return '<div onclick="track(\'explore_unlock_click\',{feat:\''+f.feat+'\'});location.href=\'/programs?unlock='+f.feat+'\'" style="background:linear-gradient(160deg,rgba(26,23,20,0.5),rgba(16,14,12,0.4));border:1px dashed rgba(201,168,76,0.28);border-radius:8px;padding:18px;cursor:pointer;transition:border-color .2s,transform .2s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.6)\';this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.borderColor=\'rgba(201,168,76,0.28)\';this.style.transform=\'none\'"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><span style="font-size:22px;opacity:0.85">'+f.icon+'</span><span style="font-size:12px;opacity:0.7">🔒</span></div><div style="font-size:14px;color:var(--parchment);font-weight:600;line-height:1.25;margin-bottom:5px">'+f.title+'</div><div style="font-size:12px;color:var(--smoke);line-height:1.55;margin-bottom:12px">'+f.desc+'</div><div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--gold);letter-spacing:0.04em">Unlock with '+f.need+' →</div></div>';
+    const chips=TOOL_CHIPS.map(function(c){
+      const ok=has(c.feat);
+      const href=ok?c.href:('/programs?unlock='+c.feat);
+      const lock=ok?'':'<span style="font-size:9px;opacity:0.55;margin-left:1px">🔒</span>';
+      const dot=(c.feat==='daily_checkin'&&ok&&pend>0)?'<span style="min-width:15px;height:15px;padding:0 4px;border-radius:8px;background:var(--gold);color:var(--ink);font-size:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-family:\'DM Mono\',monospace;margin-left:2px" title="'+pend+' habit'+(pend>1?'s':'')+' left today">'+pend+'</span>':'';
+      return '<a href="'+href+'" style="display:inline-flex;align-items:center;gap:6px;padding:8px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;color:var(--parchment);text-decoration:none;font-size:12.5px;white-space:nowrap;transition:border-color .15s" onmouseover="this.style.borderColor=\'rgba(201,168,76,0.4)\'" onmouseout="this.style.borderColor=\'rgba(255,255,255,0.07)\'"><span style="font-size:14px">'+c.icon+'</span>'+c.label+lock+dot+'</a>';
     }).join('');
-    slot.innerHTML='<div style="margin:4px 0 8px"><div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:'+(anyLocked?'4px':'14px')+'">Track your day</div>'+(anyLocked?'<div style="font-size:12.5px;color:var(--smoke);line-height:1.5;margin-bottom:16px">Log what you\'re working on - and see what deepens with Riley Coach.</div>':'')+'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px">'+cards+'</div></div>';
-  }catch(e){console.warn('explore (non-fatal):',e.message);}
+    slot.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">'+chips+'</div>';
+  }catch(e){console.warn('tool chips (non-fatal):',e.message);}
 }
 
 // ── RILEY BRAIN - the decision engine drives "For You Today" ──────────────────

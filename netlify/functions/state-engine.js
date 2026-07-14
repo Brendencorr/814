@@ -62,7 +62,7 @@ async function gatherSignals(supabase, userId) {
     supabase.from("daily_checkins").select("mood,sleep_hours,notes,checkin_date").eq("user_id", userId).gte("checkin_date", ten).order("checkin_date", { ascending: false }),
     supabase.from("fitness_logs").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("logged_date", week),
     supabase.from("nutrition_logs").select("*", { count: "exact", head: true }).eq("user_id", userId).gte("logged_date", week),
-    supabase.from("habits").select("id").eq("user_id", userId).eq("is_active", true),
+    supabase.from("habits").select("id,counts_toward_clarity").eq("user_id", userId).eq("is_active", true),
     supabase.from("habit_completions").select("habit_id").eq("user_id", userId).gte("completed_date", week),
     supabase.from("sobriety_tracker").select("start_date").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
     supabase.from("user_program_progress").select("program_name,programs(title)").eq("user_id", userId).eq("status", "active").limit(1),
@@ -75,8 +75,14 @@ async function gatherSignals(supabase, userId) {
   const reflectionsThisWeek = checkins.filter(c => c.checkin_date >= week && c.notes && String(c.notes).trim()).length;
   const checkinDays7 = new Set(checkins.filter(c => c.checkin_date >= week).map(c => c.checkin_date)).size;
 
-  const habitList = (habits.status === "fulfilled" && habits.value.data) || [];
-  const comps = (habitComp.status === "fulfilled" && habitComp.value.data) || [];
+  // v2.3 B.2: the Habits dim scores over ONLY habits that count toward Clarity (default true).
+  // Both the completions (numerator) and the active-habit denominator use the included set. Zero
+  // included -> habitRate null, so the dim renormalizes away (never scores an empty set as failure).
+  const habitListAll = (habits.status === "fulfilled" && habits.value.data) || [];
+  const habitList = habitListAll.filter((h) => h.counts_toward_clarity !== false);
+  const countIds = new Set(habitList.map((h) => h.id));
+  const compsAll = (habitComp.status === "fulfilled" && habitComp.value.data) || [];
+  const comps = compsAll.filter((c) => countIds.has(c.habit_id));
   const habitRate = habitList.length ? Math.min(100, (comps.length / (habitList.length * 7)) * 100) : null;
 
   const soberRow = (sober.status === "fulfilled" && sober.value.data && sober.value.data[0]) || null;

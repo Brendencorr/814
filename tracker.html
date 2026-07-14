@@ -391,7 +391,8 @@ async function loadHabits(){
   const dSet=new Set((done||[]).map(x=>x.habit_id));
   const el=document.getElementById('habit-list');
   if(!habits||!habits.length){el.innerHTML='<div style="font-size:12px;color:var(--smoke);padding:8px 0">No habits yet - add one below.</div>';return;}
-  el.innerHTML=habits.map(h=>{const d=dSet.has(h.id);return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)" id="hr-${h.id}"><button onclick="toggleHabit('${h.id}')" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${d?'var(--green2)':'rgba(255,255,255,0.15)'};background:${d?'var(--green2)':'transparent'};color:white;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">${d?'✓':''}</button><span style="flex:1;font-size:13px;color:${d?'var(--smoke)':'var(--parchment)'};${d?'text-decoration:line-through':''}">${h.emoji||''} ${esc(h.title)}</span><button onclick="deleteHabit('${h.id}')" aria-label="Delete habit" title="Delete habit" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div>`;}).join('');
+  let isFull=false; try{const _e=JSON.parse(sessionStorage.getItem('ent_'+UID)||'{}'); isFull=!!(_e&&(_e.tier==='companion'||_e.tier==='coach'||_e.plan==='companion'));}catch(_){}
+  el.innerHTML=habits.map(h=>{const d=dSet.has(h.id);return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)" id="hr-${h.id}"><button onclick="toggleHabit('${h.id}')" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${d?'var(--green2)':'rgba(255,255,255,0.15)'};background:${d?'var(--green2)':'transparent'};color:white;font-size:10px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center">${d?'✓':''}</button><span style="flex:1;font-size:13px;color:${d?'var(--smoke)':'var(--parchment)'};${d?'text-decoration:line-through':''}">${h.emoji||''} ${esc(h.title)}</span>${isFull?`<button onclick="setCounts('${h.id}',${h.counts_toward_clarity===false})" title="Counts toward Clarity - tap to change" style="background:none;border:none;cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.03em;color:${h.counts_toward_clarity===false?'var(--smoke2)':'var(--gold)'};flex-shrink:0">${h.counts_toward_clarity===false?'○ clarity':'◆ clarity'}</button>`:''}<button onclick="deleteHabit('${h.id}')" aria-label="Delete habit" title="Delete habit" style="background:none;border:none;color:var(--smoke2);cursor:pointer;font-size:16px">×</button></div>`;}).join('');
 }
 async function toggleHabit(id){
   const row=document.getElementById('hr-'+id);if(!row)return;
@@ -410,6 +411,13 @@ async function addHabit(){
   catch(e){A('h-alert','Error: '+e.message,false);}finally{setBtn('h-btn',false,'Add Habit');}
 }
 async function deleteHabit(id){try{await SB.from('habits').update({is_active:false}).eq('id',id);await loadHabits();}catch(e){console.error(e);}}
+// v2.3 B.2: per-habit "counts toward Clarity" toggle (Companion only). Applies on next Clarity
+// recompute; logged to habit_scoring_changes. (Spec refinements - 4am rollover, baseline
+// recalibration, 1-change/7d budget, conversational parity - are flagged in the build log.)
+async function setCounts(id,val){try{let oldV=true;try{const {data:c}=await SB.from('habits').select('counts_toward_clarity').eq('id',id).maybeSingle();if(c)oldV=c.counts_toward_clarity;}catch(_){}
+  await SB.from('habits').update({counts_toward_clarity:val}).eq('id',id);
+  try{await SB.from('habit_scoring_changes').insert({habit_id:id,user_id:UID,old_value:oldV,new_value:val});}catch(_){}
+  await loadHabits();}catch(e){console.error(e);}}
 async function loadGoals(){
   const {data}=await SB.from('user_goals').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order');
   const el=document.getElementById('goal-list');

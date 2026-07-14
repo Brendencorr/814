@@ -219,9 +219,9 @@ function renderLocked(tier,locked){
   if(tier!=='guide'||!locked||!locked.length){box.innerHTML='';return;}
   box.innerHTML='<div class="card" style="border-color:rgba(201,168,76,0.3);background:linear-gradient(180deg,rgba(201,168,76,0.08),rgba(20,18,16,0.5))">'+
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">🔒</span><div class="card-title" style="margin:0">The full library</div></div>'+
-    '<div class="card-sub">More meditations, podcasts, and practices are part of Companion. A peek:</div>'+
+    '<div class="card-sub">More meditations, podcasts, and practices are part of Coach. A peek:</div>'+
     '<div style="display:flex;flex-direction:column;gap:6px;margin:10px 0 14px">'+locked.map(function(l){return '<div style="display:flex;align-items:center;gap:8px;color:var(--smoke);font-size:13px"><span>'+(ICON[l.type]||'✨')+'</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(l.title)+'</span><span style="font-size:11px;color:var(--smoke2)">🔒</span></div>';}).join('')+'</div>'+
-    '<a href="/programs?unlock=library" class="btn btn-gold" onclick="logTap(\'locked_tap\',null,null)">See what Companion unlocks →</a></div>';
+    '<a href="/programs?unlock=library" class="btn btn-gold" onclick="logTap(\'locked_tap\',null,null)">See what Coach unlocks →</a></div>';
 }
 async function libInit(){
   try{
@@ -293,7 +293,7 @@ async function libTag(tag){ document.getElementById('lib-q').value=''; logTap('l
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -303,14 +303,14 @@ async function libTag(tag){ document.getElementById('lib-q').value=''; logTap('l
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

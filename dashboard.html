@@ -348,6 +348,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <a href="/conversations" style="color:var(--smoke);text-decoration:none">💭 Past conversations</a>
     </div>
 
+    <!-- v2.3.1: Mentor coming-soon lives in the dashboard (Brenden - removed from marketing). Teaser only; not purchasable. -->
+    <div class="card" style="padding:14px 17px;margin-bottom:16px;border-style:dashed">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:7px">Coming later - Riley Mentor</div>
+      <div style="font-size:13px;color:var(--parchment);line-height:1.6;opacity:0.92">A deeper tier down the road: <strong style="color:var(--gold)">community</strong> - real people walking the same roads - and <strong style="color:var(--gold)">upload your history</strong> so Riley knows you from day one. Nothing to do yet; founding members hear about it first.</div>
+    </div>
+
     <!-- For You Today - Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
@@ -952,12 +958,12 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 // Shows every member (except Coach, who has it all) the full menu of what they
 // could unlock - so the value of upgrading is always visible on the Today page.
 const EXPLORE_FLAGSHIP=[
-  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Companion'},
-  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Companion'},
-  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Companion'},
-  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Companion'},
-  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Companion'},
-  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Companion'}
+  {feat:'daily_checkin',      icon:'📖', title:'Reflection & Daily Check-In', desc:'Track sobriety, mood, sleep, habits and goals - Riley learns from every entry.', need:'Riley Coach'},
+  {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Coach'},
+  {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Coach'},
+  {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Coach'},
+  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach'},
+  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach'}
 ];
 async function loadExplore(){
   try{
@@ -1366,7 +1372,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -1376,14 +1382,14 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -1433,8 +1439,8 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     var card=document.createElement('div');
     card.style.cssText='background:linear-gradient(135deg,rgba(201,168,76,0.12),var(--ink2));border:1px solid rgba(201,168,76,0.28);border-radius:12px;padding:22px 24px;margin-bottom:20px';
     card.innerHTML='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);margin-bottom:8px">The weekend&rsquo;s over - and I&rsquo;m still here.</div>'
-      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Guide. If these two days felt like something you&rsquo;d want more of, Companion means we can talk like this any time - no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><a href="/programs?src=post_weekend" class="tbtn tbtn-gold" style="text-decoration:none">See Companion</a><button class="tbtn tbtn-ghost" id="pw-dismiss">Maybe later</button></div>';
+      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Companion. If these two days felt like something you&rsquo;d want more of, Coach means we can talk like this any time - no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap"><a href="/programs?src=post_weekend" class="tbtn tbtn-gold" style="text-decoration:none">See Coach</a><button class="tbtn tbtn-ghost" id="pw-dismiss">Maybe later</button></div>';
     content.insertAdjacentElement('afterbegin',card);
     try{localStorage.setItem('pw_ask_seen_'+uid,'1');}catch(e){}
     try{fetch('/.netlify/functions/weekend-ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'seen',token:tok})});}catch(e){}
@@ -1466,7 +1472,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     var lab=document.createElement('span');
     lab.textContent='PREVIEW'; lab.style.cssText='font-size:8px;font-family:DM Mono,monospace;color:#c9a84c;letter-spacing:0.12em;padding:0 8px';
     bar.appendChild(lab);
-    [['','Admin'],['guide','Guide'],['companion','Companion'],['coach','Coach']].forEach(function(t){
+    [['','Admin'],['guide','Companion'],['companion','Coach'],['coach','Mentor']].forEach(function(t){
       var on=cur===t[0];
       var b=document.createElement('button');
       b.textContent=t[1];

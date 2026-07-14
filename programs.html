@@ -183,7 +183,7 @@ function rileyUnlockWaitlist(){
   const feat=new URLSearchParams(location.search).get('unlock'); if(!feat) return;
   // Companion is now everything - every unlock routes to Companion (Coach is a future tier, not purchasable).
   const plan='companion';
-  const label='Riley Companion';
+  const label='Riley Coach';
   const tagline='Riley walks with you.';
   const ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;z-index:9500;display:flex;align-items:center;justify-content:center;background:rgba(6,6,8,0.85);backdrop-filter:blur(5px);padding:20px';
@@ -274,7 +274,7 @@ async function loadPrograms(){
   }catch(e){}
   const inc=data.included||[];
   if(incEl) incEl.innerHTML = inc.length ? inc.map(function(p){return programCard(p,true);}).join('')
-    : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet - Companion includes the 3 self-guided programs, Coach includes all of them.</div>';
+    : '<div style="font-size:13px;color:var(--smoke);padding:4px 0;grid-column:1/-1">Nothing included on your plan yet - Coach includes all the self-guided programs.</div>';
   const av=data.available||[];
   if(addEl){
     if(!av.length){ addEl.innerHTML='<div style="font-size:13px;color:var(--smoke)">You have every program. 🎉</div>'; return; }
@@ -378,7 +378,7 @@ async function buyProgram(key){
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -388,14 +388,14 @@ async function buyProgram(key){
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

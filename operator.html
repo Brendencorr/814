@@ -597,9 +597,9 @@ header{background:var(--surface);border-bottom:1px solid var(--border);height:54
             <label style="display:block;font-family:'DM Mono',monospace;font-size:.64rem;color:var(--muted2);text-transform:uppercase;letter-spacing:.13em;margin:0 0 .35rem">Membership</label>
             <select id="nu-tier"
               style="width:100%;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.6rem .8rem;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-bottom:1rem">
-              <option value="guide">Guide - free</option>
-              <option value="companion">Companion - comped</option>
-              <option value="coach">Coach - comped</option>
+              <option value="guide">Companion - free</option>
+              <option value="companion">Coach - comped</option>
+              <option value="coach">Mentor - comped</option>
             </select>
           </div>
           <div style="flex:1;min-width:180px">
@@ -1490,7 +1490,7 @@ async function loadEngagement(btn){
     renderSafety(sd,'safety-body-eng');updateSafetyBadge(sd.open_count);markSafetySeen(sd);
   }catch(se){var sb=document.getElementById('safety-body-eng');if(sb)sb.innerHTML='<div class="em">Safety queue unavailable - '+engEsc(se.message)+'</div>';}
 }
-var ENG_TIER_LABEL={guide:['Guide','var(--muted2)'],companion:['Companion','var(--gold)'],coach:['Coach','var(--gold)'],alacarte:['À la carte','var(--sage)']};
+var ENG_TIER_LABEL={guide:['Companion','var(--muted2)'],companion:['Coach','var(--gold)'],coach:['Mentor','var(--gold)'],alacarte:['À la carte','var(--sage)']};
 function engTierBadge(tier){
   var m=ENG_TIER_LABEL[tier];
   if(!m)return'';
@@ -1500,7 +1500,7 @@ function engTierBadge(tier){
 // tab and the Home "Clients" widget. `prefix` namespaces the DOM ids + state so the two coexist.
 // SEG_MAIL maps a segment → the lifecycle email checked per member when that segment is selected.
 var SEG_MAIL={new:'welcome',guide:'welcome',companion:'welcome',coach:'welcome',cooling:'brief',active:'brief',dormant:'reengagement'};
-var SEG_LABEL={all:'All',attn:'Needs check-in',guide:'Guide',companion:'Companion',coach:'Coach',new:'New',cooling:'Cooling',dormant:'Dormant',active:'Active'};
+var SEG_LABEL={all:'All',attn:'Needs check-in',guide:'Companion',companion:'Coach',coach:'Mentor',new:'New',cooling:'Cooling',dormant:'Dormant',active:'Active'};
 function engSegMatch(u,seg){ if(seg==='all')return true; if(seg==='attn')return !!u._attn; if(seg==='guide'||seg==='companion'||seg==='coach')return u.tier===seg; return u.state===seg; }
 function segSelect(prefix,cur){
   function opt(v){return '<option value="'+v+'"'+(cur===v?' selected':'')+'>'+SEG_LABEL[v]+'</option>';}
@@ -1621,7 +1621,7 @@ function engTrackerHtml(title,count){
       '<select onchange="engFilterChange(\'paid\',this.value)" id="eng-filter-paid" title="Paid status" '+SEL+'>'+
         '<option value="all">All plans</option>'+
         '<option value="paid">Paid only</option>'+
-        '<option value="unpaid">Free / Guide only</option>'+
+        '<option value="unpaid">Free / Companion only</option>'+
       '</select>'+
       '<select onchange="engFilterChange(\'programs\',this.value)" id="eng-filter-programs" title="Programs" '+SEL+'>'+
         '<option value="all">All programs</option>'+
@@ -2017,7 +2017,7 @@ async function pricingApi(action,extra){
   if(!r.ok){var e=await r.json().catch(function(){return{};});throw new Error(e.error||('HTTP '+r.status));}
   return await r.json();
 }
-var TIER_LABEL={0:'À la carte',1:'Guide',2:'Companion',3:'Coach'};
+var TIER_LABEL={0:'À la carte',1:'Companion',2:'Coach',3:'Mentor'};
 var STATUS_COLOR={draft:'var(--muted2)',locked:'var(--gold)',live:'var(--green)',retired:'var(--red)'};
 async function loadPricing(btn){
   gs('y',btn);
@@ -2152,7 +2152,7 @@ function renderPricing(products,limits,freeAccess){
   document.getElementById('pricing-body').innerHTML=
     '<div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem"><div class="cl" style="margin:0">Programs</div><div style="font-family:DM Mono,monospace;font-size:10px;color:var(--muted2)">'+products.length+' products</div></div>'+
     summary+fa+groups+
-    '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Guide - Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
+    '<div class="sh" style="margin:1.4rem 0 .6rem">Riley Companion - Usage Limits <span style="color:var(--muted2);font-weight:400;font-size:.7rem">(the currency of the free tier is quantity, not dollars)</span></div>'+limitRows;
 }
 async function setProductStatus(key,status){try{await pricingApi('update_product',{key:key,patch:{status:status}});loadPricing();}catch(e){window.alert(e.message);}}
 async function editProductPrice(key,current){
@@ -2665,15 +2665,15 @@ function renderUserDetail(d){
   }
   var totalMsgs=sessions.reduce(function(a,s){return a+s.message_count;},0);
 
-  // ── TIER BANNER (Guide/Companion; Coach = grandfathered/legacy) ────────────
+  // ── TIER BANNER (Companion/Coach; Mentor = grandfathered/legacy) ────────────
   // Quick-glance display from the legacy programs_purchased text array; the
   // full membership picture (entitlements table, grant/revoke) is the
   // Membership & Entitlements panel further down this same view.
-  var tier='Riley Guide · Free';var tierColor='var(--muted2)';
+  var tier='Riley Companion · Free';var tierColor='var(--muted2)';
   if(profile.programs_purchased&&profile.programs_purchased.length){
     var p=profile.programs_purchased;
-    if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Coach · $34/mo';tierColor='var(--gold)';}
-    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Companion · $19/mo';tierColor='var(--gold)';}
+    if(p.some(function(x){return x.indexOf('Concierge')>=0||x.indexOf('Coach')>=0;})){tier='Riley Mentor · legacy';tierColor='var(--gold)';}
+    else if(p.some(function(x){return x.indexOf('Companion')>=0;})){tier='Riley Coach · $19/mo';tierColor='var(--gold)';}
     else if(p.some(function(x){return x.indexOf('Recovery')>=0||x.indexOf('Journey')>=0||x.indexOf('Sobriety')>=0;})){tier='Sobriety (self-guided) · $8.14';tierColor='var(--sage)';}
     else if(p.some(function(x){return x.indexOf('Nourish')>=0||x.indexOf('Body')>=0;})){tier='Body Rebuild (self-guided) · $8.14';tierColor='var(--sage)';}
     else if(p.some(function(x){return x.indexOf('Carry')>=0||x.indexOf('Grief')>=0;})){tier='Grief & Life Transitions (self-guided) · $8.14';tierColor='var(--sage)';}
@@ -2920,7 +2920,7 @@ function pmRow(key,m){
     +'<div style="padding:.2rem .8rem .8rem">'
     +pmField('Title','ti-'+id,m.title,1)+pmField('Read (lesson)','rd-'+id,m.read_body,5)+pmField('Do (action)','do-'+id,m.do_body,2)
     +(m.keep_body!=null?pmField('Keep tool','kp-'+id,m.keep_body,5):'')
-    +(m.riley_layer!=null?pmField('Riley layer (Companion/Coach only)','rl-'+id,m.riley_layer,2):'')
+    +(m.riley_layer!=null?pmField('Riley layer (Coach only)','rl-'+id,m.riley_layer,2):'')
     +'<button class="spb" style="margin-top:.7rem" onclick="pmSave(\''+key+'\','+m.module_number+',\''+id+'\',this)">Save module '+m.module_number+'</button>'
     +' <span id="st-'+id+'" style="font-size:.72rem;margin-left:.5rem"></span></div></details>';
 }
@@ -3049,9 +3049,10 @@ async function iseSaveCanon(btn){
   finally{ btn.disabled=false; }
 }
 
-// v2.3: Mentor removed entirely; Riley-led interactive programs are now INCLUDED in Companion (not
-// granted separately). Coach kept only as a legacy/grandfathered grant option. Self-guided + bundle stay.
-var GRANT_PRODUCTS=[['reset_free','Riley Guide'],['companion','Riley Companion'],['coach','Riley Coach (legacy)'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)']];
+// v2.3: the old top tier removed; Riley-led interactive programs are now INCLUDED in the paid tier
+// (internal key 'companion', shown as "Coach") - not granted separately. The internal 'coach' key is
+// kept only as a legacy/grandfathered grant option (shown as "Mentor"). Self-guided + bundle stay.
+var GRANT_PRODUCTS=[['reset_free','Riley Companion'],['companion','Riley Coach'],['coach','Riley Mentor (legacy)'],['prog_sobriety','Sobriety ($8.14)'],['prog_grief','Grief & Transitions ($8.14)'],['prog_body','Body Rebuild ($8.14)'],['prog_bundle_selfguided','Self-Guided Bundle ($18.14)']];
 async function loadMembershipPanel(userId){
   var el=document.getElementById('ud-membership');if(!el)return;
   try{
@@ -3506,7 +3507,7 @@ async function renderFinanceOverview(){
     var nc=d.net>=0?'var(--green)':'var(--red)';
     var h='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.3rem">'+
       finCard('Revenue · MRR',finMoney(d.revenue.mrr),'recurring/mo','var(--green)')+
-      finCard('Paid subscriptions',String(b.companion+b.coach),b.companion+' Companion · '+b.coach+' Coach')+
+      finCard('Paid subscriptions',String(b.companion+b.coach),b.companion+' Coach · '+b.coach+' Mentor')+
       finCard('Program purchases',finMoney(d.revenue.programs.total),d.revenue.programs.count+' one-time')+
       finCard('Net / month',finMoney(d.net),d.net>=0?'in the black':'net burn',nc)+
     '</div>';
@@ -3576,7 +3577,7 @@ async function createUserSubmit(){
     if(r.status===401||r.status===403){ sessionStorage.removeItem('814_opkey'); throw new Error('bad-key'); }
     var d={}; try{ d=await r.json(); }catch(e){}
     if(!r.ok||d.error){ res.innerHTML=nuMsg(nuEsc(d.error||'Could not add the member.'),'red'); btn.disabled=false; btn.textContent=lbl; return; }
-    var tierLabel=tier==='guide'?'Guide (free)':(tier==='coach'?'Coach':'Companion');
+    var tierLabel=tier==='guide'?'Companion (free)':(tier==='coach'?'Mentor':'Coach');
     var emailNote='';
     if(sendEmail){
       if(d.emailed&&d.emailed.sent) emailNote=' &middot; welcome email sent ✓';
@@ -3628,8 +3629,8 @@ function mxRegenLetter(){
 }
 function mxOp(op){
   if(!mxCurrent)return; var who=mxCurrent.name||mxCurrent.email||mxCurrent.id;
-  if(op==='comp-companion'){ if(confirm('Comp '+who+' to Companion? (free, no expiry)')) mxPost('comp',{plan_id:'companion'}); }
-  else if(op==='comp-coach'){ if(confirm('Comp '+who+' to Coach? (free, no expiry)')) mxPost('comp',{plan_id:'coach'}); }
+  if(op==='comp-companion'){ if(confirm('Comp '+who+' to Coach? (free, no expiry)')) mxPost('comp',{plan_id:'companion'}); }
+  else if(op==='comp-coach'){ if(confirm('Comp '+who+' to Mentor? (free, no expiry)')) mxPost('comp',{plan_id:'coach'}); }
   else if(op==='weekend'){ if(confirm('Grant '+who+' a 48-hour Companion Weekend?')) mxPost('weekend',{}); }
   else if(op==='alc'){ var sel=document.getElementById('mx-alc'); var p=sel?sel.value:'sobriety'; if(confirm('Grant '+who+' the "'+p+'" program? (free)')) mxPost('grant_alc',{program_id:p}); }
   else if(op==='credit'){ if(confirm('Issue '+who+' a $8.14 credit? (90-day expiry)')) mxPost('credit',{}); }
@@ -3649,8 +3650,8 @@ function mxRenderMember(u){
     +'<div style="font-family:DM Mono,monospace;font-size:.62rem;color:var(--muted2);margin-top:.1rem">'+x(u.id)+'</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem">'+chips+'</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:1rem;padding-top:.9rem;border-top:1px solid var(--border)">'
-    +'<button class="spb" style="margin:0" data-mxop="comp-companion">Comp Companion</button>'
-    +'<button class="spb" style="margin:0" data-mxop="comp-coach">Comp Coach</button>'
+    +'<button class="spb" style="margin:0" data-mxop="comp-companion">Comp Coach</button>'
+    +'<button class="spb" style="margin:0" data-mxop="comp-coach">Comp Mentor</button>'
     +'<button class="bo" data-mxop="weekend">Grant Weekend (48h)</button>'
     +'<select id="mx-alc" style="background:var(--surface2);border:1px solid var(--border-strong);border-radius:6px;color:var(--ink);padding:.5rem .6rem;font-family:\'DM Sans\',sans-serif;font-size:.78rem"><option value="sobriety">sobriety</option><option value="grief">grief</option><option value="body_rebuild">body_rebuild</option></select>'
     +'<button class="bo" data-mxop="alc">Grant à la carte</button>'

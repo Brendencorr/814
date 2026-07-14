@@ -197,7 +197,7 @@ boot();
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -207,14 +207,14 @@ boot();
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

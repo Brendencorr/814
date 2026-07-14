@@ -203,12 +203,12 @@ async function coachEntitled(featureKey){
   }catch(e){return true;} // fail open - never block on a network hiccup
 }
 function coachLockCard(slot,title,body){
-  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Companion →</a></div>`;
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Coach →</a></div>`;
 }
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
   if(!(await coachEntitled('adaptive_workouts'))){
-    return coachLockCard(slot,'Your adaptive workout plan','Riley Companion builds a personalized 7-day plan that adapts to your week - part of Riley Companion. Your workout log below still works on Companion.');
+    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week - part of Riley Coach. Your workout log below still works on the free plan.');
   }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
@@ -348,7 +348,7 @@ async function logWorkout(){
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -358,14 +358,14 @@ async function logWorkout(){
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

@@ -1,10 +1,14 @@
 /**
  * entitlements.js - Server-side source of truth for what a user can access.
  *
- * v4 - Riley Guide (free, persistent) / Companion ($19) / Coach ($34) /
- * Mentor (future, draft) + à la carte ($8.14, content-only). No domain-locking,
+ * Display names (v2.3.1 rename): Riley Companion (free, persistent) / Coach ($19) /
+ * Mentor (future, draft) + à la carte ($8.14, content-only). NOTE: the INTERNAL plan
+ * keys were deliberately NOT renamed - the free tier is still keyed 'guide'/'reset_free',
+ * the $19 paid tier is still keyed 'companion', and the old 'coach' key is retired/folded
+ * into it. So throughout this file a lowercase 'companion' is the PAID tier (shown as
+ * "Coach") and 'guide' is the FREE tier (shown as "Companion"). No domain-locking,
  * ever - every active tier unlocks every domain; tiers differ in platform
- * depth, and Guide's depth is CAPPED (has access, limited quantity) rather
+ * depth, and the free tier's depth is CAPPED (has access, limited quantity) rather
  * than absent. See supabase/migrations/033_pricing_v4.sql + the
  * Program&Pricing updateV4 build package for the full spec.
  *

@@ -264,7 +264,7 @@ body.embed .topbar-actions{display:none}
           style="background:var(--gold);border:none;border-radius:8px;color:var(--ink);font-size:18px;width:44px;height:44px;cursor:pointer;flex-shrink:0;transition:opacity .2s;display:flex;align-items:center;justify-content:center">▶</button>
       </div>
       <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--smoke);font-family:DM Mono,monospace">Riley is an AI companion - not a therapist or doctor. She knows your streak, goals, habits, and programs.</div>
-      <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:'DM Sans',sans-serif">Your daily conversations with Riley (check-in included) are part of the process - <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Companion means no limit, ever</a>.</div>
+      <div id="cap-caption" style="display:none;text-align:center;margin-top:8px;font-size:12.5px;color:var(--gold);font-family:'DM Sans',sans-serif">Your daily conversations with Riley (check-in included) are part of the process - <a href="/programs?src=chat_cap" style="color:var(--gold);font-weight:600">Riley Coach means no limit, ever</a>.</div>
     </div>
   </main>
 </div>
@@ -1137,7 +1137,7 @@ async function signOut() {
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){
     head.classList.toggle('open');
@@ -1147,14 +1147,14 @@ async function signOut() {
 
   function wall(ent,feat){
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Companion'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Companion'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
-      tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
+      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
+      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
+      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
+      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
+      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
+      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

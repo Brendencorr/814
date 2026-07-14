@@ -6,8 +6,8 @@
  *   2. stripe-webhook.js  - maps a paid Stripe price (by lookup_key) back to a Riley grant.
  *   3. stripe-checkout.js - resolves what the member clicked to the Stripe Price to open Checkout with.
  *
- * Mirrors the live `products` table (Guide is free → no Stripe product). Subscription monthly amounts
- * come from that table; annual amounts are canonical (Companion $175/yr, Coach $350/yr). Amounts are cents.
+ * Mirrors the live `products` table (the free tier has no Stripe product). Subscription monthly amounts
+ * come from that table; annual amounts are canonical (the paid tier is $175/yr). Amounts are cents.
  */
 const CURRENCY = "usd";
 
@@ -15,11 +15,11 @@ const CURRENCY = "usd";
 const SUBSCRIPTIONS = [
   {
     riley_plan: "companion",
-    name: "Riley Companion",
-    description: "Riley Companion - Riley walks with you. Riley remembers your conversations and carries them forward: the names, the dates that matter, what you said you'd try, so you never explain yourself twice. Cancel anytime.",
+    name: "Riley Coach",
+    description: "Riley Coach - Riley walks with you. Riley remembers your conversations and carries them forward: the names, the dates that matter, what you said you'd try, so you never explain yourself twice. Cancel anytime.",
     prices: [
-      { lookup_key: "companion_monthly", unit_amount: 1900,  interval: "month", nickname: "Companion · Monthly" },
-      { lookup_key: "companion_annual",  unit_amount: 17500, interval: "year",  nickname: "Companion · Annual" },
+      { lookup_key: "companion_monthly", unit_amount: 1900,  interval: "month", nickname: "Coach · Monthly" },
+      { lookup_key: "companion_annual",  unit_amount: 17500, interval: "year",  nickname: "Coach · Annual" },
     ],
   },
   // Coach subscription retired in v2.3 (folded into Companion). Its Stripe prices are ARCHIVED (not deleted) by the founder - never delete, history/reporting must survive.

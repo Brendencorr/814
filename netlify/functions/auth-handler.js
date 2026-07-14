@@ -93,7 +93,7 @@ async function getSession(supabase, body) {
       const { notifyOperator } = require("./operator-email");
       const whoE = newProfile.full_name || (user.email || "").split("@")[0] || "New member";
       await notifyOperator({ event: "signup", subject: `New signup: ${whoE}`,
-        lines: [["Member", whoE], ["Email", user.email || "-"], ["Plan", "Riley Guide (free)"], ["Joined", new Date().toISOString()]] });
+        lines: [["Member", whoE], ["Email", user.email || "-"], ["Plan", "Riley Companion (free)"], ["Joined", new Date().toISOString()]] });
     } catch (_) {}
     // NOTE: the customer's welcome email is owned by the lifecycle "guide" flow (guide_1,
     // "Welcome to Riley - your first 8 minutes are ready") - do NOT also send email-welcome here or

@@ -236,7 +236,7 @@ exports.handler = async (event) => {
       .map(m => m.module_key);
 
     // ── §9 Entitlement states - surface gated modules as LOCKED PREVIEWS rather
-    // than hiding them, so a Guide member sees what's behind the next tier with
+    // than hiding them, so a Companion member sees what's behind the next tier with
     // an upgrade prompt (instead of never knowing it exists). companion/coach
     // unlock adaptive features; everything gated points to the upgrade path.
     const PRODUCT_UPSELL = "companion";
@@ -248,7 +248,7 @@ exports.handler = async (event) => {
       .map(m => ({
         module_key: m.module_key, title: m.title, type: m.module_type, icon: m.icon,
         description: m.description, locked: true, unlock_tier: PRODUCT_UPSELL,
-        unlock_label: "Unlock with Companion",
+        unlock_label: "Unlock with Coach",
       }));
 
     // ── Content recommendations: match mood, exclude recently-seen (unless loved) ──

@@ -319,15 +319,15 @@ const TEMPLATES = {
     preview: "The one honest difference.",
     html: (v) =>
       p("This is the only pitch I'll make, so I'll make it honestly.") +
-      p("Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Companion, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.") +
+      p("Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Coach, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.") +
       p("It's $19 a month, cancel anytime, and if it isn't right, your first payment is fully refundable within 30 days of purchase.") +
       p("And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.") +
-      btn("See what Companion adds →", SITE + "/home#programs"),
+      btn("See what Coach adds →", SITE + "/home#programs"),
     text: (v) =>
       "This is the only pitch I'll make, so I'll make it honestly.\n\n" +
-      "Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Companion, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.\n\n" +
+      "Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Coach, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.\n\n" +
       "It's $19 a month, cancel anytime, and if it isn't right, your first payment is fully refundable within 30 days of purchase.\n\n" +
-      "And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.\n\nSee what Companion adds → " + SITE + "/home#programs",
+      "And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.\n\nSee what Coach adds → " + SITE + "/home#programs",
   },
 
   // guide_7 RETIRED (July 2026): the founder-authored Month One Letter (guide_5, day 29) now owns the
@@ -452,12 +452,12 @@ const TEMPLATES = {
       p("It's built as 14 short modules - read, do, keep. Go at whatever pace your life allows; there's no schedule and nothing expires.") +
       p("Receipt: " + esc(v.program_name) + " · $8.14 · one-time · non-refundable (it's all delivered, right now, below).") +
       btn("Open Module 1 →", APP + "/programs") +
-      em("One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Companion any time in the next 90 days. You won't hear about this again."),
+      em("One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Coach any time in the next 90 days. You won't hear about this again."),
     text: (v) =>
       "Thanks, " + v.first_name + " - " + v.program_name + " is yours. Not rented, not subscribed: yours, for good.\n\n" +
       "It's built as 14 short modules - read, do, keep. Go at whatever pace your life allows; there's no schedule and nothing expires.\n\n" +
       "Receipt: " + v.program_name + " · $8.14 · one-time · non-refundable (it's all delivered, right now, below).\n\nOpen Module 1 → " + APP + "/programs\n\n" +
-      "One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Companion any time in the next 90 days. You won't hear about this again.",
+      "One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Coach any time in the next 90 days. You won't hear about this again.",
   },
 
   addon_2: {

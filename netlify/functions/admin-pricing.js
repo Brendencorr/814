@@ -1,8 +1,8 @@
 /**
  * admin-pricing.js - Membership & Pricing manager (v4). Team-only.
  *
- * Manages the `products` catalog (Riley Guide/Companion/Coach/Mentor + à la
- * carte) and `usage_limits` (Riley Guide's caps - chat/week, library items,
+ * Manages the `products` catalog (Riley Companion/Coach/Mentor + à la
+ * carte) and `usage_limits` (Riley Companion's caps - chat/week, library items,
  * etc.) - the two tables the Program&Pricing updateV4 admin spec calls the
  * "Programs & Pricing" tab + its "Usage Limits" sub-section.
  *

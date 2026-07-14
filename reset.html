@@ -225,7 +225,7 @@ function render(){
 
   // Day 7 handoff (after the action)
   if(isDay7 && morningDone){
-    html += `<div class="rcard" style="border-color:rgba(201,168,76,0.3)"><div class="rlabel" style="color:var(--gold)">The handoff</div><div style="font-size:14.5px;color:var(--parchment);line-height:1.75">You showed up for seven days. The Guide - this - stays free and never expires. If you want me checking on you, or here every day without limits, that's what Companion and Coach are. No pressure, and no wrong answer.</div><div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><a href="/programs" class="btn btn-gold" style="padding:10px 20px">See what's next →</a><a href="/dashboard" class="btn btn-ghost" style="padding:10px 20px">Stay right here</a></div></div>`;
+    html += `<div class="rcard" style="border-color:rgba(201,168,76,0.3)"><div class="rlabel" style="color:var(--gold)">The handoff</div><div style="font-size:14.5px;color:var(--parchment);line-height:1.75">You showed up for seven days. Companion - this - stays free and never expires. If you want me checking on you, or here every day without limits, that's what Coach is. No pressure, and no wrong answer.</div><div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><a href="/programs" class="btn btn-gold" style="padding:10px 20px">See what's next →</a><a href="/dashboard" class="btn btn-ghost" style="padding:10px 20px">Stay right here</a></div></div>`;
   }
 
   document.getElementById('content').innerHTML=html;
@@ -511,7 +511,7 @@ boot();
       a.classList.toggle('active',p===(a.getAttribute('href')||'').replace(/\/$/,''));
     });
     const planEl=document.getElementById('sb-plan');
-    if(planEl){const t=ent.tier||'guide';planEl.textContent='Riley '+t.charAt(0).toUpperCase()+t.slice(1);}
+    if(planEl){const t=ent.tier||'guide';const TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};planEl.textContent='Riley '+(TL[t]||(t.charAt(0).toUpperCase()+t.slice(1)));}
   }
   window.sbToggleTier=function(head){head.classList.toggle('open');const items=head.nextElementSibling;if(items)items.classList.toggle('open');};
   async function run(){

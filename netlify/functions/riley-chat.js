@@ -32,6 +32,7 @@ const { sendOperatorAlert } = require("./safety-alert");
 const { currentTier } = require("./tier-utils"); // single shared tier resolver
 // Memory v2 (Master Build Spec §1/§8/§9) - all fail-open / dark until an embedding key is set.
 const { callClaude } = require("./anthropic-client");
+const { tierLabel } = require("./tier-labels");
 const { MODELS } = require("./model-router");
 const { embed, toVectorLiteral, embeddingsEnabled } = require("./embeddings");
 
@@ -216,17 +217,17 @@ How to find community when your old social circle was built around drinking
 Online community vs in-person: both matter, differently, for different reasons
 
 THE 8:14 MEMBERSHIPS - recommend naturally when relevant, never list everything at once:
-Free, forever: Riley Guide - "Riley shows you where you stand." The 8:14 Reset, real conversation whenever you need it, the daily check-in, your Clarity Score (the free Foundation view: steadiness, rest, fuel), and a taste of the library. Free members can TRACK everything - habits, movement, meals, journal, sober days - it all works the same. Not a trial. It never expires. Always the honest first offer.
-Everything: Riley Companion $19/mo ($175/yr) - "Riley walks with you." Companion is now the whole of Riley. Riley remembers everything and carries it forward, so they never explain themselves twice: unlimited conversation any hour, every domain, the full personal Clarity Score (their own baselines and focus lanes - "distance traveled, not distance from perfect"), daily check-ins and the habit tracker, every program (self-guided AND the Riley-led coached ones), adaptive movement and nutrition, proactive check-ins Riley starts, and the Life Map. Everything Coach used to be is included.
-Tracking vs watching: free members TRACK (all logging works for everyone, always); Companion is where Riley WATCHES - personal baselines, focus lanes, memory expressed as math. "Watching" means Riley notices and grows with them, never surveillance.
-Coming later, not for sale: Riley Coach (coming soon) - a deeper tier down the road with community (real people walking the same roads) and the ability to upload your history so Riley knows you from day one. No price, no push - if someone asks what's next, warmly say "that's coming." Tagline held: "Riley moves you forward."
+Free, forever: Riley Companion - "Riley shows you where you stand." The 8:14 Reset, real conversation whenever you need it, the daily check-in, your Clarity Score (the free Foundation view: steadiness, rest, fuel), and a taste of the library. Free members can TRACK everything - habits, movement, meals, journal, sober days - it all works the same. Not a trial. It never expires. Always the honest first offer.
+Everything: Riley Coach $19/mo ($175/yr) - "Riley walks with you." Coach is now the whole of Riley. Riley remembers everything and carries it forward, so they never explain themselves twice: unlimited conversation any hour, every domain, the full personal Clarity Score (their own baselines and focus lanes - "distance traveled, not distance from perfect"), daily check-ins and the habit tracker, every program (self-guided AND the Riley-led coached ones), adaptive movement and nutrition, proactive check-ins Riley starts, and the Life Map. It is everything - nothing held back.
+Tracking vs watching: free members TRACK (all logging works for everyone, always); Coach is where Riley WATCHES - personal baselines, focus lanes, memory expressed as math. "Watching" means Riley notices and grows with them, never surveillance.
+Coming later, not for sale: Riley Mentor (coming soon) - a deeper tier down the road with community (real people walking the same roads) and the ability to upload your history so Riley knows you from day one. No price, no push - if someone asks what's next, warmly say "that's coming." Tagline held: "Riley moves you forward."
 Self-guided, no relationship: Sobriety / Grief & Life Transitions / Body Rebuild - $8.14 each, content only, lifetime access, no Riley, no tracking, no community. For someone who explicitly doesn't want an ongoing relationship with Riley - the book, not the coach.
 
 RILEY APPROACH - HOW TO RECOMMEND (no urgency games, ever):
 Never push. Never list all memberships at once. Recommend ONE thing based on what they just said.
-Guide is a real, legitimate destination - never talk about it like a lesser tier or a countdown. Someone can stay on it forever; that is fine.
-Recommendation signals: "just looking around" → stay on Guide, no push. Bumping into the chat limit / "I want to talk to you more" / wants a plan that adapts / "check in on me" / wants to be remembered more deeply → Companion, because Companion is now everything and that is exactly what they're reaching for. "I just want to read something, not talk to an AI" → the matching $8.14 self-guided program.
-There are only two tiers to recommend: Guide (free) and Companion. Coach is coming-soon only - never sell it; if they ask what's next, mention it warmly. If someone is in real distress, never make them feel unsupported on any tier, and never let a usage limit get in the way of crisis support (see CRISIS SUPPORT below - it always overrides any chat limit).
+Companion is a real, legitimate destination - never talk about it like a lesser tier or a countdown. Someone can stay on it forever; that is fine.
+Recommendation signals: "just looking around" → stay on Companion, no push. Bumping into the chat limit / "I want to talk to you more" / wants a plan that adapts / "check in on me" / wants to be remembered more deeply → Coach, because Coach is now everything and that is exactly what they're reaching for. "I just want to read something, not talk to an AI" → the matching $8.14 self-guided program.
+There are only two tiers to recommend: Companion (free) and Coach. Mentor is coming-soon only - never sell it; if they ask what's next, mention it warmly. If someone is in real distress, never make them feel unsupported on any tier, and never let a usage limit get in the way of crisis support (see CRISIS SUPPORT below - it always overrides any chat limit).
 Mention memberships the way a trusted friend would: "there's actually something built for exactly that situation."
 If they're already a member, reference what they have by name. Never sell what they own.
 
@@ -606,8 +607,8 @@ function buildUserContext(profile, clientData) {
   // ── ENTITLEMENTS - shapes what Riley sells and how she talks ──
   if (clientData && clientData.tier) {
     const PRODUCT_NAMES = {
-      reset_free:"Riley Guide (free)", companion:"Riley Companion ($19/mo)",
-      coach:"Riley Coach ($34/mo)", concierge:"Riley Coach ($34/mo)", mentor:"Riley Mentor",
+      reset_free:"Riley Companion (free)", companion:"Riley Coach ($19/mo)",
+      coach:"Riley Mentor", concierge:"Riley Mentor", mentor:"Riley Mentor",
       prog_sobriety:"Sobriety (self-guided, $8.14)", prog_sobriety_90:"Sobriety (self-guided, $8.14)",
       prog_grief:"Grief & Life Transitions (self-guided, $8.14)",
       prog_body:"Body Rebuild (self-guided, $8.14)", prog_body_90:"Body Rebuild (self-guided, $8.14)",
@@ -615,17 +616,17 @@ function buildUserContext(profile, clientData) {
     };
     const owns = (clientData.ownedProducts || []).map(p => PRODUCT_NAMES[p] || p);
     lines.push("\nACCESS & ENTITLEMENTS:");
-    lines.push(`Tier: ${clientData.tier.toUpperCase()}`);
+    lines.push(`Tier: ${tierLabel(clientData.tier).toUpperCase()}`);
     lines.push(owns.length ? `Owns: ${owns.join(", ")}` : "Owns: nothing yet");
     lines.push("\nSELLING RULES - follow exactly, no urgency games, ever:");
     if (clientData.tier === "companion" || clientData.tier === "coach" || clientData.tier === "concierge") {
-      lines.push("- This is a COMPANION member. Companion now includes EVERYTHING Riley offers - the full personal Clarity Score, adaptive plans, proactive check-ins, the Life Map, and every program. They have it all. NEVER sell or upsell anything. Just walk with them and support them.");
+      lines.push("- This is a COACH member. Coach now includes EVERYTHING Riley offers - the full personal Clarity Score, adaptive plans, proactive check-ins, the Life Map, and every program. They have it all. NEVER sell or upsell anything. Just walk with them and support them.");
     } else if (clientData.tier === "alacarte") {
-      lines.push("- They bought self-guided content only, no ongoing relationship - no chat, no tracking, no community, not even Guide's caps.");
-      lines.push("- A light, non-pushy mention of Riley Guide (it's free!) after they finish content is the natural next step - lower friction than pitching a paid tier. Never re-sell what they already own.");
+      lines.push("- They bought self-guided content only, no ongoing relationship - no chat, no tracking, no community, not even Companion's caps.");
+      lines.push("- A light, non-pushy mention of Riley Companion (it's free!) after they finish content is the natural next step - lower friction than pitching a paid tier. Never re-sell what they already own.");
     } else {
-      lines.push("- Riley GUIDE (free, forever) - not a trial, doesn't expire, never talk about it like a lesser tier. This is a real, legitimate destination. No pressure to upgrade, ever.");
-      lines.push("- If they're bumping into their weekly chat limit, want to talk more, want Riley checking on them proactively, or want a plan that adapts - Companion is the fit. Companion is now the whole of Riley, so it's the one paid tier to ever recommend. Never a hard sell.");
+      lines.push("- Riley COMPANION (free, forever) - not a trial, doesn't expire, never talk about it like a lesser tier. This is a real, legitimate destination. No pressure to upgrade, ever.");
+      lines.push("- If they're bumping into their weekly chat limit, want to talk more, want Riley checking on them proactively, or want a plan that adapts - Coach is the fit. Coach is now the whole of Riley, so it's the one paid tier to ever recommend. Never a hard sell.");
     }
     lines.push("- NEVER pitch a membership or program they already own. Reference what they have by name.");
   }
@@ -843,7 +844,7 @@ function clarityConfigNote(res, intent) {
   }
   if (res.status === "rate_limited") return "CLARITY UPDATE: the member already changed their Clarity setup this week (one change per 7 days keeps the score honest). Warmly OFFER to queue it: \"I can make that change on " + res.next_allowed + " - want me to?\" Do not claim it's applied now.";
   if (res.status === "needs_rest") return "CLARITY UPDATE: they're already tracking 5 things (the sweet spot). To add " + name + ", gently ask which one they'd like to rest first.";
-  if (res.status === "companion_only") return "CLARITY UPDATE: this is a free member asking to change what Clarity WATCHES (" + name + "). Give the honest one-liner ONCE, no push: on the free plan they can TRACK anything and Clarity always keeps the universal basics; the personal watching layer (their own baselines + focus lanes) comes with Companion.";
+  if (res.status === "companion_only") return "CLARITY UPDATE: this is a free member asking to change what Clarity WATCHES (" + name + "). Give the honest one-liner ONCE, no push: on the free plan they can TRACK anything and Clarity always keeps the universal basics; the personal watching layer (their own baselines + focus lanes) comes with Coach.";
   if (res.status === "query") {
     const cfg = res.config || {};
     const dims = (cfg.enabled_practice || []).map((d) => T[d] || d).join(", ") || "the basics";
@@ -1397,7 +1398,7 @@ exports.handler = async function (event) {
     // Warm, deterministic - no model call, matches the "capped, never a hard
     // wall implying they don't have Riley at all" tone from the client spec.
     const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : usageInfo.period === "month" ? "this month" : "for now";
-    const capReply = `We've had a full day together - your check-in and our conversations are all part of the same relationship. Riley Guide includes a daily number so I can be here for everyone. More opens up tomorrow, or Riley Companion means we can talk as much as you want, any time. I'm not going anywhere either way.`;
+    const capReply = `We've had a full day together - your check-in and our conversations are all part of the same relationship. Riley Companion includes a daily number so I can be here for everyone. More opens up tomorrow, or Riley Coach means we can talk as much as you want, any time. I'm not going anywhere either way.`;
     // Funnel event (Doc 0 §9 / Doc 3 metrics: "Chat-limit encounters"). Fire-and-forget.
     if (supabase && user_id) emitEvent(supabase, user_id, "chat_limit_reached", { period: usageInfo.period });
     if (supabase && user_id && session_id) persistMessages(supabase, user_id, session_id, latestUserText, capReply);
@@ -1411,7 +1412,7 @@ exports.handler = async function (event) {
   // Near the limit but not out - let Riley mention it naturally, once, warmly.
   if (usageInfo && usageInfo.remaining > 0 && usageInfo.remaining <= 2) {
     const periodWord = usageInfo.period === "week" ? "this week" : usageInfo.period === "day" ? "today" : "for now";
-    systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Guide and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord} (their check-in and free-form messages share the same daily pool - that's intentional, both are time with Riley). If it fits naturally, you may mention it warmly near the end - something like "we've got a couple conversations left ${periodWord} - want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
+    systemPrompt = `NOTE FOR THIS REPLY ONLY: this member is on Riley Companion and has ${usageInfo.remaining} conversation${usageInfo.remaining === 1 ? "" : "s"} left ${periodWord} (their check-in and free-form messages share the same daily pool - that's intentional, both are time with Riley). If it fits naturally, you may mention it warmly near the end - something like "we've got a couple conversations left ${periodWord} - want to save them for something specific, or keep going?" Never make it the focus of the reply, never sound like a countdown or a threat. Skip the mention entirely if the conversation is heavy or it would feel tone-deaf.\n\n----\n\n` + systemPrompt;
   }
 
   // ── ANONYMOUS VISITOR DAILY CAP ─────────────────────────────────────────────
@@ -1453,7 +1454,7 @@ exports.handler = async function (event) {
 
       // Product cap - warm upgrade nudge (same tone as the logged-in cap response)
       if (capCheck.anonUsed >= ANON_PRODUCT_CAP) {
-        const anonCapReply = "That's your free chat with me for today - and I'm glad we got to talk. If you want to pick up right where we left off, Riley Companion gives you unlimited conversations, any time. I'll be right here. Sign in to continue at meetriley.us/login.";
+        const anonCapReply = "That's your free chat with me for today - and I'm glad we got to talk. If you want to pick up right where we left off, Riley Coach gives you unlimited conversations, any time. I'll be right here. Sign in to continue at meetriley.us/login.";
         return {
           statusCode: 200,
           headers: { ...CORS_HEADERS, "Content-Type": "text/plain; charset=utf-8", "X-Chat-Atlimit": "true", "X-Chat-Remaining": "0" },

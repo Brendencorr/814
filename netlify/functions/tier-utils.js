@@ -16,7 +16,7 @@ function currentTier(owned) {
   const has = (k) => (Array.isArray(owned) ? owned.includes(k) : owned && owned.has(k));
   // v2.3 TWO-TIER: Coach folded into Companion; Mentor removed. Any grandfathered coach/mentor/
   // concierge owner resolves to "companion" - which now includes everything Coach ever had. No
-  // live "coach" role is returned anywhere. (The teased future "Coach - coming soon" is marketing
+  // live "coach" role is returned anywhere. (The teased future "Mentor - coming soon" is marketing
   // copy, not a role.)
   if (has("companion") || has("coach") || has("mentor") || has("concierge")) return "companion";
   if (has("reset_free")) return "guide";

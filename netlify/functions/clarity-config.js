@@ -24,6 +24,20 @@ async function loadRow(sb, userId) {
   catch (e) { return null; }
 }
 
+// A.3: sobriety-lane removal-with-grace. Fire the event + drop a LOW-severity FYI into the operator
+// safety queue (visible context, NOT an alert email, NOT a crisis classification). Never blocks.
+async function noteSobrietyLaneDisabled(sb, userId) {
+  try { emitEvent(sb, userId, "sobriety_lane_disabled", {}); } catch (_) {}
+  try {
+    await sb.from("crisis_log").insert({
+      user_id: userId, session_id: "clarity-config", level: 0,
+      matched_rules: ["sobriety_lane_disabled"],
+      message_excerpt: "[FYI] Member turned off the sobriety focus lane in Clarity. Not a crisis - context for awareness. Riley left the door open ('if you ever want it back, just say the word').",
+      is_test: false, resolved: false,
+    });
+  } catch (_) {}
+}
+
 // Lazily promote a due pending change to live (keeps reads honest without a cron).
 async function promoteIfDue(sb, userId, row, today) {
   const eff = effectiveConfig(row, today);
@@ -90,6 +104,9 @@ exports.handler = async function (event) {
     const onboarding = body.origin === "onboarding";
     let row = await loadRow(sb, userId);
     if (row) row = await promoteIfDue(sb, userId, row, today);
+    // A.3: detect a sobriety-lane disable (was on -> now explicitly off) for grace handling below.
+    const _prevLanes = (row && row.config && row.config.lanes) || {};
+    const _sobrietyLaneDisabled = (_prevLanes.sobriety !== false) && !!(config.lanes && config.lanes.sobriety === false);
 
     // 1 change / 7 days — onboarding-origin bypasses.
     if (!onboarding && row && row.last_changed_at) {
@@ -116,6 +133,7 @@ exports.handler = async function (event) {
         emitEvent(sb, userId, "clarity_config_changed", { config_version: upsert.config_version, applied: "now", origin: "onboarding" });
         emitEvent(sb, userId, "clarity_customize_completed", { mode: (config.enabled_practice && config.enabled_practice.length === 3 && !config.fuel_opt_out) ? "defaults" : "custom" });
       } catch (e) {}
+      if (_sobrietyLaneDisabled) await noteSobrietyLaneDisabled(sb, userId);
       return json(200, { ok: true, applied: "now", config, config_version: upsert.config_version, onboarding_stage: stage });
     }
 
@@ -129,6 +147,7 @@ exports.handler = async function (event) {
     try { await sb.from("user_clarity_config").upsert(upsert, { onConflict: "user_id" }); }
     catch (e) { return json(500, { error: "save failed: " + e.message }); }
     try { emitEvent(sb, userId, "clarity_config_changed", { applied: applyOn, origin: "update" }); } catch (e) {}
+    if (_sobrietyLaneDisabled) await noteSobrietyLaneDisabled(sb, userId);
     return json(200, { ok: true, applied: applyOn, pending: config, onboarding_stage: stage });
   }
 

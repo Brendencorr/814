@@ -88,14 +88,16 @@ exports.handler = async function (event) {
   const gate = requireScheduledOrOperator(event); if (gate) return gate;
   let sb; try { sb = getSupabaseClient(); } catch (_) { return { statusCode: 500, body: "config" }; }
 
-  // free_access_mode → adapt for everyone (matches pre-launch behavior); else Coach/mentor only.
+  // free_access_mode → adapt for everyone (matches pre-launch behavior); else paid tiers only.
+  // Tiers collapsed to two (2026-07): adaptive plan generation is now included in Companion, so
+  // Companion members are eligible alongside grandfathered coach/mentor owners.
   let freeAccess = false;
   try { const { data } = await sb.from("app_settings").select("value").eq("key", "free_access_mode").maybeSingle(); freeAccess = !!(data && String(data.value).toLowerCase() === "true"); } catch (_) {}
 
   let coach = new Set();
   if (!freeAccess) {
     try {
-      const { data: subs } = await sb.from("subscriptions").select("user_id, plan_id, status, expires_at").eq("status", "active").in("plan_id", ["coach", "mentor"]);
+      const { data: subs } = await sb.from("subscriptions").select("user_id, plan_id, status, expires_at").eq("status", "active").in("plan_id", ["companion", "coach", "mentor"]);
       const now = Date.now();
       (subs || []).forEach((s) => { if (!s.expires_at || new Date(s.expires_at).getTime() > now) coach.add(s.user_id); });
     } catch (_) {}

@@ -12,6 +12,23 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-13
 
+### Riley v2.3 - two-tier restructure + Clarity tier split (multi-commit; see V2.3_BUILD_LOG.md)
+- **Why:** Collapse to two tiers - Guide (free) + Companion ($19, price held) - folding all Coach features
+  into Companion; Mentor removed; "Coach - coming soon" teased (Community + Upload-your-history). Clarity
+  gets a free "Foundation" vs paid "full" split. Per the v2.3 handoff spec.
+- **Batch 1 (this commit) - two-tier feature collapse (additive, no member loses anything):**
+  `entitlements.js` - any paid membership now unlocks every former-Coach feature (Life Map, adaptive plans,
+  proactive, program library, finance) by granting the legacy feature-keys into the unlock set; plan resolver
+  normalizes coach/mentor/concierge -> companion. `tier-utils.currentTier()` collapses coach/mentor/concierge
+  -> companion (no live "coach" role returned). Server gates that were Coach-only now include Companion
+  (int-session, program-content, program-list incl. interactive-program ownership, plan-adapt-cron, library/
+  match-content/client-alerts TIER_RANK). `riley-chat.js` system prompt rewritten to two tiers +
+  tracking-vs-watching language + Coach-coming-soon; selling rules fold Coach into Companion.
+- **Still to land tonight:** DB migration (coach/mentor subs -> companion + founding_member comp), Stripe
+  catalog collapse, Mentor removal from HTML/operator + Coach-coming-soon teaser, pricing page (behind flag),
+  Clarity score_mode split, habit per-habit inclusion, dashboard/nav. Held for sign-off: migration email,
+  pricing flip, live Stripe billing changes on real Coach subs. Details/flags in V2.3_BUILD_LOG.md.
+
 ### Operator data correctness + missing signup/cancel/refund/crisis alerts (verify-against-DB fix)
 - **Why:** Operator reported paid members showing as unpaid and emailed members showing as not, plus never
   receiving signup/cancel/refund/crisis emails. Verified against the live DB: data was correct, the reads

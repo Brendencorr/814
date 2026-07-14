@@ -92,6 +92,15 @@ exports.handler = async function (event) {
       });
     } catch (_) {}
 
+    // v2.3 TWO-TIER: Companion now includes everything Coach ever had. Any paid membership -
+    // companion, or a grandfathered coach/mentor/concierge - unlocks every former-Coach feature.
+    // Expressed by granting the legacy feature-keys into `owned` (an internal unlock set, NOT a
+    // live role): a Companion member's `features` now includes Life Map, adaptive plans, proactive
+    // check-ins, the program library, finance - all of it.
+    if (owned.has('companion') || owned.has('coach') || owned.has('mentor') || owned.has('concierge')) {
+      owned.add('companion'); owned.add('coach'); owned.add('concierge');
+    }
+
     // Master admin: full access to everything + an `admin` flag that drives the
     // tier-preview toggle + edit controls in the app. Flagged on user_profiles.is_admin.
     let isAdmin = false;
@@ -99,7 +108,7 @@ exports.handler = async function (event) {
       const { data: prof } = await sb.from('user_profiles').select('is_admin').eq('id', userId).maybeSingle();
       isAdmin = !!(prof && prof.is_admin === true);
       if (isAdmin) {
-        const PREVIEW = { guide: ['reset_free'], companion: ['reset_free', 'companion'], coach: ['reset_free', 'companion', 'coach'] };
+        const PREVIEW = { guide: ['reset_free'], companion: ['reset_free', 'companion', 'coach', 'concierge'], coach: ['reset_free', 'companion', 'coach', 'concierge'] };
         if (PREVIEW[previewTier]) {
           // Tier-preview (admin only): render EXACTLY as that tier would see it.
           owned.clear(); PREVIEW[previewTier].forEach(p => owned.add(p));
@@ -195,11 +204,14 @@ exports.handler = async function (event) {
       if (!previewTier) {
         const { data: subs } = await sb.from('subscriptions')
           .select('plan_id, expires_at').eq('user_id', userId).eq('status', 'active');
-        const RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
+        // v2.3 two-tier: coach/mentor/concierge normalize to companion (the top live plan).
+        const NORM = (p) => (p === 'coach' || p === 'mentor' || p === 'concierge') ? 'companion' : p;
+        const RANK = { guide: 1, companion: 2 };
         const now = Date.now();
         (subs || []).forEach(s => {
           const live = !s.expires_at || new Date(s.expires_at).getTime() > now;
-          if (live && (RANK[s.plan_id] || 0) > (RANK[plan] || 0)) plan = s.plan_id;
+          const pid = NORM(s.plan_id);
+          if (live && (RANK[pid] || 0) > (RANK[plan] || 0)) plan = pid;
         });
       }
       const { data: pe } = await sb.from('plan_entitlements').select('key, value').eq('plan_id', plan);

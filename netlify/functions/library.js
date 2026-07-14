@@ -24,7 +24,9 @@ const CORS = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "no-store" }, body: JSON.stringify(d) });
-const TIER_RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
+// Tiers collapsed to two (2026-07): Companion is the top real tier. Legacy coach/mentor/concierge rank
+// EQUAL to companion so any content gated at "coach level" stays visible to companion (no feature lost).
+const TIER_RANK = { guide: 1, companion: 2, coach: 2, mentor: 2, concierge: 2 };
 const lc = (s) => String(s == null ? "" : s).trim().toLowerCase();
 
 const LIB_COLS = "id,title,creator,content_type,content_url,description,duration_minutes,tags,personas,pillars,tone,tier_access,guide_starter,time_of_day,link_status,emotional_intensity,approval_status,is_active";

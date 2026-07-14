@@ -45,9 +45,15 @@ async function resolveAccess(sb, userId, programKey) {
     (subs || []).forEach((s) => { const live = !s.expires_at || new Date(s.expires_at).getTime() > now; if (live && ["companion", "coach", "mentor"].includes(s.plan_id)) owned.add(s.plan_id); });
   } catch (_) {}
 
-  let tier = (owned.has("coach") || owned.has("mentor")) ? "coach" : owned.has("companion") ? "companion" : "guide";
-  if (admin || freeAccess) tier = "coach";
-  const owns = admin || freeAccess || owned.has(programKey);
+  // Tiers collapsed to two (2026-07): Companion is the top real tier and INCLUDES everything Coach ever had.
+  // Any grandfathered coach/mentor owner resolves to companion (identical access) and never loses anything.
+  const paid = owned.has("coach") || owned.has("mentor") || owned.has("companion");
+  let tier = paid ? "companion" : "guide";
+  if (admin || freeAccess) tier = "companion";
+  // Interactive (Riley-led) programs are now included in Companion, so a companion-tier member OWNS all
+  // prog_int_* programs even if the DB entitlement view hasn't been migrated to grant them explicitly.
+  const isInteractive = typeof programKey === "string" && programKey.startsWith("prog_int_");
+  const owns = admin || freeAccess || owned.has(programKey) || (tier === "companion" && isInteractive);
   return { owns, tier };
 }
 

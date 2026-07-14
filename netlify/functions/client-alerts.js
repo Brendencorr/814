@@ -20,7 +20,9 @@ const CORS = {
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
 const isUuid = (v) => typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const LIMIT = 40;
-const TIER_RANK = { guide: 1, companion: 2, coach: 3, mentor: 4 };
+// Tiers collapsed to two (2026-07): Companion is the top real tier. Legacy coach/mentor/concierge rank
+// EQUAL to companion so any alert gated at "coach level" stays visible to companion (no feature lost).
+const TIER_RANK = { guide: 1, companion: 2, coach: 2, mentor: 2, concierge: 2 };
 
 // Member's tier rank - mirrors entitlements.js: everyone ≥ guide; the highest active
 // (non-expired) subscription plan wins. Used to gate tier-scoped library alerts.

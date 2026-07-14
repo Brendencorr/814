@@ -15,7 +15,9 @@
  *   ctx: { mode, pillarOfDay, timeOfDay, remainingSeconds, requiredTag, query,
  *          exploreMode, crisisActive, recentContentIds:Set, limit }
  */
-const TIER_RANK    = { guide: 0, companion: 1, coach: 2, mentor: 3 };
+// Tiers collapsed to two (2026-07): Companion is the top real tier (0-based here). Legacy
+// coach/mentor/concierge rank EQUAL to companion so "coach-level" content stays visible to companion.
+const TIER_RANK    = { guide: 0, companion: 1, coach: 1, mentor: 1, concierge: 1 };
 const TONE_BLOCKED = new Set(["griever", "drinker"]); // personas we never PUSH non-grounded tone at
 
 const lc = (s) => String(s == null ? "" : s).toLowerCase();

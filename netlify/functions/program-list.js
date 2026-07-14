@@ -69,8 +69,16 @@ exports.handler = async (event) => {
     if (p.implies_all_programs) programKeys.forEach((pk) => owned.add(pk));
     if (Array.isArray(p.implies)) p.implies.forEach((i) => owned.add(i));
   });
+  // Tiers collapsed to two (2026-07): Companion now INCLUDES everything Coach ever had - ALL programs,
+  // including the Riley-led interactive ones (prog_int_*). Grant every program to any paid subscriber
+  // (companion, or a grandfathered coach/mentor) at the code level, so this is true even if the DB
+  // entitlement view hasn't been migrated. Guide still owns nothing and buys à la carte.
+  if (owned.has("companion") || owned.has("coach") || owned.has("mentor")) {
+    programKeys.forEach((pk) => owned.add(pk));
+  }
 
-  const tier = (owned.has("coach") || owned.has("mentor")) ? "coach" : owned.has("companion") ? "companion" : "guide";
+  // Companion is the top real tier; grandfathered coach/mentor collapse to companion (identical access).
+  const tier = (owned.has("companion") || owned.has("coach") || owned.has("mentor")) ? "companion" : "guide";
 
   const catalog = (allProds || [])
     .filter((p) => (p.type === "program" || p.type === "program_interactive" || p.type === "bundle") && p.visible_on_menu !== false && p.status !== "retired")

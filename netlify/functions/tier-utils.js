@@ -14,9 +14,11 @@
 
 function currentTier(owned) {
   const has = (k) => (Array.isArray(owned) ? owned.includes(k) : owned && owned.has(k));
-  if (has("mentor")) return "mentor";
-  if (has("coach") || has("concierge")) return "coach"; // concierge = retired alias for coach
-  if (has("companion")) return "companion";
+  // v2.3 TWO-TIER: Coach folded into Companion; Mentor removed. Any grandfathered coach/mentor/
+  // concierge owner resolves to "companion" - which now includes everything Coach ever had. No
+  // live "coach" role is returned anywhere. (The teased future "Coach - coming soon" is marketing
+  // copy, not a role.)
+  if (has("companion") || has("coach") || has("mentor") || has("concierge")) return "companion";
   if (has("reset_free")) return "guide";
   const size = Array.isArray(owned) ? owned.length : (owned ? owned.size : 0);
   return size ? "alacarte" : null; // owns à-la-carte program(s) but no membership tier

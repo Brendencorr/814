@@ -96,14 +96,24 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB = supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
-let UID=null, STAGE=0;
+let UID=null, STAGE=0, IS_FULL=false;
+// v2.3 B.1: free members TRACK (no bands/baselines, no 3-5 limit, no focus lanes - lanes are a
+// Companion "watching" concept). Companion members WATCH (the full v2.2 pane). Tier fetched in load().
+function applyTierFraming(){
+  if(IS_FULL) return;
+  const lede=document.querySelector('.lede'); if(lede) lede.innerHTML="Track what matters to you - only what you pick shows up in your activity view. Your Clarity score always covers the basics; the deeper, personal picture (your own baselines and focus lanes) comes with Companion.";
+  const labels=document.querySelectorAll('.sec-label'); if(labels[1]&&labels[1].firstChild) labels[1].firstChild.textContent='What you want to track ';
+  const lanesLabel=document.getElementById('lanes-label'); if(lanesLabel) lanesLabel.style.display='none';
+  const lanes=document.getElementById('lanes'); if(lanes) lanes.style.display='none';
+  const counter=document.getElementById('counter'); if(counter) counter.style.display='none';
+}
 const TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');
 const $=id=>document.getElementById(id);
 async function token(){try{const{data:{session}}=await SB.auth.getSession();return session&&session.access_token||null;}catch(e){return null;}}
 
 let HAS_LANE=false;
 function setRow(el,on){ if(el) el.classList.toggle('on',!!on); }
-function refreshCounter(){ const n=document.querySelectorAll('#practice .row.on').length; const c=$('counter'); if(c)c.textContent='· '+n+' selected'; const h=$('pick-hint'); if(h)h.textContent=(n<3?'Pick at least a few that fit your life - 3 to 5 is a good place to start.':n>5?'That is a lot to carry - 3 to 5 tends to feel best, but it is your call.':'Pick the 3-5 that fit your life right now.'); }
+function refreshCounter(){ const n=document.querySelectorAll('#practice .row.on').length; const c=$('counter'); const h=$('pick-hint'); if(!IS_FULL){ if(c)c.style.display='none'; if(h)h.textContent='Track as many or as few as you like - there is no wrong number.'; return; } if(c)c.textContent='· '+n+' selected'; if(h)h.textContent=(n<3?'Pick at least a few that fit your life - 3 to 5 is a good place to start.':n>5?'That is a lot to carry - 3 to 5 tends to feel best, but it is your call.':'Pick the 3-5 that fit your life right now.'); }
 document.addEventListener('click',e=>{ const r=e.target.closest('.row'); if(!r||r.dataset.locked)return; r.classList.toggle('on'); refreshCounter(); });
 
 async function load(){
@@ -115,6 +125,9 @@ async function load(){
     const r=await fetch('/.netlify/functions/clarity-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.access_token,action:'get',today:TODAY})});
     const j=await r.json(); if(j&&j.config)cfg=j.config; STAGE=(j&&j.onboarding_stage)||0;
   }catch(e){}
+  // v2.3 B.1: resolve tier, then reframe tracking (free) vs watching (Companion).
+  try{ const er=await fetch('/.netlify/functions/entitlements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:session.access_token})}); const ej=await er.json(); IS_FULL=!!(ej&&(ej.tier==='companion'||ej.plan==='companion')); }catch(e){}
+  applyTierFraming();
   // Foundation: fuel is the only toggle (steadiness + rest are always on).
   setRow(document.querySelector('#foundation .row[data-fuel]'), !cfg.fuel_opt_out);
   // Practice: first-time setup starts with the sensible defaults ON.

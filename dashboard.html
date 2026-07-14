@@ -935,8 +935,8 @@ const EXPLORE_FLAGSHIP=[
   {feat:'tracker_fitness',    icon:'🤍', title:'Movement',                    desc:'Adaptive workouts that meet your body exactly where it is.',                     need:'Riley Companion'},
   {feat:'tracker_nutrition',  icon:'🍃', title:'Nourishment',                 desc:'Food that heals, planned around your real life - not a rigid diet.',             need:'Riley Companion'},
   {feat:'tracker_sleep',      icon:'🌙', title:'Rest',                        desc:'Sleep tracking woven straight into your daily clarity score.',                   need:'Riley Companion'},
-  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Coach'},
-  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Coach'}
+  {feat:'knowledge_graph',    icon:'🗺️', title:'Your Life Map',               desc:'Riley remembers your whole story - a living map of who you are becoming.',       need:'Riley Companion'},
+  {feat:'tracker_finance',    icon:'💰', title:'Financial Goals',             desc:'Rebuilding a life includes rebuilding stability. Riley helps you get there.',    need:'Riley Companion'}
 ];
 async function loadExplore(){
   try{
@@ -1384,9 +1384,9 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
       tracker_fitness:{name:'Workout Tracking',need:'Riley Companion'},
       tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Companion'},
       tracker_sleep:{name:'Sleep Tracking',need:'Riley Companion'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
+      tracker_finance:{name:'Financial Goals',need:'Riley Companion'},
       tracker_calendar:{name:'Calendar',need:'Riley Companion'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      knowledge_graph:{name:'Your Life Map',need:'Riley Companion'}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');

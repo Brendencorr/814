@@ -187,8 +187,8 @@ function splitName(s){s=(s||'').trim();if(!s)return{first:'',last:''};var p=s.sp
 function sName(){
   const meta=(USER&&USER.user_metadata)||{};
   const g=splitName(A.full_name||meta.full_name||meta.name||'');
-  const first=A.first_name||meta.given_name||g.first||'';
-  const last=A.last_name||meta.family_name||g.last||'';
+  const first=A.first_name||meta.first_name||meta.given_name||g.first||'';
+  const last=A.last_name||meta.last_name||meta.family_name||g.last||'';
   const nick=(A.preferred_name&&A.preferred_name!==A.first_name)?A.preferred_name:'';
   swap(`<div class="section-label">A little about you</div>
     <div class="riley-says">First, the basics.</div>

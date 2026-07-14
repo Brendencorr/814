@@ -58,8 +58,8 @@ async function getSession(supabase, body) {
       full_name: _full,
       // First/Last are required at onboarding; pre-fill from Google here so the member just confirms.
       // A magic-link signup carries no name (email only) - these stay null until onboarding collects them.
-      first_name: user.user_metadata?.given_name  || _parts[0] || null,
-      last_name:  user.user_metadata?.family_name || (_parts.length > 1 ? _parts.slice(1).join(" ") : null),
+      first_name: user.user_metadata?.first_name || user.user_metadata?.given_name  || _parts[0] || null,
+      last_name:  user.user_metadata?.last_name  || user.user_metadata?.family_name || (_parts.length > 1 ? _parts.slice(1).join(" ") : null),
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
     };
     await supabase.from("user_profiles").upsert(newProfile);

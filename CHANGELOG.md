@@ -12,6 +12,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-14
 
+### Signup (follow-up): First + Last required on the magic-link form too
+- **Why:** First/Last must be required REGARDLESS of signup method. Google OAuth already supplies them;
+  the magic-link (email OTP) form on login.html only collected an email. Now it collects First + Last too,
+  so the requirement holds at the literal registration step for both paths.
+- **What:** login.html magic-link form gains required First + Last fields (side by side above email);
+  they ride along as `signInWithOtp` `options.data` (user_metadata) as first_name/last_name/full_name.
+  `auth-handler.js` now reads `user_metadata.first_name/last_name` on profile create (in addition to the
+  Google given/family split); onboarding Screen 2 pre-fills from them.
+- **Verified:** login form rendered live + both guards driven - empty First/Last blocks with "Please enter
+  your first and last name" and does NOT send; a bad email still blocks with the email error. Files:
+  login.html, auth-handler.js, onboarding.html.
+
 ### Signup: First + Last + Email required at onboarding; optional nickname
 - **Why:** Brenden wants First, Last, and Email mandatory at signup, with a "what should I call you"
   nickname optional. Signup is Google OAuth + magic-link (no signup form) and both already require an

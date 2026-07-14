@@ -29,8 +29,9 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
 .note a{color:#c9a84c;text-decoration:none}
 .divider{display:flex;align-items:center;gap:.75rem;margin:1.25rem 0;color:#2a3a4a;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:#1a2530}
-#ml-email{width:100%;padding:.85rem 1rem;background:#06090e;border:1px solid #1a2530;border-radius:10px;color:#e8e4de;font-size:.95rem;margin-bottom:.6rem;outline:none;transition:border-color .2s}
-#ml-email:focus{border-color:#c9a84c}
+#ml-email,#ml-first,#ml-last{width:100%;padding:.85rem 1rem;background:#06090e;border:1px solid #1a2530;border-radius:10px;color:#e8e4de;font-size:.95rem;margin-bottom:.6rem;outline:none;transition:border-color .2s}
+#ml-email:focus,#ml-first:focus,#ml-last:focus{border-color:#c9a84c}
+.ml-row{display:flex;gap:.6rem}.ml-row>input{flex:1}
 .ml-btn{width:100%;padding:.9rem 1.25rem;background:transparent;border:1px solid #c9a84c;border-radius:10px;color:#c9a84c;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s}
 .ml-btn:hover{background:rgba(201,168,76,0.08)}
 .ml-btn:disabled{opacity:.6;cursor:default}
@@ -60,6 +61,10 @@ body{display:flex;align-items:center;justify-content:center;padding:2rem}
   <div class="divider"><span>or</span></div>
 
   <form id="ml-form" onsubmit="return sendMagic(event)">
+    <div class="ml-row">
+      <input type="text" id="ml-first" placeholder="First name" autocomplete="given-name" required aria-label="First name">
+      <input type="text" id="ml-last" placeholder="Last name" autocomplete="family-name" required aria-label="Last name">
+    </div>
     <input type="email" id="ml-email" placeholder="you@email.com" autocomplete="email" required aria-label="Email address">
     <button type="submit" class="ml-btn" id="ml-btn">Send me a sign-in link</button>
   </form>
@@ -136,12 +141,16 @@ function doSignIn() {
 // NOTE: the OTP email is sent by Supabase's default sender for now; moves to Resend/Workspace later.
 function sendMagic(e) {
   e.preventDefault();
-  var em = (document.getElementById('ml-email').value || '').trim();
+  var first = (document.getElementById('ml-first').value || '').trim();
+  var last  = (document.getElementById('ml-last').value  || '').trim();
+  var em    = (document.getElementById('ml-email').value || '').trim();
+  if (!first || !last) { setStatus('Please enter your first and last name.', 'err'); return false; }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { setStatus('Please enter a valid email.', 'err'); return false; }
   var b = document.getElementById('ml-btn');
   try { if (window.RileyPH) window.RileyPH.track('signup_started', { method: 'magic_link' }); } catch (_e) {}
   b.disabled = true; b.textContent = 'Sending…';
-  _sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: DEST } })
+  // First/Last ride along as user_metadata (options.data) so auth-handler stores them and onboarding pre-fills.
+  _sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: DEST, data: { first_name: first, last_name: last, full_name: (first + ' ' + last) } } })
     .then(function(r) {
       if (r.error) { setStatus('Error: ' + r.error.message, 'err'); b.disabled = false; b.textContent = 'Send me a sign-in link'; }
       else { setStatus('Check your email - we sent you a sign-in link.', 'ok'); b.textContent = 'Link sent ✓'; }

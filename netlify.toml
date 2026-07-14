@@ -362,6 +362,19 @@
   from = "https://riley.meetriley.us/memory/"
   to = "/memory.html"
   status = 200
+# P2b.10: "The Four Pillars" folded INTO the About page (about.html #pillars). The standalone
+# /pillars route now redirects there; pillars.html stays in the repo but is no longer routed.
+# force=true so this wins over Netlify serving the still-present pillars.html file.
+[[redirects]]
+  from = "/pillars"
+  to = "/about#pillars"
+  status = 301
+  force = true
+[[redirects]]
+  from = "/pillars/*"
+  to = "/about#pillars"
+  status = 301
+  force = true
 # P1.2: the Financial Goals TOOL moved to the Mentor tier. The /finance route is retired from Companion +
 # Coach; finance.html and all member data are preserved (the feature returns with Mentor). force=true so
 # this wins over the still-present finance.html file. Riley keeps money-stress awareness in conversation.

@@ -947,6 +947,25 @@ function starter(btn) {
   send();
 }
 
+// v2.3 (0.4) subtle thumbs feedback on a Riley reply. A whisper, not a survey - visible on hover.
+function addThumbs(afterWrap){
+  try{
+    if(!afterWrap||afterWrap.dataset.thumbed)return; afterWrap.dataset.thumbed='1';
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:12px;margin:-2px 0 8px 6px;opacity:.3;transition:opacity .2s';
+    row.onmouseover=function(){row.style.opacity='.85';}; row.onmouseout=function(){row.style.opacity='.3';};
+    row.innerHTML='<button aria-label="This helped" title="This helped" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--smoke)">👍</button><button aria-label="This missed" title="This missed" style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--smoke)">👎</button>';
+    const bs=row.querySelectorAll('button');
+    bs[0].onclick=function(){chatFeedback('up',row);}; bs[1].onclick=function(){chatFeedback('down',row);};
+    if(afterWrap.parentNode) afterWrap.parentNode.insertBefore(row, afterWrap.nextSibling);
+  }catch(e){}
+}
+async function chatFeedback(reaction,row){
+  try{ if(row)row.innerHTML='<span style="font-size:11px;color:var(--smoke2);font-family:DM Mono,monospace">thanks - noted</span>';
+    const _t=(await _db.auth.getSession()).data.session?.access_token||null;
+    fetch('/.netlify/functions/chat-feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_t,session_id:_sessionId,reaction:reaction})});
+  }catch(e){}
+}
 function appendMsg(role, text) {
   const el = document.getElementById('welcome');
   if (el) el.style.display = 'none';
@@ -1045,6 +1064,7 @@ async function send() {
   if (_history.length > 40) _history = _history.slice(-40);
   showAiNote();   // one-time footer pointer after first exchange
   saveLiveChat();
+  try{ if(reply && reply.indexOf('had trouble connecting')<0) addThumbs(typingWrap); }catch(e){}
   btn.disabled = false; btn.style.opacity = '1';
   // Doc 2 §3: at the Guide daily cap, disable the composer + show the once/day caption.
   if (_atLimit) applyChatCap(); else clearChatCap();

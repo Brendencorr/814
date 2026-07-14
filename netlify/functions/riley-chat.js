@@ -474,6 +474,11 @@ function buildUserContext(profile, clientData) {
     } else {
       lines.push("\nTODAY'S CHECK-IN: not completed yet today");
     }
+    // v2.3 (0.5) consistency - noticed, never gamified. If it's clear from their context that this
+    // member has checked in several days in a row, you MAY note it once, warmly, in passing ("that's a
+    // few mornings in a row") - never a streak counter or badge. If you are not certain, do not guess.
+    // If a streak has broken, never mention the break or a lost count. No guilt, ever.
+    lines.push("\nCONSISTENCY: acknowledge showing-up-in-a-row only if their context clearly shows it, at most once, in passing - never a counter, never the break. If unsure, say nothing about it.");
 
     // Active goals
     if (clientData.goals && clientData.goals.length) {

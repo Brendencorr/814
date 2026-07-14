@@ -127,7 +127,7 @@
   }
 
   // ── Floating "Chat with Riley" pill (always on) + embedded chat popup ─────
-  var _cov, _cfr, _miniBtn, _xBtn, _checkinLock = false;
+  var _cov, _cfr, _cpanel, _miniBtn, _xBtn, _checkinLock = false, _pendingSay = null, _layerReady = false;
   // Mandatory daily check-in: while the chat (iframe) reports a check-in in progress,
   // the popup can't be minimized/closed. Crisis + fail-open always unlock (the iframe
   // posts 'exempt'). Toggled by postMessage from /chat (same-origin).
@@ -153,31 +153,51 @@
     _cov = document.createElement('div'); _cov.id = 'riley-chat-overlay';
     // Docked, NON-blocking widget: no dimming backdrop, clicks pass through to the page
     // so members can scroll/click the dashboard with Riley open or minimized.
-    _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:flex-end;justify-content:flex-end;padding:16px;pointer-events:none';
-    var panel = document.createElement('div');
-    panel.style.cssText = 'position:relative;pointer-events:auto;width:min(384px,calc(100vw - 32px));height:min(600px,calc(100vh - 120px));background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px rgba(0,0,0,0.45);border:1px solid rgba(0,0,0,0.10)';
+    // P1.10: the conversation LAYER - a full-height panel sliding over the page from the right
+    // (~46vw desktop, one-tap expand to full screen; full-screen sheet on mobile). Non-blocking, so
+    // the member can read/scroll the page beneath while Riley stays open.
+    styleOnce('riley-layer-css', '#riley-chat-overlay{align-items:stretch !important;justify-content:flex-end;padding:0 !important}.riley-layer-panel{width:min(46vw,560px);height:100vh;overflow:hidden;box-shadow:-18px 0 60px rgba(0,0,0,0.45);border-left:1px solid rgba(0,0,0,0.10);transition:width .28s cubic-bezier(.4,0,.2,1)}.riley-layer-panel.expanded{width:100vw}@media(max-width:760px){.riley-layer-panel{width:100vw !important}}@media(prefers-reduced-motion:reduce){.riley-layer-panel{transition:none}}');
+    _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:stretch;justify-content:flex-end;pointer-events:none';
+    var panel = document.createElement('div'); panel.className = 'riley-layer-panel'; _cpanel = panel;
+    panel.style.cssText = 'position:relative;pointer-events:auto;background:#fff';
     var bar = document.createElement('div'); bar.style.cssText = 'position:absolute;top:0;right:0;z-index:2;display:flex;gap:5px;padding:8px 10px';
+    var exp = document.createElement('button'); exp.setAttribute('aria-label', 'Expand to full screen'); exp.innerHTML = '&#8622;'; exp.title = 'Expand';
+    exp.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:14px;line-height:1;cursor:pointer';
+    exp.onclick = function () { setLayerExpanded(!panel.classList.contains('expanded')); };
     var mini = document.createElement('button'); mini.setAttribute('aria-label', 'Minimize'); mini.innerHTML = '&minus;';
     mini.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:19px;line-height:1;cursor:pointer';
     mini.onclick = closeChat;
     var x = document.createElement('button'); x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
     x.style.cssText = 'width:30px;height:30px;border:none;border-radius:50%;background:rgba(0,0,0,0.34);color:#fff;font-size:21px;line-height:1;cursor:pointer';
     x.onclick = closeChat;
-    bar.appendChild(mini); bar.appendChild(x); _miniBtn = mini; _xBtn = x;
-    _cfr = document.createElement('iframe'); _cfr.title = 'Chat with Riley';
+    bar.appendChild(exp); bar.appendChild(mini); bar.appendChild(x); _miniBtn = mini; _xBtn = x;
+    _cfr = document.createElement('iframe'); _cfr.title = 'Talk to Riley';
     _cfr.style.cssText = 'width:100%;height:100%;border:0;display:block';
     panel.appendChild(bar); panel.appendChild(_cfr); _cov.appendChild(panel);
     _cov.addEventListener('click', function (e) { if (e.target === _cov) closeChat(); });
     document.body.appendChild(_cov);
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && _cov.style.display === 'flex') closeChat(); });
-    // The chat (iframe) drives the mandatory-check-in lock via same-origin postMessage.
+    // The chat (iframe) drives the mandatory-check-in lock, the crisis full-screen breakout, and the
+    // "send this message" handoff - all via same-origin postMessage.
     window.addEventListener('message', function (e) {
       if (e.origin !== location.origin || !_cfr || e.source !== _cfr.contentWindow) return;
       var d = e.data || {};
-      if (d && d.type === 'riley-checkin') setCheckinLock(d.status === 'pending');
+      if (d.type === 'riley-checkin') setCheckinLock(d.status === 'pending');
+      else if (d.type === 'riley-ready') { _layerReady = true; flushSay(); }
+      else if (d.type === 'riley-crisis') { setLayerExpanded(true); }   // P1.10.4: a lifeline never renders inside a panel
     });
   }
+  function setLayerExpanded(on) { if (_cpanel) _cpanel.classList.toggle('expanded', !!on); }
+  function flushSay() { if (_pendingSay && _layerReady && _cfr && _cfr.contentWindow) { try { _cfr.contentWindow.postMessage({ type: 'riley-say', text: _pendingSay }, location.origin); } catch (e) {} _pendingSay = null; } }
   function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
+  // P1.9/P1.10: the ONE entry point. The dashboard composer, nav "Talk to Riley", and "Ask Riley about this"
+  // all call this - it opens the layer over the current page and optionally sends a message / expands.
+  window.openRileyLayer = function (opts) {
+    opts = opts || {};
+    openChat();
+    if (opts.message) { _pendingSay = String(opts.message); flushSay(); }
+    if (opts.expand) setLayerExpanded(true);
+  };
   // Minimize/close = hide the panel + bring back the pill. The iframe stays mounted, so
   // re-opening resumes the SAME conversation. Never locks the page - dashboard stays usable.
   function closeChat() {

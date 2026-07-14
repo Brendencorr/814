@@ -329,6 +329,12 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
       <div class="hero-breakdown" id="hero-breakdown"></div>
     </div>
 
+    <!-- P1.9.2: the front door is an input. Submitting opens the conversation layer with the message already sent. -->
+    <form id="dash-composer" onsubmit="return dashSay(event)" style="display:flex;gap:9px;margin:2px 0 20px;align-items:center">
+      <input id="dash-composer-input" placeholder="Say anything - she's here" autocomplete="off" aria-label="Talk to Riley" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.28);border-radius:26px;padding:13px 19px;font-size:14px;color:var(--parchment);font-family:inherit;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='rgba(201,168,76,0.28)'">
+      <button type="submit" aria-label="Send to Riley" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);font-size:19px;line-height:1;cursor:pointer">&rarr;</button>
+    </form>
+
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
@@ -400,6 +406,8 @@ const MOOD_CONFIG={
 };
 
 var _priorityRead=null;   // Riley's Read/insight text, folded into the "Riley Suggests" card (Beat 2)
+// P1.9.2: dashboard composer -> open the conversation layer with the message already sent (fallback: /chat).
+function dashSay(e){ if(e&&e.preventDefault)e.preventDefault(); var inp=document.getElementById('dash-composer-input'); var t=(inp&&inp.value||'').trim(); if(inp)inp.value=''; if(window.openRileyLayer)window.openRileyLayer(t?{message:t}:{}); else location.href='/chat'+(t?('?say='+encodeURIComponent(t)):''); return false; }
 function applyMoodEngine(n){
   const cfg=MOOD_CONFIG[n]||MOOD_CONFIG[3];
   // ── RILEY SUGGESTS - one card, two beats. Beat 1 = reflection (was "Today's

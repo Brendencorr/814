@@ -278,9 +278,27 @@ body.embed .topbar-actions{display:none}
 // so no link or hard-redirect can strand someone on the old full-page chat.
 (function(){
   var _isEmbed = new URLSearchParams(location.search).get('embed');
-  if (_isEmbed) { document.body.classList.add('embed'); return; }
+  if (_isEmbed) {
+    document.body.classList.add('embed');
+    window.RILEY_EMBED = true;
+    // P1.10: the conversation layer (parent) hands off a message typed in the dashboard composer / nav.
+    window.addEventListener('message', function(e){
+      if (e.origin !== location.origin) return;
+      var d = e.data || {};
+      if (d.type === 'riley-say' && d.text) {
+        var inp = document.getElementById('msg-input');
+        if (inp) inp.value = String(d.text);
+        if (typeof send === 'function') send();
+      }
+    });
+    return;
+  }
   if (window.top === window.self) { window.location.replace('https://riley.meetriley.us/dashboard'); }
 })();
+// P1.10: signal the parent conversation layer (embed mode only). riley-ready = mounted + can receive a
+// message; riley-crisis = a 988 lifeline just rendered, so the layer must break out to full screen.
+function layerPost(type){ try{ if(window.RILEY_EMBED && window.parent && window.parent!==window) window.parent.postMessage({type:type}, location.origin); }catch(e){} }
+if (window.RILEY_EMBED) { if (document.readyState !== 'loading') layerPost('riley-ready'); else document.addEventListener('DOMContentLoaded', function(){ layerPost('riley-ready'); }); }
 const SB_URL = 'https://tglljvjixlolaguycvbb.supabase.co';
 const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
 const RILEY_URL = '/.netlify/functions/riley-chat';
@@ -967,6 +985,7 @@ async function chatFeedback(reaction,row){
   }catch(e){}
 }
 function appendMsg(role, text) {
+  if (role === 'riley' && /\b988\b/.test(text || '')) layerPost('riley-crisis');   // P1.10.4: a lifeline forces the layer to full screen
   const el = document.getElementById('welcome');
   if (el) el.style.display = 'none';
 

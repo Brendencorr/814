@@ -333,7 +333,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="card" style="padding:15px 17px;margin-bottom:16px">
       <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:11px">Track your day</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px">
-        <a href="/tracker"   style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">📖</span> Reflection</a>
+        <a href="/tracker"   style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">📖</span> Reflection<span id="refl-dot" style="display:none;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;align-items:center;justify-content:center;font-family:'DM Mono',monospace" title=""></span></a>
         <a href="/workouts"  style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🤍</span> Movement</a>
         <a href="/nutrition" style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🍃</span> Nourishment</a>
         <a href="/sleep"     style="display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--parchment);text-decoration:none;font-size:13px"><span style="font-size:15px">🌙</span> Rest</a>
@@ -348,12 +348,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <a href="/conversations" style="color:var(--smoke);text-decoration:none">💭 Past conversations</a>
     </div>
 
-    <!-- v2.3.1: Mentor coming-soon lives in the dashboard (Brenden - removed from marketing). Teaser only; not purchasable. -->
-    <div class="card" style="padding:14px 17px;margin-bottom:16px;border-style:dashed">
-      <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke);margin-bottom:7px">Coming later - Riley Mentor</div>
-      <div style="font-size:13px;color:var(--parchment);line-height:1.6;opacity:0.92">A deeper tier down the road: <strong style="color:var(--gold)">community</strong> - real people walking the same roads - and <strong style="color:var(--gold)">upload your history</strong> so Riley knows you from day one. Nothing to do yet; founding members hear about it first.</div>
-    </div>
-
     <!-- For You Today - Riley Brain's matched recommendations -->
     <div id="foryou-slot"></div>
 
@@ -364,11 +358,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <!-- TWO COL -->
     <div class="grid2">
       <div>
-        <!-- Riley insight -->
-        <div class="insight" id="insight" style="display:none">
-          <div class="insight-ico">🤝</div>
-          <div><div class="insight-label">Riley's Read</div><div class="insight-text" id="insight-text"></div></div>
-        </div>
+        <!-- "Riley's Read" merged into the "Riley Suggests" card (Beat 2) - one insight card, not two (Brenden). -->
+        <div id="insight" style="display:none"></div>
         <!-- Brief -->
         <div class="brief">
           <div class="brief-head">
@@ -387,8 +378,8 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <!-- "How are you feeling?" (mood) + "Sobriety Streak" panels retired as duplicates:
              mood is now captured in the Riley chat check-in, and both mood + sobriety surface
              as tappable stat tiles at the top of the page (see DYNAMIC STAT TILES). -->
-        <div class="panel" id="habits-panel"><div class="p-body"><div class="rc-label">Today's Habits</div><div id="habit-list"><div class="empty" style="padding:8px 0;text-align:left">Add habits in <a href="/tracker">Reflection →</a></div></div></div></div>
-        <div class="panel" id="goals-panel"><div class="p-body"><div class="rc-label">Weekly Goals</div><div id="goal-list"><div class="empty" style="padding:8px 0;text-align:left">Add goals in <a href="/tracker">Reflection →</a></div></div></div></div>
+        <!-- Today's Habits + Weekly Goals panels retired (Brenden): logging lives in "Track your day"; a dot on the Reflection button flags pending habits. -->
+        <div id="habit-list" style="display:none"></div><div id="goal-list" style="display:none"></div>
         <div class="panel"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
       </div>
     </div>
@@ -426,13 +417,14 @@ const MOOD_CONFIG={
   1:{story:"Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>",insight:"Thank you for telling me. That's not easy. I'm here - what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:"Move. Breathe. Reflect. That's the whole day.",mode:'struggling'}
 };
 
+var _priorityRead=null;   // Riley's Read/insight text, folded into the "Riley Suggests" card (Beat 2)
 function applyMoodEngine(n){
   const cfg=MOOD_CONFIG[n]||MOOD_CONFIG[3];
   // ── RILEY SUGGESTS - one card, two beats. Beat 1 = reflection (was "Today's
   // Story"); Beat 2 = the actionable suggestion. One continuous thought. ──
   const stSlot=document.getElementById('story-slot');
   if(stSlot){
-    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+cfg.story+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+cfg.challenge+'</div></div>';
+    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+cfg.story+'</div><div id="sg-beat2" style="font-size:13px;color:var(--smoke);line-height:1.6">'+(_priorityRead||cfg.challenge)+'</div></div>';
     try{track('riley_suggests_shown',{mood:n,card_id:'riley_suggests'});}catch(e){}
   }
   // Conversational support - only on harder days (the choice buttons). Good days
@@ -611,8 +603,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Pattern detection - struggling 5+ days in 14
     const lowMoodDays=checkins.filter(c=>c.mood&&c.mood<=2&&c.checkin_date>=dAgo(14)).length;
     if(lowMoodDays>=5&&!todayCI?.mood){
-      const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
-      if(insightEl&&insightTx){insightTx.textContent="I've noticed this has been a difficult couple of weeks. Thank you for continuing to show up. Would you like me to help build a lighter week together?";insightEl.style.display='flex';}
+      _priorityRead="I've noticed this has been a difficult couple of weeks. Thank you for continuing to show up. Would you like me to help build a lighter week together?";
     }
 
     SOBER_DAYS=sobriety?window.RileyDay.soberDays(sobriety.start_date):0;
@@ -795,7 +786,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     else if(moodToday&&moodToday<=2) insight=`Your mood is low today. That's worth honoring, not pushing past. Riley's here whenever you want to talk it through.`;
     else if(habitsTotal>0&&habitsDoneToday===habitsTotal) insight=`Every habit done today. That's a clean sweep - momentum like this compounds.`;
     else if(workouts.length>=3) insight=`${workouts.length} workouts logged in the last two weeks. Your consistency in training is showing up across your whole system.`;
-    if(insight){document.getElementById('insight').style.display='flex';document.getElementById('insight-text').textContent=insight;}
+    if(insight&&!_priorityRead)_priorityRead=insight;   // folded into the Riley Suggests card (Beat 2)
 
     // ── DYNAMIC STAT TILES - only the trackers THIS member actually uses (profile +
     //    entitlements + history), each a tappable link into its own history page. ──
@@ -880,14 +871,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     //    surface as the tappable stat tiles above. Keep MOOD in state for the mood engine. ──
     if(todayCI?.mood){MOOD=todayCI.mood;}
 
-    // ── HABITS ──
-    const hEl=document.getElementById('habit-list');
-    if(habits.length)hEl.innerHTML=habits.map(h=>{const d=habitDone.has(h.id);return `<div class="habit" id="hi-${h.id}"><div class="h-check ${d?'done':''}" onclick="toggleHabit('${h.id}')">${d?'✓':''}</div><span class="h-name ${d?'done':''}">${h.emoji||''} ${esc(h.title)}</span></div>`;}).join('');
-
-    // ── GOALS ──
-    const gEl=document.getElementById('goal-list');
-    if(goals.length)gEl.innerHTML=goals.map(g=>{const pct=g.target_value>0?Math.min(100,Math.round(g.current_value/g.target_value*100)):0;const fin=pct>=100;return `<div class="goal"><div class="g-top"><span class="g-name">${esc(g.title)}</span><span class="g-val" style="${fin?'color:var(--green2)':''}">${(g.current_value||0).toLocaleString()}/${(g.target_value||0).toLocaleString()} ${g.unit||''} ${fin?'✓':''}</span></div><div class="g-bar"><div class="g-fill ${fin?'done':''}" style="width:0" data-w="${pct}"></div></div></div>`;}).join('');
-    setTimeout(()=>document.querySelectorAll('.g-fill').forEach(el=>el.style.width=el.dataset.w+'%'),250);
+    // ── Pending-habits dot on the Reflection track button (Habits/Goals panels retired, Brenden) ──
+    const _pend=(habitsTotal>0?Math.max(0,habitsTotal-habitsDoneToday):0);
+    const _rd=document.getElementById('refl-dot');
+    if(_rd&&_pend>0){_rd.style.display='inline-flex';_rd.textContent=String(_pend);_rd.title=_pend+' habit'+(_pend>1?'s':'')+' left today';}
 
     // ── PROGRAMS ──
     const pEl=document.getElementById('prog-list');
@@ -927,7 +914,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // ── RILEY SUGGESTS - one card, two beats (Today screen consolidation) ──
     // Beat 1 = reflection (was "Today's Story"); Beat 2 = the suggestion. One
     // continuous thought - no divider, no second card.
-    if(!_briefShown)stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div style="font-size:13px;color:var(--smoke);line-height:1.6">'+rec+'</div></div>';
+    if(!_briefShown)stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div id="sg-beat2" style="font-size:13px;color:var(--smoke);line-height:1.6">'+(_priorityRead||rec)+'</div></div>';
     try{track('riley_suggests_shown',{card_id:'riley_suggests'});}catch(e){}
     // NOTICES
     const nSlot=document.getElementById('notices-slot');
@@ -995,11 +982,8 @@ async function loadRileyBrain(){
 
     // The Return Moment leads when present (references something specific); else
     // fall back to the brain's daily message. Only if nothing sharper is showing.
-    const insightEl=document.getElementById('insight'),insightTx=document.getElementById('insight-text');
     const brainMsg=brain.return_moment||brain.riley_message;
-    if(brainMsg&&insightEl&&insightTx&&insightEl.style.display==='none'){
-      insightTx.textContent=brainMsg;insightEl.style.display='flex';
-    }
+    if(brainMsg){const _b2=document.getElementById('sg-beat2');if(_b2)_b2.textContent=brainMsg;}   // Riley Brain's personal read -> Suggests Beat 2
 
     // Emotional date - gentle banner above everything
     if(brain.emotional_date||brain.personal_date){

@@ -122,6 +122,24 @@ Run in order in Supabase SQL editor:
 2. supabase/migrations/002_pipeline.sql — adds pipeline_runs table + format_winner/worst_pillar columns
 3. supabase/migrations/003_auth.sql — user_profiles, riley_conversations, user_program_progress with RLS
 
+### Database security — RUN AFTER EVERY MIGRATION (prevents the auth_users_exposed class of bug)
+In Supabase, ANYTHING in the `public` schema is exposed through the API and, by default, granted to the
+`anon` + `authenticated` roles. So a new view/function/table is publicly reachable with the anon key UNLESS
+you revoke it. That is how member emails leaked through `data_integrity_report` and how operator RPCs
+(`admin_home_analytics`) became anon-callable — fixed in migrations 096/097.
+
+Every migration that creates a view / function / trigger fn MUST, in the SAME migration:
+- If it is SERVER-ONLY (monitoring views, operator RPCs, trigger fns, cron helpers — anything read only
+  via the SERVICE key): explicitly `revoke all on <view> from anon, authenticated;` /
+  `revoke execute on function <name>(<argtypes>) from anon, authenticated;`.
+- NEVER let a `public` object that reads `auth.users` be reachable by anon/authenticated. Prefer
+  `alter view <v> set (security_invoker = true);` and keep operator/monitoring objects out of client reach.
+
+Then ALWAYS run the Supabase Security Advisor and fix any NEW lint before the work is "done":
+- via the MCP: `get_advisors` with type=`security`; or the dashboard → Advisors → Security.
+- Treat `*_exposed`, `anon_*_executable`, and any ERROR-level lint as BLOCKING.
+Keep Supabase's advisory EMAILS enabled — that automated scan is the backstop that caught the last one.
+
 ## Functions
 
 ### Agent functions (manual, called from dashboard)

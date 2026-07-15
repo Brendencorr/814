@@ -3,7 +3,7 @@
  *
  * Grants full Companion access for 48 hours by inserting a subscription
  * (plan_id='companion', term='weekend', expires_at = now + 48h). entitlements.js's bridge then
- * unlocks Companion across the app; it reverts cleanly to Guide the moment it expires (no cron
+ * unlocks Companion across the app; it reverts cleanly to the free tier the moment it expires (no cron
  * needed - the bridge only counts non-expired subs). Idempotent: ONE Companion Weekend per user,
  * ever. Token-verified. Emits companion_weekend_started.
  *
@@ -21,6 +21,14 @@ const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "ap
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: CORS, body: "" };
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
+
+  // Feature-gated OFF by default (Brenden 2026-07-15): the public 48-hour Companion Weekend gift is
+  // NOT live yet - unavailable to the public. It stays disabled unless COMPANION_WEEKEND_ENABLED === "true".
+  // While off, the Reset's fire-and-forget call is a clean no-op (nothing granted, no member-facing change).
+  // Operator manual grants via admin-comp are separate and unaffected.
+  if (String(process.env.COMPANION_WEEKEND_ENABLED || "").toLowerCase() !== "true") {
+    return json(200, { ok: true, granted: false, disabled: true });
+  }
 
   let body; try { body = JSON.parse(event.body || "{}"); } catch { return json(400, { error: "Bad JSON" }); }
   const supabase = getSupabaseClient();

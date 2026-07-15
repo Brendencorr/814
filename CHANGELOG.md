@@ -10,6 +10,18 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-15
+
+- `riley-v23` — **Companion Weekend gated OFF + founder-letter brand fix.** (1) The public 48-hour
+  "Companion Weekend" gift (a paid-tier trial auto-granted on Reset close) is now **feature-gated OFF by
+  default**: `companion-weekend.js` returns a clean no-op unless `COMPANION_WEEKEND_ENABLED === "true"`.
+  Not available to the public until Brenden flips that env var. Operator manual grants (admin-comp) are
+  separate and unaffected. (2) Comms: `guide_5` (the Month One founder letter) retires the old brand
+  "The 8:14 Project" → "The 814 Project" (body reworded to keep the 8:14 origin story; signature now
+  "Founder, The 814 Project"). Files: `netlify/functions/companion-weekend.js`, `comms-templates.js`.
+  Comms remain DARK (`COMMS_ENABLED` unset). Two-tier verbiage across the rest of comms + Riley's prompt
+  audited and confirmed correct (Companion=free, Coach=$19/$175, Mentor coming-soon, no "$34"/"Guide").
+
 ## 2026-07-14
 
 - `riley-v23` — **Member-app UX punch-list P1/P2 (July 14 walkthrough).** Shipped in order across ~10 commits

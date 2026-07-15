@@ -11,8 +11,8 @@
  * Senders: 'riley' -> Riley <riley@meetriley.us>, 'brenden' -> Brenden <brenden@meetriley.us>.
  * Reply-to is ALWAYS support@meetriley.us. Never noreply@.
  *
- * guide_5 carries author:'interim' - Brenden replaces it with his own letter before launch
- * (admin surfaces a "FOUNDER COPY PENDING" badge, same pattern as lapse_first_response).
+ * guide_5 is the FINAL founder-authored Month One Letter (author:'founder'). Brand refs updated
+ * 2026-07-15 to "The 814 Project" (retired "The 8:14 Project"); the 8:14 origin story stays.
  */
 
 const APP = "https://riley.meetriley.us";
@@ -248,7 +248,7 @@ const TEMPLATES = {
       p("The hardest part wasn't always the crisis itself. It was the morning after. The ordinary Tuesday when life expected me to keep moving, but I had no idea what came next.") +
       p("I wished there had been something I could reach for in those moments.") +
       p("That's why Riley exists.") +
-      p("If you've spent any time reading about The 8:14 Project, you've probably wondered where the name comes from.") +
+      p("If you've spent any time here, you've probably wondered where the name 8:14 comes from.") +
       p("It began with a little boy and his watch.") +
       p("One day, that watch stopped.") +
       p("It stopped at 8:14.") +
@@ -271,7 +271,7 @@ const TEMPLATES = {
       p("Thank you for trusting something I built.") +
       p("More importantly, thank you for trusting yourself enough to begin.") +
       p("I'm really glad you're here.") +
-      p("- Brenden<br>Founder, The 8:14 Project"),
+      p("- Brenden<br>Founder, The 814 Project"),
     text: (v) =>
       "Hi " + (v.first_name || "there") + ",\n\n" +
       "For the last month, you've been getting to know Riley.\n\n" +
@@ -287,7 +287,7 @@ const TEMPLATES = {
       "The hardest part wasn't always the crisis itself. It was the morning after. The ordinary Tuesday when life expected me to keep moving, but I had no idea what came next.\n\n" +
       "I wished there had been something I could reach for in those moments.\n\n" +
       "That's why Riley exists.\n\n" +
-      "If you've spent any time reading about The 8:14 Project, you've probably wondered where the name comes from.\n\n" +
+      "If you've spent any time here, you've probably wondered where the name 8:14 comes from.\n\n" +
       "It began with a little boy and his watch.\n\n" +
       "One day, that watch stopped.\n\n" +
       "It stopped at 8:14.\n\n" +
@@ -310,7 +310,7 @@ const TEMPLATES = {
       "Thank you for trusting something I built.\n\n" +
       "More importantly, thank you for trusting yourself enough to begin.\n\n" +
       "I'm really glad you're here.\n\n" +
-      "- Brenden\nFounder, The 8:14 Project",
+      "- Brenden\nFounder, The 814 Project",
   },
 
   guide_6: {

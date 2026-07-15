@@ -1,0 +1,37 @@
+# Meet Riley - crawler guidance.
+# Public marketing pages are open to search. The member app + operator dashboard are auth-gated
+# (they redirect to sign-in) and must never be indexed - so we keep them out of search results.
+
+User-agent: *
+Allow: /
+
+# Member app (auth-gated - nothing public to index, and we don't want the app surface in search)
+Disallow: /dashboard
+Disallow: /chat
+Disallow: /lifemap
+Disallow: /library
+Disallow: /journey
+Disallow: /conversations
+Disallow: /programs
+Disallow: /program
+Disallow: /int-program
+Disallow: /tracker
+Disallow: /workouts
+Disallow: /nutrition
+Disallow: /sleep
+Disallow: /finance
+Disallow: /calendar
+Disallow: /progress
+Disallow: /reset
+Disallow: /clarity-setup
+Disallow: /clarity-method
+Disallow: /community
+Disallow: /onboarding
+Disallow: /settings
+Disallow: /profile
+Disallow: /memory
+
+# Private operator dashboard
+Disallow: /operator
+
+Sitemap: https://www.meetriley.us/sitemap.xml

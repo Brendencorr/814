@@ -961,7 +961,7 @@ function renderSignupAlert(d){
   var fresh=sg.filter(function(s){ return s.created_at && (!lastSeen || s.created_at>lastSeen); });
   window.__newestSignup=sg[0]&&sg[0].created_at;
   var rows=sg.slice(0,8).map(function(s){
-    var when=s.created_at?new Date(s.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+    var when=s.created_at?ft(s.created_at,s.timezone):'';
     var isNew=s.created_at&&(!lastSeen||s.created_at>lastSeen);
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--ink2)">'+(isNew?'<span style="color:var(--gold)">&#9679; </span>':'')+x(s.name||'Member')+'</span><span style="color:var(--muted);font-size:.72rem">'+when+'</span></div>';
   }).join('');
@@ -1326,7 +1326,7 @@ function memberTableRows(rows,searchStr){
     var last=engEsc(u.last_name||'');
     var email=engEsc(u.email||'-');
     var paid=u.paid?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
-    var signup=u.created_at?new Date(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'-';
+    var signup=u.created_at?_rUTC(u.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:u.timezone||OP_TZ}):'-';
     var progs=(u.has_purchases||(u.programs>0))?'<span style="color:var(--gold);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
     var wel=(u.emailed||u.welcome_email_sent===true)?'<span style="color:var(--green);font-weight:600">Yes</span>':'<span style="color:var(--muted2)">No</span>';
     return '<tr onclick="openUserPanel(\''+u.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'transparent\'">'+
@@ -2404,7 +2404,15 @@ async function tpl(){var btn=document.getElementById('stb'),res=document.getElem
 async function ca(agent,message){var r=await fetch(B+'/'+agent,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:message})});var raw=await r.text();if(!r.ok){var d=raw;try{d=JSON.parse(raw).error||raw;}catch(e){}throw new Error('HTTP '+r.status+' from '+agent+': '+d);}try{var d=JSON.parse(raw);return d.reply||raw;}catch(e){return raw;}}
 function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function exs(text,h){var idx=text.indexOf(h+':'),start=idx>=0?idx+h.length+1:-1;if(start<0){idx=text.indexOf(h+'\n');start=idx>=0?idx+h.length+1:-1;}if(start<0)return null;var lines=text.slice(start).split('\n'),out=[];for(var i=0;i<lines.length;i++){var l=lines[i];if(out.length>0&&(/^[A-Z][A-Z &'\/—-]{4,}:/.test(l.trim())||/^---/.test(l.trim())))break;out.push(l);}return out.join('\n').trim()||null;}
-function fd(s){if(!s)return'-';try{return new Date(s).toLocaleDateString('en-US',{month:'short',day:'numeric'});}catch(e){return s;}}
+// ── Time display (Brenden 2026-07-15): DB timestamps are NAIVE UTC (`timestamp without time zone`, no
+// 'Z'); parse them AS UTC so the browser doesn't misread them as local, then format in Mountain (the
+// canonical business base) or a member's ACTUAL timezone when we have it, with a short zone label. ──
+var OP_TZ='America/Denver';
+function _rUTC(s){if(s==null)return new Date(NaN);if(typeof s==='number')return new Date(s);var t=String(s).trim();if(/[zZ]$|[+\-]\d\d:?\d\d$/.test(t))return new Date(t);return new Date(t.replace(' ','T').replace(/\.\d+/,'')+'Z');}
+var _RZ={'America/Los_Angeles':'PT','America/Vancouver':'PT','America/Denver':'MT','America/Boise':'MT','America/Phoenix':'MST','America/Chicago':'CT','America/Winnipeg':'CT','America/New_York':'ET','America/Toronto':'ET','America/Halifax':'AT','America/Anchorage':'AKT','Pacific/Honolulu':'HT'};
+function _rZone(tz){if(_RZ[tz])return _RZ[tz];try{return new Intl.DateTimeFormat('en-US',{timeZone:tz,timeZoneName:'short'}).formatToParts(new Date()).filter(function(p){return p.type==='timeZoneName';})[0].value;}catch(e){return'';}}
+function fd(s,tz){if(!s)return'-';try{return _rUTC(s).toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:tz||OP_TZ});}catch(e){return s;}}
+function ft(s,tz){if(!s)return'';try{tz=tz||OP_TZ;return _rUTC(s).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:tz})+' '+_rZone(tz);}catch(e){return'';}}
 function nxs(){var d=new Date();d.setDate(d.getDate()+((7-d.getDay())%7||7));return d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});}
 function sh2(id){var el=document.getElementById(id);if(el)el.style.display='';}
 function hi2(id){var el=document.getElementById(id);if(el)el.style.display='none';}
@@ -2725,7 +2733,7 @@ function renderUserDetail(d){
       html+='<div class="ud-prog">';
       html+='<span class="ud-prog-name">'+x(p.program_name)+'</span>';
       html+='<span class="ud-prog-day">Day '+p.day_completed+'</span>';
-      html+='<span style="font-size:.65rem;color:var(--muted2)">'+fd(p.last_activity)+'</span>';
+      html+='<span style="font-size:.65rem;color:var(--muted2)">'+fd(p.last_activity,profile.timezone)+'</span>';
       html+='</div>';
     });
     html+='</div>';
@@ -2740,7 +2748,7 @@ function renderUserDetail(d){
     sessions.forEach(function(s){
       html+='<div class="session-block">';
       html+='<div class="session-hd" style="cursor:default">';
-      html+='<span class="session-date">'+fdt(s.last_message_at)+'</span>';
+      html+='<span class="session-date">'+fdt(s.last_message_at,profile.timezone)+'</span>';
       html+='<span class="session-ct">'+s.message_count+' messages</span>';
       html+='</div>';
       html+='</div>';
@@ -2755,7 +2763,7 @@ function renderUserDetail(d){
   html+='<div class="ud-section" style="border:1px solid rgba(200,70,70,.32);border-radius:10px;padding:.7rem .85rem;margin-top:.5rem"><div class="ud-section-label" style="color:#e08a8a">Danger zone <span style="color:var(--muted2);font-weight:400;font-size:.63rem">deactivate = cancel sub + revoke access, data kept (reversible) &middot; delete = erase everything</span></div><div style="display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.55rem"><button onclick="deactivateMember(\''+profile.id+'\',this)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--gold);font-size:.72rem;cursor:pointer;padding:5px 12px;font-weight:600;font-family:inherit">Deactivate</button><button onclick="deleteMemberHard(\''+profile.id+'\',this)" style="background:none;border:1px solid rgba(200,70,70,.5);border-radius:6px;color:#e07070;font-size:.72rem;cursor:pointer;padding:5px 12px;font-weight:600;font-family:inherit">Delete account</button></div></div>';
   document.getElementById('ud-body').innerHTML=html;
   if(profile.id)loadMembershipPanel(profile.id);
-  if(profile.id)loadUserEmails(profile.id);
+  if(profile.id)loadUserEmails(profile.id,profile.timezone);
   if(profile.id)loadBillingPanel(profile.id);
 }
 
@@ -2779,13 +2787,13 @@ function resendWelcome(userId, btn){
 
 // ── Correspondence: every email we've sent this member (email_log via admin-correspondence).
 // Crisis follow-ups are intentionally excluded upstream (restricted access), so they never show here.
-function loadUserEmails(userId){
+function loadUserEmails(userId,tz){
   var el=document.getElementById('ud-corr-body'); if(!el)return;
   opGet('/admin-correspondence?user_id='+encodeURIComponent(userId)).then(function(d){
     var rows=(d&&d.items)||[];
     if(!rows.length){el.innerHTML='<div class="em">No emails sent yet.</div>';return;}
     el.innerHTML='<div class="rp" style="margin:0">'+rows.map(function(r){
-      var when=r.created_at?new Date(r.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'-';
+      var when=r.created_at?ft(r.created_at,tz):'-';
       var col=r.status==='sent'?'var(--green)':r.status==='failed'?'var(--red)':'var(--muted2)';
       var reason=(r.status!=='sent'&&r.error)?' <span style="color:var(--muted2)">('+x(r.error)+')</span>':'';
       return '<div class="rr" style="grid-template-columns:14px 1fr 118px 84px"><span style="color:'+col+'">&#9679;</span>'+
@@ -2816,7 +2824,7 @@ function loadBillingPanel(userId){
       }
       if(pays.length){
         h+='<div class="rp" style="margin:0">'+pays.map(function(p){
-          var when=p.created?new Date(p.created*1000).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'-';
+          var when=p.created?ft(p.created*1000):'-';
           var refunded=(p.refunded||p.amount_refunded>0);
           var col=refunded?'var(--muted2)':(p.status==='succeeded'?'var(--green)':'var(--red)');
           var card=p.card_brand?(x(p.card_brand)+' &middot;'+x(p.card_last4||'')):'';
@@ -3089,12 +3097,13 @@ function toggleSession(id){
   if(el)el.classList.toggle('open');
 }
 
-function fdt(s){
+function fdt(s,tz){
   if(!s)return'-';
   try{
-    var d=new Date(s);
-    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' '+
-           d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    tz=tz||OP_TZ;
+    var d=_rUTC(s);
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:tz})+' '+
+           d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',timeZone:tz})+' '+_rZone(tz);
   }catch(e){return s;}
 }
 
@@ -3148,7 +3157,7 @@ function ceRenderReview(q){
   q.forEach(function(it){
     var a=(it.assets||[])[0]||null;
     var cap=(it.brief&&(it.brief.headline_hook||it.brief.caption))||it.preview_caption||'(no caption)';
-    var when=it.scheduled_for?new Date(it.scheduled_for).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):null;
+    var when=it.scheduled_for?_rUTC(it.scheduled_for).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit',timeZone:OP_TZ})+' '+_rZone(OP_TZ):null;
     html+='<div class="ce-card">';
     if(a&&a.file_url){
       html+='<img src="'+x(a.file_url)+'" alt="" style="width:100%;border-radius:8px;border:1px solid var(--border);background:var(--surface2)">';
@@ -3333,7 +3342,7 @@ function ceRenderJobs(jobs){
   var cancelable=ceView==='scheduled';
   var html='';
   jobs.forEach(function(j){
-    var when=j.scheduled_for?new Date(j.scheduled_for).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):(j.published_at?fd(j.published_at):'-');
+    var when=j.scheduled_for?ft(j.scheduled_for):(j.published_at?fd(j.published_at):'-');
     html+='<div class="ce-job"><span class="ce-job-plat">'+x(j.platform)+'</span>';
     html+='<span class="ce-job-cap">'+x((j.caption_final||'').slice(0,120))+'</span>';
     html+='<span class="ce-job-when">'+when+' · '+x(j.state)+'</span>';
@@ -3444,7 +3453,7 @@ async function openDrill(kind,val,title){
     var rows=d.rows||[];
     if(!rows.length){body.innerHTML='<div class="em" style="padding:1.5rem">No records yet.</div>';return;}
     body.innerHTML='<div style="padding:.25rem 0">'+rows.map(function(r){
-      var when=r.at?new Date(r.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'';
+      var when=r.at?ft(r.at):'';
       var clickable=r.user_id?' style="cursor:pointer" onclick="closeDrill();openUserPanel(\''+r.user_id+'\')"':'';
       return '<div class="rr" '+clickable+'style="grid-template-columns:1fr auto;border-bottom:1px solid var(--border);padding:.6rem 1.25rem">'+
         '<div style="min-width:0"><div style="color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+x(r.name||'-')+(r.user_id?' ›':'')+'</div>'+

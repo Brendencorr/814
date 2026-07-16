@@ -12,6 +12,17 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-15
 
+- `riley-v23` — **Operator timezone display fix (Mountain base + adjust per person).** DB timestamps are
+  naive UTC (`timestamp without time zone`, serialized with no 'Z'); the operator dashboard's `new Date(str)`
+  misread them as local and printed the raw UTC hour - a member's 9:59am PT chat showed as "4:59 PM". Added
+  shared helpers in operator.html: `_rUTC()` parses DB strings AS UTC; `fd`/`ft`/`fdt` format in
+  `America/Denver` (Mountain, the business base) by default, or a member's actual `user_profiles.timezone`
+  when known, with a PT/MT/CT/ET label. Wired the member-detail renders (Riley-conversation session times,
+  program activity, correspondence, signup dates) to each member's real zone; signups/payments/scheduled-
+  content use the Mountain base. Emails/crons already send in member-tz-with-Mountain-default (brief,
+  reset-nudge, proactive - confirmed, no change; no timestamps in email bodies). Verified in Node against
+  Casey's real 16:59-UTC row → "9:59 AM PT" / "10:59 AM MT". Member-page displays are the next pass. File: operator.html.
+
 - `riley-v23` — **Companion Weekend gated OFF + founder-letter brand fix.** (1) The public 48-hour
   "Companion Weekend" gift (a paid-tier trial auto-granted on Reset close) is now **feature-gated OFF by
   default**: `companion-weekend.js` returns a clean no-op unless `COMPANION_WEEKEND_ENABLED === "true"`.

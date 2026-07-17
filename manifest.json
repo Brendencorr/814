@@ -1,6 +1,6 @@
 {
-  "name": "Riley - Meet Riley",
-  "short_name": "Riley",
+  "name": "Meet Riley",
+  "short_name": "Meet Riley",
   "description": "Always there. Already knows.",
   "start_url": "/dashboard?source=pwa",
   "scope": "/",

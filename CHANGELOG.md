@@ -12,6 +12,11 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-17
 
+- `meetriley-big-build` - **App headline is "Meet Riley" everywhere (founder decision, supersedes the
+  spec's "Riley / Riley - Meet Riley" split).** manifest.json name + short_name -> "Meet Riley";
+  `apple-mobile-web-app-title` -> "Meet Riley" across all 30 pages. Spec Section 2 identity table
+  should read "Meet Riley" for launcher + store listing in v1.1.
+
 - `meetriley-big-build` - **App Phase A: PWA hardening per MeetRiley App Specification v1.0 (Sections 6-7, 9-10).**
   The installable app shell, built on the one codebase - no product page touched. (1) **sw.js rewritten
   to the Spec 6.2 strategy table**: per-deploy versioned cache names (`__RILEY_BUILD__` stamped from

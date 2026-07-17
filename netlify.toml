@@ -1,3 +1,10 @@
+# App Spec 6.3: every deploy stamps its commit into sw.js so cache names are
+# versioned per deploy and installed apps pick up the new version within one
+# session (the update-toast flow in pwa.js). COMMIT_REF is set by Netlify;
+# the fallback keeps local/preview builds working.
+[build]
+  command = "sed -i \"s/__RILEY_BUILD__/$(echo \"${COMMIT_REF:-dev}\" | cut -c1-10)/\" sw.js"
+
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html,profile.html,settings.html,reset.html,home.html,program.html,int-program.html,clarity-setup.html,clarity-method.html"
   # OPERATOR_KEY is an operator-chosen password; we never hardcode it, so scanning

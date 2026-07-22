@@ -61,8 +61,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 /* ── HERO ── */
 .hero{position:relative;padding:170px 0 60px;text-align:center;overflow:hidden}
-.hero-glow{position:absolute;top:-10%;left:50%;transform:translateX(-50%);width:900px;height:640px;max-width:130vw;
-  background:radial-gradient(ellipse at center,rgba(201,168,76,0.16),rgba(201,168,76,0.04) 42%,transparent 68%);pointer-events:none;filter:blur(8px)}
+.hero-glow{position:absolute;top:-12%;left:50%;transform:translateX(-50%);width:1200px;height:820px;max-width:150vw;
+  background:radial-gradient(ellipse at center,rgba(201,168,76,0.20),rgba(201,168,76,0.055) 46%,transparent 70%);pointer-events:none;filter:blur(10px)}
 .hero-inner{position:relative;z-index:1;max-width:880px;margin:0 auto}
 .hero h1{font-family:'DM Serif Display',serif;font-size:min(7.9vw,64px);line-height:1.08;letter-spacing:-0.02em;color:var(--parchment);margin:22px 0 14px}
 /* Exactly TWO lines, ever (founder 2026-07-22): one sentence per line, no mid-sentence wrap */
@@ -126,14 +126,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .pcard .btn{width:100%}
 @media(max-width:820px){.prog-grid{grid-template-columns:1fr;max-width:420px;margin:40px auto 0}}
 
-/* ── RESET BAND ── */
-.band{background:linear-gradient(120deg,var(--ink2),var(--ink3));border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06)}
-.reset-band{display:grid;grid-template-columns:auto 1fr auto;gap:40px;align-items:center}
-.reset-band .big{font-family:'DM Serif Display',serif;font-size:clamp(30px,4vw,44px);color:var(--gold2);line-height:1;white-space:nowrap}
-.reset-band .mid h3{font-family:'DM Serif Display',serif;font-size:22px;color:var(--parchment);margin-bottom:6px}
-.reset-band .mid p{font-size:14px;color:var(--smoke);line-height:1.7}
-@media(max-width:820px){.reset-band{grid-template-columns:1fr;gap:20px;text-align:center}}
-
 /* ── "NOT SURE" - emotional core ── */
 .core{text-align:center;max-width:760px;margin:0 auto}
 .core .big{font-family:'DM Serif Display',serif;font-size:clamp(32px,5vw,52px);line-height:1.14;letter-spacing:-0.01em;color:var(--parchment);margin-bottom:28px}
@@ -149,18 +141,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .prob-close{font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(20px,3vw,26px);color:var(--gold2);margin-top:44px}
 @media(max-width:820px){.prob-grid{grid-template-columns:1fr;max-width:440px;margin:36px auto 0}}
 
-/* ── THE PORCH LIGHTS (four doors) ── */
+/* ── THE PORCH LIGHTS (four doors: light on the left, two text lines centered beside it) ── */
 .doors{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:48px;text-align:left}
-.door{display:block;background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:30px 26px;transition:all .25s;position:relative}
+.door{display:flex;align-items:center;gap:20px;background:var(--ink2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:28px 26px;transition:all .25s;position:relative}
 .door:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-3px)}
-.door::before{content:'';display:block;width:11px;height:11px;border-radius:50%;margin-bottom:16px;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 14px rgba(201,168,76,0.55);animation:breathe 5s ease-in-out infinite}
-.door h4{font-family:'DM Serif Display',serif;font-size:21px;color:var(--parchment);margin-bottom:8px;line-height:1.2}
+.door::before{content:'';flex-shrink:0;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f);box-shadow:0 0 22px rgba(201,168,76,0.65);animation:breathe 5s ease-in-out infinite}
+.door h4{font-family:'DM Serif Display',serif;font-size:21px;color:var(--parchment);margin-bottom:6px;line-height:1.2}
 .door .light{font-family:'DM Serif Display',serif;font-style:italic;font-size:15.5px;color:var(--gold2);line-height:1.5}
 @media(max-width:720px){.doors{grid-template-columns:1fr;max-width:440px;margin:40px auto 0}}
 
 
 /* ── HARD MOMENTS + WHISPER (calm prose) ── */
-.calm{max-width:680px;margin:0 auto;text-align:left}
+.calm{max-width:900px;margin:0 auto;text-align:left}
 .calm p{font-size:15.5px;color:var(--smoke);line-height:1.9;margin-bottom:16px}
 .calm p strong{color:var(--parchment);font-weight:500}
 .whisper{max-width:620px;margin:0 auto;text-align:center}
@@ -246,28 +238,6 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   </div>
 </header>
 
-<!-- §2 THE PROBLEM (2am register) -->
-<section class="section" id="problem">
-  <div class="wrap center">
-    <div class="h2 reveal">The hardest hours are the ones nobody's available for.</div>
-    <div class="prob-grid">
-      <div class="prob reveal">
-        <h4>The 2am problem</h4>
-        <p>Cravings, grief, and the urge to reach for the phone don't keep office hours.</p>
-      </div>
-      <div class="prob reveal">
-        <h4>The restart problem</h4>
-        <p>Every place you turn makes you start your story over - new therapist, new app, new intake form.</p>
-      </div>
-      <div class="prob reveal">
-        <h4>The alone problem</h4>
-        <p>Nobody wants to burden the same friend with the same thing again.</p>
-      </div>
-    </div>
-    <div class="prob-close reveal">Sometimes you just need someone to talk to.</div>
-  </div>
-</section>
-
 <!-- §3 THE PORCH LIGHTS (replaces the retired pillars framing; doors carry the SAME persona keys as the 8:14 Reset onboarding - griever / drinker / burnt_out - no parallel taxonomy) -->
 <section class="section band" id="porch">
   <div class="wrap center">
@@ -275,20 +245,20 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="h2">Whatever you're carrying, start there.</div>
     <div class="doors">
       <a class="door reveal" href="https://riley.meetriley.us/login?lane=drinker">
-        <h4>Sobriety &amp; recovery</h4>
-        <div class="light">Rebuild your life. One day at a time.</div>
+        <div><h4>Sobriety &amp; recovery</h4>
+        <div class="light">Rebuild your life. One day at a time.</div></div>
       </a>
       <a class="door reveal" href="https://riley.meetriley.us/login?lane=griever">
-        <h4>Grief &amp; loss</h4>
-        <div class="light">Presence outlasts loss.</div>
+        <div><h4>Grief &amp; loss</h4>
+        <div class="light">Presence outlasts loss.</div></div>
       </a>
       <a class="door reveal" href="https://riley.meetriley.us/login?lane=burnt_out">
-        <h4>Burnout &amp; the heavy seasons</h4>
-        <div class="light">You're not starting over. You're continuing.</div>
+        <div><h4>Burnout &amp; the heavy seasons</h4>
+        <div class="light">You're not starting over. You're continuing.</div></div>
       </a>
       <a class="door reveal" href="https://riley.meetriley.us/login">
-        <h4>Just need someone to talk to</h4>
-        <div class="light">Not sure if you have a problem? Good. That's exactly who this is for.</div>
+        <div><h4>Just need someone to talk to</h4>
+        <div class="light">Not sure if you have a problem? Good. That's exactly who this is for.</div></div>
       </a>
     </div>
   </div>
@@ -320,21 +290,28 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   </div>
 </section>
 
-<!-- §6 THE 8:14 RESET -->
-<section class="section-tight band divider-band" id="reset">
-  <div class="wrap reset-band">
-    <div class="big">8:14</div>
-    <div class="mid">
-      <h3>The 8:14 Reset</h3>
-      <p>8 minutes. 14 seconds. 7 days. A first week with Riley, one small moment a day - built to meet you exactly where you are.</p>
+<!-- §2 THE PROBLEM (2am register) - moved below Memory per founder 2026-07-22 -->
+<section class="section" id="problem">
+  <div class="wrap center">
+    <div class="h2 reveal">The hardest hours are the ones nobody's available for.</div>
+    <div class="prob-grid">
+      <div class="prob reveal">
+        <h4>The 2am problem</h4>
+        <p>Cravings, grief, and the urge to reach for the phone don't keep office hours.</p>
+      </div>
+      <div class="prob reveal">
+        <h4>The restart problem</h4>
+        <p>Every place you turn makes you start your story over - new therapist, new app, new intake form.</p>
+      </div>
+      <div class="prob reveal">
+        <h4>The alone problem</h4>
+        <p>Nobody wants to burden the same friend with the same thing again.</p>
+      </div>
     </div>
-    <div>
-      <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm">Free, forever. Day one is waiting.</a>
-    </div>
+    <div class="prob-close reveal">Sometimes you just need someone to talk to.</div>
   </div>
 </section>
 
-<!-- PROGRAMS -->
 <!-- §7 TIERS - two-column Companion/Coach (v2.3 D.4); Mentor stays dashboard-only, never on marketing -->
 <section class="section band" id="programs" data-cms-section="programs" data-cms-label="Membership">
   <div class="wrap center">

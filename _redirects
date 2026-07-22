@@ -1,0 +1,5 @@
+# Methodology route (Clarity v2.3 §12 transparency) - the member-facing "How Clarity works"
+# page answers at /methodology. This file processes before netlify.toml rules; keep it to
+# additions that collide with nothing there.
+/methodology    /clarity-method.html   200
+/methodology/   /clarity-method.html   200

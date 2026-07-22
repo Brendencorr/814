@@ -1,13 +1,7 @@
-# 07 — CLARITY SCORE v2.2
-> **SUPERSEDED (2026-07-22): the source of truth is now `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3),**
-> which adds §2b return-cadence framework and §2c dynamic check-ins (spine/skin). This file is kept
-> as the design record of the v2.2 build phase only. Cadence & check-ins: `docs/08_RHYTHM_AND_RETURN_SPEC.md`.
-
+# 07 — CLARITY SCORE v2.3
 ### "Distance traveled, not distance from perfect." · July 2026 · Code-ready
-Supersedes v2.1. Incorporates: (a) daily check-in expansion, (b) external quantitative review (dispositions in §14), (c) customization onboarding flow (§10).
+Supersedes v2.2. Adds: return-cadence framework (§2b) and dynamic check-in spine/skin (§2c) — designed for the every-few-days member, not the daily idealization.
 Positioning (canon): **every app counts your steps against 10,000 — Riley is the only score that knows what a walk cost you this week.**
-
-> IMPLEMENTATION NOTE (2026-07-10): The live app is still Clarity **v1.0** (`netlify/functions/clarity.js`, a flat weighted average). v2.0/v2.1 were design-only. This document (v2.2) is the target; it is being built as a phased, DARK, additive epic (Phase A schema+check-in → B engine → A.5 shadow-verify → C onboarding → D validation → cutover). Nothing members see changes until the cutover flag flip. Plan of record: `.claude/plans/typed-foraging-seahorse.md`.
 
 ---
 
@@ -39,6 +33,29 @@ Lanes (sobriety etc.) opt-in inside P (§5). Weights renormalize over enabled di
 | Craving intensity (lane members only) | 0–5 | Sobriety lane leading indicator; ≥4 gently surfaces Emergency Craving Protocol |
 
 **Weekly (dashboard, Sunday):** "Compared to last week, this week felt: lighter / about the same / heavier" (the perceived-direction correlate — validation gold, §13) · "One small win this week" (text → Riley memory + weekly recap).
+
+## 2b · RETURN CADENCE FRAMEWORK (designed for the return, not the streak)
+
+`gap = days since last app-day with any activity`. Every session resolves a tier that shifts Riley's register, the check-in shape, and Clarity behavior:
+
+| Gap | Register | Check-in | Clarity |
+|---|---|---|---|
+| ≤1d | normal | standard daily (§2) | normal |
+| 2–3d | easy continuity | reframed to "the last few days, overall" — ONE check-in, never per-day backfill | normal |
+| 4–7d | warm welcome-back; Riley leads with one remembered thing | condensed (mood, energy, heaviness-of-stretch, one sentence) | return day gets hard-day band widening automatically; Direction narration suppressed this session |
+| 8–29d | welcome, zero guilt | fresh-start micro (mood, energy, one sentence) | **Re-Light**: 7-day rise-only display; provisional "warming up" state reused if confidence low |
+| 30+d | new chapter; durable-memory greeting | fresh-start micro + optional life-event recalibration offer ("a lot can change in a month — want Clarity to meet you where you are now?") | Re-Light 14 days; recalibration resets bands if accepted |
+
+**Hard rules:** Riley NEVER states the gap length or that one exists ("it's been X days" / "you were gone" banned at the string level — a counted absence is a summons, not a welcome). Return check-ins count once — no retroactive day filling. **Notification anti-nag schedule:** 3 unanswered nudges → weekly gentle; 30 days → one "the light's on" message, then quarterly max. De-escalation is the retention strategy.
+Schema: `relight_until date` on profile; events `return_tier_observed`, `relight_started/ended`, `recalibration_offered/accepted`.
+
+## 2c · DYNAMIC CHECK-INS — FIXED SPINE, PERSONAL SKIN
+
+**Spine (immutable, feeds Clarity):** the §2 fields, scales, anchors, and meanings. Never reworded in substance, never reordered in meaning, identical across all members forever — this is what keeps the score comparable and defensible.
+**Skin (Riley's, per member):** phrasing in the member's vocabulary; toggle labels localized to their actual life ("got outside" may render "make it to the river?" — still logs `outside=true`); field ordering adapted to their focus; seasonal/weather awareness (optional, consented, city-level only). 
+**The dynamic slot:** at most ONE contextual question per check-in, chosen by Riley from memory — yesterday's sentence, an approaching hard date, their named interest. Feeds memory and conversation only. **Never scored.**
+**v1 constraint (defensibility):** skins and dynamic questions come from an approved, Sentinel-passed template bank with memory slots — not free generation. Every rendered check-in is reproducible via `checkin_context jsonb` (template ids + slot values) stored on the row. Free generation is a v2 candidate once a review loop exists.
+**Invariants:** 20-second rule holds at every tier; hard-day flag present in every variant; spine-semantics lock is acceptance-tested.
 
 **Context inputs (never scored):** hard-dates calendar (anniversaries — Riley checks in *before*; nearby dips annotated, not narrated as decline) · life-event tag (offers band recalibration: "life changed — should Clarity meet you where you are now?").
 
@@ -134,9 +151,6 @@ Events: `clarity_customize_shown / deferred / completed(mode: custom|defaults)`,
 ## 12 · SCHEMA, EVENTS, MONITORING
 
 Schema as v2.0 (`user_clarity_config`, `user_dim_baselines`, `user_daily_state` additions) plus: `daily_checkins` columns `energy int, sleep_quality int, heaviness int, outside bool, connection bool, hard_day bool, craving int`; `user_daily_state.provisional bool`; `hard_dates(user_id, date, label)`; `life_events(user_id, tagged_at, kind, recalibrated bool)`.
-
-> IMPLEMENTATION NOTE: a `life_events` table already exists (emotional-calendar). v2 uses a distinct **`clarity_life_events`**. Weekly perceived-direction answers use a dedicated **`clarity_weekly`**. The engine flag lives as a `site_content` row `('clarity','engine')`.
-
 Events: `clarity_recomputed` (Tier-1 only), `clarity_config_changed`, `clarity_frozen/unfrozen`, `first_light_started/ended`, `hard_day_flagged`, `clarity_provisional`.
 **Monitoring (NEW, right-sized):** monthly Supabase job — input & score distribution vs prior month (mean/σ/quantiles), WHO-5 correlation refresh, alert to admin digest on >1σ population shift. `clarity_version` stamping = the recalibration audit trail.
 **Transparency line (NEW):** methodology page + Terms state Clarity is an automated, algorithmic wellbeing signal — never a health measurement or diagnostic. (Pairs with SB 243 AI disclosure; EU AI Act-friendly.)
@@ -155,7 +169,7 @@ Events: `clarity_recomputed` (Tier-1 only), `clarity_config_changed`, `clarity_f
 ## 15 · MIGRATION & ACCEPTANCE (delta from v2.0)
 
 Migration unchanged (version stamping; baseline backfill; sobriety lane auto-offer with opt-out; founder-voiced upgrade message).
-Acceptance criteria = v2.0's thirteen, plus: (14) check-in ships §2 fields ≤20s median completion; (15) hard-day flag widens bands/suppresses negative narration/never lowers score (property test); (16) provisional state renders at confidence <0.35 — no number shown; (17) plausibility clamps + spike test (<12-pt layer move from any single day); (18) monotonicity suite passes, sleep exception documented; (19) craving ≥4 surfaces Emergency Craving Protocol within the check-in flow; (20) weekly perceived-direction answer stored and correlated in Stage-1 job; (21) monthly drift job emits to admin digest; (22) methodology page includes transparency line + Never List; (23) first-login card appears only after the score renders and never obscures it; (24) second-login pane appears only post-check-in, never blocks chat, and "Keep the standard setup" completes the flow permanently in one tap; (25) onboarding config choices don't consume the one-change-per-7-days budget; (26) day-14 tune-up suggestion reflects actually-logged behavior (property test: suggested dims ⊆ dims with ≥4 active days in First Light).
+Acceptance criteria = v2.0's thirteen, plus: (14) check-in ships §2 fields ≤20s median completion; (15) hard-day flag widens bands/suppresses negative narration/never lowers score (property test); (16) provisional state renders at confidence <0.35 — no number shown; (17) plausibility clamps + spike test (<12-pt layer move from any single day); (18) monotonicity suite passes, sleep exception documented; (19) craving ≥4 surfaces Emergency Craving Protocol within the check-in flow; (20) weekly perceived-direction answer stored and correlated in Stage-1 job; (21) monthly drift job emits to admin digest; (22) methodology page includes transparency line + Never List; (23) first-login card appears only after the score renders and never obscures it; (24) second-login pane appears only post-check-in, never blocks chat, and "Keep the standard setup" completes the flow permanently in one tap; (25) onboarding config choices don't consume the one-change-per-7-days budget; (26) day-14 tune-up suggestion reflects actually-logged behavior (property test: suggested dims ⊆ dims with ≥4 active days in First Light); (27) gap length never appears in any member-facing string (grep-level + narration test across all tiers); (28) return check-in writes exactly one app-day row — no backfill; (29) Re-Light display is rise-only for its window (property test); (30) notification de-escalation schedule enforced (3 unanswered → weekly; 30d → single message then quarterly); (31) every check-in render reproducible from checkin_context; all skin variants pass Sentinel and preserve spine semantics (paraphrase-lock test); (32) each tier's check-in variant completes ≤20s median; (33) dynamic-slot answers never enter any dimension computation (data-path audit).
 
 ---
-*Design record: v2.2 July 2026 — customization onboarding (three-touch flow: aware → choose-with-defaults-escape → memory-powered tune-up); v2.1 — check-in expansion (energy, quality, heaviness, toggles, compassion flag, craving), provisional state, input hygiene, right-sized monitoring/validation, fairness-by-architecture stance, external review dispositions logged. Principle unchanged: distance traveled, not distance from perfect.*
+*Design record: v2.3 July 2026 — return-cadence tiers + Re-Light + anti-nag schedule + spine/skin dynamic check-ins (template-bank v1); v2.2 — customization onboarding (three-touch flow: aware → choose-with-defaults-escape → memory-powered tune-up); v2.1 — check-in expansion (energy, quality, heaviness, toggles, compassion flag, craving), provisional state, input hygiene, right-sized monitoring/validation, fairness-by-architecture stance, external review dispositions logged. Principle unchanged: distance traveled, not distance from perfect.*

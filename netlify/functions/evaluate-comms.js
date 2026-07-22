@@ -198,7 +198,25 @@ exports.handler = async (event) => {
     const sentResetDays = sentResetDaysByUser[uid] || new Set();
     // vars.plan = DISPLAY name (tierLabel, per the locked tier truth); vars.plan_key = internal key
     // (isMemoryPlan and all logic run on internal keys - display names are presentation only).
-    const vars = { first_name: firstName(prof), session_count: (convs.filter((c) => c.user_id === uid).length) || 0, plan: tierLabel(plan), plan_key: plan };
+    const myConvs = convs.filter((c) => c.user_id === uid);
+    const vars = { first_name: firstName(prof), session_count: myConvs.length || 0, plan: tierLabel(plan), plan_key: plan };
+
+    // Rhythm & Return (docs/08 §3): maintain personal_cadence = median inter-active-day gap over
+    // the trailing 28 days. Piggybacks on this loop's existing data; DARK until RHYTHM_ENABLED.
+    if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true") {
+      try {
+        const { personalCadence } = require("./rhythm");
+        const cutoff = now - 28 * DAY;
+        const days = [...new Set(myConvs.filter((c) => +new Date(c.created_at) >= cutoff)
+          .map((c) => memberDay(prof.timezone, c.created_at)))].sort();
+        const gaps = [];
+        for (let i = 1; i < days.length; i++) gaps.push(Math.round((Date.parse(days[i]) - Date.parse(days[i - 1])) / DAY));
+        if (gaps.length >= 2) {
+          const cad = personalCadence(gaps);
+          await sb.from("user_profiles").update({ personal_cadence: cad }).eq("id", uid);
+        }
+      } catch (_) {}
+    }
     const urls = { unsub: unsubUrl(uid), pref: prefUrl(uid) };
 
     // Refresh the derived snapshot (upsert) - this is the Task-5 state, server-derived.

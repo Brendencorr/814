@@ -8,6 +8,7 @@
  * Model: n/a
  */
 const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig } = require("./supabase-client");
+const { nextNudgeGap } = require("./rhythm");
 const webpush = require("web-push");
 
 const AM_H = 8, AM_M = 14;   // 8:14am - the send time IS the brand
@@ -54,6 +55,20 @@ exports.handler = async (event) => {
     (offs || []).forEach((o) => pushOff.add(o.id));
   }
 
+  // ── Notification backoff ladder (docs/08 §3). DARK until RHYTHM_ENABLED=true. ──
+  // De-escalation only: an ENGAGED member (active since the last nudge) keeps the full twice-daily
+  // 8:14 rhythm - the ladder never touches them. Only UNANSWERED nudges stretch the interval
+  // (doubling, cap 14d; 3 ignored → weekly; 30d silent → monthly). The light stays on, never louder.
+  const RHYTHM = String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true";
+  const profByUser = {};
+  if (RHYTHM && _uids.length) {
+    try {
+      const { data: profs } = await supabase.from("user_profiles")
+        .select("id,last_active_at,personal_cadence,nudge_unanswered,next_nudge_after").in("id", _uids);
+      (profs || []).forEach((p) => (profByUser[p.id] = p));
+    } catch (e) { console.warn("reset-nudge backoff read failed (fail-open):", e.message); }
+  }
+
   let sent = 0;
   for (const c of (consents || [])) {
     if (pushOff.has(c.user_id)) continue;            // opted out of push
@@ -62,6 +77,11 @@ exports.handler = async (event) => {
       const amDue = minsSince(h, m, AM_H, AM_M) >= 0 && minsSince(h, m, AM_H, AM_M) < WINDOW_MIN && c.last_am_date !== date;
       const pmDue = minsSince(h, m, PM_H, PM_M) >= 0 && minsSince(h, m, PM_H, PM_M) < WINDOW_MIN && c.last_pm_date !== date;
       if (!amDue && !pmDue) continue;
+
+      // Backoff ladder: inside a quiet period, hold this nudge (the member's ignoring us -
+      // getting quieter, not louder). Engaged members never enter a quiet period.
+      const rp = RHYTHM ? profByUser[c.user_id] : null;
+      if (rp && rp.next_nudge_after && new Date(rp.next_nudge_after) > new Date()) continue;
 
       let payload, col;
       if (amDue) {
@@ -77,6 +97,30 @@ exports.handler = async (event) => {
       const upd = { updated_at: nowIso }; upd[col] = date;
       await supabase.from("notification_consents").update(upd).eq("user_id", c.user_id).eq("program_key", c.program_key);
       sent++;
+
+      // Advance the ladder: consent.updated_at was the LAST nudge time - activity since it means
+      // this member answers nudges (counter resets, no quiet period). Silence stretches the next
+      // interval per the ladder and is counted, never punished in copy.
+      if (rp) {
+        try {
+          const lastNudgeAt = c.updated_at ? new Date(c.updated_at) : null;
+          const activeSince = !!(rp.last_active_at && (!lastNudgeAt || new Date(rp.last_active_at) >= lastNudgeAt));
+          if (activeSince) {
+            if ((rp.nudge_unanswered || 0) !== 0 || rp.next_nudge_after) {
+              await supabase.from("user_profiles").update({ nudge_unanswered: 0, next_nudge_after: null }).eq("id", c.user_id);
+            }
+          } else {
+            const unanswered = (rp.nudge_unanswered || 0) + 1;
+            const daysSilent = rp.last_active_at ? Math.floor((Date.now() - +new Date(rp.last_active_at)) / 86400000) : 0;
+            const gapDays = nextNudgeGap(rp.personal_cadence || 1, unanswered, daysSilent);
+            await supabase.from("user_profiles").update({
+              nudge_unanswered: unanswered,
+              next_nudge_after: new Date(Date.now() + gapDays * 86400000).toISOString(),
+            }).eq("id", c.user_id);
+            supabase.from("events").insert({ user_id: c.user_id, name: "notification_backoff_stepped", props: { unanswered, gap_days: gapDays } }).then(() => {}, () => {});
+          }
+        } catch (e) { console.warn("reset-nudge backoff update failed (non-fatal):", e.message); }
+      }
     } catch (err) {
       if (err.statusCode === 404 || err.statusCode === 410) {
         // Subscription is dead → stop trying.

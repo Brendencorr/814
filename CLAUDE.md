@@ -55,6 +55,13 @@ weekly-pipeline.js is the manual HTTP trigger endpoint (callable from dashboard)
 weekly-pipeline-cron.js runs every Sunday 12:00 UTC (6am MT) as a scheduled background function.
 Netlify scheduled functions do NOT need a -background suffix — the schedule makes them background automatically.
 
+## Clarity & Cadence — spec pointers (source of truth in docs/)
+- Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3 - bands, lanes, First Light, provisional).
+- Cadence & check-ins: `docs/08_RHYTHM_AND_RETURN_SPEC.md` (v1.1 - return tiers, Never-Say list, continuity loop).
+- The scored check-in spine is invariant; personalization is additive only.
+- Rhythm & Return server behavior is DARK until `RHYTHM_ENABLED=true` (same pattern as COMMS_ENABLED);
+  the shared tier/backoff/Never-Say logic lives in `netlify/functions/rhythm.js` (pure, unit-tested in tests/rhythm/).
+
 ## Repo Structure
 - netlify/functions/ — 8 Netlify serverless functions
 - dashboard.html — private agent dashboard (gated by the OPERATOR_KEY env var; value is NOT stored in this repo)

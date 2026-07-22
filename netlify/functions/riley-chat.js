@@ -17,7 +17,9 @@
  */
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember } = require("./supabase-client");
+const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember, memberDay } = require("./supabase-client");
+const { returnTier, appDayGap, registerBlock, violatesNeverSay } = require("./rhythm");
+const { extractThreads } = require("./thread-extract");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -1262,6 +1264,55 @@ exports.handler = async function (event) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
 
+  // ── Rhythm & Return (docs/08 §2): return-tier register. DARK until RHYTHM_ENABLED=true. ──
+  // Computed on the FIRST message of a session only (later turns are R0 continuation by
+  // definition), and prepended only for R2+ - R0/R1 is Riley's default register, and skipping
+  // the prepend keeps the prompt-cache fast path for daily members. last_active_at still holds
+  // the PREVIOUS session here (it's stamped after the reply below), which is exactly the gap.
+  let returnTierThisSession = null;
+  if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true" && supabase && user_id &&
+      (!Array.isArray(messages) || messages.length <= 1)) {
+    try {
+      const { data: rp } = await supabase.from("user_profiles")
+        .select("last_active_at,timezone").eq("id", user_id).maybeSingle();
+      const gap = rp && rp.last_active_at
+        ? appDayGap(memberDay(rp.timezone), memberDay(rp.timezone, rp.last_active_at)) : null;
+      if (gap != null) {
+        const tier = returnTier(gap);
+        returnTierThisSession = tier;
+        emitEvent(supabase, user_id, "session_return", { tier, gap });
+        // R3/R4 = the return moment: open the Re-Light window (rise-only display, docs/07 §2b -
+        // 7d at R3, 14d at R4) and suppress Direction narration for 14 days. Never re-shortens
+        // an already-open window.
+        if (tier === "R3" || tier === "R4") {
+          try {
+            const { tierBehavior } = require("./rhythm");
+            const beh = tierBehavior(tier);
+            const today = memberDay(rp.timezone);
+            const until = new Date(Date.parse(today) + beh.relightDays * 86400000).toISOString().slice(0, 10);
+            const dirUntil = new Date(Date.parse(today) + beh.directionSuppressDays * 86400000).toISOString().slice(0, 10);
+            const { data: cur } = await supabase.from("user_profiles").select("relight_until").eq("id", user_id).maybeSingle();
+            if (!cur || !cur.relight_until || cur.relight_until < until) {
+              await supabase.from("user_profiles").update({ relight_until: until, relight_tier: tier, direction_suppressed_until: dirUntil }).eq("id", user_id);
+              emitEvent(supabase, user_id, "relight_started", { tier, until });
+            }
+          } catch (_) {}
+        }
+        if (tier === "R2" || tier === "R3" || tier === "R4") {
+          // One remembered thread, content only - never its date (Never-Say).
+          let remembered = null;
+          try {
+            const { data: th } = await supabase.from("member_threads").select("text")
+              .eq("user_id", user_id).eq("status", "open")
+              .order("salience", { ascending: false }).limit(1);
+            remembered = (th && th[0] && th[0].text) || null;
+          } catch (_) {}
+          systemPrompt = registerBlock(tier, remembered) + "\n\n----\n\n" + systemPrompt;
+        }
+      }
+    } catch (e) { console.warn("[rhythm] return-tier injection failed (non-fatal):", e.message); }
+  }
+
   // Interactive Riley-led session context - additive, only when the client sends context.enrollment_id.
   // Injects the session spec so Riley delivers the loop conversationally, and exempts the message from
   // the Guide cap. Crisis/safety directives are prepended LATER, so they still win over this.
@@ -1503,6 +1554,22 @@ exports.handler = async function (event) {
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
     if (fullConvo.length >= 4 && (fullConvo.length === 4 || fullConvo.length % 6 === 0)) {
       extractMemories(supabase, user_id, fullConvo);
+      // Continuity loop (docs/08 §3b): open-loop thread extraction rides the same bounded
+      // cadence as memory (Haiku, non-blocking, fail-open). DARK until RHYTHM_ENABLED=true.
+      if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true") {
+        extractThreads(supabase, user_id, session_id, fullConvo);
+      }
+    }
+
+    // Never-Say runtime audit (docs/08 §2): log-only Sentinel signal - a violation in Riley's
+    // output is recorded for the operator digest, never blocks the reply (fail-open by design;
+    // the register block + base prompt are the preventive layer, this is the tripwire).
+    if (returnTierThisSession) {
+      const violation = violatesNeverSay(reply);
+      if (violation) {
+        console.warn("[rhythm] Never-Say violation in output:", violation);
+        emitEvent(supabase, user_id, "never_say_violation", { tier: returnTierThisSession, label: violation });
+      }
     }
 
     // Session summaries (Spec §2): at the START of a session, lazily summarize the most recent

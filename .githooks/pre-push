@@ -1,0 +1,9 @@
+#!/bin/sh
+# Messaging cohesion gate - runs before any push (enable once per clone:
+#   git config core.hooksPath .githooks
+# ). Netlify runs the same script on deploy, so this is the early warning.
+node "$(dirname "$0")/../scripts/check-messaging.js" || {
+  echo ""
+  echo "Push blocked: messaging drift (see above). Canon: RILEY_MESSAGING_HOUSE.md"
+  exit 1
+}

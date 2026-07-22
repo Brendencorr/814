@@ -1,3 +1,10 @@
+[build]
+  # Messaging cohesion gate (founder rule, 2026-07-22): every production deploy re-verifies that the
+  # website, app pages, client JS, and the DB-stored tier names/taglines (products/plans - what the app
+  # and internal dashboards show clients) all match RILEY_MESSAGING_HOUSE.md. Drift = failed deploy.
+  command = "node scripts/check-messaging.js"
+  publish = "."
+
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html,profile.html,settings.html,reset.html,home.html,program.html,int-program.html,clarity-setup.html,clarity-method.html"
   # OPERATOR_KEY is an operator-chosen password; we never hardcode it, so scanning

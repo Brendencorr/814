@@ -16,6 +16,7 @@
 const engine = require("./clarity-engine");
 const { effectiveConfig } = require("./clarity-config-util");
 const { emitEvent } = require("./supabase-client");
+const { rhythmEnabled, relightDisplay } = require("./rhythm");
 
 const dayISO = (d) => d.toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return dayISO(d); };
@@ -191,11 +192,11 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
     : {};
 
-  // ── Re-Light (docs/07 §2b · docs/08 §5): DARK until RHYTHM_ENABLED=true. During the window
+  // ── Re-Light (docs/07 §2b · docs/08 §5): ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off. During the window
   //    the shown number is rise-only; an R4 return additionally re-enters First-Light-lite
   //    (tiny thresholds via the engine's firstLight path). Window closes itself here. ──
   let relightActive = false, relightLite = false;
-  if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true") {
+  if (rhythmEnabled()) {
     try {
       const { data: rl } = await supabase.from("user_profiles")
         .select("relight_until,relight_tier").eq("id", userId).maybeSingle();
@@ -236,7 +237,6 @@ async function writeClarityV2Dark(supabase, userId, opts) {
 
   // Re-Light rise-only display: inside the window, never store a shown value lower than the
   // previous shown value ("returning members are never greeted by a lower number", 08 §5).
-  const { relightDisplay } = require("./rhythm");
   const displayedOut = relightActive ? relightDisplay(result.displayed, prevDisplayed, true) : result.displayed;
 
   // ── persist: v2 columns on today's user_daily_state row (v1 already wrote it) ──

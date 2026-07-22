@@ -21,11 +21,11 @@
  */
 "use strict";
 const { getSupabaseClient, getUserIdFromToken, emitEvent, memberDay } = require("./supabase-client");
-const { returnTier, appDayGap, tierBehavior } = require("./rhythm");
+const { returnTier, appDayGap, tierBehavior, violatesNeverSay, rhythmEnabled } = require("./rhythm");
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
-const ENABLED = () => String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true";
+const ENABLED = () => rhythmEnabled();
 
 // ── Template bank v1 (static, Sentinel-safe by construction; ids stored for reproducibility). ──
 // No gap arithmetic anywhere; "stretch" framing covers R2+ without counting days (Never-Say).
@@ -48,6 +48,56 @@ const RETURN_SEQUENCE = [
   { id: "rs_2_v1", step: "anything", text: "Anything I should know?", free_text: true, skippable: true },
   { id: "rs_3_v1", step: "goal_fork", text: "Those goals from last time - keep going, adjust, or start something new?", options: ["keep", "adjust", "fresh"] },
 ];
+
+// ── Riley's live re-voicing of the layer. Fail-open by construction: any error, timeout, or
+//    guardrail hit leaves the static-bank strings exactly as composed. ──
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
+const FOOD_RE = /\b(food|meal|meals|eat|eating|nutrition|snack|dinner|lunch|breakfast|cook|diet)\b/i;
+
+async function personalizeLayer(sb, userId, ctx) {
+  try {
+    const [memR, ciR, gsR] = await Promise.all([
+      sb.from("riley_memory").select("content").eq("user_id", userId).eq("is_active", true)
+        .order("last_confirmed_at", { ascending: false }).limit(8),
+      sb.from("daily_checkins").select("mood,notes,checkin_date").eq("user_id", userId)
+        .order("checkin_date", { ascending: false }).limit(1),
+      sb.from("gap_summaries").select("summary,note,returned_on").eq("user_id", userId)
+        .order("returned_on", { ascending: false }).limit(1),
+    ]);
+    const mem = ((memR && memR.data) || []).map((m) => m.content).filter(Boolean);
+    const lastCi = ((ciR && ciR.data) || [])[0] || null;
+    const gs = ((gsR && gsR.data) || [])[0] || null;
+
+    const lines = [];
+    lines.push("NAME: " + (ctx.firstName || "(unknown - use no name)"));
+    lines.push("RETURN TIER: " + ctx.tier + " (R0/R1 = regular rhythm; R2+ = coming back after a stretch - warm, never count days)");
+    if (lastCi) lines.push("LAST CHECK-IN: mood " + (lastCi.mood != null ? lastCi.mood : "?") + "/5" + (lastCi.notes ? ' - they wrote: "' + String(lastCi.notes).replace(/\s+/g, " ").slice(0, 140) + '"' : ""));
+    if (gs) lines.push("THEY SAID THE LAST STRETCH WAS: " + gs.summary + (gs.note ? ' - "' + String(gs.note).replace(/\s+/g, " ").slice(0, 140) + '"' : ""));
+    if (mem.length) { lines.push("WHAT RILEY KNOWS ABOUT THEM:"); mem.forEach((m) => lines.push("  - " + String(m).replace(/\s+/g, " ").slice(0, 160))); }
+    lines.push("CURRENT OPENING LINE: " + ctx.framing.intro);
+    if (ctx.items.length) { lines.push("CURRENT FOLLOW-UP QUESTIONS:"); ctx.items.forEach((it, i) => lines.push("  " + (i + 1) + ". " + it.text)); }
+
+    const sys = "You are Riley, rephrasing her daily check-in opener and follow-up questions for one specific person, from what she knows about them. Return ONLY JSON: {\"intro\": \"...\", \"questions\": [\"...\"]} with EXACTLY " + ctx.items.length + " question(s) (empty array if none given).\n" +
+      "Rules: warm, plain, short (intro under 160 chars, each question under 120), her voice - contractions, no exclamation marks, no emoji, plain hyphens only. Each question must stay about the SAME thing as the original (same commitment, event, or date) - re-voice it, never replace it. Never mention: how long they have been away, day counts, streaks, scores, \"back on track\". Never diagnose, never mention prices or plans, never reference crisis content. If the context is thin, return the originals unchanged.";
+
+    const gen = await Promise.race([
+      callClaude({ system: sys, messages: [{ role: "user", content: lines.join("\n") }], max_tokens: 400, model: MODELS.utility, functionName: "checkin-personalize", userId, supabase: sb }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("personalize_timeout")), 3500)),
+    ]);
+    const m = String((gen && gen.text) || "").match(/\{[\s\S]*\}/);
+    if (!m) return;
+    const out = JSON.parse(m[0]);
+    const ok = (s, max) => typeof s === "string" && s.trim().length > 0 && s.length <= max + 40 &&
+      !violatesNeverSay(s) && !(ctx.fuelOptOut && FOOD_RE.test(s));
+    if (ok(out.intro, 160)) { ctx.framing.intro = out.intro.trim(); ctx.framing.generated = true; ctx.framing.model = MODELS.utility; }
+    if (Array.isArray(out.questions)) {
+      out.questions.forEach((q, i) => {
+        if (ctx.items[i] && ok(q, 120)) { ctx.items[i].text = q.trim(); ctx.items[i].generated = true; }
+      });
+    }
+  } catch (e) { /* static bank stands - the check-in never blocks on generation */ }
+}
 
 // Nearest occurrence of an annual date within [-1, +2] days of today (mirrors int-proactive math).
 function hardDateNear(dateStr, recurrence, todayYmd) {
@@ -74,9 +124,15 @@ exports.handler = async (event) => {
 
   try {
     const { data: prof } = await sb.from("user_profiles")
-      .select("timezone,last_active_at,fuel_opt_out").eq("id", userId).maybeSingle();
+      .select("timezone,last_active_at,preferred_name,full_name").eq("id", userId).maybeSingle();
     const tz = (prof && prof.timezone) || null;
     const appDay = memberDay(tz);
+    // fuel_opt_out lives in user_clarity_config.config (07 §3 care rule), not on the profile.
+    let fuelOptOut = false;
+    try {
+      const { data: cc } = await sb.from("user_clarity_config").select("config").eq("user_id", userId).maybeSingle();
+      fuelOptOut = !!(cc && cc.config && cc.config.fuel_opt_out);
+    } catch (_) {}
 
     if (action === "delete_thread") {
       if (!body.thread_id) return json(400, { error: "thread_id required" });
@@ -177,6 +233,15 @@ exports.handler = async (event) => {
     if (items.length === 0 && tier === "R0") {
       // quiet day, nothing due - no dynamic item at all beats a filler question (20-second rule)
     }
+    // ── Live personalization (founder call 2026-07-22): Riley re-voices the opener and the
+    // follow-up questions from what she knows about THIS person - Haiku, hard 3.5s cap, gated
+    // by the Never-Say patterns + the food guard for fuel-opt-out members, and ALWAYS falling
+    // back to the static bank above on any failure or violation. Structure is unchanged: same
+    // slots, same sources, the scored spine untouched, nothing generated is ever scored. The
+    // stored row keeps whatever actually rendered, so every check-in stays reproducible.
+    const firstName = ((prof && (prof.preferred_name || prof.full_name)) || "").split(" ")[0] || null;
+    await personalizeLayer(sb, userId, { framing, items, tier, firstName, fuelOptOut });
+
     items.forEach((it) => emitEvent(sb, userId, "dynamic_item_shown", { source: it.source }));
 
     await sb.from("checkin_prompts").upsert(

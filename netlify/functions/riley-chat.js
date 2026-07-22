@@ -18,7 +18,7 @@
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember, memberDay } = require("./supabase-client");
-const { returnTier, appDayGap, registerBlock, violatesNeverSay } = require("./rhythm");
+const { returnTier, appDayGap, registerBlock, violatesNeverSay, rhythmEnabled } = require("./rhythm");
 const { extractThreads } = require("./thread-extract");
 const {
   detectCrisis,
@@ -1264,13 +1264,13 @@ exports.handler = async function (event) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
 
-  // ── Rhythm & Return (docs/08 §2): return-tier register. DARK until RHYTHM_ENABLED=true. ──
+  // ── Rhythm & Return (docs/08 §2): return-tier register. ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off. ──
   // Computed on the FIRST message of a session only (later turns are R0 continuation by
   // definition), and prepended only for R2+ - R0/R1 is Riley's default register, and skipping
   // the prepend keeps the prompt-cache fast path for daily members. last_active_at still holds
   // the PREVIOUS session here (it's stamped after the reply below), which is exactly the gap.
   let returnTierThisSession = null;
-  if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true" && supabase && user_id &&
+  if (rhythmEnabled() && supabase && user_id &&
       (!Array.isArray(messages) || messages.length <= 1)) {
     try {
       const { data: rp } = await supabase.from("user_profiles")
@@ -1555,8 +1555,8 @@ exports.handler = async function (event) {
     if (fullConvo.length >= 4 && (fullConvo.length === 4 || fullConvo.length % 6 === 0)) {
       extractMemories(supabase, user_id, fullConvo);
       // Continuity loop (docs/08 §3b): open-loop thread extraction rides the same bounded
-      // cadence as memory (Haiku, non-blocking, fail-open). DARK until RHYTHM_ENABLED=true.
-      if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true") {
+      // cadence as memory (Haiku, non-blocking, fail-open). ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off.
+      if (rhythmEnabled()) {
         extractThreads(supabase, user_id, session_id, fullConvo);
       }
     }

@@ -29,6 +29,7 @@ const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 const { signUid } = require("./comms-sign");
 const { pickGuideCandidate } = require("./comms-flow");
+const { rhythmEnabled } = require("./rhythm");
 const { tierLabel } = require("./tier-labels");
 const { PROGRAMS } = require("./stripe-catalog");
 
@@ -203,7 +204,7 @@ exports.handler = async (event) => {
 
     // Rhythm & Return (docs/08 §3): maintain personal_cadence = median inter-active-day gap over
     // the trailing 28 days. Piggybacks on this loop's existing data; DARK until RHYTHM_ENABLED.
-    if (String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true") {
+    if (rhythmEnabled()) {
       try {
         const { personalCadence } = require("./rhythm");
         const cutoff = now - 28 * DAY;

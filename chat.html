@@ -373,6 +373,7 @@ async function openConversation() {
 // "did you take a step today?" is nonsensical). Same daily_checkins row as before.
 const RC_TODAY = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": rolls at 4am LOCAL (matches dashboard)
 let RC = {}, RC_LANE = 'other', RC_READY = null, RC_CONF = null, RC_NOTE_OK = false, RC_ESC = null, RC_MOODS = [], RC_STEPS = [], RC_SOBER = false, _awaitingNote = null, _ciActive = false;
+let RC_DYN = null, RC_DYN_ANS = { answers: [] };   // Rhythm & Return dynamic layer (fail-open)
 function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (h < 17 ? 'midday' : 'evening'); }
 
 // Tell the parent shell (pwa.js) to lock/unlock the popup's close controls while a
@@ -472,14 +473,67 @@ async function runDailyCheckin(){
     const {data:rows} = await _db.from('daily_checkins').select('mood').eq('user_id',_uid).order('checkin_date',{ascending:false}).limit(6);
     if(Array.isArray(rows)) RC_MOODS = rows.map(r=>r.mood).filter(m=>m!=null);
   }catch(e){}
+  // Rhythm & Return: fetch the personalized layer (Riley's framing, her follow-up questions,
+  // the welcome-back sequence). Fail-open in every direction - error, timeout, or disabled
+  // keeps the exact static flow below.
+  RC_DYN = null; RC_DYN_ANS = { answers: [] };
+  try{
+    const tokRR = (await _db.auth.getSession()).data.session?.access_token;
+    if(tokRR){
+      const ctl = new AbortController(); const tmr = setTimeout(function(){ ctl.abort(); }, 6000);
+      const rr = await fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'get', token:tokRR }), signal:ctl.signal });
+      clearTimeout(tmr);
+      const jj = await rr.json();
+      if(jj && jj.enabled) RC_DYN = jj;
+    }
+  }catch(e){}
   const tod = riToD(), name = rcName();
-  const hi = tod==='morning' ? ("Morning, "+name+". Let's start the day together.")
+  const hi = (RC_DYN && RC_DYN.framing && RC_DYN.framing.intro) ? RC_DYN.framing.intro
+           : tod==='morning' ? ("Morning, "+name+". Let's start the day together.")
            : tod==='evening' ? ("Hey "+name+". Let's catch up on your day.")
                              : ("Hey "+name+" - let's check in on your day.");
   appendMsg('riley', hi);
   try{ window.trackEvent && window.trackEvent('checkin_started',{lane:RC_LANE}); }catch(e){}
   RC_STEPS = buildSteps(tod, RC_LANE);
+  if(RC_DYN) RC_STEPS = rcApplyDynamic(RC_STEPS, RC_DYN);
   rcAsk(0);
+}
+// ── Rhythm & Return: shape the flow AROUND the fixed spine. Return sequence first (R2+), spine
+//    shortened by return tier, up to two of Riley's own questions before the closing note. The
+//    scored fields keep byte-identical semantics - only what surrounds them changes. ──
+function rcApplyDynamic(steps, dyn){
+  let out = steps.slice();
+  if(dyn.checkin==='condensed'){
+    out = out.filter(function(s){ return s.type==='mood' || s.type==='quickcheck' || s.type==='note'; })
+      .map(function(s){
+        if(s.type!=='quickcheck') return s;
+        const c = Object.assign({}, s);
+        c.scales = (s.scales||[]).filter(function(r){ return r.key==='energy'; });
+        c.taps   = (s.taps||[]).filter(function(t){ return t.key==='hard_day'; });
+        return c;
+      });
+  } else if(dyn.checkin==='micro'){
+    out = out.filter(function(s){ return s.type==='mood' || s.type==='note'; });
+  }
+  const items = (dyn.dynamic_items||[]).slice(0,2).map(function(it){
+    return { type:'dyn', q:it.text, sub:'Optional - a word or a sentence, or just skip.', item:it };
+  });
+  if(items.length){
+    const ni = out.findIndex(function(s){ return s.type==='note'; });
+    if(ni>=0) out.splice.apply(out, [ni,0].concat(items)); else out = out.concat(items);
+  }
+  if(Array.isArray(dyn.return_sequence) && dyn.return_sequence.length){
+    const seq = [];
+    dyn.return_sequence.forEach(function(st){
+      if(st.step==='gap_summary') seq.push({ type:'gapsum', q:st.text, opts:(st.options||['rough','mixed','okay','good']).map(function(o){ return [o, o.charAt(0).toUpperCase()+o.slice(1)]; }) });
+      else if(st.step==='anything') seq.push({ type:'retnote', q:st.text, sub:'Free-form, or just skip.' });
+      else if(st.step==='goal_fork') seq.push({ type:'goalfork', q:st.text, opts:[['keep','Keep going'],['adjust','Adjust'],['fresh','Something new']] });
+    });
+    // The sequence's free-text covers the closing note on shortened check-ins - never ask twice.
+    if(seq.length && dyn.checkin!=='standard'){ out = out.filter(function(s){ return s.type!=='note'; }); }
+    out = seq.concat(out);
+  }
+  return out;
 }
 function buildSteps(tod, lane){
   const g = CI_GOAL[lane] || CI_GOAL.other;
@@ -542,6 +596,18 @@ function rcAsk(i){
   } else if(q.type==='note'){
     rcNote(function(text){
       RC.note = text || null; if(text) appendMsg('user', text); rcAsk(i+1);
+    });
+  } else if(q.type==='gapsum'){
+    rcChips(q.opts, false, function(val,label){ appendMsg('user', label); RC_DYN_ANS.gap_summary = val; rcAsk(i+1); });
+  } else if(q.type==='retnote'){
+    rcNote(function(text){ if(text){ appendMsg('user', text); RC_DYN_ANS.gap_note = text; } rcAsk(i+1); });
+  } else if(q.type==='goalfork'){
+    rcChips(q.opts, false, function(val,label){ appendMsg('user', label); RC_DYN_ANS.goal_fork = val; rcAsk(i+1); });
+  } else if(q.type==='dyn'){
+    rcNote(function(text){
+      if(text) appendMsg('user', text);
+      RC_DYN_ANS.answers.push({ thread_id:(q.item&&q.item.thread_id)||null, item_source:(q.item&&q.item.source)||null, answer:text||null, skipped:!text });
+      rcAsk(i+1);
     });
   }
 }
@@ -671,6 +737,16 @@ function rcNote(onDone){
   box.appendChild(wrap); box.scrollTop = 999999;
 }
 async function rcFinish(){
+  // Rhythm & Return: report the dynamic-layer answers (context, never scores). Fire-and-forget -
+  // closes/advances threads, logs the gap summary, writes "anything I should know" to memory.
+  if(RC_DYN && (RC_DYN_ANS.answers.length || RC_DYN_ANS.gap_summary || RC_DYN_ANS.gap_note || RC_DYN_ANS.goal_fork)){
+    try{
+      const tokRR = (await _db.auth.getSession()).data.session?.access_token;
+      fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ action:'answer', token:tokRR, answers:RC_DYN_ANS.answers,
+          gap_summary:RC_DYN_ANS.gap_summary||null, gap_note:RC_DYN_ANS.gap_note||null, goal_fork:RC_DYN_ANS.goal_fork||null }) }).catch(function(){});
+    }catch(e){}
+  }
   const row = {
     user_id:_uid, checkin_date:RC_TODAY, checkin_completed:true, sobriety_day:RC_SOBER,
     goal_answer:RC.goal||null, influences:RC.influences||[],

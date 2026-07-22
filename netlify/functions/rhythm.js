@@ -110,8 +110,15 @@ function relightDisplay(computed, prevShownInWindow, inWindow) {
   return Math.max(Number(prevShownInWindow), Number(computed));
 }
 
+// ── Master switch. ON by default (founder call, 2026-07-22): set RHYTHM_ENABLED=false in Netlify
+//    env to turn the whole layer off. The one env read in this module - the math above stays pure.
+function rhythmEnabled() {
+  const v = process.env.RHYTHM_ENABLED;
+  return String(v == null ? "true" : v).toLowerCase() !== "false";
+}
+
 module.exports = {
   returnTier, appDayGap, tierBehavior, registerBlock,
   NEVER_SAY_PATTERNS, violatesNeverSay,
-  personalCadence, nextNudgeGap, relightDisplay,
+  personalCadence, nextNudgeGap, relightDisplay, rhythmEnabled,
 };

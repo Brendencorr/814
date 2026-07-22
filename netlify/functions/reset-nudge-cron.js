@@ -8,7 +8,7 @@
  * Model: n/a
  */
 const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig } = require("./supabase-client");
-const { nextNudgeGap } = require("./rhythm");
+const { nextNudgeGap, rhythmEnabled } = require("./rhythm");
 const webpush = require("web-push");
 
 const AM_H = 8, AM_M = 14;   // 8:14am - the send time IS the brand
@@ -55,11 +55,11 @@ exports.handler = async (event) => {
     (offs || []).forEach((o) => pushOff.add(o.id));
   }
 
-  // ── Notification backoff ladder (docs/08 §3). DARK until RHYTHM_ENABLED=true. ──
+  // ── Notification backoff ladder (docs/08 §3). ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off. ──
   // De-escalation only: an ENGAGED member (active since the last nudge) keeps the full twice-daily
   // 8:14 rhythm - the ladder never touches them. Only UNANSWERED nudges stretch the interval
   // (doubling, cap 14d; 3 ignored → weekly; 30d silent → monthly). The light stays on, never louder.
-  const RHYTHM = String(process.env.RHYTHM_ENABLED || "").toLowerCase() === "true";
+  const RHYTHM = rhythmEnabled();
   const profByUser = {};
   if (RHYTHM && _uids.length) {
     try {

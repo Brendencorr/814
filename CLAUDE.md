@@ -59,8 +59,12 @@ Netlify scheduled functions do NOT need a -background suffix — the schedule ma
 - Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3 - bands, lanes, First Light, provisional).
 - Cadence & check-ins: `docs/08_RHYTHM_AND_RETURN_SPEC.md` (v1.1 - return tiers, Never-Say list, continuity loop).
 - The scored check-in spine is invariant; personalization is additive only.
-- Rhythm & Return server behavior is DARK until `RHYTHM_ENABLED=true` (same pattern as COMMS_ENABLED);
-  the shared tier/backoff/Never-Say logic lives in `netlify/functions/rhythm.js` (pure, unit-tested in tests/rhythm/).
+- Rhythm & Return is ON BY DEFAULT (founder call 2026-07-22) - set `RHYTHM_ENABLED=false` in Netlify env
+  to turn the layer off. Gate every call site through `rhythmEnabled()` (rhythm.js), never a raw env read.
+  The shared tier/backoff/Never-Say logic lives in `netlify/functions/rhythm.js` (pure, unit-tested in
+  tests/rhythm/). The check-in's framing + follow-up questions are LIVE-GENERATED per member (Haiku via
+  checkin-prompts.js personalizeLayer) with the Never-Say gate + static-bank fallback - the SCORED spine
+  is never generated and never reworded in substance.
 
 ## Repo Structure
 - netlify/functions/ — 8 Netlify serverless functions

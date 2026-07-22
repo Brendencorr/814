@@ -1,5 +1,5 @@
 /**
- * usage-limits.js - shared usage-cap helpers (Riley Guide's caps, v4 pricing)
+ * usage-limits.js - shared usage-cap helpers (free-tier caps, internal key "guide", v4 pricing)
  *
  * The one place `currentPeriodStart()` is defined. Any function that checks OR
  * increments a usage counter must use THIS implementation - if the check and

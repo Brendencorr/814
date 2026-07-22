@@ -20,6 +20,9 @@ const SITE = "https://meetriley.us";
 
 const SENDERS = {
   riley: "Riley <riley@meetriley.us>",
+  // CANON (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden - guide_5, the
+  // day-29 month-one founder note. Every other communication is signed Riley. Do not add new
+  // 'brenden' senders or Brenden-signed copy anywhere else.
   brenden: "Brenden <brenden@meetriley.us>",
 };
 const REPLY_TO = "support@meetriley.us";
@@ -366,13 +369,13 @@ const TEMPLATES = {
     html: (v) =>
       p("This is the last email I'll send on my own. Not because I've given up - because your inbox is yours and I meant it about no pressure.") +
       p("Whenever you come back - next week, next year - everything will be where you left it, and I'll be glad to see you.") +
-      p("If you'd like one short letter a month from Brenden about what we're building, say yes below. Otherwise: be well. Really.") +
+      p("If you'd like one short letter a month from me about what we're building, say yes below. Otherwise: be well. Really.") +
       btn("Yes, one letter a month", APP + "/preferences?letter=1") +
       ghostBtn("Keep my account quiet", APP + "/preferences?letter=0"),
     text: (v) =>
       "This is the last email I'll send on my own. Not because I've given up - because your inbox is yours and I meant it about no pressure.\n\n" +
       "Whenever you come back - next week, next year - everything will be where you left it, and I'll be glad to see you.\n\n" +
-      "If you'd like one short letter a month from Brenden about what we're building, say yes below. Otherwise: be well. Really.\n\n" +
+      "If you'd like one short letter a month from me about what we're building, say yes below. Otherwise: be well. Really.\n\n" +
       "Yes, one letter a month → " + APP + "/preferences?letter=1\nKeep my account quiet → " + APP + "/preferences?letter=0",
   },
 
@@ -427,20 +430,18 @@ const TEMPLATES = {
   },
 
   paid_3: {
-    from: "brenden", flow: "paid", replyTo: "brenden@meetriley.us",
-    subject: "Is she helping?",
+    from: "riley", flow: "paid", replyTo: "support@meetriley.us",
+    subject: "Is this helping?",
     preview: "An honest question, five days early.",
     html: (v) =>
-      p("Hi " + esc(v.first_name) + " - Brenden here. The person, not the AI.") +
-      p("You've had Riley for almost a month, and I'd rather ask than assume: is she helping?") +
-      p("Hit reply and tell me - the good and the bad. I read every one, and the hard answers are the ones that make her better.") +
-      p("And I'll say this part plainly: if she isn't what you hoped, you're still inside 30 days of your original purchase - that first payment is fully refundable, no hard feelings, and the door stays open. I'd rather you leave happy than stay disappointed.") +
-      p("- B"),
+      p("Hi " + esc(v.first_name) + " - honest question, and I'd rather ask than assume: is this helping?") +
+      p("Hit reply and say so - the good and the bad. The person who built me reads every reply, and the hard answers are the ones that make me better.") +
+      p("And I'll say this part plainly: if I'm not what you hoped, you're still inside 30 days of your original purchase - that first payment is fully refundable, no hard feelings, and the door stays open. I'd rather you leave happy than stay disappointed.") +
+      p("- Riley"),
     text: (v) =>
-      "Hi " + v.first_name + " - Brenden here. The person, not the AI.\n\n" +
-      "You've had Riley for almost a month, and I'd rather ask than assume: is she helping?\n\n" +
-      "Hit reply and tell me - the good and the bad. I read every one, and the hard answers are the ones that make her better.\n\n" +
-      "And I'll say this part plainly: if she isn't what you hoped, you're still inside 30 days of your original purchase - that first payment is fully refundable, no hard feelings, and the door stays open. I'd rather you leave happy than stay disappointed.\n\n- B",
+      "Hi " + v.first_name + " - honest question, and I'd rather ask than assume: is this helping?\n\n" +
+      "Hit reply and say so - the good and the bad. The person who built me reads every reply, and the hard answers are the ones that make me better.\n\n" +
+      "And I'll say this part plainly: if I'm not what you hoped, you're still inside 30 days of your original purchase - that first payment is fully refundable, no hard feelings, and the door stays open. I'd rather you leave happy than stay disappointed.\n\n- Riley",
   },
 
   addon_1: {

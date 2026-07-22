@@ -1,5 +1,5 @@
 /**
- * marketing-pill.js — Floating "Chat with Riley" pill for the marketing site
+ * marketing-pill.js - Floating "Chat with Riley" pill for the marketing site
  *
  * Adds a docked, non-blocking chat widget (bottom-right) to all marketing pages
  * (meetriley.us home/about/pillars/resources/blog/safety/help/data). Opens an
@@ -12,7 +12,7 @@
  * re-open (iframe stays mounted), mobile-friendly.
  *
  * Crisis safety: riley-chat.js handles ALL crisis detection server-side.
- * chat-anon.html calls /.netlify/functions/riley-chat — no bypass, no alternate path.
+ * chat-anon.html calls /.netlify/functions/riley-chat - no bypass, no alternate path.
  */
 (function () {
   'use strict';

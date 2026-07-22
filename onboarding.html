@@ -98,6 +98,11 @@ const A={secondary_focuses:[]}; // collected answers
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const WHY=['I want to improve my health.','I am looking for motivation.','I am struggling emotionally.','I am grieving.','I am working on my sobriety.','I am rebuilding after a difficult season.','I want better habits.','I want accountability.','I am not really sure.','Something else.'];
+// Porch Light doors (marketing home#porch) arrive with a lane stashed by login.html using the SAME
+// Reset persona keys (reset_enrollment.persona_keys taxonomy - no parallel system). Pre-select the
+// matching "what brings you here" option; the member can always change it.
+const LANE_TO_WHY={drinker:'I am working on my sobriety.',griever:'I am grieving.',burnt_out:'I am rebuilding after a difficult season.',stretched:'I am rebuilding after a difficult season.',body_first:'I want to improve my health.'};
+try{const _lane=sessionStorage.getItem('riley_lane_intent');if(_lane&&LANE_TO_WHY[_lane]){const _i=WHY.indexOf(LANE_TO_WHY[_lane]);if(_i>=0)A.why_set=[_i];sessionStorage.removeItem('riley_lane_intent');}}catch(e){}
 const FOCUS=['Sleep','Nutrition','Fitness','Purpose','Mental Health','Stress','Relationships','Recovery','Leadership','Career','Adventure','Creativity','Community','Learning','Financial Wellness'];
 const TIMING=[['morning','Morning'],['lunch','Lunch'],['afternoon','Afternoon'],['evening','Evening'],['on_demand','Only when I ask']];
 // motivation ("two weeks from now") options by lane

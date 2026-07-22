@@ -64,7 +64,7 @@ async function getSession(supabase, body) {
     };
     await supabase.from("user_profiles").upsert(newProfile);
     emitEvent(supabase, user.id, "signup_guide", {});   // Doc 0 §9 - a new Guide account
-    // v4 pricing - grantGuideOnSignup(): every new account gets Riley Guide
+    // v4 pricing - grantGuideOnSignup(): every new account gets the free Companion tier (internal key "guide")
     // immediately, no purchase needed. (entitlements.js also defends against
     // any signup path that doesn't reach this function, so this is belt-and-
     // suspenders for a clean audit row, not the only guarantee.)

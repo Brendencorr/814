@@ -177,7 +177,7 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 (async()=>{ await boot(async()=>{ setTimeout(function(){ loadPrograms(); rileyUnlockWaitlist(); }, 0); }); })();
 // Waitlist takeover - every in-app "Unlock with Companion" CTA lands here as ?unlock=<feat>.
-// Companion is waitlist-only for now (Brenden grants access manually); Guide stays open.
+// Coach (internal key: companion) is waitlist-only for now (Brenden grants access manually); the free Companion tier stays open.
 // Matches the marketing-site waitlist copy. The member is logged in, so joining is one tap (we have their email).
 function rileyUnlockWaitlist(){
   const feat=new URLSearchParams(location.search).get('unlock'); if(!feat) return;

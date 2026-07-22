@@ -229,7 +229,36 @@ OPERATOR_KEY in Netlify → Environment variables; keep the value only in a pass
 Design system:
 - Background: #06090e | Cards: #0a1018 | Borders: #1a2530
 - Gold: #c9a84c | Sage: #4a7c59 | Text: #e8e4de
-- Fonts: Playfair Display (headings), DM Sans (body), Bebas Neue (labels/nav)
+- Fonts: DM Serif Display (headings), DM Sans (body), DM Mono (labels/nav) — same DM system as the member site
+- Messaging canon: `RILEY_MESSAGING_HOUSE.md` v2.1 — now committed at the repo root (force-404'd publicly, like POSITIONING.md). Homepage v2 + sitewide copy follow it verbatim; canonical lines are never paraphrased; plain hyphens only in member-facing copy, never em-dashes. Check every copy change against it.
+- Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
+- Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
+
+## Messaging cohesion gate (founder rule, 2026-07-22) — BEFORE EVERY PRODUCTION PUSH
+Any push to main must keep the website, app pages, AND internal dashboards saying the same thing.
+- Run `node scripts/check-messaging.js` before pushing (enable the pre-push hook once per clone:
+  `git config core.hooksPath .githooks`). Netlify runs the SAME script as its build command, so a
+  deploy with drift FAILS — this gate is enforced, not advisory.
+- It checks: retired strings (incl. "Riley Guide" as display name and Riley claiming "she's been
+  through it"), em-dashes in member-facing files, canonical v2.1 lines verbatim on home/about, tier
+  taglines pinned to the right cards, no Mentor on marketing, AND (when Supabase env is present, as
+  in Netlify builds) the DB-stored client-visible naming: `products.display_name` + `plans.name/tagline`.
+- Tier naming, single source of truth (internal keys NEVER change): key `guide`/`reset_free` displays
+  "Riley Companion" (free) · key `companion` displays "Riley Coach" ($19/$175) · key `coach` (retired
+  $34 tier) displays "Riley Mentor", hidden from menus, grandfathered members only · `mentor` row is
+  draft/hidden. Synced 2026-07-22 across: DB products + plans, dashboard.html TL map, tier-labels,
+  riley-chat.js prompt, stripe-catalog, marketing pages. If you change a display name, change it in
+  ALL of those places + the check script's expectations, in the same commit.
+
+## Homepage + About final layout (founder decisions, 2026-07-22 — supersede the v2 handoff §-order)
+- home.html order: hero (two-line H1, no orb above eyebrow) → Porch Lights → Meet Riley (memory
+  doctrine folded in — NO standalone Memory section) → tiers/compare/à-la-carte → Problem ("hardest
+  hours") → hard moments → whispered story → testimonial → ethos → FAQ → close. The 8:14 Reset band
+  was removed as repetitive. Porch doors: light on the left, two text lines beside it.
+- about.html: founder-final copy (2026-07-22 amendment): Why 8:14. → Built the hard way. →
+  Wherever you are. → Meet Riley ("A steady presence. Any hour.", absorbs the Why Riley copy and
+  carries the "Riley is an AI." disclosure) → Begin. Replaced paragraphs are locked verbatim and
+  deliberately NOT CMS-editable.
 - All from Google Fonts CDN
 
 Dashboard reads live data via:

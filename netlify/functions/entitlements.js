@@ -72,7 +72,7 @@ exports.handler = async function (event) {
       .eq('user_id', userId);
     if (prodErr) throw prodErr;
     const owned = new Set((prodRows || []).map(r => r.product_key));
-    // Defensive default: Riley Guide is meant to be automatic and universal -
+    // Defensive default: the free Companion tier (internal key "guide") is meant to be automatic and universal -
     // "everyone gets a capped version of everything, forever." The app has more
     // than one place a profile can first get created (auth-handler.js's
     // get_session, onboarding.html's own upsert, etc.); rather than chase every

@@ -1,9 +1,13 @@
-# App Spec 6.3: every deploy stamps its commit into sw.js so cache names are
-# versioned per deploy and installed apps pick up the new version within one
-# session (the update-toast flow in pwa.js). COMMIT_REF is set by Netlify;
-# the fallback keeps local/preview builds working.
 [build]
-  command = "sed -i \"s/__RILEY_BUILD__/$(echo \"${COMMIT_REF:-dev}\" | cut -c1-10)/\" sw.js"
+  # Two build steps, both mandatory:
+  # 1. Messaging cohesion gate (founder rule, 2026-07-22): every production deploy re-verifies that the
+  #    website, app pages, client JS, and the DB-stored tier names/taglines (products/plans - what the app
+  #    and internal dashboards show clients) all match RILEY_MESSAGING_HOUSE.md. Drift = failed deploy.
+  # 2. App Spec 6.3 stamp: bake the commit into sw.js so cache names are versioned per deploy and
+  #    installed apps pick up the new version within one session (the update-toast flow in pwa.js).
+  #    COMMIT_REF is set by Netlify; the fallback keeps local/preview builds working.
+  command = "node scripts/check-messaging.js && sed -i \"s/__RILEY_BUILD__/$(echo \"${COMMIT_REF:-dev}\" | cut -c1-10)/\" sw.js"
+  publish = "."
 
 [build.environment]
   SECRETS_SCAN_OMIT_PATHS = "CLAUDE.md,riley-auth.html,riley-chat.js,dashboard.html,dashboard-auth.js,dashboard.css,conversations.html,tracker.html,programs.html,brief.html,workouts.html,nutrition.html,progress.html,sleep.html,finance.html,calendar.html,chat.html,login.html,community.html,journey.html,onboarding.html,lifemap.html,profile.html,settings.html,reset.html,home.html,program.html,int-program.html,clarity-setup.html,clarity-method.html"
@@ -369,17 +373,16 @@
   from = "https://riley.meetriley.us/memory/"
   to = "/memory.html"
   status = 200
-# P2b.10: "The Four Pillars" folded INTO the About page (about.html #pillars). The standalone
-# /pillars route now redirects there; pillars.html stays in the repo but is no longer routed.
-# force=true so this wins over Netlify serving the still-present pillars.html file.
+# Messaging House v2.1: the retired pillars framing is replaced by The Porch Lights section
+# on the homepage (home.html #porch). All /pillars-style routes land there; pillars.html is deleted.
 [[redirects]]
   from = "/pillars"
-  to = "/about#pillars"
+  to = "/home#porch"
   status = 301
   force = true
 [[redirects]]
   from = "/pillars/*"
-  to = "/about#pillars"
+  to = "/home#porch"
   status = 301
   force = true
 # P1.2: the Financial Goals TOOL moved to the Mentor tier. The /finance route is retired from Companion +
@@ -427,6 +430,11 @@
   force = true
 [[redirects]]
   from = "/POSITIONING.md"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/RILEY_MESSAGING_HOUSE.md"
   to = "/404.html"
   status = 404
   force = true

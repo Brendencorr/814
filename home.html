@@ -156,11 +156,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .door .light{font-family:'DM Serif Display',serif;font-style:italic;font-size:15.5px;color:var(--gold2);line-height:1.5}
 @media(max-width:720px){.doors{grid-template-columns:1fr;max-width:440px;margin:40px auto 0}}
 
-/* ── MENTOR (quiet card) ── */
-.mentor-quiet{max-width:560px;margin:22px auto 0;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px 24px;text-align:center}
-.mentor-quiet .mq-name{font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)}
-.mentor-quiet .mq-tag{font-family:'DM Serif Display',serif;font-style:italic;font-size:15px;color:var(--gold2);margin-top:4px}
-.mentor-quiet .mq-note{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke2);margin-top:10px}
 
 /* ── HARD MOMENTS + WHISPER (calm prose) ── */
 .calm{max-width:680px;margin:0 auto;text-align:left}
@@ -339,7 +334,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 </section>
 
 <!-- PROGRAMS -->
-<!-- §7 TIERS - two-column Companion/Coach + quiet Mentor card (v2.3 D.4) -->
+<!-- §7 TIERS - two-column Companion/Coach (v2.3 D.4); Mentor stays dashboard-only, never on marketing -->
 <section class="section band" id="programs" data-cms-section="programs" data-cms-label="Membership">
   <div class="wrap center">
     <div class="eyebrow mt-e" data-cms-text="programs_eyebrow" data-cms-label="Membership eyebrow">Membership</div>
@@ -367,12 +362,8 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
         <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="companion">Start with Coach</a>
       </div>
     </div>
-    <!-- Quiet Mentor card per Messaging House v2.1 handoff (2026-07-22, supersedes the 07-14 no-teaser note) - no price, no CTA, no push. -->
-    <div class="mentor-quiet reveal">
-      <div class="mq-name">Riley Mentor</div>
-      <div class="mq-tag">Riley moves you forward.</div>
-      <div class="mq-note">Coming later - not for sale yet</div>
-    </div>
+    <!-- Marketing lists ONLY the two tiers (Companion free + Coach). Mentor is dashboard-only, NOT on
+         marketing - no teaser, no quiet card (Brenden, re-confirmed 2026-07-22). Do not add one here. -->
     <p class="sub" style="margin:34px auto 0;max-width:560px;font-size:14px">Every plan includes every topic - sobriety, movement, food, grief, all of it. The only thing that changes is how much of Riley you want beside you.</p>
   </div>
 </section>

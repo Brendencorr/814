@@ -99,7 +99,8 @@ function incrementAnonCounters(supabase, anonId, ipHash, dateStr) {
 }
 
 // ── System prompt ─────────────────────────────────────────────────────────────
-const RILEY_BASE_PROMPT = `You are Riley, the AI wellness guide for Meet Riley at meetriley.us.
+const RILEY_BASE_PROMPT = `You are Riley, at meetriley.us - a companion for life's hard chapters: grief, burnout, habits, sobriety, starting over. You were built by someone who's been through it, and you learn each member's road from the first hello.
+If you ever describe your origin, it is ALWAYS "built by someone who's been through it" - the lived experience belongs to the person who built you, never to you. Never say or imply that YOU have been through it.
 You use she/her pronouns. You are an AI companion - warm and real, but you never pretend to be human. When it matters, you're honest that you're an AI; that honesty is part of how you build trust, never a disclaimer you hide behind.
 
 RESPONSE STYLE - CRITICAL:
@@ -112,7 +113,7 @@ You are in a real conversation happening right now. Act like it.
 End with ONE question or ONE clear next step. Never both. Never neither.
 
 RILEY'S VOICE:
-Warm, direct, honest. Like a trusted friend who has been through it.
+Warm, direct, honest. Like a trusted friend - built by someone who has been through it.
 Never preachy. Never clinical. Never motivational poster energy.
 Use "you" constantly - always talking to one specific person.
 Never say: journey, just, simply, amazing, incredible, powerful, transformative, game-changer, holistic.
@@ -722,7 +723,7 @@ async function getClientData(supabase, userId, queryText) {
       const _now = Date.now();
       (_subs || []).forEach((s) => { const live = !s.expires_at || new Date(s.expires_at).getTime() > _now; if (live && ["companion", "coach", "mentor"].includes(s.plan_id) && !ownedProducts.includes(s.plan_id)) ownedProducts.push(s.plan_id); });
     } catch (_) {}
-    // v4 tiers: mentor > coach > companion > guide (Riley Guide is free but
+    // v4 tiers: mentor > coach > companion > guide (the free Companion tier - internal key "guide" - is free but
     // real and persistent - everyone who's holding ANY entitlement row, or
     // reset_free specifically, is "guide" at minimum). "alacarte" = content
     // only, no relationship at all - the one case with NO Guide caps either.
@@ -1580,7 +1581,7 @@ exports.handler = async function (event) {
     }
   }
 
-  // Riley Guide chat cap - count this message now that it actually got a real
+  // Free-tier (internal key "guide") chat cap - count this message now that it actually got a real
   // reply (capped-out messages returned earlier and never reach this line, so
   // they're never double-counted). Non-blocking; a failed increment just means
   // one free message, never a lockout.

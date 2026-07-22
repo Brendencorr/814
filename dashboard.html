@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Riley">
+<meta name="apple-mobile-web-app-title" content="Meet Riley">
 <title>Home - Meet Riley</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
@@ -649,7 +649,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     document.getElementById('hero-breakdown').innerHTML=factors.map(f=>`<div class="hb-row"><span class="hb-label">${f.key}</span><div class="hb-track"><div class="hb-fill" style="width:0;background:${f.color}" data-w="${Math.round(f.val*100)}"></div></div><span class="hb-val">${Math.round(f.val*100)}</span></div>`).join('');
     setTimeout(()=>document.querySelectorAll('.hb-fill').forEach(el=>el.style.width=el.dataset.w+'%'),200);
 
-    // ── Clarity v2.2 override (DARK) — only when v2 is active for this member. The v1
+    // ── Clarity v2.2 override (DARK) - only when v2 is active for this member. The v1
     //    hero above is untouched otherwise; under v2 all pages defer to the one engine. ──
     try{
       if(window.ClarityView){
@@ -741,7 +741,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
             }
           }catch(e){} }
 
-          // ── Weekly perceived-direction + one small win (§2) — the validation-gold signal
+          // ── Weekly perceived-direction + one small win (§2) - the validation-gold signal
           // (§13 Stage-1). v2 members, on the weekend wrap (Sun/Mon member-local), once per
           // week until answered. Writes clarity_weekly (owner-RLS); the weekly recap reads it. ──
           try{

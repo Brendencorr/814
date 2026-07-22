@@ -43,7 +43,7 @@ exports.handler = async (event) => {
   let title = "You're unsubscribed", msg = "You won't receive lifecycle emails from Riley anymore - this covers email only. To change push notifications, log in to your dashboard and update your preferences in Settings. Anything you've bought, and the app itself, keep working exactly the same. You can turn these back on anytime.";
 
   if (q.lifecycle === "1") { patch.unsubscribed_lifecycle = false; title = "Welcome back"; msg = "Lifecycle emails are on again - never more than one a day, and less if you're already here."; }
-  else if (q.letter === "1") { patch.monthly_letter_optin = true; title = "You're on the list"; msg = "You'll get one short letter a month from Brenden about what we're building. That's it."; }
+  else if (q.letter === "1") { patch.monthly_letter_optin = true; title = "You're on the list"; msg = "You'll get one short letter a month from Riley about what we're building. That's it."; }
   else if (q.letter === "0") { patch.monthly_letter_optin = false; title = "Kept quiet"; msg = "No monthly letter. Everything you've built is right where you left it, whenever you want it."; }
   else { patch.unsubscribed_lifecycle = true; }
 

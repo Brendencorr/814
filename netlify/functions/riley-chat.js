@@ -120,6 +120,8 @@ Never say: journey, just, simply, amazing, incredible, powerful, transformative,
 Short sentences. White space. Easy to read on a phone.
 Punctuation: always use a plain hyphen "-" for any dash. Never use em-dashes or en-dashes (the longer dash characters) - they don't match our brand.
 
+RETURNS - THE NEVER-SAY LAW (non-negotiable): when someone comes back after time away, the gap is an input, never a topic. NEVER say "you've been gone/away," "we missed you," "it's been X days," any day-counting or gap arithmetic, any streak language, or "let's get back on track." A counted absence is a summons, not a welcome. Open with welcome-as-fact ("Good to see you") and reference the last conversation's CONTENT, never its date. If the member raises the gap themselves, meet it honestly and move forward. Missed days are met with welcome, never guilt.
+
 WHO YOU'RE TALKING TO - CRITICAL, NON-NEGOTIABLE:
 The people who come here are from every walk of life - every gender, sexual orientation, religion, background, and belief. Your default is total acceptance: no assumptions, no judgment, no shaming, ever.
 Never assume anyone's gender, pronouns, orientation, faith, or role. Do NOT infer any of it from a name, a topic, a tone, or anything else. Someone talking about their kids may be a mom, a dad, or a parent; someone in recovery or grieving could be anyone. Assuming wrong is a real, trust-breaking harm.
@@ -1265,40 +1267,29 @@ exports.handler = async function (event) {
     console.warn("Supabase context failed (non-fatal):", e.message);
   }
 
-  // ── Rhythm & Return (docs/08 §2): return-tier register. ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off. ──
-  // Computed on the FIRST message of a session only (later turns are R0 continuation by
-  // definition), and prepended only for R2+ - R0/R1 is Riley's default register, and skipping
-  // the prepend keeps the prompt-cache fast path for daily members. last_active_at still holds
-  // the PREVIOUS session here (it's stamped after the reply below), which is exactly the gap.
+  // ── Rhythm & Return (docs/08 §2): return-tier PROMPT register. ON by default (rhythmEnabled). ──
+  // Ownership split (parallel-implementation reconciliation, 2026-07-22): session-return.js owns
+  // the return STATE (last_active stamp, Re-Light arming via relight_mode, direction mute, cadence
+  // EMA, nudge-open settle, gap_summaries row, session_return event). This block owns only the
+  // PROMPT: Riley's register for the session. The client passes the tier it got from session-return
+  // (body.return_tier) - session-return refreshes last_active_at at boot, so recomputing here would
+  // read gap 0. Fallback: compute from last_active_at when the hint is absent (older clients).
+  // Prepended only for R2+ - R0/R1 is Riley's default register, and skipping the prepend keeps the
+  // prompt-cache fast path for daily members. First message of a session only.
   let returnTierThisSession = null;
   if (rhythmEnabled() && supabase && user_id &&
       (!Array.isArray(messages) || messages.length <= 1)) {
     try {
-      const { data: rp } = await supabase.from("user_profiles")
-        .select("last_active_at,timezone").eq("id", user_id).maybeSingle();
-      const gap = rp && rp.last_active_at
-        ? appDayGap(memberDay(rp.timezone), memberDay(rp.timezone, rp.last_active_at)) : null;
-      if (gap != null) {
-        const tier = returnTier(gap);
+      let tier = ["R0", "R1", "R2", "R3", "R4"].indexOf(body.return_tier) >= 0 ? body.return_tier : null;
+      if (!tier) {
+        const { data: rp } = await supabase.from("user_profiles")
+          .select("last_active_at,timezone").eq("id", user_id).maybeSingle();
+        const gap = rp && rp.last_active_at
+          ? appDayGap(memberDay(rp.timezone), memberDay(rp.timezone, rp.last_active_at)) : null;
+        if (gap != null) tier = returnTier(gap);
+      }
+      if (tier) {
         returnTierThisSession = tier;
-        emitEvent(supabase, user_id, "session_return", { tier, gap });
-        // R3/R4 = the return moment: open the Re-Light window (rise-only display, docs/07 §2b -
-        // 7d at R3, 14d at R4) and suppress Direction narration for 14 days. Never re-shortens
-        // an already-open window.
-        if (tier === "R3" || tier === "R4") {
-          try {
-            const { tierBehavior } = require("./rhythm");
-            const beh = tierBehavior(tier);
-            const today = memberDay(rp.timezone);
-            const until = new Date(Date.parse(today) + beh.relightDays * 86400000).toISOString().slice(0, 10);
-            const dirUntil = new Date(Date.parse(today) + beh.directionSuppressDays * 86400000).toISOString().slice(0, 10);
-            const { data: cur } = await supabase.from("user_profiles").select("relight_until").eq("id", user_id).maybeSingle();
-            if (!cur || !cur.relight_until || cur.relight_until < until) {
-              await supabase.from("user_profiles").update({ relight_until: until, relight_tier: tier, direction_suppressed_until: dirUntil }).eq("id", user_id);
-              emitEvent(supabase, user_id, "relight_started", { tier, until });
-            }
-          } catch (_) {}
-        }
         if (tier === "R2" || tier === "R3" || tier === "R4") {
           // One remembered thread, content only - never its date (Never-Say).
           let remembered = null;

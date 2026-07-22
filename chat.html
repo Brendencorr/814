@@ -331,6 +331,18 @@ let _db, _user, _uid, _sessionId, _history = [];
   //    Resume via auth-handler (server-side, token-verified, service-key). The
   //    browser's own RLS read was coming back empty inside the popup iframe, so
   //    Riley kept "forgetting" - the server path is reliable.
+  // Rhythm & Return: settle the session start FIRST (session-return owns the return state -
+  // last_active stamp, Re-Light arming, cadence, nudge-open settle) and keep the tier so
+  // riley-chat can shape Riley's register without recomputing against the refreshed timestamp.
+  // Fail-open: any error leaves RR_TIER null and everything behaves exactly as before.
+  try {
+    const tokSR = (await _db.auth.getSession()).data.session?.access_token;
+    if (tokSR) {
+      const rSR = await fetch('/.netlify/functions/session-return', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: tokSR }) });
+      const jSR = await rSR.json();
+      if (jSR && jSR.tier) RR_TIER = jSR.tier;
+    }
+  } catch(e) {}
   // Day-aware daily check-in first (once/day) - Riley greets + a few quick chips - THEN
   // continue/resume. If today's check-in is already done, go straight to the conversation.
   if (await checkinDoneToday()) openConversation();
@@ -374,6 +386,7 @@ async function openConversation() {
 const RC_TODAY = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": rolls at 4am LOCAL (matches dashboard)
 let RC = {}, RC_LANE = 'other', RC_READY = null, RC_CONF = null, RC_NOTE_OK = false, RC_ESC = null, RC_MOODS = [], RC_STEPS = [], RC_SOBER = false, _awaitingNote = null, _ciActive = false;
 let RC_DYN = null, RC_DYN_ANS = { answers: [] };   // Rhythm & Return dynamic layer (fail-open)
+let RR_TIER = null;   // return tier from session-return (shapes Riley's register via riley-chat)
 function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (h < 17 ? 'midday' : 'evening'); }
 
 // Tell the parent shell (pwa.js) to lock/unlock the popup's close controls while a
@@ -847,7 +860,7 @@ async function rcRespondToNote(note){
   let reply = '';
   try{
     const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
-    const res = await fetch(RILEY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message: note, messages:_history, session_id:_sessionId, token:_tok }) });
+    const res = await fetch(RILEY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ message: note, messages:_history, session_id:_sessionId, token:_tok, return_tier: RR_TIER }) });
     if(!res.ok) throw new Error('HTTP '+res.status);
     const reader = res.body.getReader(); const decoder = new TextDecoder();
     bubble.textContent = ''; bubble.style.color = 'var(--parchment)';
@@ -1131,7 +1144,7 @@ async function send() {
     const res = await fetch(RILEY_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text, messages: _history, session_id: _sessionId, token: _tok })
+      body: JSON.stringify({ message: text, messages: _history, session_id: _sessionId, token: _tok, return_tier: RR_TIER })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     _atLimit = res.headers.get('X-Chat-Atlimit') === 'true'; // Doc 2 §3

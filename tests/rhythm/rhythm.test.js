@@ -110,9 +110,9 @@ check("relightDisplay is rise-only inside the window, pass-through outside", () 
 });
 
 // ── Tier behavior mapping (07 §2b onto 08 tiers - recorded resolution) ─────────────────────────
-check("tier behavior: R3 relight 7d, R4 relight 14d + tiny thresholds, R2 widens bands", () => {
+check("tier behavior: R3 and R4 relight 7d (unified resolution), R4 adds tiny thresholds", () => {
   assert.strictEqual(R.tierBehavior("R3").relightDays, 7);
-  assert.strictEqual(R.tierBehavior("R4").relightDays, 14);
+  assert.strictEqual(R.tierBehavior("R4").relightDays, 7);
   assert.ok(R.tierBehavior("R4").tinyThresholds, "R4 = First-Light-lite");
   assert.ok(R.tierBehavior("R2").hardDayWiden, "R2 return day widens bands");
   assert.strictEqual(R.tierBehavior("R4").checkin, "micro", "R4 gets three questions, not nine");

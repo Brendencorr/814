@@ -163,7 +163,8 @@ exports.handler = async (event) => {
         .eq("user_id", userId).eq("app_day", appDay);
 
       // Return-sequence extras. Gap answers create CONTEXT, never scores (08 §3b guardrail):
-      // gap_summaries only - no daily_checkins, no user_daily_state, ever, from this path.
+      // gap_summaries only - never a scored check-in row or a daily-state row from this path
+      // (enforced by the write-path audit in tests/rhythm/runner.js).
       if (body.gap_summary && ["rough", "mixed", "okay", "good"].indexOf(body.gap_summary) >= 0) {
         const lastYmd = prof && prof.last_active_at ? memberDay(tz, prof.last_active_at) : null;
         const gapDays = lastYmd ? appDayGap(appDay, lastYmd) : null;

@@ -16,7 +16,6 @@
 const engine = require("./clarity-engine");
 const { effectiveConfig } = require("./clarity-config-util");
 const { emitEvent } = require("./supabase-client");
-const { rhythmEnabled, relightDisplay } = require("./rhythm");
 
 const dayISO = (d) => d.toISOString().slice(0, 10);
 const daysAgoISO = (n) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - n); return dayISO(d); };
@@ -54,7 +53,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
     supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
-    supabase.from("user_profiles").select("created_at").eq("id", userId).maybeSingle(),
+    supabase.from("user_profiles").select("created_at,relight_until,relight_mode,direction_mute_until").eq("id", userId).maybeSingle(),
     supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
     supabase.from("clarity_life_events").select("occurred_on,window_days,recalibrate").eq("user_id", userId).eq("recalibrate", true).gte("occurred_on", daysAgoISO(60)),
   ]);
@@ -192,25 +191,18 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
     : {};
 
-  // ── Re-Light (docs/07 §2b · docs/08 §5): ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off. During the window
-  //    the shown number is rise-only; an R4 return additionally re-enters First-Light-lite
-  //    (tiny thresholds via the engine's firstLight path). Window closes itself here. ──
-  let relightActive = false, relightLite = false;
-  if (rhythmEnabled()) {
-    try {
-      const { data: rl } = await supabase.from("user_profiles")
-        .select("relight_until,relight_tier").eq("id", userId).maybeSingle();
-      if (rl && rl.relight_until) {
-        if (today <= rl.relight_until) {
-          relightActive = true;
-          relightLite = rl.relight_tier === "R4";
-        } else {
-          await supabase.from("user_profiles").update({ relight_until: null, relight_tier: null }).eq("id", userId);
-          emitEvent(supabase, userId, "relight_ended", {});
-        }
-      }
-    } catch (_) {}
-  }
+  // ── §2b return cadence (docs/07 + docs/08 §5): Re-Light / First Light-lite window + Direction
+  //    mute are set on the profile by session-return (Phase 3) and honored here every recompute.
+  //    A return-day row in gap_summaries (gap ≥ 3) also gets automatic hard-day band widening —
+  //    the context table shapes accommodation, never scores (08 §3b guardrail). ──
+  const relightActive = !!(prof && prof.relight_until && prof.relight_until >= today);
+  const relight = relightActive ? (prof.relight_mode === "first_light_lite" ? "first_light_lite" : "relight") : null;
+  const directionMuted = !!(prof && prof.direction_mute_until && prof.direction_mute_until >= today);
+  let returnWiden = false;
+  try {
+    const { data: gs } = await supabase.from("gap_summaries").select("gap_days").eq("user_id", userId).eq("returned_on", today).maybeSingle();
+    returnWiden = !!(gs && isNum(gs.gap_days) && gs.gap_days >= 3);
+  } catch (_) {}
 
   const raw = Object.assign({}, foundationInp, {
     score_mode: scoreMode,
@@ -218,9 +210,11 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     practice,
     lane,
     coreHistory,
-    hardDayToday: hardToday2,
+    hardDayToday: hardToday2 || returnWiden,
     recalibrating,
-    firstLight: firstLight || relightLite,   // R4 re-entry = First-Light-lite (rise-only + tiny thresholds)
+    firstLight,
+    relight,
+    directionMuted,
     prevDisplayed,
     freeze,
     gaps: {
@@ -235,20 +229,17 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   // as the live dark write, so the verifier reports exactly what production would store.
   if (opts.dryRun) return result;
 
-  // Re-Light rise-only display: inside the window, never store a shown value lower than the
-  // previous shown value ("returning members are never greeted by a lower number", 08 §5).
-  const displayedOut = relightActive ? relightDisplay(result.displayed, prevDisplayed, true) : result.displayed;
-
   // ── persist: v2 columns on today's user_daily_state row (v1 already wrote it) ──
   try {
     await supabase.from("user_daily_state").update({
-      clarity_v2: displayedOut,
+      clarity_v2: result.displayed,
       provisional: result.provisional,
       clarity_core: result.core,
       f_score: result.F,
       p_score: result.P,
       d_score: result.D,
-      v2_breakdown: Object.assign({}, result.breakdown, { mode: result.mode }),
+      v2_breakdown: Object.assign({}, result.breakdown, { mode: result.mode, relight: result.relight || null, direction_muted: !!result.direction_muted }),
+      clarity_version: 2,                                    // §12 engine-version stamp (v1 rows backfilled = 1)
       config_version: cfgVersion,
       frozen: !!result.frozen,
       frozen_until: result.frozen ? frozenUntilISO : null,   // cleared on unfreeze
@@ -258,7 +249,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
 
   // ── §12 canonical events (fire-and-forget; never block the write) ──
   try {
-    emitEvent(supabase, userId, "clarity_recomputed", { displayed: displayedOut, provisional: result.provisional, frozen: !!result.frozen, config_version: cfgVersion });
+    emitEvent(supabase, userId, "clarity_recomputed", { displayed: result.displayed, provisional: result.provisional, frozen: !!result.frozen, config_version: cfgVersion });
     if (result.provisional) emitEvent(supabase, userId, "clarity_provisional", { coverage: result.breakdown && result.breakdown.coverage });
     if (hardToday2) emitEvent(supabase, userId, "hard_day_flagged", { date: today });
     if (frozeNow) emitEvent(supabase, userId, "clarity_frozen", { until: frozenUntilISO, held_at: prevDisplayed });

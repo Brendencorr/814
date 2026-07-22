@@ -10,8 +10,14 @@
  *    its acceptance tests pin the 2/3, 6/7, 29/30 boundaries. Doc 07 §2b's slightly different gap
  *    table (2-3 / 4-7 / 8-29) maps onto these tiers for check-in shape + Clarity behavior.
  * 2. Re-Light window at 30+ days: Doc 07 v2.3 §2b says 14 days; Doc 08 §5 says "7 (not 14)".
- *    Doc 07 v2.3 is the NEWER document (supersedes v2.2, written with §2b specifically for this) -
- *    R4 gets 14 days, R3 gets 7. First-Light-lite tiny thresholds apply at R4 either way.
+ *    UNIFIED RESOLUTION (2026-07-22, parallel-implementation reconciliation): 7 days for both
+ *    R3 and R4, matching rhythm-utils.js/session-return.js and the engine's first_light_lite
+ *    path - Doc 08 is the dedicated cadence spec and its correction governs. R4 additionally
+ *    re-enters First-Light-lite (tiny thresholds).
+ *
+ * NOTE: session-return.js + rhythm-utils.js own Re-Light ARMING and the notification ladder at
+ * runtime; this module's tierBehavior/relight fields drive the check-in SHAPE (checkin-prompts)
+ * and the reset-nudge ladder, and stay unified with those semantics.
  */
 "use strict";
 
@@ -38,7 +44,7 @@ function tierBehavior(tier) {
     case "R1": return { checkin: "standard", reframe: null, relightDays: 0, directionSuppressDays: 0, hardDayWiden: false, tinyThresholds: false };
     case "R2": return { checkin: "standard", reframe: "stretch", relightDays: 0, directionSuppressDays: 1, hardDayWiden: true, tinyThresholds: false };
     case "R3": return { checkin: "condensed", reframe: "stretch", relightDays: 7, directionSuppressDays: 14, hardDayWiden: true, tinyThresholds: false };
-    case "R4": return { checkin: "micro", reframe: "season", relightDays: 14, directionSuppressDays: 14, hardDayWiden: true, tinyThresholds: true };
+    case "R4": return { checkin: "micro", reframe: "season", relightDays: 7, directionSuppressDays: 14, hardDayWiden: true, tinyThresholds: true };
     default: return { checkin: "standard", reframe: null, relightDays: 0, directionSuppressDays: 0, hardDayWiden: false, tinyThresholds: false };
   }
 }

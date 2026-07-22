@@ -230,7 +230,7 @@ Design system:
 - Background: #06090e | Cards: #0a1018 | Borders: #1a2530
 - Gold: #c9a84c | Sage: #4a7c59 | Text: #e8e4de
 - Fonts: DM Serif Display (headings), DM Sans (body), DM Mono (labels/nav) — same DM system as the member site
-- Messaging canon: RILEY_MESSAGING_HOUSE.md v2.1 (homepage v2 + sitewide copy follow it verbatim; plain hyphens only in member-facing copy, never em-dashes)
+- Messaging canon: `RILEY_MESSAGING_HOUSE.md` v2.1 — now committed at the repo root (force-404'd publicly, like POSITIONING.md). Homepage v2 + sitewide copy follow it verbatim; canonical lines are never paraphrased; plain hyphens only in member-facing copy, never em-dashes. Check every copy change against it.
 - Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
 - All from Google Fonts CDN

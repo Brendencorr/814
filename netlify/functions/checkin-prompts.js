@@ -192,9 +192,25 @@ exports.handler = async (event) => {
     // Reproducibility: an already-rendered day returns the stored row verbatim (07 §2c).
     const { data: stored } = await sb.from("checkin_prompts").select("framing,dynamic_items")
       .eq("user_id", userId).eq("app_day", appDay).maybeSingle();
-    const lastYmd = prof && prof.last_active_at ? memberDay(tz, prof.last_active_at) : null;
-    const gap = lastYmd ? appDayGap(appDay, lastYmd) : null;
-    const tier = gap == null ? "R0" : returnTier(gap);
+    // Tier resolution - ORDER MATTERS (bug fix, 2026-07-22): session-return runs at chat boot and
+    // refreshes last_active_at BEFORE this endpoint is called, so recomputing from last_active_at
+    // here always reads gap 0 and a returning member never saw the welcome-back sequence.
+    //   1) the client's hint (chat.html passes the tier session-return returned)
+    //   2) today's gap_summaries return row (session-return writes it BEFORE the refresh)
+    //   3) last_active_at computation (correct only when session-return didn't run first)
+    let tier = ["R0", "R1", "R2", "R3", "R4"].indexOf(body.return_tier) >= 0 ? body.return_tier : null;
+    if (!tier) {
+      try {
+        const { data: gsToday } = await sb.from("gap_summaries").select("gap_days")
+          .eq("user_id", userId).eq("returned_on", appDay).maybeSingle();
+        if (gsToday && gsToday.gap_days != null) tier = returnTier(gsToday.gap_days);
+      } catch (_) {}
+    }
+    if (!tier) {
+      const lastYmd = prof && prof.last_active_at ? memberDay(tz, prof.last_active_at) : null;
+      const gap = lastYmd ? appDayGap(appDay, lastYmd) : null;
+      tier = gap == null ? "R0" : returnTier(gap);
+    }
     const beh = tierBehavior(tier);
     if (stored) {
       return json(200, {

@@ -494,7 +494,7 @@ async function runDailyCheckin(){
     const tokRR = (await _db.auth.getSession()).data.session?.access_token;
     if(tokRR){
       const ctl = new AbortController(); const tmr = setTimeout(function(){ ctl.abort(); }, 6000);
-      const rr = await fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'get', token:tokRR }), signal:ctl.signal });
+      const rr = await fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'get', token:tokRR, return_tier: RR_TIER }), signal:ctl.signal });
       clearTimeout(tmr);
       const jj = await rr.json();
       if(jj && jj.enabled) RC_DYN = jj;

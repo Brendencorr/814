@@ -1,5 +1,5 @@
 /**
- * checkin-templates.js — the approved template bank (docs/07 §2c v1 constraint).
+ * checkin-templates.js - the approved template bank (docs/07 §2c v1 constraint).
  * Skins and dynamic questions come from HERE, not free generation: every string below is
  * Sentinel-reviewed, plain-hyphen, Never-Say-clean (tests/rhythm asserts it). Templates carry
  * {slot} placeholders filled from member memory; the SPINE (fields, scales, semantics) never

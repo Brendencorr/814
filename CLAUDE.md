@@ -230,6 +230,7 @@ Design system:
 - Background: #06090e | Cards: #0a1018 | Borders: #1a2530
 - Gold: #c9a84c | Sage: #4a7c59 | Text: #e8e4de
 - Fonts: DM Serif Display (headings), DM Sans (body), DM Mono (labels/nav) — same DM system as the member site
+- Messaging canon: RILEY_MESSAGING_HOUSE.md v2.1 (homepage v2 + sitewide copy follow it verbatim; plain hyphens only in member-facing copy, never em-dashes)
 - All from Google Fonts CDN
 
 Dashboard reads live data via:

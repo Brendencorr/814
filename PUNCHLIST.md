@@ -30,7 +30,7 @@ Status: ✅ shipped+verified · 🟡 partial · 🚩 flagged follow-up · ⬜ no
 ## P2 - VOICE & POLISH  ✅
 - ✅ P2.1 No "Day 0". P2.2 No % on program cards. P2.3 Auto-titled conversations (member-editable, Haiku).
 - ✅ P2.4 Labeled bell. P2.5 "Your Programs". P2.6 State-aware greeting (gentler on hard days).
-- ✅ P2.7 Quiet hours. P2.8 Mobile sun bottom-bar. P2b.9 "Rebuilding." P2b.10 Four Pillars folded into About.
+- ✅ P2.7 Quiet hours. P2.8 Mobile sun bottom-bar. P2b.9 "Rebuilding." P2b.10 pillars framing folded into About (since replaced by The Porch Lights).
 
 ## FOUNDER EXCEPTIONS - not touched
 Recovery Journey · Casey K. testimonial · "What We Believe" block.

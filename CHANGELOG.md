@@ -43,7 +43,7 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
   cards -> one compact chip row (Financial dropped). P1.6 empty dims warm-framed. P1.11 Life Map crown-jewels-first
   + empties collapse. P1.10.7 retired the in-app chat pill (kept on marketing). Nav order Talk-to-Riley-first.
   P2.1 no "Day 0", P2.2 no % on program cards, P2.4 labeled bell, P2.5 "Your Programs", P2.7 quiet-hours,
-  P2b.9 hero eyebrow "Rebuild. One day at a time.", P2b.10 retired Four Pillars from primary nav. Files: many
+  P2b.9 hero eyebrow "Rebuild. One day at a time.", P2b.10 retired the four-pillars nav framing (now The Porch Lights). Files: many
   member HTML pages, pwa.js, member-doc-background.js, netlify.toml. 🔴 FLAGGED for a dedicated build: P1.9
   dashboard voice-block+composer + P1.10 the persistent conversation LAYER (coordinate with the `/talk` work);
   P2.3 auto-title convos; P2.8 mobile sun bottom-bar; P1.8 brief email-toggle. Founder picks: P2b.9 wording,

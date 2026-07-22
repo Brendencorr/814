@@ -1,5 +1,5 @@
 /**
- * clarity-view.js — Clarity Score v2.2 shared client reader (the cutover switch).
+ * clarity-view.js - Clarity Score v2.2 shared client reader (the cutover switch).
  *
  * ONE place that decides whether a page shows the v1 or v2 Clarity score, and turns a
  * user_daily_state row into a normalized, member-facing view. dashboard.html and brief.html
@@ -9,7 +9,7 @@
  * DARK by default: the global flag (site_content clarity/engine) ships as 'v1', so
  * resolveEngine() returns 'v1' for everyone and the pages keep their exact v1 behavior.
  * A member with user_profiles.clarity_preview=true (dogfood) sees 'v2'; the public flips
- * only when the flag is set to 'v2'. Never shows the math — narration stays emotional.
+ * only when the flag is set to 'v2'. Never shows the math - narration stays emotional.
  */
 (function () {
   'use strict';

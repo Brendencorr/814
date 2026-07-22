@@ -1,7 +1,7 @@
 {
   "name": "Riley",
   "short_name": "Riley",
-  "description": "Rebuild your life, one day at a time. Your personal guide through sobriety, movement, and food that heals.",
+  "description": "Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over - built by someone who's been through them. Free to start at meetriley.us.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
@@ -9,8 +9,23 @@
   "background_color": "#0a0908",
   "theme_color": "#0a0908",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

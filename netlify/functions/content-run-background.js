@@ -409,7 +409,7 @@ const LAUNCH = [
   { slug: "come-back", hook: "Come back. That's the whole assignment.", ground: "dawn", persona: "drinker_user", caption: "Today can still count. It usually does." },
   { slug: "movement", hook: "Movement isn't punishment.", ground: "first-light", persona: "body_first", caption: "It's a way of being on your own side. No scale. No before-and-after. Just a body that carried you this far." },
   { slug: "eight-minutes", hook: "Eight minutes is enough to begin.", ground: "first-blush", persona: "body_first", caption: "A stretch counts. A walk counts. Showing up counts. Start where you are." },
-  { slug: "rebuild", hook: "Rebuild your life. One day at a time.", ground: "dawn", persona: "universal", caption: "You don't build a life all at once. You build a day you can live with. Then another." },
+  { slug: "rebuild", hook: "Rebuild your life. One day at a time.", ground: "dawn", persona: "drinker_user", caption: "You don't build a life all at once. You build a day you can live with. Then another." },
   { slug: "continuing", hook: "You're not starting over. You're continuing.", ground: "first-light", persona: "universal", caption: "And you don't have to do it alone. meetriley.us" },
   { slug: "riley-awake", hook: "Riley is awake.", ground: "veil", persona: "universal", caption: "For the 3am thinkers: think out loud. It takes half the weight away. Riley is already there." },
   { slug: "2am-lies", hook: "At 2am, everything lies.", ground: "first-light", persona: "griever", caption: "Wait for morning. Then decide. And if you don't want to wait alone - Riley is awake too." },

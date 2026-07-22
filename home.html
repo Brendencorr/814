@@ -63,8 +63,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .hero{position:relative;padding:170px 0 60px;text-align:center;overflow:hidden}
 .hero-glow{position:absolute;top:-10%;left:50%;transform:translateX(-50%);width:900px;height:640px;max-width:130vw;
   background:radial-gradient(ellipse at center,rgba(201,168,76,0.16),rgba(201,168,76,0.04) 42%,transparent 68%);pointer-events:none;filter:blur(8px)}
-.hero-inner{position:relative;z-index:1;max-width:820px;margin:0 auto}
-.hero h1{font-family:'DM Serif Display',serif;font-size:clamp(42px,7vw,76px);line-height:1.04;letter-spacing:-0.02em;color:var(--parchment);margin:22px 0 14px}
+.hero-inner{position:relative;z-index:1;max-width:880px;margin:0 auto}
+.hero h1{font-family:'DM Serif Display',serif;font-size:min(7.9vw,64px);line-height:1.08;letter-spacing:-0.02em;color:var(--parchment);margin:22px 0 14px}
+/* Exactly TWO lines, ever (founder 2026-07-22): one sentence per line, no mid-sentence wrap */
+.hero h1 span{display:block;white-space:nowrap}
 .hero .lede{font-family:'DM Serif Display',serif;font-style:italic;font-size:clamp(20px,3vw,27px);color:var(--gold2);margin-bottom:26px}
 .hero p.body{font-size:clamp(16px,2vw,18px);color:var(--smoke);max-width:600px;margin:0 auto 14px;line-height:1.75}
 .hero p.body strong{color:var(--parchment);font-weight:500}
@@ -232,9 +234,8 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 <header class="hero" id="top">
   <div class="hero-glow"></div>
   <div class="wrap hero-inner">
-    <div class="timesun"><div class="logo-sun" style="width:34px;height:34px;margin:0 0 18px"></div></div>
     <div class="eyebrow">BUILT BY SOMEONE WHO'S BEEN THROUGH IT</div>
-    <h1>Start where you are.<br>Riley will meet you there.</h1>
+    <h1><span>Start where you are.</span><span>Riley will meet you there.</span></h1>
     <div class="lede">Not every change needs to be a reinvention.</div>
     <p class="body">Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over. She knows this road from day one, and she learns yours from the first hello.</p>
     <div class="cta-row">

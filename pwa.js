@@ -19,10 +19,47 @@
   // is set at onboarding completion (and whenever we confirm onboarding_completed) in riley-auth/dashboard.
   function isOnboarded() { try { return localStorage.getItem('riley_onboarded') === '1'; } catch (e) { return false; } }
 
-  // ── 1) Register the network-first service worker ─────────────────────────
+  // ── 1) Register the governed service worker + update flow (App Spec 6.3) ──
+  // A deploy installs a new worker in the background while the member keeps
+  // using the current version. When it's waiting we show ONE quiet parchment
+  // toast; tap -> SKIP_WAITING -> reload. Ignored -> activates on next cold
+  // start. Never a modal, never mid-check-in. Maximum staleness: one session.
+  var _updateAccepted = false;
+  function showUpdateToast(worker) {
+    if (document.getElementById('riley-update-toast')) return;
+    if (_checkinLock) { setTimeout(function () { showUpdateToast(worker); }, 20000); return; }
+    styleOnce('riley-upd-css', '@keyframes rlUpdIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}');
+    var t = document.createElement('div'); t.id = 'riley-update-toast';
+    t.setAttribute('role', 'status');
+    t.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:10004;display:flex;align-items:center;gap:12px;background:#f5f0e8;color:#0a0908;border:1px solid rgba(201,168,76,0.55);padding:12px 16px;border-radius:12px;font-family:"DM Sans",sans-serif;font-size:13.5px;box-shadow:0 10px 36px rgba(0,0,0,0.5);cursor:pointer;animation:rlUpdIn .35s cubic-bezier(.2,.7,.2,1);max-width:calc(100vw - 32px)';
+    t.innerHTML = '<span style="width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);flex-shrink:0"></span>'
+      + '<span>Riley has something new - tap to refresh.</span>'
+      + '<span id="riley-upd-x" role="button" aria-label="Not now" style="color:#8a8578;font-size:18px;line-height:1;padding:0 2px">&times;</span>';
+    t.addEventListener('click', function (e) {
+      if (e.target && e.target.id === 'riley-upd-x') { t.remove(); return; }  // ignored -> next cold start
+      _updateAccepted = true;
+      try { worker.postMessage({ type: 'SKIP_WAITING' }); } catch (err) {}
+      t.remove();
+    });
+    document.body.appendChild(t);
+  }
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
-      navigator.serviceWorker.register('/sw.js').catch(function () {});
+      navigator.serviceWorker.register('/sw.js').then(function (reg) {
+        // Deploy landed while this tab was closed: the new worker is already waiting.
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdateToast(reg.waiting);
+        reg.addEventListener('updatefound', function () {
+          var w = reg.installing; if (!w) return;
+          w.addEventListener('statechange', function () {
+            if (w.state === 'installed' && navigator.serviceWorker.controller) showUpdateToast(w);
+          });
+        });
+      }).catch(function () {});
+      // Only an ACCEPTED update reloads (guard against the first-install claim()).
+      var reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!_updateAccepted || reloaded) return; reloaded = true; location.reload();
+      });
     });
   }
 

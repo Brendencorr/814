@@ -10,6 +10,34 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-17
+
+- `meetriley-big-build` - **App headline is "Meet Riley" everywhere (founder decision, supersedes the
+  spec's "Riley / Riley - Meet Riley" split).** manifest.json name + short_name -> "Meet Riley";
+  `apple-mobile-web-app-title` -> "Meet Riley" across all 30 pages. Spec Section 2 identity table
+  should read "Meet Riley" for launcher + store listing in v1.1.
+
+- `meetriley-big-build` - **App Phase A: PWA hardening per MeetRiley App Specification v1.0 (Sections 6-7, 9-10).**
+  The installable app shell, built on the one codebase - no product page touched. (1) **sw.js rewritten
+  to the Spec 6.2 strategy table**: per-deploy versioned cache names (`__RILEY_BUILD__` stamped from
+  `COMMIT_REF` by the new `[build]` command in netlify.toml); safety.html + offline.html precached and
+  cache-first so crisis resources open with NO network; app shell (icons/pwa.js/manifest) precached;
+  member pages stay network-first (freshness wins); `/.netlify/*` NETWORK ONLY - never cached, nothing
+  queues offline; `/assets/*` stale-while-revalidate. Push + notificationclick handlers preserved.
+  (2) **Spec 6.3 update flow**: a new deploy's worker installs in the background and WAITS (skipWaiting
+  on install removed); pwa.js shows one quiet parchment toast "Riley has something new - tap to refresh"
+  (check-in-lock aware, dismissible; ignored = activates next cold start, max staleness one session);
+  tap posts SKIP_WAITING + reloads. (3) **offline.html** (new): warm offline note in Riley's voice with
+  988 / Crisis Text Line / 911 inline - served for uncached navigations offline, never a browser error
+  page (Spec 7.1). (4) **manifest.json per Spec 6.1**: name "Riley - Meet Riley", start_url
+  `/dashboard?source=pwa` (stays dashboard until founder confirms P1.7 chat-landing), portrait-primary,
+  icon set now 192/512/1024 + maskable 192/512. (5) **Icons regenerated per Spec Section 2**: the sun
+  mark alone on Ink (spec-exact gradient), maskable-safe; the previous icons carried the "I'm Riley."
+  hero wordmark which is the SPLASH mark, not the launcher icon. Verified headless in Chromium (14
+  checks): precache, offline safety + fallback + 988, functions-never-cached, waiting-worker update
+  flow, old-cache purge on activate. Files: sw.js, pwa.js, manifest.json, offline.html, netlify.toml,
+  icon-*.png, apple-touch-icon.png.
+
 ## 2026-07-15
 
 - `riley-v23` — **Operator timezone display fix (Mountain base + adjust per person).** DB timestamps are

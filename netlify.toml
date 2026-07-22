@@ -1,8 +1,12 @@
 [build]
-  # Messaging cohesion gate (founder rule, 2026-07-22): every production deploy re-verifies that the
-  # website, app pages, client JS, and the DB-stored tier names/taglines (products/plans - what the app
-  # and internal dashboards show clients) all match RILEY_MESSAGING_HOUSE.md. Drift = failed deploy.
-  command = "node scripts/check-messaging.js"
+  # Two build steps, both mandatory:
+  # 1. Messaging cohesion gate (founder rule, 2026-07-22): every production deploy re-verifies that the
+  #    website, app pages, client JS, and the DB-stored tier names/taglines (products/plans - what the app
+  #    and internal dashboards show clients) all match RILEY_MESSAGING_HOUSE.md. Drift = failed deploy.
+  # 2. App Spec 6.3 stamp: bake the commit into sw.js so cache names are versioned per deploy and
+  #    installed apps pick up the new version within one session (the update-toast flow in pwa.js).
+  #    COMMIT_REF is set by Netlify; the fallback keeps local/preview builds working.
+  command = "node scripts/check-messaging.js && sed -i \"s/__RILEY_BUILD__/$(echo \"${COMMIT_REF:-dev}\" | cut -c1-10)/\" sw.js"
   publish = "."
 
 [build.environment]

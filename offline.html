@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0908">
+<title>Riley</title>
+<!-- Offline page (App Spec Section 7.1). Served by sw.js when a navigation fails
+     with nothing cached. MUST stay fully self-contained: no external fonts, no
+     scripts, no network requests of any kind. The 988 section can never be hidden. -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#0a0908;--parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;--smoke:#8a8578}
+body{
+  font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--ink);color:var(--parchment);line-height:1.65;
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;
+  text-align:center;
+}
+.card{max-width:420px;width:100%}
+.sun{
+  width:72px;height:72px;border-radius:50%;margin:0 auto 22px;
+  background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f);
+  box-shadow:0 0 44px rgba(201,168,76,0.45);
+  animation:breathe 5s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{transform:scale(1);opacity:0.92}50%{transform:scale(1.06);opacity:1}}
+@media(prefers-reduced-motion:reduce){.sun{animation:none}}
+h1{font-family:'DM Serif Display',Georgia,'Times New Roman',serif;font-weight:400;font-size:26px;margin-bottom:10px}
+h1 span{color:var(--gold)}
+.note{font-size:15px;color:var(--smoke);margin-bottom:26px}
+.retry{
+  display:inline-block;background:linear-gradient(135deg,#e8d5a3,#c9a84c 55%,#a8842f);
+  color:var(--ink);border:none;padding:13px 26px;font-size:14px;font-weight:600;
+  border-radius:9px;cursor:pointer;font-family:inherit;margin-bottom:34px;
+}
+.crisis{
+  border:1px solid rgba(201,168,76,0.28);border-radius:14px;padding:18px 20px;
+  text-align:left;background:rgba(20,18,16,0.6);
+}
+.crisis .label{
+  font-family:'DM Mono',ui-monospace,monospace;font-size:10.5px;letter-spacing:0.24em;
+  text-transform:uppercase;color:var(--gold);margin-bottom:10px;
+}
+.crisis p{font-size:13.5px;color:var(--parchment);margin-bottom:12px}
+.crisis a{color:var(--gold2);text-decoration:none;font-weight:600}
+.line{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid rgba(255,255,255,0.07);font-size:13.5px}
+.line:first-of-type{border-top:none}
+.line .who{color:var(--smoke)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="sun" aria-hidden="true"></div>
+  <h1>I'm Riley<span>.</span></h1>
+  <p class="note">I can't reach you right now - I'm here as soon as you're back online.</p>
+  <button class="retry" onclick="location.reload()">Try again</button>
+
+  <div class="crisis" role="region" aria-label="Crisis resources">
+    <div class="label">If you need someone right now</div>
+    <p>These work from your phone even when the app can't connect.</p>
+    <div class="line"><span class="who">988 Suicide &amp; Crisis Lifeline</span><a href="tel:988">Call or text 988</a></div>
+    <div class="line"><span class="who">Crisis Text Line</span><a href="sms:741741&amp;body=HOME">Text HOME to 741741</a></div>
+    <div class="line"><span class="who">Emergency</span><a href="tel:911">Call 911</a></div>
+    <div class="line"><span class="who">More resources</span><a href="/safety">Safety page</a></div>
+  </div>
+</div>
+</body>
+</html>

@@ -53,7 +53,7 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
     supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
-    supabase.from("user_profiles").select("created_at").eq("id", userId).maybeSingle(),
+    supabase.from("user_profiles").select("created_at,relight_until,relight_mode,direction_mute_until").eq("id", userId).maybeSingle(),
     supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
     supabase.from("clarity_life_events").select("occurred_on,window_days,recalibrate").eq("user_id", userId).eq("recalibrate", true).gte("occurred_on", daysAgoISO(60)),
   ]);
@@ -191,15 +191,30 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
     : {};
 
+  // ── §2b return cadence (docs/07 + docs/08 §5): Re-Light / First Light-lite window + Direction
+  //    mute are set on the profile by session-return (Phase 3) and honored here every recompute.
+  //    A return-day row in gap_summaries (gap ≥ 3) also gets automatic hard-day band widening —
+  //    the context table shapes accommodation, never scores (08 §3b guardrail). ──
+  const relightActive = !!(prof && prof.relight_until && prof.relight_until >= today);
+  const relight = relightActive ? (prof.relight_mode === "first_light_lite" ? "first_light_lite" : "relight") : null;
+  const directionMuted = !!(prof && prof.direction_mute_until && prof.direction_mute_until >= today);
+  let returnWiden = false;
+  try {
+    const { data: gs } = await supabase.from("gap_summaries").select("gap_days").eq("user_id", userId).eq("returned_on", today).maybeSingle();
+    returnWiden = !!(gs && isNum(gs.gap_days) && gs.gap_days >= 3);
+  } catch (_) {}
+
   const raw = Object.assign({}, foundationInp, {
     score_mode: scoreMode,
     enabledPractice: enabled,
     practice,
     lane,
     coreHistory,
-    hardDayToday: hardToday2,
+    hardDayToday: hardToday2 || returnWiden,
     recalibrating,
     firstLight,
+    relight,
+    directionMuted,
     prevDisplayed,
     freeze,
     gaps: {
@@ -223,7 +238,8 @@ async function writeClarityV2Dark(supabase, userId, opts) {
       f_score: result.F,
       p_score: result.P,
       d_score: result.D,
-      v2_breakdown: Object.assign({}, result.breakdown, { mode: result.mode }),
+      v2_breakdown: Object.assign({}, result.breakdown, { mode: result.mode, relight: result.relight || null, direction_muted: !!result.direction_muted }),
+      clarity_version: 2,                                    // §12 engine-version stamp (v1 rows backfilled = 1)
       config_version: cfgVersion,
       frozen: !!result.frozen,
       frozen_until: result.frozen ? frozenUntilISO : null,   // cleared on unfreeze

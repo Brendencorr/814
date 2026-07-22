@@ -13,3 +13,6 @@ node_modules/
 # ~120MB rendered library is not - it bloats history and is fully reproducible.
 brand/template-kit/library/
 brand/template-kit/__pycache__/
+
+# Test-runner local state (written on every run by tests/*/runner.js - never source)
+tests/**/.last-run.json

@@ -1504,6 +1504,9 @@ exports.handler = async function (event) {
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
     if (fullConvo.length >= 4 && (fullConvo.length === 4 || fullConvo.length % 6 === 0)) {
       extractMemories(supabase, user_id, fullConvo);
+      // Continuity loop (docs/08 §3b): open loops → member_threads → tomorrow's check-in.
+      // Same cadence + fail-open contract as extractMemories.
+      try { require("./thread-extract").extractThreads(supabase, user_id, fullConvo, session_id || null); } catch (_) {}
     }
 
     // Session summaries (Spec §2): at the START of a session, lazily summarize the most recent

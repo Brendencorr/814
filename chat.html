@@ -347,6 +347,12 @@ async function openConversation() {
   if (_snd) _snd.disabled = true;
   try {
     const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
+    // Rhythm & Return (docs/08 §2): resolve the return tier at session start - arms Re-Light,
+    // settles notification backoff, shapes today's check-in. Fire-and-forget; fail-open to R1.
+    try {
+      fetch('/.netlify/functions/session-return', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: _tok }) })
+        .then(r=>r.ok?r.json():null).then(j=>{ if(j&&j.tier) window.RC_TIER=j.tier; }).catch(()=>{});
+    } catch(e){}
     const r = await fetch('/.netlify/functions/auth-handler', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_session', token: _tok })
@@ -372,7 +378,7 @@ async function openConversation() {
 // time-aware: in the MORNING the reflective questions look back at YESTERDAY (at 6am
 // "did you take a step today?" is nonsensical). Same daily_checkins row as before.
 const RC_TODAY = new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA');   // "app day": rolls at 4am LOCAL (matches dashboard)
-let RC = {}, RC_LANE = 'other', RC_READY = null, RC_CONF = null, RC_NOTE_OK = false, RC_ESC = null, RC_MOODS = [], RC_STEPS = [], RC_SOBER = false, _awaitingNote = null, _ciActive = false;
+let RC = {}, RC_LANE = 'other', RC_READY = null, RC_CONF = null, RC_NOTE_OK = false, RC_ESC = null, RC_MOODS = [], RC_STEPS = [], RC_SOBER = false, _awaitingNote = null, _ciActive = false, RC_DYN_ANSWERS = {};
 function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (h < 17 ? 'midday' : 'evening'); }
 
 // Tell the parent shell (pwa.js) to lock/unlock the popup's close controls while a
@@ -478,16 +484,58 @@ async function runDailyCheckin(){
                              : ("Hey "+name+" - let's check in on your day.");
   appendMsg('riley', hi);
   try{ window.trackEvent && window.trackEvent('checkin_started',{lane:RC_LANE}); }catch(e){}
-  RC_STEPS = buildSteps(tod, RC_LANE);
+  // Living check-in (docs/07 §2c + docs/08 §4): fetch today's composed render - fixed spine,
+  // personal skin, up to 2 dynamic items, tier-shaped length. Static fallback on ANY failure;
+  // the check-in never blocks on composition (200ms-class budget via race).
+  let cp = null;
+  try{
+    const _t=(await _db.auth.getSession()).data.session?.access_token||null;
+    cp = await Promise.race([
+      fetch('/.netlify/functions/checkin-prompt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_t,tier:window.RC_TIER||null})}).then(r=>r.ok?r.json():null),
+      new Promise(res=>setTimeout(()=>res(null),1500))
+    ]);
+  }catch(e){ cp=null; }
+  RC_STEPS = buildSteps(tod, RC_LANE, cp);
   rcAsk(0);
 }
-function buildSteps(tod, lane){
+function buildSteps(tod, lane, cp){
   const g = CI_GOAL[lane] || CI_GOAL.other;
   const isAM = tod==='morning';                 // morning check-in reflects on YESTERDAY / last night
   const goalQ = isAM ? g.am : g.day;
   const inflQ = isAM ? "What shaped yesterday most?" : "What shaped that most?";
+  const RS = (cp && cp.return_seq) || null;
+  // R4 "coming back" micro (docs/08 §4.3): three questions, not nine. Hard-day flag stays (invariant).
+  if(cp && cp.sequence==='micro'){
+    return [
+      { key:'mood', type:'mood', q:(RS&&RS.r4_open?RS.r4_open+"\n":"")+(CI_MOOD_Q[tod]||CI_MOOD_Q.evening) },
+      { key:'season', type:'note', q:(RS&&RS.r4_season)||"What season are you in right now?", optional:true, dyn:{source:'return'} },
+      { key:'note', type:'note', q:"One honest sentence, if you want to leave one.", optional:true }
+    ];
+  }
+  // R2/R3 return sequence (docs/08 §3b) - a conversation before a shortened spine.
+  if(cp && cp.sequence==='return'){
+    const steps = [
+      { key:'gap_summary', type:'choice', q:(RS&&RS.open)||"Good to see you. How have the last few days been?", opts:[['rough','Rough'],['mixed','Mixed'],['okay','Okay'],['good','Good']] },
+      { key:'gap_note', type:'note', q:(RS&&RS.anything)||"Anything I should know?", optional:true },
+      { key:'goal_fork', type:'choice', q:(RS&&RS.goals)||"Those goals from last week - keep going, adjust, or start something new?", opts:[['keep','Keep going'],['adjust','Adjust'],['fresh','Start something new']] },
+      { key:'mood', type:'mood', q:CI_MOOD_Q[tod] || CI_MOOD_Q.evening },
+      { type:'quickcheck', q:"A few quick reads on the last stretch:",
+        scales:[
+          { key:'energy', label:"Energy", opts:ENERGY_OPTS },
+          { key:'heaviness', label:"How heavy the stretch felt", opts:HEAVY5_OPTS }
+        ],
+        tapsLabel:"Tap any that are true:",
+        taps:[ { key:'hard_day', label:"Today is a hard day" } ]
+      },
+      { key:'note', type:'note', q:"One honest sentence about where you are.", optional:true }
+    ];
+    (cp.dynamic||[]).slice(0,2).forEach(function(d,i){ steps.splice(steps.length-1,0,{ key:'dyn'+i, type:'note', q:d.text, optional:true, dyn:d }); });
+    return steps;
+  }
+  // Hard-day aftermath (docs/08 §4.4): the morning after opens with acknowledgment, not metrics.
+  const moodQ = (cp && cp.aftermath) ? cp.aftermath : ((cp && !cp.fallback && cp.framing && cp.framing.mood) || CI_MOOD_Q[tod] || CI_MOOD_Q.evening);
   const steps = [
-    { key:'mood', type:'mood', q:CI_MOOD_Q[tod] || CI_MOOD_Q.evening },
+    { key:'mood', type:'mood', q:moodQ },
     // ONE grouped "quick check" (Clarity v2 signals) - scales + taps on one screen, time-aware wording.
     { type:'quickcheck',
       q: isAM ? "A few quick reads on last night and yesterday:" : "A few quick reads - tap what fits:",
@@ -509,7 +557,10 @@ function buildSteps(tod, lane){
   ];
   // Craving - sobriety lane only. >=4 surfaces the Emergency Craving Protocol.
   if(lane==='sobriety') steps.push({ key:'craving', type:'craving', q:isAM?"How strong were cravings yesterday?":"How strong were cravings today?", opts:CRAVING_OPTS });
-  steps.push({ key:'note', type:'note', q:"Anything you want me to remember?", sub:"Optional - a sentence is enough.", optional:true });
+  // Dynamic slots (docs/08 §3b): up to 2 unscored items from threads/hard-dates/context.
+  // Always skippable; answers feed memory + the continuity loop, never any dimension.
+  if(cp && !cp.fallback && Array.isArray(cp.dynamic)) cp.dynamic.slice(0,2).forEach(function(d,i){ steps.push({ key:'dyn'+i, type:'note', q:d.text, sub:"Only if you want to - one tap skips it.", optional:true, dyn:d }); });
+  steps.push({ key:'note', type:'note', q:(cp && !cp.fallback && cp.framing && cp.framing.sentence) || "Anything you want me to remember?", sub:"Optional - a sentence is enough.", optional:true });
   return steps;
 }
 function rcAsk(i){
@@ -541,7 +592,11 @@ function rcAsk(i){
     });
   } else if(q.type==='note'){
     rcNote(function(text){
-      RC.note = text || null; if(text) appendMsg('user', text); rcAsk(i+1);
+      const k = q.key || 'note';
+      RC[k] = text || null; if(text) appendMsg('user', text);
+      // dynamic-slot answers: context/memory only - NEVER scored (docs/07 acc #33)
+      if(q.dyn) RC_DYN_ANSWERS[k] = { text: text || null, skipped: !text, source: q.dyn.source || 'dynamic', thread_id: q.dyn.thread_id || null };
+      rcAsk(i+1);
     });
   }
 }
@@ -688,6 +743,15 @@ async function rcFinish(){
   if(RC_LANE==='sobriety' && RC.craving!=null) row.craving = parseInt(RC.craving,10);
   // Hard-day compassion flag → hard_dates (NEVER a score input; drives tone/band-widening only).
   if(RC.hard_day){ try{ await _db.from('hard_dates').upsert({ user_id:_uid, date:RC_TODAY, source:'checkin_tap' },{onConflict:'user_id,date'}); }catch(e){} }
+  // Continuity loop write-back (docs/08 §3b): dynamic-slot answers, gap summary, goal fork.
+  // Context + memory only - the server path cannot touch scored rows. Fire-and-forget.
+  if(Object.keys(RC_DYN_ANSWERS).length || RC.gap_summary || RC.goal_fork || RC.season){
+    try{
+      const _tok2 = (await _db.auth.getSession()).data.session?.access_token||null;
+      if(RC.season) RC_DYN_ANSWERS.season = { text: RC.season, skipped: !RC.season, source:'return' };
+      fetch('/.netlify/functions/checkin-prompt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok2,answer:{items:RC_DYN_ANSWERS,gap_summary:RC.gap_summary||null,gap_note:RC.gap_note||null,goal_fork:RC.goal_fork||null}})}).catch(()=>{});
+    }catch(e){}
+  }
   // Reflection stored ONLY if the member opted in (onboarding privacy toggle). The crisis
   // scan below still runs on it either way - safety never depends on storage.
   if(RC.note && RC_NOTE_OK) row.notes = RC.note;

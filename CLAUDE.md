@@ -234,6 +234,14 @@ Design system:
 - Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
 
+## Clarity + cadence canon (2026-07-22)
+- Clarity engine: docs/07_CLARITY_SCORE_V2_SPEC.md (v2.3 — bands, lanes, First Light, provisional,
+  return cadence/Re-Light, spine/skin dynamic check-ins). Cadence & check-ins:
+  docs/08_RHYTHM_AND_RETURN_SPEC.md (v1.1 — return tiers, Never-Say list, continuity loop).
+  The scored check-in spine is invariant; personalization is additive only.
+- Clarity/Rhythm work lives on branch `clarity-v2` — it merges AFTER launch blockers (payments,
+  campaign, site) unless the founder says otherwise. Do not touch the launch-critical path from it.
+
 ## Messaging cohesion gate (founder rule, 2026-07-22) — BEFORE EVERY PRODUCTION PUSH
 Any push to main must keep the website, app pages, AND internal dashboards saying the same thing.
 - Run `node scripts/check-messaging.js` before pushing (enable the pre-push hook once per clone:

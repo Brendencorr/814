@@ -217,6 +217,12 @@
 [functions."reset-nudge-cron"]
   schedule = "*/15 * * * *"
 
+# Rhythm & Return adaptive nudges (docs/08 §3) — daily 16:00 UTC (~10am MT). Personal-cadence
+# mirror + backoff ladder for members OUTSIDE an active Reset window; hard-date care touches
+# override the backoff. De-escalation is the retention strategy — never louder, never fully dark.
+[functions."rhythm-nudge-cron"]
+  schedule = "0 16 * * *"
+
 # Interactive-program proactive nudges — daily at 15:00 UTC (~9am MT, a humane hour = quiet-hours-safe
 # for the US). In-app alerts for everyone + opt-in email via Resend (per-enrollment nudge_channels +
 # global email consent). 1/day cap, lapse-aware, dry_run supported. Dormant until members enroll.

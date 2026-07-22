@@ -193,6 +193,10 @@ function computeDirection(coreHistory) {
 function computeClarityV2(raw) {
   const inp = clampInputs(raw);
   const gaps = inp.gaps || {};
+  // v2.3 §2b return cadence (docs/07 + docs/08 §5): R4 re-entry runs First Light-lite - the tiny
+  // First-Light thresholds return for the window, so showing up is again the whole assignment.
+  const relight = inp.relight === 'relight' || inp.relight === 'first_light_lite' ? inp.relight : null;
+  if (relight === 'first_light_lite') inp.firstLight = true;
   // v2.3 TIER SPLIT: foundation mode (free/Guide) scores on Foundation + Direction only - no Practice
   // layer, no personal bands or focus lanes ("the universal score"). full mode (Companion) is the v2.2
   // formula, unchanged ("the personal score"). Default is full so existing callers are unaffected.
@@ -211,12 +215,16 @@ function computeClarityV2(raw) {
   // §6 provisional: confidence-weight coverage. Foundation carries the bulk of the weight, so a
   // completed check-in (fresh Foundation) clears the bar — a two-datapoint score never shows a number.
   const coverage = (F.wTotal ? F.wConf / F.wTotal : 0);
-  const provisional = core == null || coverage < 0.35;
+  // §2b/08 §5: a returning member is never greeted by a lower number - during the Re-Light window
+  // the score stays provisional ("warming up") until confidence reaches 0.5, regardless of value.
+  const minCoverage = relight ? 0.5 : 0.35;
+  const provisional = core == null || coverage < minCoverage;
 
   let displayed = core == null ? null : clamp100(0.8 * core + 0.2 * D);
 
   // §9 First Light rise-only: membership days 1-14 — displayed never drops below yesterday.
-  if (!provisional && displayed != null && inp.firstLight && isNum(inp.prevDisplayed)) {
+  // §2b Re-Light: the same rise-only guarantee for the whole return window (R3/R4).
+  if (!provisional && displayed != null && (inp.firstLight || relight) && isNum(inp.prevDisplayed)) {
     displayed = Math.max(displayed, inp.prevDisplayed);
   }
 
@@ -235,6 +243,8 @@ function computeClarityV2(raw) {
     mode,                                   // v2.3: 'foundation' (free) | 'full' (Companion)
     provisional: !!provisional,
     frozen: !!frozen,
+    relight: relight,                       // §2b: 'relight' (R3) | 'first_light_lite' (R4) | null
+    direction_muted: !!inp.directionMuted,  // 08 §5: no trend narration until 14d of post-return data
     breakdown: { foundation: { f1: F.f1, f2: F.f2, f3: F.f3 }, practice: (mode === 'foundation' ? {} : P.perDim), coverage: Number(coverage.toFixed(3)) },
   };
 }

@@ -34,7 +34,7 @@ Day/Time: Monday 8am MT
 Slides: 7
 Canva size: 1080x1080px
 
-SLIDE 1 (Hook - black bg, white text, Playfair Display Bold):
+SLIDE 1 (Hook - black bg, white text, DM Serif Display):
 [Headline - must stop the scroll. Under 10 words. A pattern interrupt.]
 
 SLIDE 2 (Sage green bg #4a7c59, white text, DM Sans):

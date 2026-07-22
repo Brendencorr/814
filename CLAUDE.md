@@ -229,7 +229,7 @@ OPERATOR_KEY in Netlify → Environment variables; keep the value only in a pass
 Design system:
 - Background: #06090e | Cards: #0a1018 | Borders: #1a2530
 - Gold: #c9a84c | Sage: #4a7c59 | Text: #e8e4de
-- Fonts: Playfair Display (headings), DM Sans (body), Bebas Neue (labels/nav)
+- Fonts: DM Serif Display (headings), DM Sans (body), DM Mono (labels/nav) — same DM system as the member site
 - All from Google Fonts CDN
 
 Dashboard reads live data via:

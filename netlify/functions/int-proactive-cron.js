@@ -115,8 +115,8 @@ async function sendProgramEmail(key, to, alert, userId) {
       p(body) + btn("Open Riley →", url) + '<p style="margin:16px 0 0;color:#6b655b">- Riley</p>',
       { preview: String(alert.body || "").slice(0, 90), footerHtml: footer }
     );
-    const r = await sendClientEmail({ to, subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url, kind: "program_nudge", userId });
-    return r.sent;
+    const r = await sendClientEmail({ to, subject: alert.title, html, text: String(alert.body || "") + "\n\n" + url, kind: "program_nudge", category: "program_nudge", userId });
+    return r.sent;   // a choke-point suppression (daily cap / crisis window) simply reads as not-sent
   } catch (e) { console.error("program email send failed (non-fatal):", e.message); return false; }
 }
 

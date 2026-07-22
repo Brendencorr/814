@@ -25,7 +25,8 @@
 
 const { soberDaysForMember } = require("./supabase-client");
 const { OPERATOR_EMAIL } = require("./operator-email");
-const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const { FROM_ADDRESSES } = require("./email-send");
+const FROM_EMAIL = process.env.SAFETY_ALERT_FROM || process.env.REENGAGEMENT_FROM || FROM_ADDRESSES.riley;
 const LEVEL_LABEL = { 2: "Relapse risk (Level 2)", 3: "ACTIVE CRISIS / self-harm risk (Level 3)" };
 
 // The alert destination. Always resolves to a real address (never null) so a crisis alert

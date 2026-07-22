@@ -21,10 +21,10 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
-const { sendClientEmail } = require("./email-send");
+const { sendClientEmail, FROM_ADDRESSES } = require("./email-send");
 const { shell, p, btn, esc } = require("./comms-templates");
 
-const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const FROM_EMAIL = process.env.REENGAGEMENT_FROM || FROM_ADDRESSES.riley;
 const APP_URL    = "https://riley.meetriley.us";
 
 // ── Compose the email - warm, specific, never guilt ──────────────────────────
@@ -74,8 +74,11 @@ function buildEmail(u) {
 
 // ── Send via Resend ──────────────────────────────────────────────────────────
 async function sendEmail(to, email, userId) {
-  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "reengagement", from: FROM_EMAIL, userId });
+  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "reengagement", category: "reengagement", from: FROM_EMAIL, userId });
   if (r.status === "skipped") return { skipped: true };
+  // The choke point may suppress (global daily cap / crisis window) - that's a decision, not an
+  // error. Don't mark reengagement_sent_at, so the win-back re-arms on a later day.
+  if (r.status === "suppressed") return { skipped: true, suppressed: r.reason };
   if (!r.sent) throw new Error((r.reason || "send_failed") + (r.detail ? ": " + r.detail : ""));
   return { id: r.id };
 }

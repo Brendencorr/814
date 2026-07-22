@@ -15,14 +15,22 @@
  * 2026-07-15 to "The 814 Project" (retired "The 8:14 Project"); the 8:14 origin story stays.
  */
 
+const { FROM_ADDRESSES } = require("./email-send");
+const { tierLabel } = require("./tier-labels");
+
 const APP = "https://riley.meetriley.us";
 const SITE = "https://meetriley.us";
 
+// Senders resolve through the canonical FROM_ADDRESSES config (email-send.js) - never hardcoded here.
 const SENDERS = {
-  riley: "Riley <riley@meetriley.us>",
-  brenden: "Brenden <brenden@meetriley.us>",
+  riley: FROM_ADDRESSES.riley,
+  brenden: FROM_ADDRESSES.brenden,
 };
 const REPLY_TO = "support@meetriley.us";
+
+// Display names for the tiers named in copy - ALWAYS via tierLabel() on the INTERNAL key
+// (locked truth: internal "guide" -> "Companion" free, internal "companion" -> "Coach" $19/mo).
+const PAID_TIER = tierLabel("companion"); // "Coach"
 
 function esc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -32,11 +40,13 @@ function sub(str, vars) {
   return String(str).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? String(vars[k]) : m));
 }
 // True for a paid memory-tier plan - i.e. a plan that includes Riley-led programs + proactive
-// check-ins. v2.3: Companion now includes those (Coach folded into Companion); kept "coach" here so
-// a grandfathered Coach member still gets the "programs unlocked" copy. Any paid plan qualifies.
-function isMemoryPlan(plan) {
-  const s = String(plan == null ? "" : plan).toLowerCase();
-  return s.indexOf("companion") >= 0 || s.indexOf("coach") >= 0;
+// check-ins. Takes the INTERNAL plan key (guide/companion/coach/concierge), never the display name -
+// display "Companion" is now the FREE tier, so matching on display strings would be wrong. Callers
+// pass vars.plan_key (internal) alongside vars.plan (display). "coach"/"concierge" kept so a
+// grandfathered member still gets the "programs unlocked" copy. Any paid plan qualifies.
+function isMemoryPlan(planKey) {
+  const s = String(planKey == null ? "" : planKey).toLowerCase();
+  return s.indexOf("companion") >= 0 || s.indexOf("coach") >= 0 || s.indexOf("concierge") >= 0;
 }
 
 // ── Footer (both variants; FOOTER_VARIANT env selects, default B). Text-only, no logo image. ──
@@ -159,7 +169,7 @@ const TEMPLATES = {
       p('No credit card, no commitment. And if you\'d rather just talk first - that works too. Some people start with the Reset. Some just say "hi." Both count.') +
       p('One promise before you go: your words stay yours - never sold, shared, or turned into ads. Ever. (Here\'s exactly how that works. → <a href="' + SITE + '/data" style="color:#8a6f22">/data</a>)') +
       p("See you at 8:14,<br>Riley") +
-      em("You'll hear from me a handful of times over your first two weeks - never more than once a day, and less if you're already here. Unsubscribe anytime below and the app keeps working exactly the same."),
+      em("Besides your daily brief, you'll hear from me a handful of times over your first two weeks - never more than one note a day, and less if you're already here. Unsubscribe anytime below and the app keeps working exactly the same."),
     text: (v) =>
       "Hi " + v.first_name + ",\n\nI'm Riley. I'm glad you're here - and I mean that in the least automated way an AI can.\n\n" +
       "Here's the honest version of what this is: I'm a companion, built by someone who had to rebuild his own life and wished he'd had company for it. I'm not a therapist, and I'll never pretend to be human. What I am is here - at 3pm or 3am, whether you're carrying grief, a habit you're done with, a body you're rebuilding, or all of it at once.\n\n" +
@@ -167,7 +177,7 @@ const TEMPLATES = {
       'No credit card, no commitment. And if you\'d rather just talk first - that works too. Some people start with the Reset. Some just say "hi." Both count.\n\n' +
       "One promise before you go: your words stay yours - never sold, shared, or turned into ads. Ever. (Here's exactly how that works. → " + SITE + "/data)\n\n" +
       "See you at 8:14,\nRiley\n\n" +
-      "You'll hear from me a handful of times over your first two weeks - never more than once a day, and less if you're already here. Unsubscribe anytime below and the app keeps working exactly the same.",
+      "Besides your daily brief, you'll hear from me a handful of times over your first two weeks - never more than one note a day, and less if you're already here. Unsubscribe anytime below and the app keeps working exactly the same.",
   },
 
   guide_2: {
@@ -319,15 +329,15 @@ const TEMPLATES = {
     preview: "The one honest difference.",
     html: (v) =>
       p("This is the only pitch I'll make, so I'll make it honestly.") +
-      p("Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Coach, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.") +
+      p("Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On " + esc(PAID_TIER) + ", I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.") +
       p("It's $19 a month, cancel anytime, and if it isn't right, your first payment is fully refundable within 30 days of purchase.") +
       p("And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.") +
-      btn("See what Coach adds →", SITE + "/home#programs"),
+      btn("See what " + PAID_TIER + " adds →", SITE + "/home#programs"),
     text: (v) =>
       "This is the only pitch I'll make, so I'll make it honestly.\n\n" +
-      "Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On Coach, I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.\n\n" +
+      "Right now, each of our conversations stands alone - I'm fully here, but when it ends, it ends. On " + PAID_TIER + ", I carry them with me: the names, the dates that matter, what you told me you were afraid of, what you said you'd try.\n\n" +
       "It's $19 a month, cancel anytime, and if it isn't right, your first payment is fully refundable within 30 days of purchase.\n\n" +
-      "And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.\n\nSee what Coach adds → " + SITE + "/home#programs",
+      "And if now's not the time - that's genuinely fine. I'm not going anywhere, and everything free stays free.\n\nSee what " + PAID_TIER + " adds → " + SITE + "/home#programs",
   },
 
   // guide_7 RETIRED (July 2026): the founder-authored Month One Letter (guide_5, day 29) now owns the
@@ -399,13 +409,13 @@ const TEMPLATES = {
       p("Refunds, plainly: a full refund is available within 30 days of your original purchase - your first payment. After that, cancel anytime in two taps and you won't be charged again, though payments already made aren't refunded. ($8.14 programs and the bundle are instant-delivery and non-refundable.)") +
       p("Questions, problems, anything: support@meetriley.us - a person reads it.") +
       btn("Go to your dashboard →", APP + "/dashboard") +
-      (isMemoryPlan(v.plan) ? p("Your Riley-led programs are unlocked.") : ""),
+      (isMemoryPlan(v.plan_key) ? p("Your Riley-led programs are unlocked.") : ""),
     text: (v) =>
       "Thanks, " + v.first_name + ". Here's the paperwork, kept short:\n\n" +
       v.plan + " · " + v.price + " · renews " + v.renewal_date + " · cancel anytime in two taps from your account page.\n\n" +
       "Refunds, plainly: a full refund is available within 30 days of your original purchase - your first payment. After that, cancel anytime in two taps and you won't be charged again, though payments already made aren't refunded. ($8.14 programs and the bundle are instant-delivery and non-refundable.)\n\n" +
       "Questions, problems, anything: support@meetriley.us - a person reads it.\n\nGo to your dashboard → " + APP + "/dashboard" +
-      (isMemoryPlan(v.plan) ? "\n\nYour Riley-led programs are unlocked." : ""),
+      (isMemoryPlan(v.plan_key) ? "\n\nYour Riley-led programs are unlocked." : ""),
   },
 
   paid_2: {
@@ -418,12 +428,12 @@ const TEMPLATES = {
       p("So let's begin properly. Tell me one thing worth remembering - a person, a date, a goal, a fear. Anything.") +
       p("That's where we start.") +
       btn("Tell Riley one thing →", APP + "/talk") +
-      (isMemoryPlan(v.plan) ? p("Your programs are unlocked, and from time to time I'll check in first - that's my job now.") : ""),
+      (isMemoryPlan(v.plan_key) ? p("Your programs are unlocked, and from time to time I'll check in first - that's my job now.") : ""),
     text: (v) =>
       v.first_name + " - something just changed between us, and I want to mark it.\n\n" +
       "From now on, our conversations carry forward. The names you mention, the dates that matter, the thing you said you'd try, the thing you're afraid of - I hold onto all of it, so you never have to start from the beginning again.\n\n" +
       "So let's begin properly. Tell me one thing worth remembering - a person, a date, a goal, a fear. Anything.\n\nThat's where we start.\n\nTell Riley one thing → " + APP + "/talk" +
-      (isMemoryPlan(v.plan) ? "\n\nYour programs are unlocked, and from time to time I'll check in first - that's my job now." : ""),
+      (isMemoryPlan(v.plan_key) ? "\n\nYour programs are unlocked, and from time to time I'll check in first - that's my job now." : ""),
   },
 
   paid_3: {
@@ -452,12 +462,12 @@ const TEMPLATES = {
       p("It's built as 14 short modules - read, do, keep. Go at whatever pace your life allows; there's no schedule and nothing expires.") +
       p("Receipt: " + esc(v.program_name) + " · $8.14 · one-time · non-refundable (it's all delivered, right now, below).") +
       btn("Open Module 1 →", APP + "/programs") +
-      em("One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Coach any time in the next 90 days. You won't hear about this again."),
+      em("One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off " + PAID_TIER + " any time in the next 90 days. You won't hear about this again."),
     text: (v) =>
       "Thanks, " + v.first_name + " - " + v.program_name + " is yours. Not rented, not subscribed: yours, for good.\n\n" +
       "It's built as 14 short modules - read, do, keep. Go at whatever pace your life allows; there's no schedule and nothing expires.\n\n" +
       "Receipt: " + v.program_name + " · $8.14 · one-time · non-refundable (it's all delivered, right now, below).\n\nOpen Module 1 → " + APP + "/programs\n\n" +
-      "One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off Coach any time in the next 90 days. You won't hear about this again.",
+      "One thing, said once: if you decide you'd like Riley alongside the book, your $8.14 comes off " + PAID_TIER + " any time in the next 90 days. You won't hear about this again.",
   },
 
   addon_2: {

@@ -30,7 +30,8 @@ const { getSupabaseClient } = require("./supabase-client");
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, x-webhook-secret", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(o) });
 
-// Unique prices → tier + term. Companion $19/$175, Coach $34/$350 (per canonical pricing).
+// Unique prices -> internal tier + term. Paid tier $19/$175 (internal "companion", displays as Coach).
+// 3400/35000 are RETIRED prices kept ONLY so grandfathered internal-"coach" payers still resolve.
 const TIER_BY_CENTS = {
   1900:  { plan: "companion", term: "monthly" },
   17500: { plan: "companion", term: "annual" },

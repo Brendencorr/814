@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "netlify dev",
-    "test": "node tests/golden/runner.js && node tests/crisis/runner.js && node tests/clarity/runner.js",
+    "test": "node tests/comms/guide-flow.test.js && node tests/golden/runner.js && node tests/crisis/runner.js && node tests/clarity/runner.js",
+    "test:comms": "node tests/comms/guide-flow.test.js",
     "test:golden": "node tests/golden/runner.js",
     "test:crisis": "node tests/crisis/runner.js",
     "test:clarity": "node tests/clarity/runner.js"

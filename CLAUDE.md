@@ -245,13 +245,14 @@ Dashboard writes/triggers via:
 Supabase tables used by dashboard (no RLS — anon key reads work):
 - echo_scores, pipeline_runs, published_posts, scout_history
 
-## Tier Positioning (CANONICAL — see POSITIONING.md)
+## Tier Positioning (CANONICAL - see POSITIONING.md)
 The tiers answer "how close do you want Riley?", not "how much do you get?" Money is secondary.
-Prices are unchanged ($19/$34); this is messaging only. Every plan includes every topic - the only
-thing that changes is how much of Riley is beside you. Verbatim taglines (must match everywhere):
-- Guide (free): **Riley shows you where you stand.**
-- Companion ($19/mo · $175/yr): **Riley walks with you.** (memory turns on → "never explain yourself twice")
-- Coach ($34/mo · $350/yr): **Riley moves you forward.** (adaptive plans + proactive + Life Map)
+Locked v2.3.1 truth - display rename ONLY (internal keys, entitlements, Stripe lookups, DB values
+unchanged). All display names render through tierLabel() (tier-labels.js) / RILEY_TIER_LABELS in
+client HTML - NEVER hardcode a tier display name. One paid tier. Verbatim taglines (must match everywhere):
+- Companion (free; internal key "guide"): **Riley shows you where you stand.**
+- Coach ($19/mo · $175/yr; internal key "companion"): **Riley walks with you.** (memory turns on -> "never explain yourself twice"; Coach is the whole of Riley)
+- Mentor (teased, not purchasable; internal keys "coach"/"mentor"/"concierge"): **Riley moves you forward.**
 The one member-facing name for the Coach memory pillar is **Life Map** (never "Knowledge Graph"). In-app
 upsell cards lead with value and carry NO inline price. Full copy deck + surface checklist: `POSITIONING.md`
 (force-404'd publicly). Tier blurbs also live in DB `products.blurb` + Riley's prompt (riley-chat.js) +

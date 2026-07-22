@@ -17,10 +17,10 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
-const { sendClientEmail } = require("./email-send");
+const { sendClientEmail, FROM_ADDRESSES } = require("./email-send");
 const { shell, p, btn, esc } = require("./comms-templates");
 
-const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const FROM_EMAIL = process.env.BRIEF_FROM || process.env.REENGAGEMENT_FROM || FROM_ADDRESSES.riley;
 const APP_URL    = "https://riley.meetriley.us";
 const SCHEDULE_HOUR = { morning: 8, lunch: 12, afternoon: 15, evening: 19 }; // local hour per choice
 
@@ -61,7 +61,7 @@ function buildEmail(name, brief, schedule) {
 }
 
 async function sendEmail(to, email, userId) {
-  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "brief", from: FROM_EMAIL, userId });
+  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "brief", category: "brief", from: FROM_EMAIL, userId });
   if (r.status === "skipped") return { skipped: true };
   if (!r.sent) throw new Error((r.reason || "send_failed") + (r.detail ? ": " + r.detail : ""));
   return { id: r.id };

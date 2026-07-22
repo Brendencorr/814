@@ -12,7 +12,7 @@
  *
  * Env:
  *   RESEND_API_KEY  - Resend API key (set this to go live)
- *   RESEND_FROM     - optional From header (default 'Riley <hello@meetriley.us>')
+ *   RESEND_FROM     - optional From header (default: FROM_ADDRESSES.system in email-send.js)
  */
 const { sendClientEmail } = require("./email-send");
 const { shell, p, btn } = require("./comms-templates");
@@ -46,6 +46,7 @@ async function sendWelcomeEmail(member) {
     subject: "You're in - welcome to Riley",
     html: welcomeHtml(first),
     kind: "welcome",
+    category: "transactional",   // account-provisioning welcome - must always send, cap-exempt
     userId: (member && member.userId) || null,
     meta: { tier: (member && member.tier) || null },
   });

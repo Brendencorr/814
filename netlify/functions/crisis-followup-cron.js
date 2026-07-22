@@ -27,9 +27,10 @@
  */
 
 const { getSupabaseClient, requireScheduledOrOperator } = require("./supabase-client");
+const { sendClientEmail, FROM_ADDRESSES } = require("./email-send");
 const { shell, p, btn, esc } = require("./comms-templates");
 
-const FROM_EMAIL = process.env.REENGAGEMENT_FROM || "Riley <riley@meetriley.us>";
+const FROM_EMAIL = process.env.REENGAGEMENT_FROM || FROM_ADDRESSES.riley;
 const APP_URL    = "https://riley.meetriley.us";
 
 const THRESHOLD_HOURS = { 1: 6, 2: 20, 3: 72, 4: 168 };
@@ -85,16 +86,15 @@ function buildFollowup(stage, u) {
   return { subject: m.subject, text, html };
 }
 
-async function sendEmail(to, email) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { skipped: true };
-  const resp = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject: email.subject, html: email.html, text: email.text }),
-  });
-  if (!resp.ok) throw new Error(`Resend ${resp.status}: ${(await resp.text()).slice(0, 200)}`);
-  return await resp.json();
+// Routed through the sendClientEmail choke point (category 'crisis': always sends - exempt from
+// the daily cap and, by definition, from crisis suppression) so these check-ins finally appear in
+// the unified ledger + email_log like every other send. Subject/metadata only is logged, never the
+// body, so the §1.4 restricted-access boundary holds.
+async function sendEmail(to, email, userId) {
+  const r = await sendClientEmail({ to, subject: email.subject, html: email.html, text: email.text, kind: "crisis_followup", category: "crisis", from: FROM_EMAIL, userId });
+  if (r.status === "skipped") return { skipped: true };
+  if (!r.sent) throw new Error((r.reason || "send_failed") + (r.detail ? ": " + r.detail : ""));
+  return { id: r.id };
 }
 
 exports.handler = async function (event) {
@@ -170,7 +170,7 @@ exports.handler = async function (event) {
           resolved:         nextStage >= 4,
         }).eq("id", row.id).eq("followup_stage", row.followup_stage || 0).select("id");
         if (!adv || !adv.length) continue; // another run already advanced this row - don't re-send
-        await sendEmail(prof.email, email);
+        await sendEmail(prof.email, email, row.user_id);
         result.sent++;
       } catch (e) {
         result.errors++;

@@ -19,7 +19,8 @@ const json = (c, o) => ({ statusCode: c, headers: { ...CORS, "Content-Type": "ap
 const { sendClientEmail } = require("./email-send");
 
 async function sendEmail(to, subject, html) {
-  await sendClientEmail({ to, subject, html, kind: "waitlist" });
+  // Confirmation of a visitor action - transactional (always sends, exempt from the daily cap).
+  await sendClientEmail({ to, subject, html, kind: "waitlist", category: "transactional" });
 }
 
 exports.handler = async (event) => {

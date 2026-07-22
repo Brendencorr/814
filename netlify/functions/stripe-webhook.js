@@ -14,15 +14,23 @@
  * Events handled:
  *   checkout.session.completed     → grant (subscription or one-time program) + store customer id
  *                                    + capture stripe_coupon_id / promo_code if a discount was applied
- *   invoice.paid                   → renewal: extend the active sub's expiry
+ *                                    + member purchase emails: paid_1 receipt + paid_2 memory moment
+ *                                      (subscription) / addon_1 receipt (program) - transactional,
+ *                                      never blocking the grant; addon_2 is evaluate-comms' calendar job
+ *   invoice.paid                   → renewal: extend the active sub's expiry; fallback paid_1/paid_2
+ *                                    ONCE for a payer who never got them via checkout
  *   customer.subscription.updated  → upgrade/downgrade: swap plan_id/term
  *   customer.subscription.deleted  → revoke
  *   charge.refunded                → revoke
  */
 const crypto = require("crypto");
 const { getSupabaseClient } = require("./supabase-client");
-const { PLAN_BY_LOOKUP } = require("./stripe-catalog");
+const { PLAN_BY_LOOKUP, PROGRAMS } = require("./stripe-catalog");
 const { notifyOperator } = require("./operator-email");
+const { render } = require("./comms-templates");
+const { sendClientEmail } = require("./email-send");
+const { tierLabel } = require("./tier-labels");
+const { signUid } = require("./comms-sign");
 
 // Stripe REST helpers (reuse the pattern from stripe-checkout.js - no SDK needed).
 const STRIPE_BASE = "https://api.stripe.com/v1/";
@@ -114,6 +122,81 @@ async function memberInfo(sb, uid, fallbackEmail) {
 // Resolve a Stripe price's lookup_key from a subscription-item / invoice-line object.
 function lookupOf(item) { return item && item.price && item.price.lookup_key; }
 
+// ── Member-facing purchase emails (paid_1 receipt, paid_2 memory moment, addon_1 program receipt) ──
+// These are TRANSACTIONAL: category 'transactional' at the choke point bypasses COMMS_ENABLED,
+// the global daily cap, and crisis suppression - a receipt must always send. Every send is also
+// mirrored into email_sends (flow from the template) so the operator comms view and the once-ever
+// dedup (paid_2) see it. All of this is non-fatal by construction: a failed email NEVER blocks
+// or reverts a grant.
+
+function fmtPrice(cents, term) {
+  if (cents == null || isNaN(cents)) cents = term === "annual" ? 17500 : 1900; // catalog fallback
+  const n = cents / 100;
+  return "$" + (Number.isInteger(n) ? n : n.toFixed(2)) + (term === "annual" ? "/yr" : "/mo");
+}
+function renewalDate(term) {
+  const d = new Date();
+  if (term === "annual") d.setFullYear(d.getFullYear() + 1); else d.setMonth(d.getMonth() + 1);
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+}
+function programDisplayName(programId) {
+  const p = PROGRAMS.find((x) => x.product_key === programId);
+  return (p && p.name) || String(programId || "your program");
+}
+// Has this template ever ACTUALLY been sent to this member? (paid_1/paid_2 fallback dedup)
+async function everSent(sb, uid, key) {
+  try {
+    const { data } = await sb.from("email_sends").select("id").eq("user_id", uid).eq("template_key", key).eq("suppressed", false).limit(1);
+    return !!(data && data.length);
+  } catch (_) { return true; } // fail-closed: if we can't check, don't risk a duplicate
+}
+async function sendPurchaseEmail(sb, key, uid, email, vars) {
+  try {
+    if (!email) return false;
+    // Operator override row (edited copy/sender/kill-switch) - same contract as evaluate-comms.
+    let override = null;
+    try {
+      const { data } = await sb.from("comms_templates").select("*").eq("template_key", key).maybeSingle();
+      override = data || null;
+    } catch (_) {}
+    if (override && override.enabled === false) return false; // explicit operator kill-switch
+    // Signed unsub/pref links, same as the lifecycle cron builds them.
+    const APP = "https://riley.meetriley.us";
+    const sig = signUid(uid); const sp = sig ? "&s=" + sig : "";
+    const urls = {
+      unsub: APP + "/.netlify/functions/comms-unsubscribe?u=" + encodeURIComponent(uid) + sp,
+      pref: APP + "/preferences?u=" + encodeURIComponent(uid) + sp,
+    };
+    const msg = render(key, vars, urls, override);
+    const r = await sendClientEmail({
+      to: email, from: msg.from, replyTo: msg.replyTo, subject: msg.subject,
+      html: msg.html, text: msg.text,
+      category: "transactional",
+      kind: "transactional:" + key, userId: uid, meta: { template_key: key },
+    });
+    try {
+      await sb.from("email_sends").insert({
+        user_id: uid, template_key: key, flow: msg.flow, resend_id: r.id || null,
+        suppressed: !r.sent, suppression_reason: r.sent ? null : (r.reason || "error"),
+        plan: vars.plan_key || null,
+      });
+    } catch (_) {}
+    return r.sent;
+  } catch (e) {
+    console.warn("[stripe-webhook] purchase email failed (non-fatal):", key, e && e.message);
+    return false;
+  }
+}
+// Stamp the comms-state subscription start (paid_3's day-25 clock - nothing else writes it).
+async function stampSubscriptionStart(sb, uid, plan) {
+  try {
+    await sb.from("user_comms_state").upsert(
+      { user_id: uid, subscription_started_at: new Date().toISOString(), plan, updated_at: new Date().toISOString() },
+      { onConflict: "user_id" }
+    );
+  } catch (_) {}
+}
+
 exports.handler = async (event) => {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret) return json(503, { error: "not_configured" }); // dormant until the endpoint secret is set
@@ -147,8 +230,14 @@ exports.handler = async (event) => {
         if (md.product_type === "program" && md.program) {
           await sb.from("purchases").insert({ user_id: uid, program_id: md.program });
           await log("granted", { user_id: uid, program_id: md.program, term: "one_time", email });
+          const who = await memberInfo(sb, uid, email);
+          // addon_1: the $8.14 program receipt - transactional, always sends. (addon_2, the
+          // unopened follow-up, is calendar work: evaluate-comms sends it ~3 days later.)
+          await sendPurchaseEmail(sb, "addon_1", uid, who.email !== "-" ? who.email : email, {
+            first_name: (who.name || "there").split(" ")[0] || "there",
+            program_name: programDisplayName(md.program),
+          });
           try {
-            const who = await memberInfo(sb, uid, email);
             await notifyOperator({ event: "purchase", subject: `Program purchase: ${who.name}`,
               lines: [["Member", who.name], ["Email", who.email], ["Program", md.program], ["Type", "One-time purchase"]] });
           } catch (_) {}
@@ -167,12 +256,23 @@ exports.handler = async (event) => {
               await sb.from("subscriptions").update(coupon).eq("user_id", uid).eq("status", "active");
             }
           } catch (_) {}
+          // Member-facing purchase emails + the paid_3 day-25 clock. Any granted subscription is
+          // the paid memory tier (display name ALWAYS via tierLabel on the internal key).
+          const who = await memberInfo(sb, uid, email);
+          const memberEmail = who.email !== "-" ? who.email : email;
+          const first = (who.name || "there").split(" ")[0] || "there";
+          const payVars = {
+            first_name: first, plan: tierLabel(plan), plan_key: plan,
+            price: fmtPrice(obj.amount_total, term), renewal_date: renewalDate(term),
+          };
+          await stampSubscriptionStart(sb, uid, plan);
+          await sendPurchaseEmail(sb, "paid_1", uid, memberEmail, payVars);            // receipt - every purchase
+          if (!(await everSent(sb, uid, "paid_2"))) {                                   // memory moment - once ever
+            await sendPurchaseEmail(sb, "paid_2", uid, memberEmail, payVars);
+          }
           try {
-            const who = await memberInfo(sb, uid, email);
-            // Label the GRANTED plan (Coach retired in v2.3 - no longer advertised).
-            const planLabel = plan === "companion" ? "Riley Companion" : plan;
             await notifyOperator({ event: "new_sub", subject: `New paid subscription: ${who.name}`,
-              lines: [["Member", who.name], ["Email", who.email], ["Plan", `${planLabel} (${term})`], ["Source", "Stripe checkout"]] });
+              lines: [["Member", who.name], ["Email", who.email], ["Plan", `${tierLabel(plan)} (${term})`], ["Source", "Stripe checkout"]] });
           } catch (_) {}
         } else { await log("needs_review", { user_id: uid, email, detail: "session had no plan/program metadata" }); }
         break;
@@ -184,6 +284,30 @@ exports.handler = async (event) => {
         const term = (lk && PLAN_BY_LOOKUP[lk] && PLAN_BY_LOOKUP[lk].term) || "monthly";
         if (uid) await sb.from("subscriptions").update({ status: "active", expires_at: graceISO(term) }).eq("user_id", uid).eq("status", "active");
         await log(uid ? "renewed" : "unmatched", { user_id: uid, term });
+        // FALLBACK purchase emails: a paying subscriber who somehow never got paid_1/paid_2 via
+        // checkout (grandfathered sub renewing on an archived price, missed/unmatched checkout
+        // event) gets them ONCE here. Ordinary renewals send nothing (everSent guard).
+        if (uid && !(await everSent(sb, uid, "paid_1"))) {
+          const who = await memberInfo(sb, uid, null);
+          if (who.email !== "-") {
+            // Internal key for logic from the live sub row; display is ALWAYS the paid tier's
+            // label via tierLabel("companion") - a grandfathered internal-"coach" key must show
+            // as the paid tier, not the coming-soon one.
+            let planKey = "companion";
+            try {
+              const { data: subRow } = await sb.from("subscriptions").select("plan_id").eq("user_id", uid).eq("status", "active").maybeSingle();
+              if (subRow && subRow.plan_id) planKey = String(subRow.plan_id);
+            } catch (_) {}
+            const cents = typeof obj.amount_paid === "number" ? obj.amount_paid : null;
+            const payVars = {
+              first_name: (who.name || "there").split(" ")[0] || "there",
+              plan: tierLabel("companion"), plan_key: planKey,
+              price: fmtPrice(cents, term), renewal_date: renewalDate(term),
+            };
+            await sendPurchaseEmail(sb, "paid_1", uid, who.email, payVars);
+            if (!(await everSent(sb, uid, "paid_2"))) await sendPurchaseEmail(sb, "paid_2", uid, who.email, payVars);
+          }
+        }
         break;
       }
       case "customer.subscription.updated": { // upgrade / downgrade
@@ -202,7 +326,7 @@ exports.handler = async (event) => {
         try {
           const who = await memberInfo(sb, uid, null);
           await notifyOperator({ event: "cancel", subject: `Subscription canceled: ${who.name}`,
-            lines: [["Member", who.name], ["Email", who.email], ["Event", "Subscription canceled"], ["Access", "Reverts to Guide"]] });
+            lines: [["Member", who.name], ["Email", who.email], ["Event", "Subscription canceled"], ["Access", "Reverts to " + tierLabel("guide") + " (free)"]] });
         } catch (_) {}
         break;
       }
@@ -214,7 +338,7 @@ exports.handler = async (event) => {
           const who = await memberInfo(sb, uid, (obj.billing_details && obj.billing_details.email) || null);
           const amt = typeof obj.amount_refunded === "number" ? `$${(obj.amount_refunded / 100).toFixed(2)}` : "-";
           await notifyOperator({ event: "refund", subject: `Refund issued: ${who.name}`,
-            lines: [["Member", who.name], ["Email", who.email], ["Refund", amt], ["Access", "Reverts to Guide"]] });
+            lines: [["Member", who.name], ["Email", who.email], ["Refund", amt], ["Access", "Reverts to " + tierLabel("guide") + " (free)"]] });
         } catch (_) {}
         break;
       }

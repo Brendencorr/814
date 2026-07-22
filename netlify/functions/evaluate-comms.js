@@ -12,15 +12,25 @@
  * (last activity), subscriptions (plan), reset_enrollment (reset progress). More robust, less brittle.
  * user_comms_state is upserted with the derived snapshot so admin views + once-ever rules work.
  *
- * ⚠️ TIMING NOTE: the exact Guide-flow trigger table lives in riley-lifecycle-comms-spec-FINAL.md
- * (not in this repo). The day-based triggers below are a faithful reading of the copy's cadence and
- * should be reconciled against that spec before COMMS_ENABLED is flipped. Gone-Quiet ladder + gates
- * follow the handoff exactly. Once-per-template-ever is enforced here in code (not a DB constraint).
+ * ── GUIDE FLOW = CANDIDATE LIST (comms-flow.js) ────────────────────────────────────────────────
+ * The old else-if chain deadlocked (guide_4's branch matched every run after day 4 and
+ * short-circuited reset_daily days 5-7). Selection is now a pure candidate picker - eligibility +
+ * priority per template - in comms-flow.js, unit-tested in tests/comms/guide-flow.test.js.
+ * reset_daily dedups PER RESET DAY (email_sends.meta.n); a day skipped for a calendar guide is
+ * never deferred.
+ *
+ * Every send goes through sendClientEmail (email-send.js) with category 'lifecycle', which ALSO
+ * enforces the cross-flow global daily cap and the 7-day crisis-window suppression at the choke
+ * point. Transactional paid_1/paid_2/addon_1 fire on the Stripe webhook (stripe-webhook.js);
+ * this cron owns the calendar pieces: paid_3 (day 25) and addon_2 (program unopened ~3 days).
  */
 const { getSupabaseClient, requireScheduledOrOperator, memberDay, inQuietHours } = require("./supabase-client");
 const { render, TRIGGERS } = require("./comms-templates");
 const { sendClientEmail } = require("./email-send");
 const { signUid } = require("./comms-sign");
+const { pickGuideCandidate } = require("./comms-flow");
+const { tierLabel } = require("./tier-labels");
+const { PROGRAMS } = require("./stripe-catalog");
 
 const APP = "https://riley.meetriley.us";
 const DAY = 86400000;
@@ -35,11 +45,17 @@ function sigParam(uid) { const s = signUid(uid); return s ? "&s=" + s : ""; }
 function prefUrl(uid) { return APP + "/preferences?u=" + encodeURIComponent(uid) + sigParam(uid); }
 function unsubUrl(uid) { return APP + "/.netlify/functions/comms-unsubscribe?u=" + encodeURIComponent(uid) + sigParam(uid); }
 
+// Program display name for addon copy - from the canonical Stripe catalog, never a raw key.
+function programName(programId) {
+  const p = PROGRAMS.find((x) => x.product_key === programId);
+  return (p && p.name) || String(programId || "your program");
+}
+
 async function resendSend(msg, uid) {
   // Route through the single client-email choke point (email-send.js) so every lifecycle
-  // send is also captured in email_log / the operator correspondence view. Reply-To
-  // (support@) and the RFC 8058 one-click List-Unsubscribe headers ride along via the
-  // choke point's additive replyTo/headers params.
+  // send is captured in the unified ledger + email_log, governed by the global daily cap and
+  // crisis-window suppression, and carries Reply-To (support@) + RFC 8058 one-click
+  // List-Unsubscribe headers.
   const headers = msg.transactional ? undefined : {
     "List-Unsubscribe": "<" + unsubUrl(uid) + ">, <mailto:support@meetriley.us?subject=unsubscribe>",
     "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
@@ -47,6 +63,7 @@ async function resendSend(msg, uid) {
   const r = await sendClientEmail({
     to: msg.to, from: msg.from, replyTo: msg.replyTo, subject: msg.subject,
     html: msg.html, text: msg.text, headers,
+    category: "lifecycle",
     kind: "lifecycle:" + (msg.flow || "comms"), userId: uid,
     meta: { template_key: msg.template_key },
   });
@@ -75,14 +92,16 @@ exports.handler = async (event) => {
   const bump = (k) => { out.decisions[k] = (out.decisions[k] || 0) + 1; };
 
   // ── Load source data (batched, not N+1) ──
-  const [profR, stateR, sendsR, subsR, convR, ciR, tplR] = await Promise.allSettled([
+  const [profR, stateR, sendsR, subsR, convR, ciR, tplR, purR, progR] = await Promise.allSettled([
     sb.from("user_profiles").select("id,email,full_name,preferred_name,created_at,onboarding_completed,timezone"),
     sb.from("user_comms_state").select("*"),
-    sb.from("email_sends").select("user_id,template_key,flow,sent_at,suppressed"),
+    sb.from("email_sends").select("user_id,template_key,flow,sent_at,suppressed,meta"),
     sb.from("subscriptions").select("user_id,plan_id,status").eq("status", "active"),
     sb.from("riley_conversations").select("user_id,created_at").order("created_at", { ascending: false }),
     sb.from("daily_checkins").select("user_id,checkin_date").order("checkin_date", { ascending: false }),
     sb.from("comms_templates").select("*"),  // operator overrides (copy/timing/enabled)
+    sb.from("purchases").select("user_id,program_id,purchased_at"),                       // addon_2 source
+    sb.from("user_program_progress").select("user_id,program_id,enrolled_at,last_activity"), // addon_2 "opened?"
   ]);
   // Surface query failures instead of masking them as "no users": a bad column name makes
   // PostgREST reject the whole query (fulfilled promise, but value.error set) - record it.
@@ -93,6 +112,7 @@ exports.handler = async (event) => {
     return (r.value && r.value.data) || [];
   };
   const profiles = g(profR, "user_profiles"), states = g(stateR, "user_comms_state"), sends = g(sendsR, "email_sends"), subs = g(subsR, "subscriptions"), convs = g(convR, "riley_conversations"), cis = g(ciR, "daily_checkins");
+  const purchases = g(purR, "purchases"), progresses = g(progR, "user_program_progress");
   if (Object.keys(loadErrors).length) out.load_errors = loadErrors;
   if (!profiles.length) return { statusCode: 200, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...out, note: "no users" }) };
 
@@ -105,15 +125,22 @@ exports.handler = async (event) => {
   const planByUser = {}; subs.forEach((s) => { const t = String(s.plan_id || "").toLowerCase(); planByUser[s.user_id] = t.indexOf("coach") >= 0 || t.indexOf("concierge") >= 0 ? "coach" : t.indexOf("companion") >= 0 ? "companion" : planByUser[s.user_id] || "guide"; });
   const lastMsgByUser = {}; convs.forEach((c) => { if (!lastMsgByUser[c.user_id]) lastMsgByUser[c.user_id] = c.created_at; });
   const lastCiByUser = {}; cis.forEach((c) => { if (!lastCiByUser[c.user_id]) lastCiByUser[c.user_id] = c.checkin_date; });
+  const purchasesByUser = {}; purchases.forEach((p) => { (purchasesByUser[p.user_id] = purchasesByUser[p.user_id] || []).push(p); });
+  const progressByUser = {}; progresses.forEach((p) => { (progressByUser[p.user_id] = progressByUser[p.user_id] || []).push(p); });
   // sentKeys = templates ACTUALLY sent (suppressed=false) - the once-per-template-ever dedup.
+  // sentResetDaysByUser = reset-day NUMBERS already announced (email_sends.meta.n) - reset_daily's
+  // per-day dedup: each day's number sends at most once, and a skipped day is never re-announced.
   // loggedKeys = any decision row incl. suppressed - used only to avoid re-logging the same
   // suppressed decision every hour while dark. A suppressed (never-sent) decision must NOT
   // block the real send at go-live, or the dark period would silently burn every template.
-  const sentKeys = {}; const loggedKeys = {}; const nonTxSendsByUser = {}; const lastEmailByUser = {};
+  const sentKeys = {}; const loggedKeys = {}; const nonTxSendsByUser = {}; const lastEmailByUser = {}; const sentResetDaysByUser = {};
   sends.forEach((s) => {
     (loggedKeys[s.user_id] = loggedKeys[s.user_id] || new Set()).add(s.template_key);
     if (!s.suppressed) {
       (sentKeys[s.user_id] = sentKeys[s.user_id] || new Set()).add(s.template_key);
+      if (s.template_key === "reset_daily" && s.meta && s.meta.n != null) {
+        (sentResetDaysByUser[s.user_id] = sentResetDaysByUser[s.user_id] || new Set()).add(Number(s.meta.n));
+      }
       // "our last touch" = the last email we actually SENT them (suppressed rows while dark don't count).
       const t = +new Date(s.sent_at || 0);
       if (t && (!lastEmailByUser[s.user_id] || t > lastEmailByUser[s.user_id])) lastEmailByUser[s.user_id] = t;
@@ -124,7 +151,9 @@ exports.handler = async (event) => {
   });
 
   // Log a decision (send or suppression) to email_sends, and (if live) actually send.
-  async function decide(uid, email, key, msg, forceReason, logged, plan) {
+  // Returns true only when the email was ACTUALLY sent - callers that advance durable state
+  // (gone-quiet ladder) must never advance on a suppressed decision.
+  async function decide(uid, email, key, msg, forceReason, logged, plan, meta) {
     let suppressed = true, reason = forceReason || null, resend_id = null;
     if (!forceReason) {
       if (!ENABLED) { reason = "comms_disabled"; }
@@ -137,10 +166,11 @@ exports.handler = async (event) => {
     }
     // Don't re-insert the same suppressed decision every hour while dark (would bloat the log);
     // the real once-ever dedup lives in sentKeys (actual sends), never in the suppressed rows.
-    if (suppressed && logged && logged.has(key)) { bump("suppressed_dupe:" + (reason || "?")); return; }
-    await sb.from("email_sends").insert({ user_id: uid, template_key: key, flow: msg.flow, resend_id, suppressed, suppression_reason: reason, plan: plan || null });
+    if (suppressed && logged && logged.has(key)) { bump("suppressed_dupe:" + (reason || "?")); return false; }
+    await sb.from("email_sends").insert({ user_id: uid, template_key: key, flow: msg.flow, resend_id, suppressed, suppression_reason: reason, plan: plan || null, meta: meta || null });
     if (logged) logged.add(key);
     bump(suppressed ? "suppressed:" + (reason || "?") : "sent:" + key);
+    return !suppressed;
   }
 
   for (const prof of profiles) {
@@ -151,7 +181,7 @@ exports.handler = async (event) => {
     const lastMsg = lastMsgByUser[uid] ? +new Date(lastMsgByUser[uid]) : null;
     const lastCi = lastCiByUser[uid] ? +new Date(lastCiByUser[uid] + "T12:00:00Z") : null;
     const lastActive = Math.max(signupAt, lastMsg || 0, lastCi || 0);
-    const plan = planByUser[uid] || st.plan || "guide";
+    const plan = planByUser[uid] || st.plan || "guide";   // INTERNAL plan key
     const daysSinceSignup = Math.floor((now - signupAt) / DAY);
     const daysAbsent = Math.floor((now - lastActive) / DAY);
     const everMessaged = !!lastMsg;
@@ -165,7 +195,10 @@ exports.handler = async (event) => {
     const ladder = st.ladder_position || 0;
     const keys = sentKeys[uid] || new Set();       // actually-sent → once ever
     const logged = loggedKeys[uid] || new Set();   // any logged decision → avoids dark re-logging
-    const vars = { first_name: firstName(prof), session_count: (convs.filter((c) => c.user_id === uid).length) || 0, plan };
+    const sentResetDays = sentResetDaysByUser[uid] || new Set();
+    // vars.plan = DISPLAY name (tierLabel, per the locked tier truth); vars.plan_key = internal key
+    // (isMemoryPlan and all logic run on internal keys - display names are presentation only).
+    const vars = { first_name: firstName(prof), session_count: (convs.filter((c) => c.user_id === uid).length) || 0, plan: tierLabel(plan), plan_key: plan };
     const urls = { unsub: unsubUrl(uid), pref: prefUrl(uid) };
 
     // Refresh the derived snapshot (upsert) - this is the Task-5 state, server-derived.
@@ -187,12 +220,16 @@ exports.handler = async (event) => {
     if (inQuietHours(memberTz)) { bump("skip:quiet_hours"); continue; } // their LOCAL quiet hours; retry next run
 
     let fired = false;
+    // Send one template (once-ever templates). Returns true only when ACTUALLY sent; sets `fired`
+    // whenever a decision was made, so at most one decision happens per member per run.
     const send = async (key) => {
-      if (keys.has(key)) return false;         // once-per-template-ever (except reset_daily handled separately)
+      if (keys.has(key)) return false;         // once-per-template-ever (reset_daily handled separately)
       if (tplOff(key)) return false;           // operator disabled this template in the dashboard
       const r = render(key, vars, urls, tplOverride[key]);
-      await decide(uid, prof.email, key, r, null, logged, plan);
-      keys.add(key); fired = true; return true;
+      fired = true;
+      const sentOk = await decide(uid, prof.email, key, r, null, logged, plan);
+      if (sentOk) keys.add(key);
+      return sentOk;
     };
 
     // 2) GONE QUIET (owns absent users)
@@ -215,34 +252,53 @@ exports.handler = async (event) => {
 
     // 3) GUIDE FLOW (runs while still "in touch" - i.e., not yet in win-back). The onboarding series
     // keeps refreshing the touch, so it completes on its calendar before Gone-Quiet can start.
+    // Selection is the pure candidate picker (comms-flow.js) - eligibility + priority, no else-if
+    // chain, so reset_daily days 2-7 fire regardless of signup day (see file header).
     if (!fired && daysSinceTouch < QUIET_GAP) {
-      // Month One founder letter (day 29) now owns the one-month moment; guide_7 retired. NO tier gate here -
-      // every client, regardless of tier, gets this letter (active users only; Gone-Quiet owns the absent above).
-      if (daysSinceSignup >= dayFor("guide_5", 29)) await send("guide_5");
-      // Companion pitch: Guide tier ONLY (Option A - never upsell a paid member the tier they already have).
-      // Paid members enter this branch and send nothing, so they never fall through to an earlier email.
-      else if (daysSinceSignup >= dayFor("guide_6", 12)) { if (plan === "guide") await send("guide_6"); }
-      else if (resetDay >= dayFor("guide_4", 4) || daysSinceSignup >= dayFor("guide_4", 4)) await send("guide_4");
-      // reset_daily: days 2–7, only if push not opted in, for the next uncompleted reset day.
-      else if (resetStarted && resetDay >= 1 && resetDay < 7 && !st.push_opted_in && !tplOff("reset_daily")) {
-        const n = resetDay + 1;
+      const cand = pickGuideCandidate({
+        daysSinceSignup, resetStarted, resetDay,
+        pushOptedIn: !!st.push_opted_in,
+        plan, sentKeys: keys, sentResetDays, dayFor, tplOff,
+      });
+      if (cand && cand.key === "reset_daily") {
+        const n = cand.n;
         const rd = render("reset_daily", { ...vars, n, module_title: "Day " + n, module_theme: "today's step" }, urls, tplOverride["reset_daily"]);
-        // reset_daily is the ONE template allowed to repeat (once per day, gated by "already_today" above).
-        await decide(uid, prof.email, "reset_daily", rd, null, logged, plan);
         fired = true;
+        // reset_daily repeats across the sequence but each day NUMBER sends once (meta.n dedup).
+        if (await decide(uid, prof.email, "reset_daily", rd, null, logged, plan, { n })) sentResetDays.add(n);
+      } else if (cand) {
+        await send(cand.key);
       }
-      else if (resetDay >= 1) await send("guide_3");
-      else if (daysSinceSignup >= dayFor("guide_2", 1)) await send("guide_2");
-      // guide_1 (welcome) is sent HERE by the cron for brand-new users (<1 day old) who don't have it yet.
-      // Routing the welcome through the cron - not a synchronous signup hook - is deliberate: it makes the
-      // welcome honor quiet hours + the member's timezone (a 4:31am signup gets it at 7am local, not at night).
-      else if (daysSinceSignup < 1 && !keys.has("guide_1")) await send("guide_1");
     }
 
-    // 4) PAID / ADDON (cron-driven parts). Event-driven paid_1/paid_2/addon_1 fire on webhooks (dark).
+    // 4) PAID / ADDON (cron-driven parts). Event-driven paid_1/paid_2/addon_1 fire on the Stripe
+    // webhook as TRANSACTIONAL sends; this cron owns the calendar pieces.
     if (!fired && st.subscription_started_at) {
       const dSub = Math.floor((now - +new Date(st.subscription_started_at)) / DAY);
       if (dSub >= dayFor("paid_3", 25)) await send("paid_3");
+    }
+    // addon_2: "a few days later, if unopened" (deck) - default 3 days (editable via trigger_days).
+    // Unopened = no user_program_progress activity for THAT program since purchase. Conservative
+    // match on program_id (with a defensive prog_-prefix-stripped fallback); once-ever.
+    if (!fired && !keys.has("addon_2") && !tplOff("addon_2")) {
+      const addonGapDays = dayFor("addon_2", 3);
+      const myProgress = progressByUser[uid] || [];
+      const unopened = (purchasesByUser[uid] || []).find((p) => {
+        const boughtAt = +new Date(p.purchased_at || 0);
+        if (!boughtAt || (now - boughtAt) / DAY < addonGapDays) return false;
+        const bare = String(p.program_id || "").replace(/^prog_/, "");
+        return !myProgress.some((pr) => {
+          const pid = String(pr.program_id || "");
+          if (pid !== p.program_id && pid !== bare) return false;
+          const opened = +new Date(pr.last_activity || pr.enrolled_at || 0);
+          return opened >= boughtAt;
+        });
+      });
+      if (unopened) {
+        const r = render("addon_2", { ...vars, program_name: programName(unopened.program_id) }, urls, tplOverride["addon_2"]);
+        fired = true;
+        if (await decide(uid, prof.email, "addon_2", r, null, logged, plan)) keys.add("addon_2");
+      }
     }
   }
 

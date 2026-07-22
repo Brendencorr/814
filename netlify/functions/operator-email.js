@@ -62,6 +62,7 @@ async function notifyOperator(opts) {
       html,
       text,
       kind: "operator:" + (o.event || "alert"),
+      category: "operator",
       meta: { event: o.event || "alert" },
     });
   } catch (e) {

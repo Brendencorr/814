@@ -335,6 +335,10 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
       <button type="submit" aria-label="Send to Riley" style="flex-shrink:0;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);font-size:19px;line-height:1;cursor:pointer">&rarr;</button>
     </form>
 
+    <!-- Life Map spotlight (founder, 2026-07-23): the memory payoff lives on the homepage too -
+         what Riley's noticing + what she's holding, with a member "Dismiss". loadLifemapSpotlight fills it. -->
+    <div id="lifemap-spot-slot"></div>
+
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
 
@@ -591,6 +595,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Doc 2 §1.2/§2: the habit tracker (habits + goals) is Companion+ (plan_entitlements.habit_tracker).
     // Guide hides the module entirely - never an empty "Habits: 0". Fail-open if entitlements missing.
     if(ENT.entitlements && ENT.entitlements.habit_tracker==='false'){ ['habits-panel','goals-panel'].forEach(function(id){var el=document.getElementById(id); if(el)el.style.display='none';}); }
+    loadLifemapSpotlight(ENT,checkins); // fire-and-forget; renders nothing if dismissed or locked
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;
@@ -950,6 +955,67 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     setTimeout(loadPhase2Discovery, 5 * 60 * 1000);
     }catch(e){console.error('Dashboard:',e);}
 })();
+
+// ── LIFE MAP SPOTLIGHT (founder, 2026-07-23) - the memory payoff on the homepage ──────────────
+// A condensed Life Map card up top: what Riley's noticing + what she's holding, plus the
+// still-learning line. Dismissible per member (localStorage, this device). Shows for every
+// entitled member until dismissed - "at least the first week" guaranteed by never auto-hiding.
+const LM_SPOT_FACETS=[
+  {k:'why',emoji:'🎯',title:'Your Why'},
+  {k:'vision',emoji:'🌅',title:"Who You're Becoming"},
+  {k:'recovery_dna',emoji:'🌿',title:'What Keeps You Steady'},
+  {k:'win',emoji:'🏆',title:'Wins'},
+  {k:'joy',emoji:'☀️',title:'What Brings You Joy'},
+  {k:'relationship',emoji:'🤝',title:'People Who Matter'},
+  {k:'fear',emoji:'🌊',title:'Fears'},
+  {k:'value',emoji:'💎',title:'Values'},
+  {k:'strength',emoji:'💪',title:'Strengths'},
+  {k:'energy',emoji:'⚡',title:'Your Energy Rhythms'}
+];
+window.dismissLifemapSpot=function(){
+  try{localStorage.setItem('lm_spot_off_'+UID,'1');}catch(e){}
+  const el=document.getElementById('lifemap-spot-slot');if(el)el.innerHTML='';
+};
+async function loadLifemapSpotlight(ent,checkins){
+  try{
+    const slot=document.getElementById('lifemap-spot-slot');if(!slot)return;
+    try{if(localStorage.getItem('lm_spot_off_'+UID))return;}catch(e){}
+    // Life Map is the Coach memory pillar - hide only when we can positively tell it's locked (fail-open).
+    const kg=ent&&ent.features&&ent.features.knowledge_graph;
+    if((kg&&kg.access===false)||(ent&&ent.entitlements&&ent.entitlements.knowledge_graph==='false'))return;
+    let rows=[];
+    try{const {data}=await SB.from('life_map').select('facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});rows=data||[];}catch(e){}
+    // What Riley's noticing - same patterns as the Life Map page, from the check-ins already loaded.
+    const ci=checkins||[],both=ci.filter(c=>c.mood!=null&&c.sleep_hours!=null),ins=[];
+    if(both.length>=6){
+      const good=both.filter(c=>c.sleep_hours>=7.5),poor=both.filter(c=>c.sleep_hours<6);
+      if(good.length>=3&&poor.length>=3){const ag=good.reduce((a,c)=>a+c.mood,0)/good.length,ap=poor.reduce((a,c)=>a+c.mood,0)/poor.length;if(ag-ap>=0.4)ins.push("When you sleep <b>7.5+ hours</b>, your mood runs noticeably higher than on short nights. Sleep is one of your biggest levers.");}
+    }
+    const recent=ci.slice(0,7).filter(c=>c.mood!=null).map(c=>c.mood),prior=ci.slice(7,14).filter(c=>c.mood!=null).map(c=>c.mood);
+    if(recent.length>=3&&prior.length>=3){const ar=recent.reduce((a,b)=>a+b,0)/recent.length,ap=prior.reduce((a,b)=>a+b,0)/prior.length;if(ar-ap>=0.5)ins.push("Your mood has been <b>trending up</b> this past week versus the one before. Whatever you're doing - keep it.");else if(ap-ar>=0.5)ins.push("This week has been a little heavier than last. That happens - be gentle, and lean on what steadies you.");}
+    const by={};rows.forEach(r=>{(by[r.facet]=by[r.facet]||[]).push(r);});
+    const filled=LM_SPOT_FACETS.filter(f=>(by[f.k]||[]).length),empty=LM_SPOT_FACETS.filter(f=>!(by[f.k]||[]).length);
+    const chip=r=>'<span style="display:inline-flex;align-items:center;background:var(--ink3,#1c1a18);border:1px solid '+(r.source==='conversation'?'rgba(74,122,176,0.25)':'rgba(201,168,76,0.18)')+';border-radius:20px;padding:5px 11px;font-size:12px;color:var(--parchment);line-height:1.4">'+esc(r.content)+'</span>';
+    const facetRows=filled.slice(0,4).map(f=>{
+      const items=by[f.k],shown=items.slice(0,4);
+      const more=items.length>shown.length?'<span style="font-size:11px;color:var(--smoke2);align-self:center">+'+(items.length-shown.length)+' more</span>':'';
+      return '<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">'+f.emoji+'</span>'+f.title+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+shown.map(chip).join('')+more+'</div></div>';
+    }).join('');
+    const moreFacets=filled.length>4?'<div style="font-size:11.5px;color:var(--smoke2);margin-top:10px">+'+(filled.length-4)+' more on your full Life Map</div>':'';
+    const insBlock=ins.length?'<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">🔎</span>What Riley\'s Noticing</div>'+ins.map(i=>'<div style="font-size:13px;color:var(--parchment);line-height:1.6;padding:3px 0">'+i+'</div>').join('')+'</div>':'';
+    const learning=empty.length?'<div style="font-size:11.5px;color:var(--smoke2);margin-top:12px;font-style:italic">🌱 Still learning: '+empty.map(f=>f.title).join(' · ')+'</div>':'';
+    const emptyState=(!filled.length&&!ins.length)?'<div style="font-size:13px;color:var(--smoke);line-height:1.65;margin-top:10px">I\'m building your Life Map as we talk - your why, your people, what keeps you steady. Everything you share lives here, and I\'ll never make you repeat it.</div>':'';
+    slot.innerHTML='<div style="background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:18px 20px;margin:0 0 20px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
+      +'<div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px">Your Life Map</div>'
+      +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">What Riley\'s holding for you</div></div>'
+      +'<button onclick="dismissLifemapSpot()" title="Dismiss this card" style="background:none;border:none;color:var(--smoke2);font-size:11px;cursor:pointer;font-family:\'DM Mono\',monospace;letter-spacing:0.06em;flex-shrink:0">DISMISS ✕</button>'
+      +'</div>'
+      +insBlock+facetRows+moreFacets+emptyState+learning
+      +'<div style="margin-top:14px"><a href="/lifemap" style="font-size:12px;color:var(--gold);text-decoration:none">Open your full Life Map →</a></div>'
+      +'</div>';
+  }catch(e){}
+}
 
 // ── EVERYTHING RILEY OFFERS - reliable, entitlement-driven locked previews ────
 // Shows every member (except Coach, who has it all) the full menu of what they

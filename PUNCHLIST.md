@@ -10,7 +10,8 @@ Status: ✅ shipped+verified · 🟡 partial · 🚩 flagged follow-up · ⬜ no
 - ✅ P1.1 Removed raw layer numbers.
 - ✅ P1.2 Financial Goals -> Mentor (all surfaces + /finance redirect; data preserved; money-in-convo kept).
 - ✅ P1.3 Legacy Vault -> Mentor (data preserved).
-- ✅ P1.4 Life Balance wheel deleted.
+- ↩️ P1.4 Life Balance wheel deleted - REVERSED 2026-07-23 (founder asked for the diagram back).
+  Restored on /lifemap below the crown jewels (manual + story still lead).
 - ✅ P1.5 Compact tool chips (was six large cards).
 - ✅ P1.6 Empty dims warm-framed.
 - ✅ P1.7 Nav order Talk-to-Riley-first / Clarity-second.

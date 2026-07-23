@@ -88,9 +88,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
     <div class="intro">This is who you are - the whole of it, not just one chapter.</div>
     <div class="intro-sub">Riley builds this quietly as you talk. Add anything you want her to hold. She'll never make you repeat it - and she'll bring it back exactly when it matters.</div>
     <!-- P1.11: the crown jewels (My User Manual + Your Story) lead the page - memory's payoff first.
-         Life Balance wheel deleted (P1.4); Legacy Vault moved to Mentor (P1.3). -->
+         Legacy Vault moved to Mentor (P1.3). Life Balance wheel RESTORED 2026-07-23 (founder request,
+         reversing P1.4) - it sits below the crown jewels so memory still leads the page. -->
     <div id="manual-slot"></div>
     <div id="story-slot"></div>
+    <div id="wheel-slot"></div>
     <div id="insights-slot"></div>
     <div id="map-slot"><div class="empty">Loading your map…</div></div>
     <div id="timeline-slot"></div>
@@ -142,7 +144,7 @@ async function boot(){
   document.getElementById('sb-name').textContent=fullName;
   document.getElementById('tb-date').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
   if(!(await knowledgeGraphEntitled())){return lockedPage();}
-  loadManual();loadStory();loadInsights();
+  loadManual();loadStory();loadLifeScore();loadInsights();
   await loadMap();
   loadTimeline();
 }
@@ -249,8 +251,58 @@ async function loadTimeline(){
   const rows=items.map(it=>`<div style="display:flex;gap:12px;padding:8px 0"><div style="font-size:15px;width:22px;text-align:center;flex-shrink:0">${it.e}</div><div><div style="font-size:13.5px;color:var(--parchment);line-height:1.5">${esc(it.t)}</div><div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--smoke2)">${isNaN(it.d)?'':it.d.toLocaleDateString('en-US',{month:'short',year:'numeric'})}</div></div></div>`).join('');
   slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">🧭</span><span class="ftitle">Your Timeline</span></div><div class="fsub">Context, not just facts - the shape of your story so far.</div><div style="border-left:1px solid rgba(201,168,76,0.2);padding-left:14px;margin-left:6px;margin-top:6px">${rows}</div></div>`;
 }
-// ── P1.4: the Life Balance wheel (nine-spoke visualization) was deleted entirely, data plumbing and all.
-// Clarity is the score; the Life Map is the memory - two scoring visuals competed and confused. ──
+// ── Life Balance wheel (nine-spoke mirror) - RESTORED 2026-07-23 on founder request, reversing P1.4.
+// Clarity stays the score; this wheel is a mirror of life balance, not a grade. ──
+async function loadLifeScore(){
+  const wslot=document.getElementById('wheel-slot');if(!wslot)return;
+  const wk=new Date();wk.setDate(wk.getDate()-7);const wkISO=wk.toLocaleDateString('en-CA');
+  const ten=new Date();ten.setDate(ten.getDate()-10);const tenISO=ten.toLocaleDateString('en-CA');
+  let ci=[],fit=0,nut=0,habits=[],comps=[],sober=null,facets=[];
+  try{
+    const R=await Promise.allSettled([
+      SB.from('daily_checkins').select('mood,sleep_hours,notes,checkin_date').eq('user_id',UID).gte('checkin_date',tenISO).order('checkin_date',{ascending:false}),
+      SB.from('fitness_logs').select('*',{count:'exact',head:true}).eq('user_id',UID).gte('logged_date',wkISO),
+      SB.from('nutrition_logs').select('*',{count:'exact',head:true}).eq('user_id',UID).gte('logged_date',wkISO),
+      SB.from('habits').select('id').eq('user_id',UID).eq('is_active',true),
+      SB.from('habit_completions').select('habit_id').eq('user_id',UID).gte('completed_date',wkISO),
+      SB.from('sobriety_tracker').select('start_date').eq('user_id',UID).eq('is_active',true).order('start_date',{ascending:false}).limit(1),
+      SB.from('life_map').select('facet').eq('user_id',UID).eq('is_active',true)
+    ]);
+    const v=r=>r.status==='fulfilled'?r.value:{};
+    ci=v(R[0]).data||[];fit=v(R[1]).count||0;nut=v(R[2]).count||0;habits=v(R[3]).data||[];comps=v(R[4]).data||[];const s=(v(R[5]).data||[])[0];sober=s?s.start_date:null;facets=(v(R[6]).data||[]).map(x=>x.facet);
+  }catch(e){}
+  const clamp=n=>Math.max(0,Math.min(100,Math.round(n)));
+  const moods=ci.filter(c=>c.mood!=null).map(c=>c.mood);
+  const latestSleep=(ci.find(c=>c.sleep_hours!=null)||{}).sleep_hours;
+  const checkinDays=new Set(ci.filter(c=>c.checkin_date>=wkISO).map(c=>c.checkin_date)).size;
+  const reflWk=ci.filter(c=>c.checkin_date>=wkISO&&c.notes&&String(c.notes).trim()).length;
+  const habitRate=habits.length?comps.length/(habits.length*7)*100:null;
+  const soberDays=(sober&&window.RileyDay)?window.RileyDay.soberDays(sober):null;
+  const cnt=f=>facets.filter(x=>x===f).length;
+  const avgMood=moods.length?moods.reduce((a,b)=>a+b,0)/moods.length:null;
+  const raw=[
+    {label:'RECOVERY',val:soberDays!=null?clamp(100*(1-Math.exp(-soberDays/35))):(cnt('recovery_dna')?60:null)},
+    {label:'SLEEP',val:latestSleep!=null?clamp(latestSleep/8*100):null},
+    {label:'MOVE',val:clamp(fit/3*100)},
+    {label:'FOOD',val:clamp(nut/14*100)},
+    {label:'PURPOSE',val:habitRate!=null?clamp(habitRate*0.7+((cnt('why')||cnt('vision'))?30:0)):((cnt('why')||cnt('vision'))?55:null)},
+    {label:'PEOPLE',val:clamp(checkinDays/7*40+Math.min(60,cnt('relationship')*15))},
+    {label:'JOY',val:clamp(Math.min(100,cnt('joy')*22))},
+    {label:'CALM',val:avgMood!=null?clamp((avgMood-1)/4*100):null},
+    {label:'REFLECT',val:clamp(reflWk/5*100)}
+  ];
+  const dims=raw.map(d=>({label:d.label,val:d.val==null?0:d.val,has:d.val!=null}));
+  wslot.innerHTML=`<div class="fcard" style="text-align:center"><div class="fhead" style="justify-content:center"><span class="femoji">🧭</span><span class="ftitle">Your Life Balance</span></div><div class="fsub" style="text-align:center">Not a grade - a mirror. Where is life full, and where is it asking for attention?</div>${drawWheel(dims)}<div style="font-size:11.5px;color:var(--smoke2);margin-top:4px">The more you check in, log, and talk with Riley, the truer this becomes.</div></div>`;
+}
+function drawWheel(dims){
+  const cx=150,cy=150,r=105,n=dims.length;
+  const ang=i=>(-Math.PI/2)+(i*2*Math.PI/n);
+  const pt=(i,rad)=>[cx+rad*Math.cos(ang(i)),cy+rad*Math.sin(ang(i))];
+  let grid='';[0.25,0.5,0.75,1].forEach(f=>{grid+=`<polygon points="${dims.map((d,i)=>pt(i,r*f).join(',')).join(' ')}" fill="none" stroke="rgba(255,255,255,0.06)"/>`;});
+  let axes='',labels='';dims.forEach((d,i)=>{const p=pt(i,r);axes+=`<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="rgba(255,255,255,0.06)"/>`;const l=pt(i,r+20);labels+=`<text x="${l[0]}" y="${l[1]}" font-size="8.5" fill="${d.has?'#8a8578':'#5a5450'}" text-anchor="middle" dominant-baseline="middle" font-family="DM Mono,monospace">${d.label}</text>`;});
+  const vpoly=dims.map((d,i)=>pt(i,r*Math.max(0.02,d.val/100)).join(',')).join(' ');
+  return `<svg viewBox="0 0 300 300" width="300" height="300" style="max-width:100%;margin:6px auto 0;display:block"><defs><radialGradient id="wg"><stop offset="0%" stop-color="rgba(201,168,76,0.4)"/><stop offset="100%" stop-color="rgba(74,173,114,0.12)"/></radialGradient></defs>${grid}${axes}<polygon points="${vpoly}" fill="url(#wg)" stroke="#c9a84c" stroke-width="1.5"/>${labels}</svg>`;
+}
 async function loadMap(){
   let rows=[];
   try{const {data}=await SB.from('life_map').select('id,facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});rows=data||[];}catch(e){}

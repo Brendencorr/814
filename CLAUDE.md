@@ -281,6 +281,38 @@ Design system:
   (soft-delete via life_map.is_active, same as the Life Map page).
 - **The daily brief is ONE card** — title row + body in a single padded container, no separate
   gradient header band, no duplicated copy (bc-sub is hidden but stays in the DOM for the JS).
+- **Onboarding→Clarity handoff (founder-approved 2026-07-23, four fixes):**
+  1. **Sobriety date is asked ONCE, in chat, only when sobriety is already the topic** — never an
+     onboarding screen. Directive in riley-chat buildUserContext; capture via
+     `sobriety-date-capture.js` (Haiku, regex-gated, fail-open; guarded update fills only a null
+     column, also seeds sobriety_tracker). A decline is stored as riley_memory and is permanent
+     (NEVER RE-ASK). 2. **Presence lane offer extends to focus_lane='grief'** (not just grief-program
+     owners) — onboarding grief pick seeds config.lanes.presence=true via clarity-config
+     origin:'onboarding'; clarity-v2-write auto-offers for existing grief-lane members. Opt-out
+     unchanged. 3. **Important Dates**: member surface on /lifemap (date + optional "why is this
+     important" + heavy toggle) writing important_dates, heavy ones mirrored to hard_dates
+     (source 'member', recurrence annual); grief lean-in gets an optional heavy-date screen;
+     clarity-v2-write now PROJECTS annual labeled hard_dates into its window (taps never recur —
+     chat.html writes recurrence:'none'). 4. **Focus picks seed enabled_practice** at onboarding
+     finish (default trio base + connection/outside/program from their picks, cap 5).
+- **Memory/recall upgrades (founder-approved 2026-07-23, #2-#6 of the memory roadmap):**
+  All Haiku-powered utilities - non-blocking, fail-open, regex-gated where possible.
+  #2 `style-learn.js`: auto-learns communication_style (14-day self-rate-limit; NEVER clobbers a
+  member-set style - events name 'style_learned' is the provenance marker); injected in riley-chat.
+  #3 `people-graph.js` + `member_people` (migration 104, owner RLS): structured people
+  (name/role/sentiment/mention recency) fed by the extraction pass; THEIR PEOPLE prompt block has
+  Riley ask about people BY NAME. life_map relationship chips unchanged.
+  #4 `progress-mirror-cron.js` (Mon 15:00 UTC) + `progress_mirrors` (105, SERVER-ONLY): one
+  "distance traveled" note per member per ~28d; DIGIT-BAN + violatesNeverSay gate every note;
+  surfaced ONCE in chat, calm days only (no heavy dates, recentMood > 2.2), shown_at marks it.
+  #5 `memory-intent.js`: "forget that"/"remember this" honored in-data (soft-delete / priority
+  insert, source 'member_request'); MEMBER MEMORY CONTROL directive in buildUserContext.
+  #6 memory-maintenance-cron gained theme PROMOTION (recurring riley_memory themes → life_map,
+  source 'consolidation', max 2/member/run) - merge/decay/backfill already existed.
+  #1 (semantic recall) is BUILT but DARK: set EMBEDDINGS_API_KEY (+EMBEDDINGS_PROVIDER) or
+  OPENAI_API_KEY/VOYAGE_API_KEY in Netlify and retrieval + weekly backfill go live on their own.
+  SECURITY LESSON (advisor re-flag, fixed in 106): re-creating a SECURITY DEFINER function
+  restores PUBLIC execute - every migration that (re)creates one must re-revoke in the same file.
 - Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —
   regenerate/update it when tiers, member experience, or comms change materially.
 - `/docs/*` is force-404'd publicly (netlify.toml) — internal specs live there; keep it that way.

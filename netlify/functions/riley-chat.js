@@ -20,6 +20,10 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember, memberDay } = require("./supabase-client");
 const { returnTier, appDayGap, registerBlock, violatesNeverSay, rhythmEnabled } = require("./rhythm");
 const { extractThreads } = require("./thread-extract");
+const { maybeCaptureSobrietyDate, mentionsSobriety } = require("./sobriety-date-capture");
+const { maybeLearnStyle } = require("./style-learn");
+const { upsertPerson, bumpMentions } = require("./people-graph");
+const { mentionsMemoryIntent, maybeHandleMemoryIntent } = require("./memory-intent");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -407,6 +411,7 @@ function buildUserContext(profile, clientData) {
   }
   if (profile.pronouns) lines.push(`Pronouns: ${profile.pronouns} - use these exactly, every time.`);
   else lines.push(`Pronouns: NOT on file - do NOT assume gender. Stay neutral (use their name or "you") until they tell you.`);
+  if (profile.communication_style) lines.push(`HOW THEY LIKE TO BE TALKED TO (learned from them over time - follow it): ${profile.communication_style}`);
   if (profile.influences) lines.push(`Their people (heroes, favorite authors, artists, coaches, songs, books): ${profile.influences}. When THEY choose to end a conversation, you may close with a short, fitting quote or line from one of these - attributed simply. Never force it.`);
   if (profile.why_here) lines.push(`Why they came here: ${profile.why_here}`);
   if (profile.one_year_vision) lines.push(`Their one-year vision (what success looks like a year from now): ${profile.one_year_vision} - hold this quietly as their north star.`);
@@ -422,6 +427,11 @@ function buildUserContext(profile, clientData) {
   if (profile.sobriety_date) {
     const days = soberDaysForMember(profile.sobriety_date);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
+  } else if (profile.sobriety_interest === true || profile.focus_lane === "sobriety" || /sobriety/i.test(profile.why_here || "")) {
+    // Founder call 2026-07-23: sobriety members are never asked a date at onboarding - Riley
+    // may ask ONCE in chat, and only when sobriety is already the topic. Capture is automatic
+    // (sobriety-date-capture.js) whether they answer the ask or just mention it on their own.
+    lines.push(`SOBRIETY DATE: they're working on their sobriety, but we don't have a date they're counting from. ONLY if they are already talking about their sobriety in this conversation, you may ask ONCE, gently, whether they have a date they're counting from - and make it genuinely optional ("totally fine if you don't count days - some people don't, and that works too"). Never open a conversation with it, never ask while they're struggling or heavy, never ask twice. If a remembered note says they'd rather not share a sobriety date, NEVER bring it up again.`);
   }
   lines.push(
     profile.programs_purchased?.length
@@ -431,7 +441,8 @@ function buildUserContext(profile, clientData) {
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
 
   lines.push(`\nNEVER RE-ASK LAW ("never explain yourself twice" - non-negotiable): everything above is what they have ALREADY told us. Never ask for any of it again - re-asking something they gave us at signup reads as "you weren't listening" and breaks the one promise this product leads with. If a fact above is missing and would genuinely help, you may ask once, naturally, in context.
-AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask for it again. If Age is NOT listed, their account predates when we started keeping it (we only stored the 18+ confirmation back then) - never ask their age cold; if it comes up, say so plainly and let them share it only if they want you to know. Either way: age never touches their Clarity score.`);
+AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask for it again. If Age is NOT listed, their account predates when we started keeping it (we only stored the 18+ confirmation back then) - never ask their age cold; if it comes up, say so plainly and let them share it only if they want you to know. Either way: age never touches their Clarity score.
+MEMBER MEMORY CONTROL: they own what you hold. If they ask you to forget something, confirm warmly that it's gone - the system honors it automatically; never argue, never ask why, never bring it up again. If they ask you to remember something, promise you will - it is saved the moment they say it. "Don't bring that up again" is permanent.`);
 
   // #3 Relationship stage - calibrate familiarity to how long they have known each other.
   if (profile.created_at) {
@@ -579,6 +590,20 @@ AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask
       }
     }
 
+    // ── THEIR PEOPLE - the structured people graph (ask about them BY NAME) ──
+    if (clientData.people && clientData.people.length) {
+      const ago = (ts) => {
+        const d = Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+        if (!isFinite(d) || d <= 1) return "came up very recently";
+        if (d < 7) return "came up this week";
+        if (d < 14) return "came up about a week ago";
+        return `hasn't come up in about ${Math.round(d / 7)} weeks`;
+      };
+      lines.push("\nTHEIR PEOPLE - the living map of who matters to them:");
+      clientData.people.forEach((p) => lines.push(`  - ${p.name}${p.role ? ` (${p.role})` : ""}${p.sentiment === "strained" || p.sentiment === "complicated" ? ` [${p.sentiment} - tread gently]` : ""} - ${ago(p.last_mentioned_at)}`));
+      lines.push("  Ask about them BY NAME when the moment fits ('How's Mike doing?') - someone who hasn't come up in a while may be exactly the right person to ask about, the way a friend keeps up. ONE person, one genuine question, never a roll call, and always follow their lead if they don't want to go there.");
+    }
+
     // ── MEMORY - what Riley already knows about this person (cross-session) ──
     if (clientData.memory && clientData.memory.length) {
       lines.push("\nWHAT YOU REMEMBER ABOUT THIS PERSON (from past sessions - reference naturally, never announce that you 'looked it up'):");
@@ -601,6 +626,11 @@ AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask
     if (clientData.followups && clientData.followups.length) {
       lines.push("\nOPEN THREADS TO FOLLOW UP ON (they mentioned these were coming up, and the day has now passed - if the moment fits, ask how it went, warmly and just once; if they would rather not get into it, let it go gracefully):");
       clientData.followups.forEach((f) => lines.push(`  - ${f.content}`));
+    }
+
+    // ── DISTANCE TRAVELED - the progress mirror (once, calm days only; pre-gated server-side) ──
+    if (clientData.progressMirror) {
+      lines.push(`\nDISTANCE TRAVELED (you may share this ONCE this conversation, in your own words, only if the moment is genuinely calm and it fits - never while they're struggling, never as a report card, never with numbers): ${clientData.progressMirror}`);
     }
 
     // ── ACTIVE LIFE EVENTS - shape Riley's whole approach ──
@@ -693,7 +723,7 @@ async function getClientData(supabase, userId, queryText) {
     const fourAgo = new Date(); fourAgo.setDate(fourAgo.getDate() - 4);
     const fourISO = fourAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes, recentCheckinsRes, calDigestRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes, recentCheckinsRes, peopleRes, mirrorRes, calDigestRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
@@ -715,6 +745,10 @@ async function getClientData(supabase, userId, queryText) {
       supabase.from("member_followups").select("id,content,due_at").eq("user_id", userId).eq("status", "open").lte("due_at", appToday).gte("due_at", fourISO).order("due_at", { ascending: true }).limit(3),
       // Recent check-ins for gentle pattern-noticing (streak + recent-mood tone). NOT a safety signal.
       supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).order("checkin_date", { ascending: false }).limit(14),
+      // The people graph - who matters, by name, with mention recency (people-graph.js).
+      supabase.from("member_people").select("name,role,sentiment,last_mentioned_at").eq("user_id", userId).eq("is_active", true).order("last_mentioned_at", { ascending: false }).limit(8),
+      // One unshown "distance traveled" note, if fresh (progress-mirror-cron; surfaced once, calm days only).
+      supabase.from("progress_mirrors").select("id,note").eq("user_id", userId).is("shown_at", null).gte("created_at", new Date(Date.now() - 21 * 86400000).toISOString()).order("created_at", { ascending: false }).limit(1),
       // Phase 2 calendar digest (flag-gated; null until CALENDAR_GOOGLE_ENABLED + member connected).
       // Cached 15 min server-side; fail-open - a Google hiccup never slows a reply.
       (async () => { try { return { data: await require("./calendar-google").getDigest(supabase, userId) }; } catch (e) { return { data: null }; } })(),
@@ -803,6 +837,15 @@ async function getClientData(supabase, userId, queryText) {
       interactivePrograms = (ip || []).map((p) => ({ key: p.product_key, name: p.display_name, owned: ownedProducts.includes(p.product_key) || tier === "companion" || tier === "coach" || tier === "mentor" }));
     } catch (_) {}
 
+    // Progress mirror: surface only on a CALM day - never on a heavy date, never in a low
+    // stretch. Marking shown_at on surfacing makes each note strictly once-ever.
+    let progressMirror = null;
+    const _mrow = mirrorRes.value?.data?.[0];
+    if (_mrow && !sensitiveDates.length && !(patterns && patterns.recentMood != null && patterns.recentMood <= 2.2)) {
+      progressMirror = _mrow.note;
+      supabase.from("progress_mirrors").update({ shown_at: new Date().toISOString() }).eq("id", _mrow.id).then(() => {}, () => {});
+    }
+
     return {
       sobriety: soberRes.value?.data?.[0] || null,
       todayCheckin: checkinRes.value?.data?.[0] || null,
@@ -821,6 +864,8 @@ async function getClientData(supabase, userId, queryText) {
       lifeMap,
       interactivePrograms,
       sessionSummaries: summariesRes.value?.data || [],
+      people: peopleRes.value?.data || [],
+      progressMirror,
       calendarDigest: calDigestRes && calDigestRes.value ? calDigestRes.value.data : null,
     };
   } catch (e) {
@@ -994,7 +1039,7 @@ Capture these facets especially - they matter most:
 - win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
 - fear: something they're afraid of.
 - joy: a thing that brings them joy (hiking, dogs, music, coffee, a person, a place).
-- relationship: a person who matters - put the person and role in content ("his sponsor Mike", "her daughter Ava").
+- relationship: a person who matters - put the person and role in content ("his sponsor Mike", "her daughter Ava"). When a specific person is identifiable by name, ALSO set "person_name" (just the name), and optionally "person_role" ("his sponsor") and "person_sentiment" (one of warm|strained|complicated - only if clear).
 - recovery_dna: what actually keeps THIS person steady/sober (walking, prayer, AA, fitness, family, nature, helping others).
 - value / strength: a core value or personal strength they reveal.
 - why: their reason for being here / getting sober / changing.
@@ -1036,6 +1081,11 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
           } catch (_) {}
         }
         continue;
+      }
+
+      // People graph: a named person feeds member_people alongside the life_map chip (never instead of).
+      if (m.facet === "relationship" && m.person_name) {
+        upsertPerson(supabase, userId, { name: m.person_name, role: m.person_role, sentiment: m.person_sentiment });
       }
 
       const isFacet = LIFE_FACETS.includes(m.facet);
@@ -1576,11 +1626,31 @@ exports.handler = async function (event) {
     const fullConvo = [...conversationHistory, { role: "assistant", content: reply }];
     if (fullConvo.length >= 4 && (fullConvo.length === 4 || fullConvo.length % 6 === 0)) {
       extractMemories(supabase, user_id, fullConvo);
+      // People graph recency: bump last_mentioned_at for KNOWN people named in recent messages
+      // (regex only - no AI call). Rides the same bounded cadence.
+      bumpMentions(supabase, user_id, fullConvo);
+      // Communication style observer (14-day self-rate-limited; never clobbers a member-set style).
+      maybeLearnStyle(supabase, user_id, fullConvo);
       // Continuity loop (docs/08 §3b): open-loop thread extraction rides the same bounded
       // cadence as memory (Haiku, non-blocking, fail-open). ON by default (rhythmEnabled); RHYTHM_ENABLED=false turns it off.
       if (rhythmEnabled()) {
         extractThreads(supabase, user_id, session_id, fullConvo);
       }
+    }
+
+    // Ask-once sobriety date (founder call 2026-07-23): if a sobriety-interest member with no
+    // date on file just mentioned their sobriety, a Haiku pass checks whether they stated their
+    // date (or declined to share one) and saves accordingly. Regex-gated so it's ~free on the
+    // typical message; non-blocking and fail-open like every utility call.
+    if (mentionsSobriety(userMsg)) {
+      maybeCaptureSobrietyDate(supabase, user_id, fullConvo);
+    }
+
+    // Member memory control ("forget that" / "remember this") - regex-gated, Haiku target
+    // matching, conservative by design. The prompt directive has Riley confirm warmly;
+    // this is the system side that actually honors it.
+    if (mentionsMemoryIntent(userMsg)) {
+      maybeHandleMemoryIntent(supabase, user_id, fullConvo);
     }
 
     // Never-Say runtime audit (docs/08 §2): log-only Sentinel signal - a violation in Riley's

@@ -802,7 +802,7 @@ async function rcFinish(){
   if(RC.sleep_hours!=null)   row.sleep_hours   = parseFloat(RC.sleep_hours);
   if(RC_LANE==='sobriety' && RC.craving!=null) row.craving = parseInt(RC.craving,10);
   // Hard-day compassion flag → hard_dates (NEVER a score input; drives tone/band-widening only).
-  if(RC.hard_day){ try{ await _db.from('hard_dates').upsert({ user_id:_uid, date:RC_TODAY, source:'checkin_tap' },{onConflict:'user_id,date'}); }catch(e){} }
+  if(RC.hard_day){ try{ await _db.from('hard_dates').upsert({ user_id:_uid, date:RC_TODAY, source:'checkin_tap', recurrence:'none' },{onConflict:'user_id,date'}); }catch(e){} }
   // Reflection stored ONLY if the member opted in (onboarding privacy toggle). The crisis
   // scan below still runs on it either way - safety never depends on storage.
   if(RC.note && RC_NOTE_OK) row.notes = RC.note;

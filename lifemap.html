@@ -95,6 +95,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
     <div id="story-slot"></div>
     <div id="insights-slot"></div>
     <div id="map-slot"><div class="empty">Loading your map…</div></div>
+    <div id="dates-slot"></div>
     <div id="timeline-slot"></div>
   </div>
 </main>
@@ -146,7 +147,43 @@ async function boot(){
   if(!(await knowledgeGraphEntitled())){return lockedPage();}
   loadManual();loadStory();loadLifeScore();loadInsights();
   await loadMap();
+  loadDates();
   loadTimeline();
+}
+// ── Important dates (founder call 2026-07-23) - the days that matter, heavy or bright. ──────
+// Feeds important_dates (Riley + the daily brief know the day, every year) and, for heavy ones,
+// hard_dates - so Clarity is extra gentle around it (band widening + Presence-lane protection).
+async function loadDates(){
+  const slot=document.getElementById('dates-slot');if(!slot)return;
+  let rows=[];
+  try{const {data}=await SB.from('important_dates').select('id,label,event_month,event_day,event_year,is_sensitive').eq('user_id',UID).order('event_month',{ascending:true}).order('event_day',{ascending:true});rows=data||[];}catch(e){}
+  const fmt=r=>{const d=new Date(2000,(r.event_month||1)-1,r.event_day||1);let s=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});if(r.event_year)s+=', '+r.event_year;return s;};
+  const chips=rows.length?`<div class="chips">${rows.map(r=>`<span class="chip">${r.is_sensitive?'🕯 ':''}${esc(r.label)} · <span style="color:var(--smoke)">${fmt(r)}</span><span class="x" onclick="removeDate('${r.id}',${r.event_year||'null'},${r.event_month},${r.event_day})">×</span></span>`).join('')}</div>`:`<div class="empty">Nothing here yet - add the dates you carry, and I'll carry them with you.</div>`;
+  slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📅</span><span class="ftitle">Important Dates</span></div><div class="fsub">The days that matter - bright or heavy. I'll remember them every year, and I'm extra gentle around the heavy ones.</div>${chips}
+    <div class="addrow" style="flex-wrap:wrap">
+      <input type="date" id="id-date" style="flex:0 0 150px">
+      <input type="text" id="id-why" placeholder="Why is this important? (optional)" onkeydown="if(event.key==='Enter')addDate()">
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+      <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--smoke);cursor:pointer"><input type="checkbox" id="id-heavy" style="accent-color:var(--gold)">A heavy one - be gentle around it</label>
+      <button onclick="addDate()" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:4px;padding:8px 14px;font-size:13px;cursor:pointer">Add</button>
+    </div></div>`;
+}
+async function addDate(){
+  const dEl=document.getElementById('id-date');const d=dEl&&dEl.value;if(!d)return dEl&&dEl.focus();
+  const why=(document.getElementById('id-why').value||'').trim();
+  const heavy=!!document.getElementById('id-heavy').checked;
+  const label=(why||'A date that matters').slice(0,120);
+  const dt=new Date(d+'T00:00:00');
+  try{await SB.from('important_dates').insert({user_id:UID,label:label,date_type:heavy?'loss':'custom',event_month:dt.getMonth()+1,event_day:dt.getDate(),event_year:dt.getFullYear(),emotional_weight:heavy?4:3,is_sensitive:heavy});}catch(e){}
+  if(heavy){try{await SB.from('hard_dates').upsert({user_id:UID,date:d,label:label,source:'member'},{onConflict:'user_id,date'});}catch(e){}}
+  await loadDates();loadTimeline();
+}
+async function removeDate(id,y,m,day){
+  try{await SB.from('important_dates').delete().eq('id',id).eq('user_id',UID);}catch(e){}
+  if(y){const iso=y+'-'+String(m).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    try{await SB.from('hard_dates').delete().eq('user_id',UID).eq('date',iso).eq('source','member');}catch(e){}}
+  await loadDates();loadTimeline();
 }
 // ── Story Engine - "This is who you became" ─────────────────────────────────
 // ── P0.1: canonical live sober-day count for this page + token/legacy-scrub for stored prose.

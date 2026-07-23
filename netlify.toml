@@ -236,6 +236,12 @@
   # EMAIL channel (int-proactive-cron.js, shared inQuietHours) additionally protects exotic/international tz.
   schedule = "0 18 * * *"
 
+# Progress mirror ("distance traveled", memory upgrade #4, 2026-07-23) — weekly Mon 15:00 UTC.
+# Writes at most ONE Never-Say-safe then-vs-now reflection per member per ~28 days; riley-chat
+# surfaces each once, calm days only. Digit-ban + violatesNeverSay gate every note.
+[functions."progress-mirror-cron"]
+  schedule = "0 15 * * 1"
+
 # Memory v2 hygiene (Master Build Spec §1.2) — weekly Mon 09:00 UTC. Backfills embeddings,
 # merges near-duplicate memories, decays stale low-confidence ones. Gated + fail-open; a no-op
 # until an embedding key is set. Logs each run to system_incidents.

@@ -476,6 +476,23 @@ async function runDailyCheckin(){
   const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
   if(_inp){ _inp.disabled=true; _inp.placeholder='Tap an answer above…'; } if(_snd) _snd.disabled=true;   // guide to the chips; the note step + rcHandoff re-enable
   const w = document.getElementById('welcome'); if(w) w.style.display='none';
+  // Rhythm & Return: KICK OFF the personalized-layer fetch FIRST so it runs in parallel with the
+  // profile/mood reads below (2026-07-23 fix: a cold function + Haiku personalization can take
+  // 6-10s; the old sequential fetch with a 6s abort silently fell back to the static flow while
+  // the server finished anyway - the founder's 6-day return never showed the welcome-back).
+  // Fail-open in every direction - error, timeout, or disabled keeps the exact static flow below.
+  RC_DYN = null; RC_DYN_ANS = { answers: [] };
+  const dynPromise = (async function(){
+    try{
+      const tokRR = (await _db.auth.getSession()).data.session?.access_token;
+      if(!tokRR) return null;
+      const ctl = new AbortController(); const tmr = setTimeout(function(){ ctl.abort(); }, 12000);
+      const rr = await fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'get', token:tokRR, return_tier: RR_TIER }), signal:ctl.signal });
+      clearTimeout(tmr);
+      const jj = await rr.json();
+      return (jj && jj.enabled) ? jj : null;
+    }catch(e){ return null; }
+  })();
   // Focus lane + branch signals from onboarding v2 (graceful fallback for v1 users).
   try{
     const {data:pf} = await _db.from('user_profiles').select('focus_lane,readiness,confidence,note_storage_consent,sobriety_date').eq('id',_uid).maybeSingle();
@@ -486,20 +503,17 @@ async function runDailyCheckin(){
     const {data:rows} = await _db.from('daily_checkins').select('mood').eq('user_id',_uid).order('checkin_date',{ascending:false}).limit(6);
     if(Array.isArray(rows)) RC_MOODS = rows.map(r=>r.mood).filter(m=>m!=null);
   }catch(e){}
-  // Rhythm & Return: fetch the personalized layer (Riley's framing, her follow-up questions,
-  // the welcome-back sequence). Fail-open in every direction - error, timeout, or disabled
-  // keeps the exact static flow below.
-  RC_DYN = null; RC_DYN_ANS = { answers: [] };
+  // Riley's typing dots while her layer finishes - the wait reads as Riley thinking, not a stall.
+  const _dynBox = document.getElementById('messages');
+  let _dynDots = null;
   try{
-    const tokRR = (await _db.auth.getSession()).data.session?.access_token;
-    if(tokRR){
-      const ctl = new AbortController(); const tmr = setTimeout(function(){ ctl.abort(); }, 6000);
-      const rr = await fetch('/.netlify/functions/checkin-prompts',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ action:'get', token:tokRR, return_tier: RR_TIER }), signal:ctl.signal });
-      clearTimeout(tmr);
-      const jj = await rr.json();
-      if(jj && jj.enabled) RC_DYN = jj;
-    }
+    _dynDots = document.createElement('div');
+    _dynDots.style.cssText = 'display:flex;justify-content:flex-start;margin:2px 0';
+    _dynDots.innerHTML = '<div style="padding:12px 15px;border-radius:12px;border-bottom-left-radius:4px;background:#16130f;border:1px solid rgba(201,168,76,0.16);line-height:0"><span class="rc-dot"></span><span class="rc-dot"></span><span class="rc-dot"></span></div>';
+    if(_dynBox){ _dynBox.appendChild(_dynDots); _dynBox.scrollTop = 999999; }
   }catch(e){}
+  RC_DYN = await dynPromise;
+  try{ if(_dynDots) _dynDots.remove(); }catch(e){}
   const tod = riToD(), name = rcName();
   const hi = (RC_DYN && RC_DYN.framing && RC_DYN.framing.intro) ? RC_DYN.framing.intro
            : tod==='morning' ? ("Morning, "+name+". Let's start the day together.")

@@ -504,6 +504,9 @@ async function runDailyCheckin(){
   try{
     const {data:pf} = await _db.from('user_profiles').select('focus_lane,readiness,confidence,note_storage_consent,sobriety_date').eq('id',_uid).maybeSingle();
     if(pf){ RC_LANE=pf.focus_lane||'other'; RC_READY=pf.readiness; RC_CONF=pf.confidence; RC_NOTE_OK=!!pf.note_storage_consent; RC_SOBER=!!pf.sobriety_date; }
+    // v2.4 Presence lane (docs/07A): "kept the ritual" tap renders for lane members ONLY.
+    window.RC_RITUAL=false;
+    try{const{data:cc}=await _db.from('user_clarity_config').select('config').eq('user_id',_uid).maybeSingle();window.RC_RITUAL=!!(cc&&cc.config&&cc.config.lanes&&cc.config.lanes.presence===true);}catch(e){}
   }catch(e){}
   // Recent moods → escalation trend (most-recent first).
   try{
@@ -590,7 +593,7 @@ function buildSteps(tod, lane){
         { key:'outside',    label:isAM?"Got outside yesterday":"Got outside" },
         { key:'connection', label:"Talked to a human" },
         { key:'hard_day',   label:isAM?"Yesterday was a hard day":"Today was a hard day" }
-      ]
+      ].concat(window.RC_RITUAL?[{ key:'kept_ritual', label:"Kept the ritual" }]:[])
     },
     { key:'goal', type:'choice', q:goalQ, sub:g.sub||'', opts:g.opts },
     { key:'influences', type:'tags', q:inflQ, sub:"Pick anything that fits - up to 3.", tags:(CI_INFL[lane]||CI_INFL.other).concat(CI_INFL_GENERIC) }
@@ -786,6 +789,8 @@ async function rcFinish(){
     goal_answer:RC.goal||null, influences:RC.influences||[],
     // Clarity v2 canonical fields (§2)
     outside:!!RC.outside, connection:!!RC.connection, hard_day:!!RC.hard_day,
+    // v2.4: counted, never described, never graded - lane members only (column stays null otherwise)
+    ...(window.RC_RITUAL?{kept_ritual:!!RC.kept_ritual}:{}),
     // Back-compat: keep `secondary`/`daily_log` populated for one release.
     secondary:{ key:'heaviness', value:(RC.heaviness!=null ? RC.heaviness : null) },
     daily_log:{ sleep:(RC.sleep_hours!=null ? RC.sleep_hours : null) }

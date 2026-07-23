@@ -56,7 +56,9 @@ weekly-pipeline-cron.js runs every Sunday 12:00 UTC (6am MT) as a scheduled back
 Netlify scheduled functions do NOT need a -background suffix — the schedule makes them background automatically.
 
 ## Clarity & Cadence — spec pointers (source of truth in docs/)
-- Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3 - bands, lanes, First Light, provisional).
+- Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3) + `docs/07A_CLARITY_V2_4_AMENDMENT.md`
+  (v2.4 - Presence lane for grief + insight nudges; founder-approved 2026-07-23, closes the grief
+  open question. We still never grade grief itself - Presence scores the showing up.).
 - Cadence & check-ins: `docs/08_RHYTHM_AND_RETURN_SPEC.md` (v1.1 - return tiers, Never-Say list, continuity loop).
 - The scored check-in spine is invariant; personalization is additive only.
 - Rhythm & Return is ON BY DEFAULT (founder call 2026-07-22) - set `RHYTHM_ENABLED=false` in Netlify env

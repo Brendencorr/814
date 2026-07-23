@@ -46,13 +46,13 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   // ── gather the v2-specific signals in parallel (bounded fan-out; Tier-1 only) ──
   const [ciRes, baseRes, cfgRes, histRes, hardRes, profRes, fitRes, leRes] = await Promise.allSettled([
     supabase.from("daily_checkins")
-      .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,notes")
+      .select("checkin_date,mood,energy,sleep_hours,sleep_quality,heaviness,outside,connection,hard_day,craving,kept_ritual,notes")
       .eq("user_id", userId).gte("checkin_date", win28).order("checkin_date", { ascending: true }),
     supabase.from("user_dim_baselines").select("dim,baseline,sample_days").eq("user_id", userId),
     supabase.from("user_clarity_config").select("config,config_version,pending_config,pending_apply_on").eq("user_id", userId).maybeSingle(),
     supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
-    supabase.from("hard_dates").select("date").eq("user_id", userId).eq("date", today),
+    supabase.from("hard_dates").select("date").eq("user_id", userId).gte("date", daysAgoISO(16)).lte("date", dayISO(new Date(Date.now() + 2 * 86400000))),
     supabase.from("user_profiles").select("created_at,relight_until,relight_mode,direction_mute_until").eq("id", userId).maybeSingle(),
     supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
     supabase.from("clarity_life_events").select("occurred_on,window_days,recalibrate").eq("user_id", userId).eq("recalibrate", true).gte("occurred_on", daysAgoISO(60)),
@@ -67,7 +67,8 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const cfg = eff.config || {};
   const cfgVersion = eff.version || 1;
   const hist = (histRes.status === "fulfilled" && histRes.value.data) || [];
-  const hardToday = (hardRes.status === "fulfilled" && hardRes.value.data && hardRes.value.data.length > 0) || false;
+  const hardDates = (hardRes.status === "fulfilled" && hardRes.value.data) || [];
+  const hardToday = hardDates.some((h) => h.date === today);
   const prof = (profRes.status === "fulfilled" && profRes.value.data) || null;
 
   // v2.3 TIER SPLIT: free/Guide members score in FOUNDATION mode (Foundation + Direction only - "the
@@ -190,6 +191,47 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const lane = laneEnabled
     ? { sobriety: { enabled: true, soberDays30: Math.min(30, Math.max(0, sig.soberDays)) } }
     : {};
+
+  // ── v2.4 Presence lane (docs/07A): opt-in; auto-offered to grief-program members with
+  //    opt-out (cfg.lanes.presence === false), same pattern as sobriety. Occurrence density
+  //    over 14 days - the door counts, the words never do. ──
+  try {
+    const P = require("./presence-lane");
+    let presenceOn = cfg.lanes && cfg.lanes.presence === true;
+    if (!presenceOn && !(cfg.lanes && cfg.lanes.presence === false)) {
+      const { data: gp } = await supabase.from("user_active_products").select("product_key")
+        .eq("user_id", userId).in("product_key", ["prog_grief", "prog_int_grief"]).limit(1);
+      presenceOn = !!(gp && gp.length);
+    }
+    if (presenceOn) {
+      // Extra qualifying-day sources: grief-program steps + conversations on hard dates.
+      // OCCURRENCE dates only - content is never read, never scored (Never List).
+      const extra = [];
+      try {
+        const { data: ps } = await supabase.from("user_program_progress").select("updated_at,program_key")
+          .eq("user_id", userId).in("program_key", ["prog_grief", "prog_int_grief"]).gte("updated_at", daysAgoISO(15));
+        (ps || []).forEach((r) => { if (r.updated_at) extra.push(String(r.updated_at).slice(0, 10)); });
+      } catch (_) {}
+      try {
+        const { data: convs } = await supabase.from("riley_conversations").select("created_at")
+          .eq("user_id", userId).eq("role", "user").gte("created_at", daysAgoISO(15)).limit(200);
+        (convs || []).forEach((r) => {
+          const d = String(r.created_at || "").slice(0, 10);
+          if (d && P.inHardDateWindow(d, hardDates)) extra.push(d);
+        });
+      } catch (_) {}
+      const qualDays = P.qualifyingDays14(today, checkins, hardDates, extra);
+      const prevLane = prev && prev.v2_breakdown && prev.v2_breakdown.practice && prev.v2_breakdown.practice.presence
+        ? num(prev.v2_breakdown.practice.presence.score) : null;
+      lane.presence = {
+        enabled: true,
+        qualifyingDays14: qualDays,
+        protectedToday: P.isProtectedDay(today, hardToday2, hardDates),
+        prevLane,
+      };
+      if (qualDays > 0) emitEvent(supabase, userId, "presence_qualifying_day", { days_14: qualDays });
+    }
+  } catch (e) { console.warn("presence lane gather failed (non-fatal):", e.message); }
 
   // ── §2b return cadence (docs/07 + docs/08 §5): Re-Light / First Light-lite window + Direction
   //    mute are set on the profile by session-return (Phase 3) and honored here every recompute.

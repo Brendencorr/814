@@ -1305,6 +1305,20 @@ exports.handler = async function (event) {
     } catch (e) { console.warn("[rhythm] return-tier injection failed (non-fatal):", e.message); }
   }
 
+  // v2.4 insight nudge (docs/07A §2): at most one per 7 days, crisis- and protected-window
+  // suppressed inside the module (fail-safe). Chat is one of the two sanctioned surfaces.
+  // Injected as an OPTION for Riley - share only if it fits the conversation naturally.
+  if (user_id) {
+    try {
+      const { maybeInsightNudge, recordShown } = require("./insight-nudge");
+      const nudge = await maybeInsightNudge(supabase, user_id);
+      if (nudge) {
+        systemPrompt = systemPrompt + "\n\nINSIGHT NUDGE (optional, at most once this conversation, only if it fits naturally - never during a heavy moment): share this observation from their own patterns, keeping its shape - observation, \"your pattern, not a rule,\" and end by handing agency back: \"" + nudge.text + "\"";
+        recordShown(supabase, user_id, nudge.key);
+      }
+    } catch (_) {}
+  }
+
   // Interactive Riley-led session context - additive, only when the client sends context.enrollment_id.
   // Injects the session spec so Riley delivers the loop conversationally, and exempts the message from
   // the Guide cap. Crisis/safety directives are prepended LATER, so they still win over this.

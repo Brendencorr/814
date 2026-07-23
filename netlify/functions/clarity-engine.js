@@ -161,21 +161,35 @@ function computePractice(inp) {
     perDim[dim] = { score: s, v: d.v, baseline: d.baseline, conf: c };
     if (s != null && c >= 0.1) scored.push({ s, c, w: 1 });
   });
-  const lane = inp.lane && inp.lane.sobriety && inp.lane.sobriety.enabled;
-  let laneScore = null;
-  if (lane) {
-    const density = clamp((inp.lane.sobriety.soberDays30 || 0) / 30, 0, 1);
-    laneScore = clamp100(100 * Math.pow(density, 0.8));
-    perDim.sobriety = { score: laneScore, density };
+  // ── v2.4 lanes (docs/07A): sobriety (density_30) + Presence (grief, density_14, protected).
+  // Multi-lane rule, GLOBAL: one lane takes 12 of P's 40; two take 10 each (20 combined);
+  // max two lanes ever - chosen practice dims always retain real weight. ──
+  const lanesIn = inp.lane || {};
+  const laneScores = [];
+  if (lanesIn.sobriety && lanesIn.sobriety.enabled) {
+    const density = clamp((lanesIn.sobriety.soberDays30 || 0) / 30, 0, 1);
+    const s = clamp100(100 * Math.pow(density, 0.8));
+    perDim.sobriety = { score: s, density };
+    laneScores.push(s);
   }
-  // Non-lane dims share (lane ? 28 : 40) of P; lane takes 12.
+  if (lanesIn.presence && lanesIn.presence.enabled) {
+    const density = clamp((lanesIn.presence.qualifyingDays14 || 0) / 14, 0, 1);
+    let s = clamp100(100 * Math.pow(density, 0.8));
+    // Hard-date protection (07A §1): on flagged hard days and within ±1 day of any hard date
+    // the lane may rise or hold ONLY - a brutal anniversary can never lower Presence.
+    if (lanesIn.presence.protectedToday && isNum(lanesIn.presence.prevLane)) s = Math.max(s, lanesIn.presence.prevLane);
+    perDim.presence = { score: s, density, protected: !!lanesIn.presence.protectedToday };
+    laneScores.push(s);
+  }
+  const laneW = laneScores.length >= 2 ? 20 : laneScores.length === 1 ? 12 : 0;
+  const laneAvg = laneScores.length ? laneScores.reduce((a, b) => a + b, 0) / laneScores.length : null;
   const dimsWc = scored.reduce((s, d) => s + d.w * d.c, 0);
   const dimsAvg = dimsWc ? scored.reduce((s, d) => s + d.w * d.c * d.s, 0) / dimsWc : null;
   let P;
-  if (lane && dimsAvg != null) P = (laneScore * 12 + dimsAvg * 28) / 40;
-  else if (lane) P = laneScore;
+  if (laneAvg != null && dimsAvg != null) P = (laneAvg * laneW + dimsAvg * (40 - laneW)) / 40;
+  else if (laneAvg != null) P = laneAvg;
   else P = dimsAvg;
-  return { P: P == null ? null : clamp100(P), perDim, hasData: scored.length > 0 || lane };
+  return { P: P == null ? null : clamp100(P), perDim, hasData: scored.length > 0 || laneScores.length > 0 };
 }
 
 // ── §8 Direction ─────────────────────────────────────────────────────────────────

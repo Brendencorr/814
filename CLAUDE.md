@@ -246,6 +246,12 @@ Design system:
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
 
 ## Founder decisions, 2026-07-23 (hold as truth)
+- **Riley is NOT a recovery tool - never describe it as one, anywhere** (founder correction after an
+  internal brief opened with "a recovery and sobriety support product"). The category is REBUILDING -
+  not wellness, not recovery. Recovery is one chapter, never the whole story. The canonical one-liner
+  (verbatim): "Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety,
+  starting over - built by someone who's been through them." This binds INTERNAL docs and briefs too,
+  not just member-facing copy - source: RILEY_MESSAGING_HOUSE.md §The Category and the Mission.
 - **Life Balance wheel is BACK, and at the TOP of /lifemap** — reverses punch-list P1.4 (July 14).
   Order: wheel → My User Manual → Your Story → insights → facets → timeline. Do not re-delete it.
 - **Life Map spotlight on the member homepage** (dashboard.html `loadLifemapSpotlight`): condensed

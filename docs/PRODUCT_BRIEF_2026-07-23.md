@@ -10,10 +10,23 @@ RILEY_MESSAGING_HOUSE.md v2.1 are used verbatim, never paraphrased. This brief f
 
 ## 1. What the product is
 
-Meet Riley is a recovery and sobriety support product. **Riley** is an AI companion - openly disclosed
-as an AI ("Riley is an AI.") - who offers a steady, warm, judgment-free presence at any hour. The brand
-is positioned against forms, streaks, and guilt: showing up counts, gaps are never counted out loud,
-and Riley remembers so members never have to explain themselves twice.
+**Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over -
+built by someone who's been through them.** (That one-liner is canon; use it verbatim.) Riley is an AI
+companion - openly disclosed as an AI ("Riley is an AI.") - who offers a steady, warm, judgment-free
+presence at any hour.
+
+**Riley is NOT a recovery tool.** The category is **REBUILDING** - not wellness, not recovery.
+"Wellness" is a sea; "recovery" is a label. Rebuilding is ours: sobriety, grief, burnout, the body, the
+whole restart - one companion for the whole person. Recovery is one chapter, never the whole story.
+(Category language is internal and investor-facing; the porch speaks in change and chapters, not
+category names.) The mission: help people build a life they don't want to escape from.
+
+Audience: the lead ICP is **the Rebuilder** - recovery first, grief close second, 25-60, in or around a
+hard chapter they can name. The adjacent ring (stressed, anxious, burnt-out adults) is welcomed by the
+universal lines and never pitched with lane language.
+
+The brand is positioned against forms, streaks, and guilt: showing up counts, gaps are never counted
+out loud, and Riley remembers so members never have to explain themselves twice.
 
 Surfaces:
 - **meetriley.us** - marketing site (home, about, tiers, FAQ).
@@ -34,7 +47,7 @@ The tiers answer "how close do you want Riley?", not "how much do you get?". One
 |---|---|---|---|
 | **Riley Companion** | `guide`, `reset_free` | Free | Riley shows you where you stand. |
 | **Riley Coach** | `companion` | $19/mo or $175/yr | Riley walks with you. |
-| **Riley Mentor** | `coach`, `mentor`, `concierge` | Teased, not purchasable | Riley moves you forward. |
+| **Riley Mentor** | `coach`, `mentor`, `concierge` | Coming soon (Community, Upload your history) | Riley moves you forward. |
 
 - Coach is the whole of Riley: memory turns on ("never explain yourself twice"). The member-facing name
   for the memory pillar is **Life Map** - never "Knowledge Graph".
@@ -44,6 +57,8 @@ The tiers answer "how close do you want Riley?", not "how much do you get?". One
   through sign-in to checkout.
 - Display names render only through `tierLabel()` / `RILEY_TIER_LABELS` - never hardcoded.
 - In-app upsell cards lead with value and carry no inline price.
+- One-breath offering (canon): "Riley is free to start. $8.14 gets you a program. $19 a month gets you
+  all of Riley." Programs are $8.14 - the :14 rhythm is a brand signature.
 
 ## 3. The member experience
 
@@ -100,7 +115,7 @@ conversation and members can add to → Your Timeline. Empty facets collapse int
 
 ### Programs
 - **The 8:14 Reset** - the free 7-day starting program (daily emails + in-app days).
-- Paid programs are available a la carte; program progress is tracked per member.
+- Paid programs are $8.14 a la carte ("The book, not the coach."); progress is tracked per member.
 
 ## 4. Member communications (email)
 

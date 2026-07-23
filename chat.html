@@ -237,7 +237,9 @@ body.embed .topbar-actions{display:none}
     <!-- Messages -->
     <div id="messages" style="flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:12px">
       <!-- Welcome -->
-      <div id="welcome" style="max-width:600px;margin:40px auto;text-align:center">
+      <!-- Hidden until boot decides the day's opening (check-in / resume / fresh) - the static
+           welcome must never flash before the dynamic flow takes over (founder, 2026-07-23). -->
+      <div id="welcome" style="max-width:600px;margin:40px auto;text-align:center;display:none">
         <div style="font-size:40px;margin-bottom:16px">🤝</div>
         <div style="font-family:'DM Serif Display',serif;font-size:28px;color:var(--parchment);margin-bottom:12px">Good to see you.</div>
         <div style="font-size:14px;color:var(--smoke);line-height:1.7;margin-bottom:28px">Ask me anything - your recovery, your workouts, your goals, your mindset. I already know your context.</div>
@@ -357,6 +359,7 @@ async function openConversation() {
   if (_live) { resumeSession(_live.sid, _live.history); return; }
   if (_inp) { _inp.disabled = true; _inp.placeholder = 'One moment…'; }
   if (_snd) _snd.disabled = true;
+  let _landed = false;   // a resume view rendered - the static welcome stays hidden
   try {
     const _tok = (await _db.auth.getSession()).data.session?.access_token || null;
     const r = await fetch('/.netlify/functions/auth-handler', {
@@ -370,10 +373,14 @@ async function openConversation() {
         const hoursSince = s.last_at ? (Date.now() - new Date(s.last_at).getTime()) / 3600000 : 0;
         if (hoursSince < 24) resumeSession(s.last_session_id, history);
         else                 offerResume(s.last_session_id, history);
+        _landed = true;
       }
     }
   } catch (e) { /* no resume available → fresh session */ }
   finally {
+    // Only a genuinely fresh session shows the static welcome (it boots hidden so it can
+    // never flash before the check-in / resume takes over).
+    if (!_landed) { const _w = document.getElementById('welcome'); if (_w) _w.style.display = 'block'; }
     if (_inp) { _inp.disabled = false; _inp.placeholder = 'Message Riley…'; _inp.focus(); }
     if (_snd) _snd.disabled = false;
   }

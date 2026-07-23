@@ -44,7 +44,9 @@ const THREAD_Q = {
 };
 const HARDDATE_Q = { id: "dq_harddate_v1", t: (label) => (label ? label + " is close. How are you holding it this week?" : "A date you told me matters is close. How are you holding it this week?") };
 const RETURN_SEQUENCE = [
-  { id: "rs_1_v1", step: "gap_summary", text: "Good to see you. How have the last few days been?", options: ["rough", "mixed", "okay", "good"], optional_note: true },
+  // No greeting here - the framing intro already greets; a second "Good to see you" read as
+  // two conversations starting (founder, 2026-07-23). The steps are plain questions.
+  { id: "rs_1_v1", step: "gap_summary", text: "How have the last few days been?", options: ["rough", "mixed", "okay", "good"], optional_note: true },
   { id: "rs_2_v1", step: "anything", text: "Anything I should know?", free_text: true, skippable: true },
   { id: "rs_3_v1", step: "goal_fork", text: "Those goals from last time - keep going, adjust, or start something new?", options: ["keep", "adjust", "fresh"] },
 ];

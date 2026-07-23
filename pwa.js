@@ -193,7 +193,10 @@
     // P1.10: the conversation LAYER - a full-height panel sliding over the page from the right
     // (~46vw desktop, one-tap expand to full screen; full-screen sheet on mobile). Non-blocking, so
     // the member can read/scroll the page beneath while Riley stays open.
-    styleOnce('riley-layer-css', '#riley-chat-overlay{align-items:stretch !important;justify-content:flex-end;padding:0 !important}.riley-layer-panel{width:min(46vw,560px);height:100vh;overflow:hidden;box-shadow:-18px 0 60px rgba(0,0,0,0.45);border-left:1px solid rgba(0,0,0,0.10);transition:width .28s cubic-bezier(.4,0,.2,1)}.riley-layer-panel.expanded{width:100vw}@media(max-width:760px){.riley-layer-panel{width:100vw !important}}@media(prefers-reduced-motion:reduce){.riley-layer-panel{transition:none}}');
+    // While the layer is open the PAGE SHRINKS to fit beside it (founder, 2026-07-23) - the panel
+    // must not cover content. body gets a right margin matching the panel width; mobile keeps the
+    // full-screen sheet (no room to share), and expanded covers everything anyway.
+    styleOnce('riley-layer-css', '#riley-chat-overlay{align-items:stretch !important;justify-content:flex-end;padding:0 !important}.riley-layer-panel{width:min(46vw,560px);height:100vh;overflow:hidden;box-shadow:-18px 0 60px rgba(0,0,0,0.45);border-left:1px solid rgba(0,0,0,0.10);transition:width .28s cubic-bezier(.4,0,.2,1)}.riley-layer-panel.expanded{width:100vw}@media(max-width:760px){.riley-layer-panel{width:100vw !important}}body{transition:margin-right .28s cubic-bezier(.4,0,.2,1)}html.riley-layer-open body{margin-right:min(46vw,560px)}@media(max-width:760px){html.riley-layer-open body{margin-right:0}}@media(prefers-reduced-motion:reduce){.riley-layer-panel{transition:none}body{transition:none}}');
     _cov.style.cssText = 'position:fixed;inset:0;z-index:10005;display:none;align-items:stretch;justify-content:flex-end;pointer-events:none';
     var panel = document.createElement('div'); panel.className = 'riley-layer-panel'; _cpanel = panel;
     panel.style.cssText = 'position:relative;pointer-events:auto;background:#fff';
@@ -226,7 +229,7 @@
   }
   function setLayerExpanded(on) { if (_cpanel) _cpanel.classList.toggle('expanded', !!on); }
   function flushSay() { if (_pendingSay && _layerReady && _cfr && _cfr.contentWindow) { try { _cfr.contentWindow.postMessage({ type: 'riley-say', text: _pendingSay }, location.origin); } catch (e) {} _pendingSay = null; } }
-  function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
+  function openChat() { if (!_cov) buildChat(); if (!_cfr.src) _cfr.src = '/chat?embed=1'; _cov.style.display = 'flex'; document.documentElement.classList.add('riley-layer-open'); var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'none'; }
   // P1.9/P1.10: the ONE entry point. The dashboard composer, nav "Talk to Riley", and "Ask Riley about this"
   // all call this - it opens the layer over the current page and optionally sends a message / expands.
   window.openRileyLayer = function (opts) {
@@ -239,7 +242,7 @@
   // re-opening resumes the SAME conversation. Never locks the page - dashboard stays usable.
   function closeChat() {
     if (_checkinLock) { flashLockHint(); return; }   // mandatory check-in in progress → can't dismiss
-    if (_cov) _cov.style.display = 'none'; document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex';
+    if (_cov) _cov.style.display = 'none'; document.documentElement.classList.remove('riley-layer-open'); document.body.style.overflow = ''; var p = document.getElementById('riley-chat-btn'); if (p) p.style.display = 'flex';
   }
   // Once per LOCAL day, on the app home, auto-open the chat so Riley greets with the
   // day-aware daily check-in. Strictly one auto-open per day - non-naggy by design.

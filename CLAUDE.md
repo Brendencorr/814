@@ -252,6 +252,11 @@ Design system:
   What Riley's Noticing + filled facet chips + still-learning line, under the composer, for every
   entitled member until they hit DISMISS (localStorage `lm_spot_off_<uid>`, per device). Never
   auto-hide it — "at least the first week" is guaranteed by only the member dismissing it.
+- **The spotlight is an OPEN feature** (founder, same day): members add, update, and REMOVE entries
+  directly on the homepage card (every chip has an ×, every facet a "+ add", still-learning facets
+  are tappable to start). Habits/fears/people change — there must always be space to update the
+  member's identity. It does not need to preserve past answers; removal is the member's call
+  (soft-delete via life_map.is_active, same as the Life Map page).
 - **The daily brief is ONE card** — title row + body in a single padded container, no separate
   gradient header band, no duplicated copy (bc-sub is hidden but stays in the DOM for the JS).
 - Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —

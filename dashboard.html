@@ -958,25 +958,45 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
 })();
 
 // ── LIFE MAP SPOTLIGHT (founder, 2026-07-23) - the memory payoff on the homepage ──────────────
-// A condensed Life Map card up top: what Riley's noticing + what she's holding, plus the
-// still-learning line. Dismissible per member (localStorage, this device). Shows for every
-// entitled member until dismissed - "at least the first week" guaranteed by never auto-hiding.
+// An OPEN, living card (founder): members add, update, and remove entries right here - habits,
+// fears, and people change, so there is always space to update who you are today. What Riley's
+// noticing + every filled facet as editable chips + tap a still-learning facet to start it.
+// Dismissible per member (localStorage, this device); never auto-hidden.
 const LM_SPOT_FACETS=[
-  {k:'why',emoji:'🎯',title:'Your Why'},
-  {k:'vision',emoji:'🌅',title:"Who You're Becoming"},
-  {k:'recovery_dna',emoji:'🌿',title:'What Keeps You Steady'},
-  {k:'win',emoji:'🏆',title:'Wins'},
-  {k:'joy',emoji:'☀️',title:'What Brings You Joy'},
-  {k:'relationship',emoji:'🤝',title:'People Who Matter'},
-  {k:'fear',emoji:'🌊',title:'Fears'},
-  {k:'value',emoji:'💎',title:'Values'},
-  {k:'strength',emoji:'💪',title:'Strengths'},
-  {k:'energy',emoji:'⚡',title:'Your Energy Rhythms'}
+  {k:'why',emoji:'🎯',title:'Your Why',ph:'Why are you here? Why now?'},
+  {k:'vision',emoji:'🌅',title:"Who You're Becoming",ph:'A hope for your life…'},
+  {k:'recovery_dna',emoji:'🌿',title:'What Keeps You Steady',ph:'Walking, prayer, family, fitness…'},
+  {k:'win',emoji:'🏆',title:'Wins',ph:'Something you did, big or small…'},
+  {k:'joy',emoji:'☀️',title:'What Brings You Joy',ph:'Hiking, music, dogs, coffee…'},
+  {k:'relationship',emoji:'🤝',title:'People Who Matter',ph:'A person and who they are to you…'},
+  {k:'fear',emoji:'🌊',title:'Fears',ph:"Something you're afraid of…"},
+  {k:'value',emoji:'💎',title:'Values',ph:'A value you live by…'},
+  {k:'strength',emoji:'💪',title:'Strengths',ph:'A strength of yours…'},
+  {k:'energy',emoji:'⚡',title:'Your Energy Rhythms',ph:'e.g. sharp in the mornings, wiped by 3pm'}
 ];
+let LM_SPOT={ent:null,checkins:null,rows:[],open:null};
 window.dismissLifemapSpot=function(){
   try{localStorage.setItem('lm_spot_off_'+UID,'1');}catch(e){}
   const el=document.getElementById('lifemap-spot-slot');if(el)el.innerHTML='';
 };
+window.lmSpotToggle=function(k){
+  LM_SPOT.open=(LM_SPOT.open===k?null:k);lmSpotRender();
+  if(LM_SPOT.open)setTimeout(function(){var e=document.getElementById('lmspot-in-'+k);if(e)e.focus();},0);
+};
+window.lmSpotAdd=async function(k){
+  const el=document.getElementById('lmspot-in-'+k);const v=el&&el.value.trim();if(!v)return;
+  el.disabled=true;
+  try{await SB.from('life_map').insert({user_id:UID,facet:k,content:v.slice(0,300),source:'member'});}catch(e){}
+  LM_SPOT.open=null;await lmSpotRefresh();
+};
+window.lmSpotRemove=async function(id){
+  try{await SB.from('life_map').update({is_active:false}).eq('id',id);}catch(e){}
+  await lmSpotRefresh();
+};
+async function lmSpotRefresh(){
+  try{const {data}=await SB.from('life_map').select('id,facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});LM_SPOT.rows=data||[];}catch(e){}
+  lmSpotRender();
+}
 async function loadLifemapSpotlight(ent,checkins){
   try{
     const slot=document.getElementById('lifemap-spot-slot');if(!slot)return;
@@ -984,35 +1004,43 @@ async function loadLifemapSpotlight(ent,checkins){
     // Life Map is the Coach memory pillar - hide only when we can positively tell it's locked (fail-open).
     const kg=ent&&ent.features&&ent.features.knowledge_graph;
     if((kg&&kg.access===false)||(ent&&ent.entitlements&&ent.entitlements.knowledge_graph==='false'))return;
-    let rows=[];
-    try{const {data}=await SB.from('life_map').select('facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});rows=data||[];}catch(e){}
+    LM_SPOT.ent=ent;LM_SPOT.checkins=checkins;
+    await lmSpotRefresh();
+  }catch(e){}
+}
+function lmSpotRender(){
+  try{
+    const slot=document.getElementById('lifemap-spot-slot');if(!slot)return;
     // What Riley's noticing - same patterns as the Life Map page, from the check-ins already loaded.
-    const ci=checkins||[],both=ci.filter(c=>c.mood!=null&&c.sleep_hours!=null),ins=[];
+    const ci=LM_SPOT.checkins||[],both=ci.filter(c=>c.mood!=null&&c.sleep_hours!=null),ins=[];
     if(both.length>=6){
       const good=both.filter(c=>c.sleep_hours>=7.5),poor=both.filter(c=>c.sleep_hours<6);
       if(good.length>=3&&poor.length>=3){const ag=good.reduce((a,c)=>a+c.mood,0)/good.length,ap=poor.reduce((a,c)=>a+c.mood,0)/poor.length;if(ag-ap>=0.4)ins.push("When you sleep <b>7.5+ hours</b>, your mood runs noticeably higher than on short nights. Sleep is one of your biggest levers.");}
     }
     const recent=ci.slice(0,7).filter(c=>c.mood!=null).map(c=>c.mood),prior=ci.slice(7,14).filter(c=>c.mood!=null).map(c=>c.mood);
     if(recent.length>=3&&prior.length>=3){const ar=recent.reduce((a,b)=>a+b,0)/recent.length,ap=prior.reduce((a,b)=>a+b,0)/prior.length;if(ar-ap>=0.5)ins.push("Your mood has been <b>trending up</b> this past week versus the one before. Whatever you're doing - keep it.");else if(ap-ar>=0.5)ins.push("This week has been a little heavier than last. That happens - be gentle, and lean on what steadies you.");}
-    const by={};rows.forEach(r=>{(by[r.facet]=by[r.facet]||[]).push(r);});
+    const by={};LM_SPOT.rows.forEach(r=>{(by[r.facet]=by[r.facet]||[]).push(r);});
     const filled=LM_SPOT_FACETS.filter(f=>(by[f.k]||[]).length),empty=LM_SPOT_FACETS.filter(f=>!(by[f.k]||[]).length);
-    const chip=r=>'<span style="display:inline-flex;align-items:center;background:var(--ink3,#1c1a18);border:1px solid '+(r.source==='conversation'?'rgba(74,122,176,0.25)':'rgba(201,168,76,0.18)')+';border-radius:20px;padding:5px 11px;font-size:12px;color:var(--parchment);line-height:1.4">'+esc(r.content)+'</span>';
-    const facetRows=filled.slice(0,4).map(f=>{
-      const items=by[f.k],shown=items.slice(0,4);
-      const more=items.length>shown.length?'<span style="font-size:11px;color:var(--smoke2);align-self:center">+'+(items.length-shown.length)+' more</span>':'';
-      return '<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">'+f.emoji+'</span>'+f.title+'</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+shown.map(chip).join('')+more+'</div></div>';
+    const inputRow=f=>'<div style="display:flex;gap:7px;margin-top:7px;width:100%"><input id="lmspot-in-'+f.k+'" placeholder="'+esc(f.ph)+'" maxlength="300" onkeydown="if(event.key===\'Enter\')lmSpotAdd(\''+f.k+'\')" style="flex:1;background:var(--ink2,#141210);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:8px 11px;font-size:12.5px;font-family:inherit;color:var(--parchment);outline:none"><button onclick="lmSpotAdd(\''+f.k+'\')" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:4px;padding:0 13px;font-size:12px;cursor:pointer">Add</button></div>';
+    const chip=r=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--ink3,#1c1a18);border:1px solid '+(r.source==='conversation'?'rgba(74,122,176,0.25)':'rgba(201,168,76,0.18)')+';border-radius:20px;padding:5px 11px;font-size:12px;color:var(--parchment);line-height:1.4">'+esc(r.content)+'<span onclick="lmSpotRemove(\''+r.id+'\')" title="Remove" style="color:var(--smoke2);cursor:pointer;font-size:13px;line-height:1">×</span></span>';
+    const facetRows=filled.map(f=>{
+      const items=by[f.k],shown=items.slice(0,6);
+      const more=items.length>shown.length?'<a href="/lifemap" style="font-size:11px;color:var(--smoke2);align-self:center;text-decoration:none">+'+(items.length-shown.length)+' more</a>':'';
+      const plus='<span onclick="lmSpotToggle(\''+f.k+'\')" title="Add to '+esc(f.title)+'" style="display:inline-flex;align-items:center;border:1px dashed rgba(201,168,76,0.35);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--gold);cursor:pointer;line-height:1.4">'+(LM_SPOT.open===f.k?'−':'+ add')+'</span>';
+      return '<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">'+f.emoji+'</span>'+f.title+'</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+shown.map(chip).join('')+more+plus+'</div>'+(LM_SPOT.open===f.k?inputRow(f):'')+'</div>';
     }).join('');
-    const moreFacets=filled.length>4?'<div style="font-size:11.5px;color:var(--smoke2);margin-top:10px">+'+(filled.length-4)+' more on your full Life Map</div>':'';
     const insBlock=ins.length?'<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">🔎</span>What Riley\'s Noticing</div>'+ins.map(i=>'<div style="font-size:13px;color:var(--parchment);line-height:1.6;padding:3px 0">'+i+'</div>').join('')+'</div>':'';
-    const learning=empty.length?'<div style="font-size:11.5px;color:var(--smoke2);margin-top:12px;font-style:italic">🌱 Still learning: '+empty.map(f=>f.title).join(' · ')+'</div>':'';
-    const emptyState=(!filled.length&&!ins.length)?'<div style="font-size:13px;color:var(--smoke);line-height:1.65;margin-top:10px">I\'m building your Life Map as we talk - your why, your people, what keeps you steady. Everything you share lives here, and I\'ll never make you repeat it.</div>':'';
+    // Still-learning facets are tappable - one tap opens the input to start that part of the map.
+    const openEmpty=empty.find(f=>LM_SPOT.open===f.k);
+    const learning=empty.length?'<div style="margin-top:14px"><div style="font-size:11.5px;color:var(--smoke2);margin-bottom:6px;font-style:italic">🌱 Still learning - tap one to add to it:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+empty.map(f=>'<span onclick="lmSpotToggle(\''+f.k+'\')" style="display:inline-flex;align-items:center;gap:5px;border:1px dashed rgba(255,255,255,0.14);border-radius:20px;padding:5px 11px;font-size:11.5px;color:'+(LM_SPOT.open===f.k?'var(--gold)':'var(--smoke)')+';cursor:pointer;line-height:1.4">'+f.emoji+' '+f.title+'</span>').join('')+'</div>'+(openEmpty?inputRow(openEmpty):'')+'</div>':'';
     slot.innerHTML='<div style="background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:18px 20px;margin:0 0 20px">'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
       +'<div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px">Your Life Map</div>'
-      +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">What Riley\'s holding for you</div></div>'
+      +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">What Riley\'s holding for you</div>'
+      +'<div style="font-size:11.5px;color:var(--smoke2);margin-top:3px">Yours to keep current - add or clear anything as life changes.</div></div>'
       +'<button onclick="dismissLifemapSpot()" title="Dismiss this card" style="background:none;border:none;color:var(--smoke2);font-size:11px;cursor:pointer;font-family:\'DM Mono\',monospace;letter-spacing:0.06em;flex-shrink:0">DISMISS ✕</button>'
       +'</div>'
-      +insBlock+facetRows+moreFacets+emptyState+learning
+      +insBlock+facetRows+learning
       +'<div style="margin-top:14px"><a href="/lifemap" style="font-size:12px;color:var(--gold);text-decoration:none">Open your full Life Map →</a></div>'
       +'</div>';
   }catch(e){}

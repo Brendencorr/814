@@ -10,6 +10,14 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-23
+
+- `meetriley-big-build` - **Third homepage testimonial (Curtis, MI).** Added to the Real Stories band in
+  home.html after Samantha's, same card pattern with CMS override hooks (`testimonial_curtis` /
+  `testimonial_curtis_author`). Founder-supplied copy, verbatim with straight apostrophes; the memory
+  line ("remembers our conversations... picks up right where we left off") aligns with canon's
+  "Never explain yourself twice." Messaging gate passes. File: home.html.
+
 ## 2026-07-17
 
 - `meetriley-big-build` - **App headline is "Meet Riley" everywhere (founder decision, supersedes the

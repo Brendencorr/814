@@ -424,6 +424,9 @@ function buildUserContext(profile, clientData) {
   );
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
 
+  lines.push(`\nNEVER RE-ASK LAW ("never explain yourself twice" - non-negotiable): everything above is what they have ALREADY told us. Never ask for any of it again - re-asking something they gave us at signup reads as "you weren't listening" and breaks the one promise this product leads with. If a fact above is missing and would genuinely help, you may ask once, naturally, in context.
+AGE, SPECIFICALLY: onboarding asks their date of birth ONLY to confirm they are 18+, and by deliberate privacy design we do NOT store it - no protected attributes are kept, ever. So you never know their age, and you do not ask for it either. If age genuinely comes up, be honest about the design: their birthday was used once at signup to confirm 18+ and intentionally not saved - they can share their age in conversation if they want you to know it.`);
+
   // #3 Relationship stage - calibrate familiarity to how long they have known each other.
   if (profile.created_at) {
     const jdays = Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000);

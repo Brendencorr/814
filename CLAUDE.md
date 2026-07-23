@@ -245,6 +245,19 @@ Design system:
 - Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
 
+## Founder decisions, 2026-07-23 (hold as truth)
+- **Life Balance wheel is BACK, and at the TOP of /lifemap** — reverses punch-list P1.4 (July 14).
+  Order: wheel → My User Manual → Your Story → insights → facets → timeline. Do not re-delete it.
+- **Life Map spotlight on the member homepage** (dashboard.html `loadLifemapSpotlight`): condensed
+  What Riley's Noticing + filled facet chips + still-learning line, under the composer, for every
+  entitled member until they hit DISMISS (localStorage `lm_spot_off_<uid>`, per device). Never
+  auto-hide it — "at least the first week" is guaranteed by only the member dismissing it.
+- **The daily brief is ONE card** — title row + body in a single padded container, no separate
+  gradient header band, no duplicated copy (bc-sub is hidden but stays in the DOM for the JS).
+- Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —
+  regenerate/update it when tiers, member experience, or comms change materially.
+- `/docs/*` is force-404'd publicly (netlify.toml) — internal specs live there; keep it that way.
+
 ## Founder decisions, 2026-07-22 (hold as truth)
 - **No crossover message.** The Clarity v2 upgrade announcement (Doc 07 §12.4 "Clarity got smarter"
   placeholder) is DEAD - never build or send it. Members just experience the new score.

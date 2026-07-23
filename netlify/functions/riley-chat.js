@@ -514,6 +514,9 @@ AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask
 
     // #4 Pattern-noticing - warm conversational colour, reflected back rarely; NEVER clinical, NEVER a
     // safety mechanism (crisis + check-in escalation handle risk separately). Only positive/steadying framings.
+    if (clientData.calendarDigest && clientData.calendarDigest.count) {
+      try { lines.push("\n" + require("./calendar-google").digestContextLine(clientData.calendarDigest)); } catch (e) {}
+    }
     if (clientData.patterns) {
       const p = clientData.patterns, pbits = [];
       if (p.streak >= 3) pbits.push(`they have checked in ${p.streak} days in a row - name that consistency warmly if it fits, it is real and it matters`);
@@ -690,7 +693,7 @@ async function getClientData(supabase, userId, queryText) {
     const fourAgo = new Date(); fourAgo.setDate(fourAgo.getDate() - 4);
     const fourISO = fourAgo.toISOString().split("T")[0];
 
-    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes, recentCheckinsRes] = await Promise.allSettled([
+    const [soberRes, checkinRes, goalsRes, habitsRes, habitCompRes, programsRes, entRes, memoryRes, lifeEventsRes, importantRes, calRes, wellnessRes, plansRes, lifeMapRes, summariesRes, followupsRes, recentCheckinsRes, calDigestRes] = await Promise.allSettled([
       supabase.from("sobriety_tracker").select("start_date,is_active").eq("user_id", userId).eq("is_active", true).order("start_date", { ascending: false }).limit(1),
       // Today's check-in, keyed on the 4am-local app-day (matches how the client saves it).
       supabase.from("daily_checkins").select("mood,water_oz,sleep_hours,notes,daily_log").eq("user_id", userId).eq("checkin_date", appToday).limit(1),
@@ -712,6 +715,9 @@ async function getClientData(supabase, userId, queryText) {
       supabase.from("member_followups").select("id,content,due_at").eq("user_id", userId).eq("status", "open").lte("due_at", appToday).gte("due_at", fourISO).order("due_at", { ascending: true }).limit(3),
       // Recent check-ins for gentle pattern-noticing (streak + recent-mood tone). NOT a safety signal.
       supabase.from("daily_checkins").select("mood,checkin_date").eq("user_id", userId).order("checkin_date", { ascending: false }).limit(14),
+      // Phase 2 calendar digest (flag-gated; null until CALENDAR_GOOGLE_ENABLED + member connected).
+      // Cached 15 min server-side; fail-open - a Google hiccup never slows a reply.
+      (async () => { try { return { data: await require("./calendar-google").getDigest(supabase, userId) }; } catch (e) { return { data: null }; } })(),
     ]);
 
     const habits = habitsRes.value?.data || [];
@@ -815,6 +821,7 @@ async function getClientData(supabase, userId, queryText) {
       lifeMap,
       interactivePrograms,
       sessionSummaries: summariesRes.value?.data || [],
+      calendarDigest: calDigestRes && calDigestRes.value ? calDigestRes.value.data : null,
     };
   } catch (e) {
     console.warn("getClientData failed (non-fatal):", e.message);

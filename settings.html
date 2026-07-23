@@ -105,6 +105,11 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="status" id="notif-status"></div>
   </div>
 
+  <!-- Phase 1 calendar feed (CALENDAR_INTEGRATION §1.3): the private ICS subscribe card. -->
+  <div class="card" id="calendar-feed-card"></div>
+  <!-- Phase 2 Google connect (flag-gated server-side; renders nothing until verification clears). -->
+  <div id="calendar-google-slot"></div>
+
   <div class="card" id="admin-card" style="display:none">
     <h2>Operator</h2>
     <div class="cdesc">Admin tools - visible to you only.</div>
@@ -120,6 +125,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/clarity-view.js"></script>
+<script src="/calendar-card.js"></script>
 <script>
 const SB = supabase.createClient(
   'https://tglljvjixlolaguycvbb.supabase.co',
@@ -144,6 +150,10 @@ async function load(){
   }catch(e){ setEmailToggle(true); setPushToggle(true); }
   // Clarity customization: show for members on the v2 engine (preview or the public flag).
   try{ if(window.ClarityView){ const _ce=await ClarityView.resolveEngine(SB,UID); if(_ce.engine==='v2'){ const cc=$('clarity-card'); if(cc) cc.style.display=''; } } }catch(e){}
+  // Calendar feed card (Phase 1 ICS) - fail-open: an error just leaves the card empty.
+  try{ if(window.RileyCalendarCard) RileyCalendarCard.mount($('calendar-feed-card'), SB, UID); }catch(e){}
+  // Phase 2 Google connect card - server flag decides; renders nothing while unverified.
+  try{ if(window.RileyCalendarCard&&RileyCalendarCard.mountGoogle){ const g=$('calendar-google-slot'); if(g) RileyCalendarCard.mountGoogle(g, SB, UID).then(function(){ if(g.innerHTML) g.className='card'; }); } }catch(e){}
 }
 
 // ── Notifications ──────────────────────────────────────────────────────────

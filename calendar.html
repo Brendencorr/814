@@ -118,6 +118,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 
 <div class="two-col">
 <div>
+  <!-- Phase 1 calendar feed (CALENDAR_INTEGRATION §1.3): live now - subscribe from any calendar app. -->
+  <div class="card" id="calendar-feed-card"></div>
   <div class="card">
     <div class="card-title">Calendar Integration</div>
     <div class="card-sub">Riley will connect to your Google Calendar to understand your schedule and build your brief around it.</div>
@@ -138,6 +140,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="/calendar-card.js"></script>
 <script>
 
 const SB = supabase.createClient(
@@ -178,6 +181,8 @@ async function doSignOut(){await SB.auth.signOut();window.location.href='https:/
 
 
 (async()=>{ await boot(async()=>{
+  // Phase 1 ICS feed card - fail-open (an error just leaves the card empty).
+  try{ if(window.RileyCalendarCard) RileyCalendarCard.mount(document.getElementById('calendar-feed-card'), SB, UID); }catch(e){}
   const [hR,hdR,gR]=await Promise.allSettled([
     SB.from('habits').select('*').eq('user_id',UID).eq('is_active',true).order('sort_order').limit(8),
     SB.from('habit_completions').select('habit_id').eq('user_id',UID).eq('completed_date',TODAY),

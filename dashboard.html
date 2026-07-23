@@ -359,6 +359,10 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
     <!-- "Riley's Read" merged into the "Riley Suggests" card (Beat 2) - one insight card, not two. -->
     <div id="insight" style="display:none"></div>
     <div id="habit-list" style="display:none"></div><div id="goal-list" style="display:none"></div>
+    <!-- Phase 2 calendar connect card (CALENDAR_INTEGRATION §2.3) - server flag decides;
+         renders NOTHING until Google verification clears and CALENDAR_GOOGLE_ENABLED=true. -->
+    <div id="calendar-google-slot" style="margin-bottom:16px"></div>
+
     <!-- Brief - ONE section (founder, 2026-07-23): title and body share a single card, no separate
          header band. bc-sub stays in the DOM (hidden) because the brief JS still writes to it. -->
     <div class="brief" style="padding:20px 22px">
@@ -391,6 +395,7 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="/clarity-view.js"></script>
+<script src="/calendar-card.js"></script>
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 // "App day" rolls at 4am LOCAL, not midnight - a night owl checking in at 1am is still on
@@ -618,6 +623,8 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Guide hides the module entirely - never an empty "Habits: 0". Fail-open if entitlements missing.
     if(ENT.entitlements && ENT.entitlements.habit_tracker==='false'){ ['habits-panel','goals-panel'].forEach(function(id){var el=document.getElementById(id); if(el)el.style.display='none';}); }
     loadLifemapSpotlight(ENT,checkins); // fire-and-forget; renders nothing if dismissed or locked
+    // Phase 2 calendar connect card - fire-and-forget; renders nothing while the server flag is off.
+    try{ if(window.RileyCalendarCard&&RileyCalendarCard.mountGoogle){ const _cg=document.getElementById('calendar-google-slot'); if(_cg) RileyCalendarCard.mountGoogle(_cg, SB, UID).then(function(){ if(_cg.innerHTML) _cg.style.cssText='margin-bottom:16px;background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px'; }); } }catch(e){}
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
     const habitDone=new Set((done7||[]).filter(d=>d.completed_date===TODAY).map(x=>x.habit_id));
     CHECKINS=checkins;

@@ -7,8 +7,9 @@
   },
   "scripts": {
     "dev": "netlify dev",
-    "test": "node tests/comms/guide-flow.test.js && node tests/rhythm/rhythm.test.js && node tests/rhythm/runner.js && node tests/golden/runner.js && node tests/crisis/runner.js && node tests/clarity/runner.js",
+    "test": "node tests/comms/guide-flow.test.js && node tests/rhythm/rhythm.test.js && node tests/rhythm/runner.js && node tests/calendar/ics.test.js && node tests/calendar/google.test.js && node tests/golden/runner.js && node tests/crisis/runner.js && node tests/clarity/runner.js",
     "test:comms": "node tests/comms/guide-flow.test.js",
+    "test:calendar": "node tests/calendar/ics.test.js && node tests/calendar/google.test.js",
     "test:rhythm": "node tests/rhythm/rhythm.test.js && node tests/rhythm/runner.js",
     "test:golden": "node tests/golden/runner.js",
     "test:crisis": "node tests/crisis/runner.js",

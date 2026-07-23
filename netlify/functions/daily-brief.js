@@ -137,6 +137,24 @@ exports.handler = async (event) => {
                     : checkins.filter(c => c.mood && c.mood >= 4).length >= 4 ? 'strong (many good days recently)'
                     : 'mixed';
 
+    // Phase 2 calendar (CALENDAR_INTEGRATION §2.3, flag-gated OFF until Google verification):
+    // at most ONE gentle time-aware sentence, woven - never a list, never surveillance.
+    // Suppressed inside a crisis window like every other nudge (fail-SAFE: an error suppresses).
+    let calendarLine = "";
+    try {
+      const calg = require("./calendar-google");
+      if (calg.calGoogleEnabled()) {
+        let inCrisis = true;
+        try {
+          const since = new Date(Date.now() - 7 * 86400000).toISOString();
+          const { data: cl, error: ce } = await supabase.from("crisis_log").select("id")
+            .eq("user_id", user_id).gte("level", 2).eq("is_test", false).gte("created_at", since).limit(1);
+          inCrisis = !!ce || !!(cl && cl.length);
+        } catch (e) {}
+        if (!inCrisis) calendarLine = calg.digestContextLine(await calg.getDigest(supabase, user_id));
+      }
+    } catch (e) {}
+
     // Onboarding context - who this person told us they are (Phase 1)
     const hos = profile?.human_os || {};
     const ctx = [
@@ -161,6 +179,7 @@ exports.handler = async (event) => {
       programs.length          ? `Active programs: ${programs.map(p => `${p.programs?.title || "Program"} (day ${p.days_completed})`).join(", ")}` : "",
       `Season: ${season} - theme: ${seasonTheme[season]}`,
       `Recent mood trend: ${moodTrend}`,
+      calendarLine,
       lifeEvents.length ? `ACTIVE LIFE EVENT - hold with care: ${lifeEvents.map(e => `${e.event_type}${e.riley_strategy ? " (" + e.riley_strategy + ")" : ""}`).join("; ")}` : "",
       todaysDates.length ? `TODAY CARRIES WEIGHT: ${todaysDates.map(d => `${d.label}${d.riley_strategy ? " - " + d.riley_strategy : ""}`).join("; ")}. Soften celebratory language. Lead with presence.` : "",
     ].filter(Boolean).join("\n");

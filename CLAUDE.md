@@ -114,6 +114,10 @@ Set all of these in Netlify → Site configuration → Environment variables:
 - FEEDHIVE_MODE — "draft" (default) or "live". draft = nothing auto-publishes (a human approves/schedules in FeedHive); live = pipeline schedules already-approved items. Per CONTENT_ENGINE_v3 §A7; Phase A moves this to a DB-stored admin toggle.
 - FEEDHIVE_TRIGGER_URL — (Phase A, optional) FeedHive Trigger-URL endpoint for the create-and-schedule hot path (REST POST /posts is the current path)
 - URL — Netlify site URL (set automatically by Netlify, e.g. https://admin.meetriley.us)
+- CALENDAR_GOOGLE_ENABLED — "true" enables calendar Phase 2 (Google read-only). KEEP OFF until
+  Google OAuth verification clears; Phase 2 endpoints 404 and the connect card renders nothing while off
+- GOOGLE_CAL_CLIENT_ID / GOOGLE_CAL_CLIENT_SECRET — OAuth client for calendar Phase 2 (project riley-app)
+- CAL_TOKEN_KEY — 32-byte hex key; AES-256-GCM encryption of Google refresh tokens (calendar Phase 2)
 
 ## Supabase
 The shared client is at netlify/functions/supabase-client.js.
@@ -246,6 +250,16 @@ Design system:
 - Messaging canon: `RILEY_MESSAGING_HOUSE.md` v2.1 — now committed at the repo root (force-404'd publicly, like POSITIONING.md). Homepage v2 + sitewide copy follow it verbatim; canonical lines are never paraphrased; plain hyphens only in member-facing copy, never em-dashes. Check every copy change against it.
 - Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
+
+## Calendar integration (2026-07-23) — docs/CALENDAR_INTEGRATION.md is the source of truth
+- **Phase 1 ICS feed is LIVE**: calendar_feeds (migration 104) + calendar-ics.js + calendar-card.js
+  (Account + /calendar). PRIVACY LAW: discreet event titles ONLY — "Your 8:14", never program names,
+  never recovery language; milestones opt-in. Tests: `npm run test:calendar` (must stay green).
+- **Phase 2 (Google read-only) is BUILT but DARK** behind CALENDAR_GOOGLE_ENABLED (default off) —
+  calendar-connect/-callback/-digest/-disconnect + calendar-google.js. Refresh tokens are AES-256-GCM
+  encrypted (CAL_TOKEN_KEY); digests cache ≤15 min; raw event payloads NEVER touch the DB; the brief
+  weaves AT MOST one gentle time-aware line, crisis-suppressed. Do NOT flip the flag before Google
+  verification clears. Phase 3 (write scope) is NOT to be built or filed yet.
 
 ## Founder decisions, 2026-07-23 (hold as truth)
 - **Riley is NOT a recovery tool - never describe it as one, anywhere** (founder correction after an

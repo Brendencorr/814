@@ -282,6 +282,12 @@ Design system:
   change the lane until a founder-approved spec exists. Current truth: grief-lane members DO earn
   presence credit (showing up counts toward Practice); what is never graded is grief itself.
 - Supabase leaked-password protection: deferred until the plan upgrade (founder aware).
+- **Birthdate is KEPT from the 18+ gate** (founder, 2026-07-23 - supersedes 088's discard design):
+  saved to `user_profiles.date_of_birth`, injected into Riley's chat context as Age, disclosed in
+  privacy.html. Ask ONCE, ever. HARD LINES: never an input to Clarity scoring or audits (the
+  methodology page's fair-by-design wording was narrowed to match); a denied minor's birthdate is
+  never stored; accounts predating 2026-07-23 have no DOB on file - Riley never asks their age cold
+  (NEVER RE-ASK LAW in riley-chat buildUserContext).
 
 ## Clarity + cadence canon (2026-07-22)
 - Clarity engine: docs/07_CLARITY_SCORE_V2_SPEC.md (v2.3 — bands, lanes, First Light, provisional,

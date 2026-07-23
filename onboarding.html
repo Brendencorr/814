@@ -228,7 +228,8 @@ async function doneName(){
 // ── Screen 2b · Age gate (18+) ─────────────────────────────────────────────────
 // Date of birth confirms adulthood BEFORE we collect any sensitive answers (grief /
 // sobriety live on the very next screen). We persist ONLY the confirmation + its
-// timestamp (age_18_plus / age_attested_at) alongside consent - never the birthdate.
+// timestamp (age_18_plus / age_attested_at) + since 2026-07-23 the birthdate itself (founder call:
+// Riley should know their age from the gate - ask once, ever). Denied minors: boolean only.
 const DOB_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function ageFrom(y,m,d){ // m is 1-12
   const t=new Date();let a=t.getFullYear()-y;
@@ -259,9 +260,14 @@ async function doneAge(){
   if(!m||!d||!y){err.textContent='Please enter your full date of birth.';err.style.display='block';return;}
   const dt=new Date(y,m-1,d);
   if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d){err.textContent="That date doesn't look right - please check it.";err.style.display='block';return;}
-  A._dobM=m;A._dobD=d;A._dobY=y; // in-memory only (re-render / back); never saved to the server
+  A._dobM=m;A._dobD=d;A._dobY=y;
   if(ageFrom(y,m,d)<18)return sUnder18();
-  await save({age_attested_at:new Date().toISOString(),age_18_plus:true},1);
+  // Founder decision 2026-07-23 (supersedes the 088 discard-after-gate design): the birthdate
+  // entered here is KEPT on the profile so Riley knows their age from day one - never explain
+  // yourself twice. Age is NEVER used in Clarity scoring (methodology page holds that line).
+  // Under-18 path below still stores the boolean only - a denied minor's birthdate is never saved.
+  const dobISO=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  await save({age_attested_at:new Date().toISOString(),age_18_plus:true,date_of_birth:dobISO},1);
   try{window.trackEvent&&window.trackEvent('age_gate_passed',{});}catch(e){}
   sBrings();
 }

@@ -359,13 +359,14 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
     <!-- "Riley's Read" merged into the "Riley Suggests" card (Beat 2) - one insight card, not two. -->
     <div id="insight" style="display:none"></div>
     <div id="habit-list" style="display:none"></div><div id="goal-list" style="display:none"></div>
-    <!-- Brief -->
-    <div class="brief">
-          <div class="brief-head">
-            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub">Assembled fresh from your check-ins, streak, and goals.</div></div>
+    <!-- Brief - ONE section (founder, 2026-07-23): title and body share a single card, no separate
+         header band. bc-sub stays in the DOM (hidden) because the brief JS still writes to it. -->
+    <div class="brief" style="padding:20px 22px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px">
+            <div><div class="bc-label" id="bc-label">Morning Brief</div><div class="bc-title" id="bc-title">Your Daily Brief</div><div class="bc-sub" id="bc-sub" style="display:none"></div></div>
             <div id="bc-regen-wrap" style="text-align:right;flex-shrink:0;padding-left:16px;display:none"><button onclick="genDashBrief(true)" id="bc-regen" style="background:none;border:1px solid rgba(255,255,255,0.1);color:var(--smoke2);padding:5px 11px;font-size:10px;border-radius:2px;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:0.06em">↻ Regenerate</button></div>
           </div>
-          <div id="brief-body" style="padding:4px 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
+          <div id="brief-body" style="padding:12px 0 0"><div style="font-size:12px;color:var(--smoke)">Loading your brief…</div></div>
         </div>
         <!-- Active Programs (full-width, right below the brief) -->
         <div class="panel" style="margin-bottom:16px"><div class="p-head"><div class="p-title">Active Programs</div><a href="/programs" class="p-action">BROWSE →</a></div><div id="prog-list"><div class="empty">No programs - <a href="/programs">enroll</a></div></div></div>
@@ -869,7 +870,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
         _briefShown=true;
         const _ins=document.getElementById('insight'); if(_ins)_ins.style.display='none';   // one voice: the brief supersedes Riley's Read
       } else if(_emailMode){
-        _brBody.innerHTML='<div style="font-size:13px;color:var(--parchment);line-height:1.7;margin-bottom:14px">Your '+new Date().toLocaleDateString('en-US',{weekday:'long'})+' brief is in your inbox.</div><button id="dash-gen-btn" onclick="genDashBrief()" style="background:none;border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:10px 22px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Read it here</button>';
+        _brBody.innerHTML='<div style="font-size:13px;color:var(--parchment);line-height:1.7;margin-bottom:14px">It\'s in your inbox - or read it right here.</div><button id="dash-gen-btn" onclick="genDashBrief()" style="background:none;border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:10px 22px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Read it here</button>';
       } else {
         _brBody.innerHTML='<div style="font-size:13px;color:var(--smoke);line-height:1.7;margin-bottom:16px">Your brief is assembled fresh each morning from your check-ins, streak, and goals.</div><button id="dash-gen-btn" onclick="genDashBrief()" style="background:var(--gold);color:var(--ink);border:none;padding:11px 24px;font-size:12px;font-weight:600;border-radius:2px;cursor:pointer;letter-spacing:0.04em">Generate today\'s brief</button>';
       }

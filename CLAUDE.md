@@ -56,7 +56,9 @@ weekly-pipeline-cron.js runs every Sunday 12:00 UTC (6am MT) as a scheduled back
 Netlify scheduled functions do NOT need a -background suffix — the schedule makes them background automatically.
 
 ## Clarity & Cadence — spec pointers (source of truth in docs/)
-- Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3 - bands, lanes, First Light, provisional).
+- Clarity engine: `docs/07_CLARITY_SCORE_V2_SPEC.md` (v2.3) + `docs/07A_CLARITY_V2_4_AMENDMENT.md`
+  (v2.4 - Presence lane for grief + insight nudges; founder-approved 2026-07-23, closes the grief
+  open question. We still never grade grief itself - Presence scores the showing up.).
 - Cadence & check-ins: `docs/08_RHYTHM_AND_RETURN_SPEC.md` (v1.1 - return tiers, Never-Say list, continuity loop).
 - The scored check-in spine is invariant; personalization is additive only.
 - Rhythm & Return is ON BY DEFAULT (founder call 2026-07-22) - set `RHYTHM_ENABLED=false` in Netlify env
@@ -280,6 +282,12 @@ Design system:
   change the lane until a founder-approved spec exists. Current truth: grief-lane members DO earn
   presence credit (showing up counts toward Practice); what is never graded is grief itself.
 - Supabase leaked-password protection: deferred until the plan upgrade (founder aware).
+- **Birthdate is KEPT from the 18+ gate** (founder, 2026-07-23 - supersedes 088's discard design):
+  saved to `user_profiles.date_of_birth`, injected into Riley's chat context as Age, disclosed in
+  privacy.html. Ask ONCE, ever. HARD LINES: never an input to Clarity scoring or audits (the
+  methodology page's fair-by-design wording was narrowed to match); a denied minor's birthdate is
+  never stored; accounts predating 2026-07-23 have no DOB on file - Riley never asks their age cold
+  (NEVER RE-ASK LAW in riley-chat buildUserContext).
 
 ## Clarity + cadence canon (2026-07-22)
 - Clarity engine: docs/07_CLARITY_SCORE_V2_SPEC.md (v2.3 — bands, lanes, First Light, provisional,

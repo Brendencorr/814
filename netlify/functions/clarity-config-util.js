@@ -23,7 +23,11 @@ function validateConfig(input) {
   const inLanes = input.lanes && typeof input.lanes === "object" ? input.lanes : {};
   const lanes = {};
   if (typeof inLanes.sobriety === "boolean") lanes.sobriety = inLanes.sobriety;
-  if (typeof inLanes.grief === "boolean") lanes.grief = inLanes.grief;   // §5 grief lane (presence-only)
+  if (typeof inLanes.grief === "boolean") lanes.grief = inLanes.grief;   // §5 grief presence-credit dim (non-lane members)
+  // v2.4 Presence lane (docs/07A): opt-in; auto-offered to grief-program members with opt-out.
+  if (typeof inLanes.presence === "boolean") lanes.presence = inLanes.presence;
+  // Multi-lane rule: max TWO weighted lanes (sobriety + presence are the only two today; unknown
+  // lane keys are dropped above, so a third lane is impossible at the API level by construction).
   return { enabled_practice: enabled, fuel_opt_out: !!input.fuel_opt_out, lanes };
 }
 

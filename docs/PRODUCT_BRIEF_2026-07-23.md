@@ -82,8 +82,13 @@ Programs → Recent Conversations.
 - One daily score with bands and lanes, built from check-ins, sleep, movement, nourishment, and
   reflection. New members get **First Light** (a gentle provisional period), and scores are
   provisional when coverage is thin.
-- **Grief is never graded.** Grief-lane members earn presence credit (showing up counts toward
-  Practice) but grief itself is not scored. Fleshing this out further is an open founder question.
+- **Grief is never graded - and Presence is scored (v2.4).** The founder-approved Presence lane
+  (docs/07A, 2026-07-23) scores SHOWING UP as occurrence density over 14 days: check-ins on hard
+  days, hard-date engagement, "kept the ritual," grief-program steps, connection on heavy days,
+  and a conversation with Riley on a hard date (occurrence only - the door counts, the words
+  never do). Hard days and hard-date windows are protected: the lane can rise or hold, never
+  fall. Opt-in; auto-offered to grief-program members with opt-out. Multi-lane rule: one lane
+  takes 12 of Practice's 40; two lanes take 10 each; max two.
 - **Re-Light:** when a member returns after 7+ days away, the displayed score is rise-only for a
   7-day window (it can climb, never drop) so the first week back never punishes the return.
 
@@ -164,7 +169,6 @@ member's reply.
   check-in; return tier is now passed end to end).
 
 **Open questions / launch blockers**
-- Grief scoring: founder wants grief to count in some way; no change until a founder-approved spec.
 - paid_3 signature (Brenden vs Riley) - founder decision pending.
 - Crisis test corpus: 14 human-authored phrases (Brenden + clinician) must replace placeholders
   before launch; the test suite deliberately fails until they do.

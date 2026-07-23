@@ -399,6 +399,12 @@ function buildUserContext(profile, clientData) {
   lines.push("USER CONTEXT - this person is logged in:");
   if (profile.full_name) lines.push(`Name: ${profile.full_name}`);
   if (profile.preferred_name) lines.push(`Prefers to be called: ${profile.preferred_name} - use this name.`);
+  if (profile.date_of_birth) {
+    const b = new Date(profile.date_of_birth + "T00:00:00Z"), n = new Date();
+    let age = n.getUTCFullYear() - b.getUTCFullYear();
+    if (n.getUTCMonth() < b.getUTCMonth() || (n.getUTCMonth() === b.getUTCMonth() && n.getUTCDate() < b.getUTCDate())) age--;
+    if (age >= 18 && age < 120) lines.push(`Age: ${age} (from their signup birthdate - hold it naturally, never recite it)`);
+  }
   if (profile.pronouns) lines.push(`Pronouns: ${profile.pronouns} - use these exactly, every time.`);
   else lines.push(`Pronouns: NOT on file - do NOT assume gender. Stay neutral (use their name or "you") until they tell you.`);
   if (profile.influences) lines.push(`Their people (heroes, favorite authors, artists, coaches, songs, books): ${profile.influences}. When THEY choose to end a conversation, you may close with a short, fitting quote or line from one of these - attributed simply. Never force it.`);
@@ -423,6 +429,9 @@ function buildUserContext(profile, clientData) {
       : "Programs purchased: none yet"
   );
   lines.push(`Community member: ${profile.community_member ? "yes" : "no"}`);
+
+  lines.push(`\nNEVER RE-ASK LAW ("never explain yourself twice" - non-negotiable): everything above is what they have ALREADY told us. Never ask for any of it again - re-asking something they gave us at signup reads as "you weren't listening" and breaks the one promise this product leads with. If a fact above is missing and would genuinely help, you may ask once, naturally, in context.
+AGE, SPECIFICALLY: if Age appears above, they told us once at signup - NEVER ask for it again. If Age is NOT listed, their account predates when we started keeping it (we only stored the 18+ confirmation back then) - never ask their age cold; if it comes up, say so plainly and let them share it only if they want you to know. Either way: age never touches their Clarity score.`);
 
   // #3 Relationship stage - calibrate familiarity to how long they have known each other.
   if (profile.created_at) {
@@ -1303,6 +1312,20 @@ exports.handler = async function (event) {
         }
       }
     } catch (e) { console.warn("[rhythm] return-tier injection failed (non-fatal):", e.message); }
+  }
+
+  // v2.4 insight nudge (docs/07A §2): at most one per 7 days, crisis- and protected-window
+  // suppressed inside the module (fail-safe). Chat is one of the two sanctioned surfaces.
+  // Injected as an OPTION for Riley - share only if it fits the conversation naturally.
+  if (user_id) {
+    try {
+      const { maybeInsightNudge, recordShown } = require("./insight-nudge");
+      const nudge = await maybeInsightNudge(supabase, user_id);
+      if (nudge) {
+        systemPrompt = systemPrompt + "\n\nINSIGHT NUDGE (optional, at most once this conversation, only if it fits naturally - never during a heavy moment): share this observation from their own patterns, keeping its shape - observation, \"your pattern, not a rule,\" and end by handing agency back: \"" + nudge.text + "\"";
+        recordShown(supabase, user_id, nudge.key);
+      }
+    } catch (_) {}
   }
 
   // Interactive Riley-led session context - additive, only when the client sends context.enrollment_id.

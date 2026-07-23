@@ -402,13 +402,33 @@ function getSeason(){const m=new Date().getMonth();return m>=2&&m<=4?'spring':m>
 const SEASON_WARMS={spring:["Spring. Time to build.","New season. New chapter.","Growth season. Let's begin."],summer:["Summer. Explore.","The days are long. Use them.","Energy season. Let's go."],fall:["Fall. Time to reflect.","The world is slowing down. Follow it.","Reflection season."],winter:["Winter. Rest and restore.","The quiet season. Honor it.","Slow down. That's the work."]};
 
 // ── MOOD ENGINE ───────────────────────────────────────────────────────────────
+// story/challenge are VARIANT BANKS - rsPick() rotates per login so the card never repeats
+// back-to-back (founder rule 2026-07-23: Riley Suggests must change every visit).
 const MOOD_CONFIG={
-  5:{story:"You're bringing real energy today. <span style='color:var(--smoke)'>Whatever's feeding it - build on it.</span>",insight:"Real momentum right now. Use it intentionally today.",response:"Wonderful. Let's build on that.",choices:false,challenge:"Push one thing slightly further than feels comfortable today.",mode:'thriving'},
-  4:{story:"A good day ahead. <span style='color:var(--smoke)'>Steady and solid. That consistency matters more than most people realize.</span>",insight:"Good energy. Keep the habits going - this is what momentum feels like.",response:"Good. That's a solid foundation.",choices:false,challenge:"One thing slightly outside your comfort zone today.",mode:'building'},
-  3:{story:"Okay is honest. <span style='color:var(--smoke)'>Start here - no need to force anything. Show up, and that's enough.</span>",insight:"Okay days are still days. Show up as you are - Riley's here with you.",response:"Okay is honest. That's where we begin.",choices:false,challenge:"Just one small thing today. That's enough.",mode:'steady'},
-  2:{story:"Today feels heavy, and that's allowed. <span style='color:var(--smoke)'>You don't have to fix anything. Being here counts.</span>",insight:"I'm glad you checked in. That takes something on a hard day.",response:"I hear you. I'm glad you're here.",choices:true,challenge:"A short walk - even ten minutes - tends to loosen the heavy days.",mode:'struggling'},
-  1:{story:"Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>",insight:"Thank you for telling me. That's not easy. I'm here - what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:"Move. Breathe. Reflect. That's the whole day.",mode:'struggling'}
+  5:{story:["You're bringing real energy today. <span style='color:var(--smoke)'>Whatever's feeding it - build on it.</span>","There's fuel in the tank this morning. <span style='color:var(--smoke)'>Point it at the thing that matters most.</span>","Days like this are for building. <span style='color:var(--smoke)'>Pick one brick and lay it well.</span>"],insight:"Real momentum right now. Use it intentionally today.",response:"Wonderful. Let's build on that.",choices:false,challenge:["Push one thing slightly further than feels comfortable today.","Spend the good energy on the hard thing first - it's cheapest right now.","Name the one thing you'd try if today couldn't miss. Then start it."],mode:'thriving'},
+  4:{story:["A good day ahead. <span style='color:var(--smoke)'>Steady and solid. That consistency matters more than most people realize.</span>","Steady is its own kind of strong. <span style='color:var(--smoke)'>This is what building quietly looks like.</span>","Solid ground under you today. <span style='color:var(--smoke)'>Keep walking - the rhythm is doing its work.</span>"],insight:"Good energy. Keep the habits going - this is what momentum feels like.",response:"Good. That's a solid foundation.",choices:false,challenge:["One thing slightly outside your comfort zone today.","Add one small extra to something you already do well.","Send the message, take the walk, open the notebook - whichever one you've been circling."],mode:'building'},
+  3:{story:["Okay is honest. <span style='color:var(--smoke)'>Start here - no need to force anything. Show up, and that's enough.</span>","Middle days count too. <span style='color:var(--smoke)'>Nothing to fix, nothing to prove - keep it moving gently.</span>","An even keel is a fine place to begin. <span style='color:var(--smoke)'>Small and steady wins today.</span>"],insight:"Okay days are still days. Show up as you are - Riley's here with you.",response:"Okay is honest. That's where we begin.",choices:false,challenge:["Just one small thing today. That's enough.","Ten minutes on anything that matters to you. Then decide if you want ten more.","Do the smallest version of the thing. Done small still counts as done."],mode:'steady'},
+  2:{story:["Today feels heavy, and that's allowed. <span style='color:var(--smoke)'>You don't have to fix anything. Being here counts.</span>","Heavy days ask less of you, not more. <span style='color:var(--smoke)'>Being here is already the work.</span>","Carrying something today - that's okay. <span style='color:var(--smoke)'>Set the bar at showed-up. You've cleared it.</span>"],insight:"I'm glad you checked in. That takes something on a hard day.",response:"I hear you. I'm glad you're here.",choices:true,challenge:["A short walk - even ten minutes - tends to loosen the heavy days.","Water, a little air, one honest breath. Start there.","Text one person who feels easy to talk to. That's plenty for today."],mode:'struggling'},
+  1:{story:["Just breathe. <span style='color:var(--smoke)'>Nothing else matters until you take care of yourself. Nothing is required today except presence.</span>","One breath at a time is a real pace. <span style='color:var(--smoke)'>That's the whole assignment right now.</span>","You came here on a day like this. <span style='color:var(--smoke)'>That took something - let it count.</span>"],insight:"Thank you for telling me. That's not easy. I'm here - what do you need right now?",response:"I'm really glad you checked in today.",choices:true,challenge:["Move. Breathe. Reflect. That's the whole day.","Riley is right here if you want to talk it through - any of it.","A warm shower, some water, one slow breath. Then we go from there."],mode:'struggling'}
 };
+
+// ── Riley Suggests rotation + continuity fold ─────────────────────────────────
+// rsPick: sequential per-key rotation stored in localStorage - a different variant EVERY
+// visit, never the same one twice in a row (arrays of 3). Fail-open to the first variant.
+function rsPick(key,arr){if(!Array.isArray(arr))return arr;if(arr.length<2)return arr[0]||'';try{var k='rs_rot_'+key,i=(parseInt(localStorage.getItem(k),10)||0)%arr.length;localStorage.setItem(k,String(i+1));return arr[i];}catch(e){return arr[0];}}
+// rsThreadFold: the learning layer - if Riley is carrying a due open thread for this member
+// (from their chats), Beat 2 becomes about THEIR life, rotating through what's due. Riley's
+// Read (_priorityRead) still wins; failures leave the rotated suggestion in place.
+async function rsThreadFold(){try{
+  if(_priorityRead)return;
+  var today=new Date(Date.now()-4*3600*1000).toISOString().slice(0,10);
+  var r=await SB.from('member_threads').select('text,kind').eq('user_id',UID).eq('status','open').or('surface_after.is.null,surface_after.lte.'+today).order('salience',{ascending:false}).limit(3);
+  var rows=(r&&r.data)||[];if(!rows.length)return;
+  var i=0;try{i=(parseInt(localStorage.getItem('rs_rot_thread'),10)||0);localStorage.setItem('rs_rot_thread',String(i+1));}catch(e){}
+  var t=rows[i%rows.length];if(!t||!t.text)return;
+  var line=t.kind==='joy'?('You lit up about '+t.text+' - any more of that lately?'):t.kind==='goal'?(t.text.charAt(0).toUpperCase()+t.text.slice(1)+' - still serving you? Even a small step counts today.'):('You mentioned '+t.text+'. If today has room for it, that might be the thing.');
+  var el=document.getElementById('sg-beat2');if(el)el.textContent=line;
+}catch(e){}}
 
 var _priorityRead=null;   // Riley's Read/insight text, folded into the "Riley Suggests" card (Beat 2)
 // P1.9.2: dashboard composer -> open the conversation layer with the message already sent (fallback: /chat).
@@ -419,8 +439,9 @@ function applyMoodEngine(n){
   // Story"); Beat 2 = the actionable suggestion. One continuous thought. ──
   const stSlot=document.getElementById('story-slot');
   if(stSlot){
-    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+cfg.story+'</div><div id="sg-beat2" style="font-size:13px;color:var(--smoke);line-height:1.6">'+(_priorityRead||cfg.challenge)+'</div></div>';
+    stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+rsPick('story_m'+n,cfg.story)+'</div><div id="sg-beat2" style="font-size:13px;color:var(--smoke);line-height:1.6">'+(_priorityRead||rsPick('chal_m'+n,cfg.challenge))+'</div></div>';
     try{track('riley_suggests_shown',{mood:n,card_id:'riley_suggests'});}catch(e){}
+    rsThreadFold();
   }
   // Conversational support - only on harder days (the choice buttons). Good days
   // are fully covered by the two-beat card above; we don't stack a third Riley line.
@@ -915,23 +936,28 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // STORY
     const stSlot=document.getElementById('story-slot');
     const sleepLast2=checkins.find(x=>x.sleep_hours)?.sleep_hours||null;
+    // Variant banks per state - rsPick rotates every visit (founder rule 2026-07-23:
+    // Riley Suggests must change every login; consecutive repeats impossible).
     let stTxt='';
-    if(sleepLast2&&sleepLast2>=7.5)stTxt='Your mind is rested. <span style="color:var(--smoke)">Seven-plus hours gave your clarity room to recharge. Good foundation.</span>';
-    else if(sleepLast2&&sleepLast2<6)stTxt='Running on less than you needed. <span style="color:var(--smoke)">Last night was short. Slower is still forward today.</span>';
-    else if(moodToday&&moodToday<=2)stTxt="Today feels heavy, and that’s allowed. <span style='color:var(--smoke)'>You don’t have to fix it. Being here counts.</span>";
-    else if(moodToday&&moodToday>=4)stTxt="There’s some lightness in you today. <span style='color:var(--smoke)'>Whatever’s feeding it - protect it.</span>";
-    else if(dateStreak>=7)stTxt=dateStreak+' days of showing up. <span style="color:var(--smoke)">Quiet consistency is what rebuilds a life.</span>';
-    else if(SOBER_DAYS>0)stTxt='Another morning, sober. <span style="color:var(--smoke)">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>';
-    else stTxt='Today is a fresh page. <span style="color:var(--smoke)">No quiz to pass. Just you, here, beginning.</span>';
-    // Beat 2 - the actionable suggestion (was the standalone "Riley suggests" notice).
-    let rec='Take ten quiet minutes before opening your phone. The day will still be there.';
-    if(sleepLast2&&sleepLast2<6)rec='Easy on the caffeine today. Try to be in bed a little earlier tonight.';
-    else if(moodToday&&moodToday<=2)rec='A short walk outside - even ten minutes - tends to loosen the heavy days.';
+    const SM='color:var(--smoke)';
+    if(sleepLast2&&sleepLast2>=7.5)stTxt=rsPick('st_rested',['Your mind is rested. <span style="'+SM+'">Seven-plus hours gave your clarity room to recharge. Good foundation.</span>','Rest did its job last night. <span style="'+SM+'">You\'re working with a full tank of clarity.</span>','Good sleep is quiet momentum. <span style="'+SM+'">Today starts a step ahead.</span>']);
+    else if(sleepLast2&&sleepLast2<6)stTxt=rsPick('st_short',['Running on less than you needed. <span style="'+SM+'">Last night was short. Slower is still forward today.</span>','Short night. <span style="'+SM+'">Be a little kinder to yourself than usual - pace beats push today.</span>','The tank is lighter than usual. <span style="'+SM+'">Small moves still move the day.</span>']);
+    else if(moodToday&&moodToday<=2)stTxt=rsPick('st_heavy',["Today feels heavy, and that’s allowed. <span style='"+SM+"'>You don’t have to fix it. Being here counts.</span>","Heavy is welcome here. <span style='"+SM+"'>No fixing required - presence is the whole ask.</span>","Some days just weigh more. <span style='"+SM+"'>You showed up anyway - that matters.</span>"]);
+    else if(moodToday&&moodToday>=4)stTxt=rsPick('st_light',["There’s some lightness in you today. <span style='"+SM+"'>Whatever’s feeding it - protect it.</span>","Something’s working today. <span style='"+SM+"'>Notice what it is - that’s worth keeping.</span>","Lightness like this is fuel. <span style='"+SM+"'>Spend a little of it on something you love.</span>"]);
+    else if(dateStreak>=7)stTxt=rsPick('st_streak',[dateStreak+' days of showing up. <span style="'+SM+'">Quiet consistency is what rebuilds a life.</span>',dateStreak+' days, one at a time. <span style="'+SM+'">This is what steady looks like.</span>','Still here, still showing up. <span style="'+SM+'">'+dateStreak+' days of quiet proof.</span>']);
+    else if(SOBER_DAYS>0)stTxt=rsPick('st_sober',['Another morning, sober. <span style="'+SM+'">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' of choosing this. That foundation holds.</span>','Chose it again today. <span style="'+SM+'">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+', each one on purpose.</span>','The choice is holding. <span style="'+SM+'">'+SOBER_DAYS+' day'+(SOBER_DAYS>1?'s':'')+' and counting - in your corner the whole way.</span>']);
+    else stTxt=rsPick('st_fresh',['Today is a fresh page. <span style="'+SM+'">No quiz to pass. Just you, here, beginning.</span>','A clean start, no strings. <span style="'+SM+'">Begin anywhere - beginning is the point.</span>','Nothing owed from yesterday. <span style="'+SM+'">Today gets its own page.</span>']);
+    // Beat 2 - the actionable suggestion (rotates too; rsThreadFold may replace it with a
+    // line from the member's own open threads - the learning layer).
+    let rec=rsPick('rec_default',['Take ten quiet minutes before opening your phone. The day will still be there.','Step outside for a few minutes today - the sky does more than it gets credit for.','Two minutes of water and stretching - small resets compound.','One honest sentence in your journal tonight. Future-you reads it.']);
+    if(sleepLast2&&sleepLast2<6)rec=rsPick('rec_short',['Easy on the caffeine today. Try to be in bed a little earlier tonight.','Guard tonight early - a wind-down alarm an hour before bed helps.','A twenty-minute rest this afternoon beats pushing through on fumes.']);
+    else if(moodToday&&moodToday<=2)rec=rsPick('rec_heavy',['A short walk outside - even ten minutes - tends to loosen the heavy days.','Riley is right here - saying the heavy thing out loud usually shrinks it.','One small kindness to yourself this hour. Anything counts.']);
     // ── RILEY SUGGESTS - one card, two beats (Today screen consolidation) ──
     // Beat 1 = reflection (was "Today's Story"); Beat 2 = the suggestion. One
     // continuous thought - no divider, no second card.
     if(!_briefShown)stSlot.innerHTML='<div data-card="riley_suggests" style="background:linear-gradient(135deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:20px 24px;margin-bottom:18px"><div style="font-family:DM Mono,monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:12px;opacity:0.85">Riley Suggests</div><div style="font-family:DM Serif Display,serif;font-size:18px;font-weight:340;line-height:1.6;color:var(--parchment);letter-spacing:-0.01em;margin-bottom:12px">'+stTxt+'</div><div id="sg-beat2" style="font-size:13px;color:var(--smoke);line-height:1.6">'+(_priorityRead||rec)+'</div></div>';
     try{track('riley_suggests_shown',{card_id:'riley_suggests'});}catch(e){}
+    rsThreadFold();
     // NOTICES
     const nSlot=document.getElementById('notices-slot');
     const sleepWin=checkins.filter(x=>x.sleep_hours>=7).length;

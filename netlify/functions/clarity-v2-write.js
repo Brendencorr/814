@@ -52,8 +52,8 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     supabase.from("user_clarity_config").select("config,config_version,pending_config,pending_apply_on").eq("user_id", userId).maybeSingle(),
     supabase.from("user_daily_state").select("date,clarity_core,clarity_v2,frozen,frozen_until,frozen_snapshot")
       .eq("user_id", userId).gte("date", win28).lte("date", today).order("date", { ascending: true }),
-    supabase.from("hard_dates").select("date").eq("user_id", userId).gte("date", daysAgoISO(16)).lte("date", dayISO(new Date(Date.now() + 2 * 86400000))),
-    supabase.from("user_profiles").select("created_at,relight_until,relight_mode,direction_mute_until").eq("id", userId).maybeSingle(),
+    supabase.from("hard_dates").select("date,label,recurrence,source").eq("user_id", userId).limit(120),
+    supabase.from("user_profiles").select("created_at,relight_until,relight_mode,direction_mute_until,focus_lane").eq("id", userId).maybeSingle(),
     supabase.from("fitness_logs").select("logged_date").eq("user_id", userId).gte("logged_date", win7),
     supabase.from("clarity_life_events").select("occurred_on,window_days,recalibrate").eq("user_id", userId).eq("recalibrate", true).gte("occurred_on", daysAgoISO(60)),
   ]);
@@ -67,7 +67,27 @@ async function writeClarityV2Dark(supabase, userId, opts) {
   const cfg = eff.config || {};
   const cfgVersion = eff.version || 1;
   const hist = (histRes.status === "fulfilled" && histRes.value.data) || [];
-  const hardDates = (hardRes.status === "fulfilled" && hardRes.value.data) || [];
+  // Hard dates, materialized into the engine's window (16 days back .. 2 ahead). Literal rows
+  // (incl. hard-day taps) count as-is; LABELED calendar entries with recurrence 'annual' are
+  // projected onto this year's month-day so a loss anniversary from any past year still
+  // protects the member today. Taps never recur (mirrors the checkin-prompts guard).
+  const hdWinStart = daysAgoISO(16), hdWinEnd = dayISO(new Date(Date.now() + 2 * 86400000));
+  const hardRows = (hardRes.status === "fulfilled" && hardRes.value.data) || [];
+  const hardSeen = new Set();
+  const hardDates = [];
+  hardRows.forEach((h) => {
+    if (!h || !/^\d{4}-\d{2}-\d{2}/.test(String(h.date || ""))) return;
+    const lit = String(h.date).slice(0, 10);
+    if (lit >= hdWinStart && lit <= hdWinEnd && !hardSeen.has(lit)) { hardSeen.add(lit); hardDates.push({ date: lit }); }
+    if ((h.recurrence || "annual") === "annual" && h.label && h.source !== "checkin_tap") {
+      const md = lit.slice(4); // "-MM-DD"
+      const y0 = parseInt(hdWinStart.slice(0, 4), 10), y1 = parseInt(hdWinEnd.slice(0, 4), 10);
+      for (let y = y0; y <= y1; y++) {
+        const proj = y + md;
+        if (proj >= hdWinStart && proj <= hdWinEnd && !hardSeen.has(proj)) { hardSeen.add(proj); hardDates.push({ date: proj }); }
+      }
+    }
+  });
   const hardToday = hardDates.some((h) => h.date === today);
   const prof = (profRes.status === "fulfilled" && profRes.value.data) || null;
 
@@ -199,9 +219,14 @@ async function writeClarityV2Dark(supabase, userId, opts) {
     const P = require("./presence-lane");
     let presenceOn = cfg.lanes && cfg.lanes.presence === true;
     if (!presenceOn && !(cfg.lanes && cfg.lanes.presence === false)) {
-      const { data: gp } = await supabase.from("user_active_products").select("product_key")
-        .eq("user_id", userId).in("product_key", ["prog_grief", "prog_int_grief"]).limit(1);
-      presenceOn = !!(gp && gp.length);
+      // Founder call 2026-07-23: the offer extends to members whose focus lane IS grief
+      // (onboarding "I am grieving"), not just grief-program owners. Same opt-out either way.
+      if (prof && prof.focus_lane === "grief") presenceOn = true;
+      else {
+        const { data: gp } = await supabase.from("user_active_products").select("product_key")
+          .eq("user_id", userId).in("product_key", ["prog_grief", "prog_int_grief"]).limit(1);
+        presenceOn = !!(gp && gp.length);
+      }
     }
     if (presenceOn) {
       // Extra qualifying-day sources: grief-program steps + conversations on hard dates.

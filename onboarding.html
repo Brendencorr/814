@@ -344,6 +344,32 @@ async function pickLeanIn(i){
   const cfg=LEANIN[A._leanFor];if(!cfg)return sStart();
   const val=cfg.opts[i];A.leanin_answer=val;
   if(!/rather not say|not sure/i.test(val))await saveMemory([{content:`${cfg.mem}: ${val}`,type:'long_term'}]);
+  // Grief only (founder call 2026-07-23): one optional follow-up for the date that's heavy.
+  // Respect a "rather not say" by skipping it entirely.
+  if(A._leanFor==='I am grieving.'&&!/rather not say/i.test(val))return sGriefDate();
+  sStart();
+}
+
+// ── Screen 3c · Optional: the date that's heavy (grief only) ──────────────────────────────
+// Feeds important_dates (Riley knows the day, every year) + hard_dates (Clarity protects it -
+// the Presence lane's anniversary rule). Fully skippable; skipping stores nothing.
+function sGriefDate(){
+  swap(`<div class="section-label">Getting to know you</div>
+    <div class="riley-says">Is there a date that's especially heavy - an anniversary, a birthday?</div>
+    <div class="riley-sub">Only if you want to share it. I'll remember, and I'll be extra gentle around that day - every year.</div>
+    <div style="margin-bottom:10px"><label class="fld">The date</label><input type="date" id="gd-date" max="${new Date().toISOString().slice(0,10)}" onchange="document.getElementById('b-gd').disabled=!this.value"></div>
+    <div style="margin-bottom:8px"><label class="fld">Why is this important? (optional)</label><input type="text" id="gd-why" placeholder="In your words - as little as you like"></div>
+    <div class="actions"><button class="skip" onclick="sStart()" style="margin-right:auto">Skip</button><button class="btn" id="b-gd" onclick="doneGriefDate()" disabled>Hold this date</button></div>
+    ${dots(2)}`);
+}
+async function doneGriefDate(){
+  const d=document.getElementById('gd-date').value;if(!d)return sStart();
+  const whyEl=document.getElementById('gd-why');const why=(whyEl&&whyEl.value.trim())||'';
+  const label=(why||'A heavy anniversary').slice(0,120);
+  const dt=new Date(d+'T00:00:00');
+  try{await SB.from('important_dates').insert({user_id:UID,label:label,date_type:'loss',event_month:dt.getMonth()+1,event_day:dt.getDate(),event_year:dt.getFullYear(),emotional_weight:4,is_sensitive:true});}catch(e){console.warn('gd',e.message);}
+  try{await SB.from('hard_dates').upsert({user_id:UID,date:d,label:label,source:'member'},{onConflict:'user_id,date'});}catch(e){}
+  await saveMemory([{content:`A date that's heavy for them: ${label} (${d}). Be extra gentle around it - never a cheerful check-in that day.`,type:'sensitive'}]);
   sStart();
 }
 
@@ -576,6 +602,21 @@ function sPreview(){
 async function finish(nowCheckin){
   const note=A.motivation?`In two weeks they want: ${A.motivation}`:`They just began their journey.`;
   try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_completed:true,onboarding_step:9,onboarding_version:2,onboarding_completed_at:new Date().toISOString(),last_engagement_note:note},{onConflict:'id'});}catch(e){console.warn('finish',e.message);}
+  // Seed Clarity from THEIR answers (founder call 2026-07-23): Practice starts as what they chose
+  // (default trio as the base, their picks added on top), and a grief lane turns the Presence lane
+  // on from day one - the "offer" IS onboarding, opt-out any time by telling Riley. origin:'onboarding'
+  // applies immediately and is exempt from the 7-day change budget. Fire-and-forget: never blocks.
+  try{
+    const dims=['movement','habits','reflection'];
+    const add=function(x){if(dims.indexOf(x)<0)dims.push(x);};
+    const P=[A.primary_focus||''].concat(A.secondary_focuses||[]).join('; ').toLowerCase();
+    if(/relationship|community|connected/.test(P)||(A.life_flags||[]).indexOf('Have support nearby')>=0)add('connection');
+    if(/adventure|outside/.test(P))add('outside');
+    if(/recovery/.test(P)||(A.life_flags||[]).indexOf('In a recovery program')>=0)add('program');
+    const lanes={};if(A.focus_lane==='grief')lanes.presence=true;
+    const tok=(await SB.auth.getSession()).data.session?.access_token;
+    fetch('/.netlify/functions/clarity-config',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,action:'save',origin:'onboarding',config:{enabled_practice:dims.slice(0,5),fuel_opt_out:false,lanes:lanes}})}).catch(function(){});
+  }catch(e){}
   try{if(window.trackEvent){window.trackEvent('onboarding_completed',{lane:A.focus_lane||'other',secondary_count:(A.secondary_focuses||[]).length,readiness_band:A.readiness==null?'na':(A.readiness<=4?'low':A.readiness<=7?'mid':'high'),confidence_band:A.confidence==null?'na':(A.confidence<=4?'low':A.confidence<=7?'mid':'high'),note_consent:!!A.note_storage_consent,started_checkin:!!nowCheckin});window.trackFlush&&window.trackFlush();}}catch(e){}
   el().innerHTML=`<div class="build-stage"><div class="rsun-lg"></div><div class="build-msg" style="opacity:1;animation:rise .8s;margin-top:22px">Welcome home, ${esc(FIRST)}.</div></div>`;
   setTimeout(()=>{window.location.href='https://riley.meetriley.us/dashboard'+(nowCheckin?'?checkin=1':'');},1600);

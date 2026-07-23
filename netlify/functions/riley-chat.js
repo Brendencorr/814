@@ -20,6 +20,7 @@ const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, getUserIdFromToken, emitEvent, soberDaysForMember, memberDay } = require("./supabase-client");
 const { returnTier, appDayGap, registerBlock, violatesNeverSay, rhythmEnabled } = require("./rhythm");
 const { extractThreads } = require("./thread-extract");
+const { maybeCaptureSobrietyDate, mentionsSobriety } = require("./sobriety-date-capture");
 const {
   detectCrisis,
   detectDiagnosis,
@@ -422,6 +423,11 @@ function buildUserContext(profile, clientData) {
   if (profile.sobriety_date) {
     const days = soberDaysForMember(profile.sobriety_date);
     lines.push(`Sober since: ${profile.sobriety_date} (${days} day${days !== 1 ? "s" : ""})`);
+  } else if (profile.sobriety_interest === true || profile.focus_lane === "sobriety" || /sobriety/i.test(profile.why_here || "")) {
+    // Founder call 2026-07-23: sobriety members are never asked a date at onboarding - Riley
+    // may ask ONCE in chat, and only when sobriety is already the topic. Capture is automatic
+    // (sobriety-date-capture.js) whether they answer the ask or just mention it on their own.
+    lines.push(`SOBRIETY DATE: they're working on their sobriety, but we don't have a date they're counting from. ONLY if they are already talking about their sobriety in this conversation, you may ask ONCE, gently, whether they have a date they're counting from - and make it genuinely optional ("totally fine if you don't count days - some people don't, and that works too"). Never open a conversation with it, never ask while they're struggling or heavy, never ask twice. If a remembered note says they'd rather not share a sobriety date, NEVER bring it up again.`);
   }
   lines.push(
     profile.programs_purchased?.length
@@ -1574,6 +1580,14 @@ exports.handler = async function (event) {
       if (rhythmEnabled()) {
         extractThreads(supabase, user_id, session_id, fullConvo);
       }
+    }
+
+    // Ask-once sobriety date (founder call 2026-07-23): if a sobriety-interest member with no
+    // date on file just mentioned their sobriety, a Haiku pass checks whether they stated their
+    // date (or declined to share one) and saves accordingly. Regex-gated so it's ~free on the
+    // typical message; non-blocking and fail-open like every utility call.
+    if (mentionsSobriety(userMsg)) {
+      maybeCaptureSobrietyDate(supabase, user_id, fullConvo);
     }
 
     // Never-Say runtime audit (docs/08 §2): log-only Sentinel signal - a violation in Riley's

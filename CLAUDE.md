@@ -267,6 +267,20 @@ Design system:
   (soft-delete via life_map.is_active, same as the Life Map page).
 - **The daily brief is ONE card** — title row + body in a single padded container, no separate
   gradient header band, no duplicated copy (bc-sub is hidden but stays in the DOM for the JS).
+- **Onboarding→Clarity handoff (founder-approved 2026-07-23, four fixes):**
+  1. **Sobriety date is asked ONCE, in chat, only when sobriety is already the topic** — never an
+     onboarding screen. Directive in riley-chat buildUserContext; capture via
+     `sobriety-date-capture.js` (Haiku, regex-gated, fail-open; guarded update fills only a null
+     column, also seeds sobriety_tracker). A decline is stored as riley_memory and is permanent
+     (NEVER RE-ASK). 2. **Presence lane offer extends to focus_lane='grief'** (not just grief-program
+     owners) — onboarding grief pick seeds config.lanes.presence=true via clarity-config
+     origin:'onboarding'; clarity-v2-write auto-offers for existing grief-lane members. Opt-out
+     unchanged. 3. **Important Dates**: member surface on /lifemap (date + optional "why is this
+     important" + heavy toggle) writing important_dates, heavy ones mirrored to hard_dates
+     (source 'member', recurrence annual); grief lean-in gets an optional heavy-date screen;
+     clarity-v2-write now PROJECTS annual labeled hard_dates into its window (taps never recur —
+     chat.html writes recurrence:'none'). 4. **Focus picks seed enabled_practice** at onboarding
+     finish (default trio base + connection/outside/program from their picks, cap 5).
 - Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —
   regenerate/update it when tiers, member experience, or comms change materially.
 - `/docs/*` is force-404'd publicly (netlify.toml) — internal specs live there; keep it that way.

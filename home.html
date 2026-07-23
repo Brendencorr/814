@@ -32,6 +32,10 @@
   --green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;
 }
 html{scroll-behavior:smooth}
+/* Anchor jumps (nav Get Started -> #programs, /pillars -> #porch) must land BELOW the fixed nav -
+   without this the "Membership" heading hides under the bar and the first thing a visitor sees is
+   the Free card, which reads like we've chosen Companion for them (founder bug, 2026-07-23). */
+section[id],header[id]{scroll-margin-top:92px}
 body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);line-height:1.6;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
 .wrap{max-width:1200px;margin:0 auto;padding:0 24px}

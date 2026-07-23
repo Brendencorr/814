@@ -245,6 +245,18 @@ Design system:
 - Email signing canon (Brenden, 2026-07-22): exactly ONE email is ever from/signed Brenden — `guide_5`, the day-29 month-one founder note in comms-templates.js. EVERY other communication (emails, in-app, letters) is signed Riley. Never add a new Brenden-signed comm.
 - Mentor tier: dashboard-only, NEVER on marketing surfaces — no teaser, no quiet card (re-confirmed 2026-07-22).
 
+## Founder decisions, 2026-07-22 (hold as truth)
+- **No crossover message.** The Clarity v2 upgrade announcement (Doc 07 §12.4 "Clarity got smarter"
+  placeholder) is DEAD - never build or send it. Members just experience the new score.
+- **Payments are LIVE** (`app_settings.payments_live = true`). The marketing waitlist path is
+  RETIRED and removed from home.html - paid CTAs route straight through sign-in to Stripe Checkout.
+  Do not resurrect the waitlist modal.
+- **Grief scoring is an OPEN QUESTION.** Doc 07 §5 ships "never score grief" (presence-credit only);
+  the founder disagrees and wants it fleshed out - grief is real and should count some way. Do NOT
+  change the lane until a founder-approved spec exists. Current truth: grief-lane members DO earn
+  presence credit (showing up counts toward Practice); what is never graded is grief itself.
+- Supabase leaked-password protection: deferred until the plan upgrade (founder aware).
+
 ## Clarity + cadence canon (2026-07-22)
 - Clarity engine: docs/07_CLARITY_SCORE_V2_SPEC.md (v2.3 — bands, lanes, First Light, provisional,
   return cadence/Re-Light, spine/skin dynamic check-ins). Cadence & check-ins:

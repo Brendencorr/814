@@ -1062,6 +1062,7 @@ Capture these facets especially - they matter most:
 - followup: a SPECIFIC dated thing coming up where asking afterward would show you care - an interview, a doctor/court/therapy appointment, a hard conversation, a trip, a first day, a deadline. Set "content" to a short natural phrase ("her job interview", "his custody hearing", "the first day at the new job") and "due" to the calendar date it happens (resolve "Thursday" / "next week" / "the 14th" against today, ${todayStr}). ONLY with a real near-term date; never vague someday plans. A followup is not a durable fact - do not also add it as "general".
 Use "supersedes" ONLY when the person states something that changes or contradicts a KNOWN fact below (a breakup after "married", a new job after "unemployed", a corrected name). Copy the known text verbatim into "supersedes".
 Extract ONLY real, stable, useful things. No small talk, no momentary feelings, nothing already known (unless superseding), nothing speculative.
+GROUNDING (absolute): every entry must use only what the person actually said - never add specifics they did not say (no invented plans, places, amounts, or people).
 Already known (do not repeat unless superseding): ${known.length ? known.join(" | ") : "nothing yet"}`;
 
     // Utility model (Haiku) via the shared client - non-blocking, cost-logged, fail-open.

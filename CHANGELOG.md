@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Memory provenance investigation (founder-raised) + grounding hardening.**
+  The founder questioned a Life Map entry he never typed. Forensic result: NOT a cross-member leak
+  (phrase exists nowhere else in the system; user_id chain intact) and NOT fabrication - the
+  promoted theme synthesized THREE of his own onboarding answers (drains: "not being financially
+  free" + "anxiety & stress"; one-year vision: "bought a house"). Real defects were classification:
+  an aspiration promoted as 'win' (fixed earlier today) and a purpose/work theme filed under
+  'energy' (reclassified to vision in prod). Hardening shipped anyway: promotion now requires >=3
+  distinct supporting memories and carries an absolute GROUNDING rule (only facts/words present in
+  the memories - no invented plans, places, amounts, or people); the conversation extractor gets
+  the same grounding rule. Note for v1.1 docs: onboarding answers feed riley_memory (source
+  'onboarding') by design - the Life Map can surface synthesis of them, which reads as "never
+  typed this" to members. Consider a provenance hint on chips.
+  Files: netlify/functions/{riley-chat,memory-maintenance-cron}.js.
+
+
 - `meetriley-big-build` - **Win accuracy: a win is something that HAPPENED (founder catch).** The
   theme-promotion job filed an aspiration ("building financial freedom - moving toward...") as a
   'win' on the founder's Life Map - the promotion prompt had no facet definitions and the

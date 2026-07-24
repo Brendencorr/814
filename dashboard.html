@@ -460,7 +460,7 @@ function applyMoodEngine(n){
 
 function applyEncourageMode(){
   const slot=document.getElementById('notices-slot');
-  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><img src="/assets/cardinal/webp/814-cardinal-gentle-reminder.webp" alt="" style="height:30px;width:auto;flex-shrink:0"><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing - four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:30px;width:auto;flex-shrink:0"><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing - four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
 
@@ -1188,7 +1188,7 @@ function contentFeedback(contentId,type){
 }
 async function sendFeedback(contentId,type,fb){
   contentEvent(contentId,type,{feedback:fb});
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:10px"><img src="/assets/cardinal/webp/814-cardinal-thank-you.webp" alt="" style="height:48px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you - that helps me learn.</div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:10px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:48px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you - that helps me learn.</div></div>');
   setTimeout(closeP2,1500);
 }
 
@@ -1285,7 +1285,7 @@ async function p2save(key,store,col,bucket){
     else if(store==='profile'&&col){const patch={};patch[col]=val;if(col==='preferred_encouragement')patch.communication_style=val;await SB.from('user_profiles').update(patch).eq('id',UID);}
     await markP2(key);
     await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:phase2MemoryLine(key,val),source:'phase2',confidence:0.95,is_active:true});
-    p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-thank-you.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you. I have got that.<br><span style="color:var(--smoke);font-size:15px">It helps more than you know.</span></div></div>');
+    p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you. I have got that.<br><span style="color:var(--smoke);font-size:15px">It helps more than you know.</span></div></div>');
     setTimeout(closeP2,1800);
   }catch(e){console.warn('p2save',e.message);closeP2();}
 }
@@ -1309,7 +1309,7 @@ async function p2saveSobrietyStatus(val){
       renderSoberDateAsk();
     }else if(val==='Want to get sober'){
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They want to get sober but have not started yet. Be supportive and non-judgmental, let them set the pace, do not assume a start date or push a plan.',source:'phase2',confidence:0.95,is_active:true});
-      p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-thank-you.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready - even just to talk it through - I am here.</span></div></div>');
+      p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready - even just to talk it through - I am here.</span></div></div>');
       setTimeout(closeP2,2400);
     }else{
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They were asked about sobriety and said not right now. Do not bring it up unprompted going forward, let them lead.',source:'phase2',confidence:0.95,is_active:true});
@@ -1330,11 +1330,11 @@ async function p2saveSoberDate(){
     await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
     await SB.from('sobriety_tracker').insert({user_id:UID,start_date:dt,is_active:true,milestone_days:[]});
   }catch(e){console.warn('p2saveSoberDate',e.message);}
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-success.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it - saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it - saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
   setTimeout(closeP2,2000);
 }
 function p2skipSoberDate(){
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-keep-going.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Whenever you are ready.<br><span style="color:var(--smoke);font-size:15px">Tracker is right there for you.</span></div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Whenever you are ready.<br><span style="color:var(--smoke);font-size:15px">Tracker is right there for you.</span></div></div>');
   setTimeout(closeP2,2000);
 }
 

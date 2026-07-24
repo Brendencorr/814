@@ -6,9 +6,11 @@
  */
 
 const { getSupabaseClient, requireOperator, requireScheduledOrOperator } = require("./supabase-client");
+const { callClaude: sharedCallClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-6"; // repo standard - do not change
+const MODEL = "claude-sonnet-4-6"; // repo standard - do not change (used by the webSearch raw path below)
 
 // Service-role Supabase client (public schema; bypasses RLS). content_* tables.
 function contentDb() {
@@ -36,38 +38,52 @@ async function callClaude({ system, user, maxTokens = 4000, webSearch = false })
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const body = {
-    model: MODEL,
-    max_tokens: maxTokens,
+  if (webSearch) {
+    // KEEP THIS RAW FETCH: the shared anthropic-client callClaude() does not support
+    // tools (the server-side web_search tool), so the webSearch path must stay on a
+    // direct API call. Everything else goes through the shared client below.
+    const body = {
+      model: MODEL,
+      max_tokens: maxTokens,
+      system,
+      messages: [{ role: "user", content: user }],
+      tools: [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }],
+    };
+
+    const res = await fetch(ANTHROPIC_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
+    }
+    const data = await res.json();
+    // With web search the message has multiple content blocks; keep only text.
+    const text = (data.content || [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("\n")
+      .trim();
+    return text;
+  }
+
+  // No tools needed → shared client (prompt caching + cost logging + retry).
+  const r = await sharedCallClaude({
     system,
     messages: [{ role: "user", content: user }],
-  };
-  if (webSearch) {
-    body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }];
-  }
-
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify(body),
+    max_tokens: maxTokens,
+    model: MODELS.chat,
+    functionName: "content-engine",
+    supabase: contentDb(),
   });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  // With web search the message has multiple content blocks; keep only text.
-  const text = (data.content || [])
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("\n")
-    .trim();
-  return text;
+  return r.text;
 }
 
 // Robustly extract the first JSON object/array from a model reply.

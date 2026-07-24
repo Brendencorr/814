@@ -311,8 +311,11 @@ Design system:
   source 'consolidation', max 2/member/run) - merge/decay/backfill already existed.
   #1 (semantic recall) is BUILT but DARK: set EMBEDDINGS_API_KEY (+EMBEDDINGS_PROVIDER) or
   OPENAI_API_KEY/VOYAGE_API_KEY in Netlify and retrieval + weekly backfill go live on their own.
-  SECURITY LESSON (advisor re-flag, fixed in 106): re-creating a SECURITY DEFINER function
-  restores PUBLIC execute - every migration that (re)creates one must re-revoke in the same file.
+  SECURITY LESSON (advisor re-flag; 106 was INSUFFICIENT, truly fixed in 109): re-creating a
+  SECURITY DEFINER function restores PUBLIC execute, and revoking only anon/authenticated does
+  NOTHING while the PUBLIC grant remains (roles inherit it). The revoke must ALWAYS be
+  "revoke all on function <f> from public, anon, authenticated;" in the same migration.
+  Verify with has_function_privilege('anon', oid, 'execute') - never trust the revoke ran.
 - Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —
   regenerate/update it when tiers, member experience, or comms change materially.
 - `/docs/*` is force-404'd publicly (netlify.toml) — internal specs live there; keep it that way.

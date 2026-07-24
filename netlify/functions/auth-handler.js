@@ -236,13 +236,25 @@ async function exportData(supabase, body) {
   const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).maybeSingle();
   out.profile = profile || null;
 
-  const results = await Promise.allSettled(
-    USER_DATA_TABLES.map((t) => supabase.from(t).select("*").eq("user_id", user.id))
-  );
-  out.data = {};
-  USER_DATA_TABLES.forEach((t, i) => {
-    out.data[t] = results[i].status === "fulfilled" ? (results[i].value.data || []) : [];
-  });
+  // Introspection-based export (migration 107): covers EVERY table keyed by user_id, so a
+  // newly added table is automatically included and the "everything" claim below stays true.
+  // Falls back to the static list if the RPC is unavailable (fail-safe, never fail-closed).
+  let viaRpc = false;
+  try {
+    const { data: full, error } = await supabase.rpc("admin_export_member", {
+      p_user_id: user.id, p_exclude: ["crisis_log", "admins"],
+    });
+    if (!error && full && typeof full === "object") { out.data = full; viaRpc = true; }
+  } catch (e) { console.warn("export rpc failed, falling back to static list:", e.message); }
+  if (!viaRpc) {
+    const results = await Promise.allSettled(
+      USER_DATA_TABLES.map((t) => supabase.from(t).select("*").eq("user_id", user.id))
+    );
+    out.data = {};
+    USER_DATA_TABLES.forEach((t, i) => {
+      out.data[t] = results[i].status === "fulfilled" ? (results[i].value.data || []) : [];
+    });
+  }
 
   out.note = "This is everything Riley has stored for you. Crisis-safety records, if any, are kept separately and only used to keep you safe.";
   return json(200, out);
@@ -253,14 +265,27 @@ async function deleteData(supabase, body) {
   const user = await verifyToken(supabase, body.token);
   if (body.confirm !== true) return json(400, { error: "confirm:true is required to delete data" });
 
-  const results = await Promise.allSettled(
-    USER_DATA_TABLES.map((t) => supabase.from(t).delete().eq("user_id", user.id))
-  );
-  const cleared = [];
-  const failed = [];
-  USER_DATA_TABLES.forEach((t, i) => {
-    (results[i].status === "fulfilled" && !results[i].value.error ? cleared : failed).push(t);
-  });
+  // Introspection-based wipe (migration 107): every user_id-keyed table EXCEPT what a
+  // data-wipe (account stays open) must keep - billing/financial records and the documented
+  // de-identified crisis-safety carve-out. Static-list fallback if the RPC is unavailable.
+  let cleared = [];
+  let failed = [];
+  let viaRpc = false;
+  try {
+    const { data: purged, error } = await supabase.rpc("admin_purge_member", {
+      p_user_id: user.id,
+      p_exclude: ["crisis_log", "admins", "payments", "entitlements", "subscriptions", "purchases", "credits"],
+    });
+    if (!error) { cleared = Object.keys(purged || {}); viaRpc = true; }
+  } catch (e) { console.warn("delete_data rpc failed, falling back to static list:", e.message); }
+  if (!viaRpc) {
+    const results = await Promise.allSettled(
+      USER_DATA_TABLES.map((t) => supabase.from(t).delete().eq("user_id", user.id))
+    );
+    USER_DATA_TABLES.forEach((t, i) => {
+      (results[i].status === "fulfilled" && !results[i].value.error ? cleared : failed).push(t);
+    });
+  }
 
   // Reset the profile to a minimal shell (keep email, consent, safety flags).
   try {
@@ -307,8 +332,14 @@ const ACCOUNT_DELETE_TABLES = [
   // comms state + email logs. Deliberately NOT here: crisis_log (retained, de-identified when the
   // profile row is removed), payments (financial record; Stripe is authoritative), admins (operator).
   "int_enrollments", "phq_gad_scores", "who5_scores", "program_module_progress",
-  "user_active_products", "user_comms_state", "email_log", "email_sends", "feature_interest",
+  "user_comms_state", "email_log", "email_sends", "feature_interest",
   "member_followups",
+  // 2026-07-24 audit: previously-missing member tables (now also auto-covered by the
+  // admin_purge_member RPC pass - this list is the fallback belt, kept complete anyway).
+  // user_active_products was removed above: it is a VIEW and can never be deleted from.
+  "hard_dates", "user_clarity_config", "user_dim_baselines", "clarity_life_events",
+  "clarity_weekly", "habit_scoring_changes", "member_threads", "gap_summaries",
+  "checkin_prompts", "member_people", "progress_mirrors", "calendar_feeds",
 ];
 
 // ── Action: delete_account - permanently close the account + erase all data ────
@@ -327,6 +358,16 @@ async function eraseMemberById(supabase, userId) {
       await supabase.storage.from("avatars").remove([path]);
     }
   } catch (e) { console.warn("eraseMember avatar cleanup (non-fatal):", e.message); }
+
+  // Introspection-based erasure first (migration 107): every user_id-keyed table except the
+  // documented carve-outs - crisis_log (de-identified safety record), payments (financial
+  // record, Stripe authoritative), admins (operator infra). The static two-pass below stays
+  // as a belt for anything the RPC couldn't reach (and as the fallback if it's unavailable).
+  try {
+    await supabase.rpc("admin_purge_member", {
+      p_user_id: userId, p_exclude: ["crisis_log", "admins", "payments"],
+    });
+  } catch (e) { console.warn("eraseMember rpc pass failed (static pass still runs):", e.message); }
 
   // Wipe all member-owned rows. Two passes so any FK-ordering hiccup self-heals.
   let failed = ACCOUNT_DELETE_TABLES.slice();

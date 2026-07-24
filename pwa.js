@@ -6,6 +6,25 @@
   // Inside the embedded chat popup (iframe /chat?embed=1) we want a bare chat -
   // no hamburger, no pills, no account menu. Skip all of pwa.js there.
   if (/[?&]embed=1/.test(location.search)) return;
+
+  // ── Post-purchase entitlement refresh (audit 2026-07-24) ──────────────────────
+  // Stripe checkout returns to /dashboard?checkout=success. Entitlements are cached in
+  // sessionStorage ('ent_'+uid) by every page's gating script, and nothing else ever
+  // invalidates that cache mid-session - so without this, a member who JUST PAID keeps
+  // seeing locked walls and their old plan name until they close the tab. Runs before
+  // the page's gating script reads the cache (pwa.js is loaded in <head>-adjacent order
+  // on member pages; the gating scripts read entitlements inside their async boot).
+  if (/[?&]checkout=success\b/.test(location.search)) {
+    try {
+      var _entKeys = [];
+      for (var _i = 0; _i < sessionStorage.length; _i++) {
+        var _k = sessionStorage.key(_i);
+        if (_k && _k.indexOf('ent_') === 0) _entKeys.push(_k);
+      }
+      _entKeys.forEach(function (k) { sessionStorage.removeItem(k); });
+    } catch (e) {}
+  }
+
   var ua = navigator.userAgent || '';
   var isMobile = /iphone|ipad|ipod|android/i.test(ua);
   var isIOS = /iphone|ipad|ipod/i.test(ua);

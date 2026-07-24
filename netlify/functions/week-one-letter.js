@@ -18,9 +18,10 @@
  */
 const crypto = require("crypto");
 const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-4-6"; // recorded in week_one_letters.model rows
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -202,18 +203,15 @@ async function assembleInputs(sb, userId) {
 }
 
 async function callModel(firstName, notes) {
-  const r = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: MODEL, max_tokens: 700, temperature: 0.7,
-      system: systemPrompt(firstName),
-      messages: [{ role: "user", content: "Here are the notes from their week. Write the letter.\n\n" + notes }],
-    }),
+  const r = await callClaude({
+    system: systemPrompt(firstName),
+    messages: [{ role: "user", content: "Here are the notes from their week. Write the letter.\n\n" + notes }],
+    max_tokens: 700,
+    temperature: 0.7,
+    model: MODELS.chat,
+    functionName: "week-one-letter",
   });
-  if (!r.ok) throw new Error("model " + r.status);
-  const d = await r.json();
-  return (d.content && d.content[0] && d.content[0].text ? d.content[0].text : "").trim();
+  return (r.text || "").trim();
 }
 
 // Generate a validated body (max 2 retries), else the fallback. Returns { body, is_fallback }.

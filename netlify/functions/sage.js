@@ -1,5 +1,6 @@
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient } = require('./supabase-client');
+const { callClaude } = require('./anthropic-client');
+const { MODELS } = require('./model-router');
 
 const SYSTEM_PROMPT = `You are Sage - the content writer and creative director for Meet Riley (meetriley.us).
 
@@ -302,33 +303,24 @@ exports.handler = async function (event) {
 
     const enrichedMessage = message + performanceContext;
 
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4000,
+    let reply;
+    try {
+      const r = await callClaude({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: enrichedMessage }],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("Anthropic API error:", response.status, errorBody);
+        max_tokens: 4000,
+        model: MODELS.chat,
+        functionName: "sage",
+      });
+      reply = r.text;
+    } catch (apiErr) {
+      console.error("Anthropic API error:", apiErr.status, apiErr.detail || apiErr.message);
       return {
         statusCode: 502,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
         body: JSON.stringify({ error: "Upstream API error" }),
       };
     }
-
-    const data = await response.json();
-    const reply = data.content && data.content[0] && data.content[0].text;
 
     return {
       statusCode: 200,

@@ -149,7 +149,7 @@ function A(id,msg,ok){
   clearTimeout(el._t);el._t=setTimeout(()=>el.style.display='none',5000);
 }
 function setBtn(id,loading,label){const el=document.getElementById(id);if(!el)return;el.disabled=loading;el.textContent=loading?'Saving…':label;}
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 function fmtDate(ts){if(!ts)return'';const d=new Date(ts),t=new Date(),y=new Date();y.setDate(t.getDate()-1);if(d.toDateString()===t.toDateString())return'Today';if(d.toDateString()===y.toDateString())return'Yesterday';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function fmtTime(ts){if(!ts)return'';return new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
@@ -166,7 +166,7 @@ async function boot(cb){
     const h=new Date().getHours();
     const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
     const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;av.appendChild(_im);}else{av.textContent=initials;}}
     const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
     await cb();
   }catch(e){console.error('Boot:',e);}
@@ -251,15 +251,17 @@ async function deleteGoal(id){try{await SB.from('user_goals').update({is_active:
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_finance:{name:'Financial Goals',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_finance:{name:'Financial Goals',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -271,7 +273,10 @@ async function deleteGoal(id){try{await SB.from('user_goals').update({is_active:
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

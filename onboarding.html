@@ -123,7 +123,7 @@ const TIME_LABEL={morning:'each morning',lunch:'around lunch',afternoon:'in the 
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const el=()=>document.getElementById('moment');
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function swap(html){const m=el();m.style.animation='fadeout .3s forwards';setTimeout(()=>{m.innerHTML=html;m.style.animation='rise .7s cubic-bezier(.2,.7,.2,1) backwards';window.scrollTo(0,0);},300);}
 function dots(n){return `<div class="progress-dots">${[1,2,3,4,5,6,7,8,9].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
 async function save(patch,step){try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_version:2,...patch,...(step!=null?{onboarding_step:step}:{})},{onConflict:'id'});}catch(e){console.warn('save',e.message);}}
@@ -543,7 +543,7 @@ function sPrivacy(){
       </div>
     </div>
     <div style="background:var(--ink2);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:6px 18px 10px;margin-bottom:6px">
-      <div class="toggle-row"><div><div class="tl">Remember my written reflections</div><div class="td">Off by default. When on, I keep the notes you write so I can refer back with care.</div></div><div class="sw" id="sw-note" onclick="tglNote()"></div></div>
+      <div class="toggle-row"><div><div class="tl">Remember my written reflections</div><div class="td">Off by default. When on, I keep the notes you write so I can refer back with care.</div></div><div class="sw" id="sw-note" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="tglNote()"></div></div>
     </div>
     <div style="font-size:12px;color:var(--smoke2);line-height:1.5;margin-bottom:4px">Your information is never sold or used for advertising. If you ever share an unsafe moment, that stays private - used only to keep you safe. <a href="/safety" style="color:var(--smoke)" target="_blank">Our safety approach</a>.</div>
     <div class="actions" style="flex-direction:column;align-items:stretch"><button class="btn" onclick="acceptPrivacy()" style="width:100%">I understand - let's begin</button></div>
@@ -592,7 +592,7 @@ function sPreview(){
   const lane=A.focus_lane||'other';
   try{window.trackEvent&&window.trackEvent('plan_preview_shown',{lane:lane,readiness_band:A.readiness==null?'na':(A.readiness<=4?'low':A.readiness<=7?'mid':'high'),has_secondary:!!(A.secondary_focuses&&A.secondary_focuses.length)});}catch(e){}
   swap(`<div style="text-align:center;margin-bottom:22px"><div class="rsun-lg" style="width:54px;height:54px"></div><div class="section-label" style="margin:16px 0 0">Here's our start</div></div>
-    <div class="tw" id="plan-tw" onclick="_planSkip=true" title="tap to skip"></div>
+    <div class="tw" id="plan-tw" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="_planSkip=true" title="tap to skip"></div>
     <div class="actions" id="plan-actions" style="flex-direction:column;align-items:stretch;gap:10px;margin-top:26px;opacity:0;transition:opacity .7s;pointer-events:none">
       <button class="btn" onclick="finish(true)" style="width:100%">Try your first check-in now</button>
       <button class="skip" onclick="finish(false)">I'll start later</button>

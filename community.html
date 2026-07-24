@@ -125,7 +125,7 @@ async function boot(){
     const h=new Date().getHours();
     const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
     const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;else av.textContent=initials;}
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;_im.setAttribute('style','width:100%;height:100%;object-fit:cover;border-radius:50%');av.appendChild(_im);}else{av.textContent=initials;}}
     const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
     // Pre-fill email
     const emailEl=document.getElementById('comm-email');
@@ -138,7 +138,11 @@ async function joinWaitlist(){
   const msg=document.getElementById('comm-msg');
   msg.textContent='Saving…';
   try{
-    await SB.from('community_waitlist').upsert({email,created_at:new Date().toISOString()},{onConflict:'email'});
+    // Plain insert: RLS on this table is INSERT-only (007), so upsert's on-conflict UPDATE
+    // branch was silently denied for repeat emails. A duplicate email is already on the
+    // list - treat the unique-violation as success rather than needing an UPDATE grant.
+    const {error:_we}=await SB.from('community_waitlist').insert({email,created_at:new Date().toISOString()});
+    if(_we && !/duplicate|unique/i.test(_we.message||''))throw _we;
     msg.style.color='var(--green2)';
     msg.textContent="You're on the list. We'll reach out before it opens.";
     document.getElementById('comm-email').disabled=true;
@@ -206,14 +210,16 @@ boot();
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -225,7 +231,10 @@ boot();
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

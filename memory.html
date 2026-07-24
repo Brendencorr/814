@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>What Riley knows</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  :root{ --bg:#06090e; --card:#0a1018; --border:#1a2530; --gold:#c9a84c; --sage:#6f9e7f; --text:#e8e4de; --dim:#8a94a0; }
+  :root{ --bg:#0a0908; --card:#141210; --border:rgba(255,255,255,0.08); --gold:#c9a84c; --sage:#6f9e7f; --text:#f5f0e8; --dim:#8a8578; }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font-family:'DM Sans',system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
   .wrap{max-width:720px;margin:0 auto;padding:28px 18px 80px}
@@ -16,19 +16,19 @@
   h1{font-family:'DM Serif Display',serif;font-weight:400;font-size:2rem;margin:.2em 0 .1em}
   .lede{color:var(--dim);margin:0 0 26px;max-width:56ch}
   h2{font-family:'DM Serif Display',serif;font-weight:400;font-size:1.15rem;color:var(--gold);margin:30px 0 10px;border-bottom:1px solid var(--border);padding-bottom:6px}
-  .item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin:9px 0;display:flex;gap:12px;align-items:flex-start}
+  .item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin:9px 0;display:flex;gap:12px;align-items:flex-start}
   .item .body{flex:1;min-width:0}
   .kind{display:inline-block;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--sage);margin-bottom:3px}
   .content{word-wrap:break-word}
   .acts{display:flex;gap:6px;flex-shrink:0}
-  button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.8rem;padding:5px 10px;transition:.15s}
+  button{font-family:inherit;cursor:pointer;border-radius:3px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.8rem;padding:5px 10px;transition:.15s}
   button:hover{border-color:var(--gold);color:var(--gold)}
   button.danger:hover{border-color:#c05a5a;color:#e08a8a}
-  .edit{width:100%;background:#050a10;border:1px solid var(--gold);color:var(--text);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.95rem;margin-top:8px}
+  .edit{width:100%;background:var(--bg);border:1px solid var(--gold);color:var(--text);border-radius:4px;padding:8px 10px;font-family:inherit;font-size:.95rem;margin-top:8px}
   .row-edit{display:flex;gap:6px;margin-top:8px}
-  .empty{color:var(--dim);background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:22px;text-align:center}
+  .empty{color:var(--dim);background:var(--card);border:1px dashed var(--border);border-radius:10px;padding:22px;text-align:center}
   .muted{color:var(--dim);font-size:.85rem}
-  #status{position:fixed;bottom:0;left:0;right:0;background:#0d1620;border-top:1px solid var(--border);padding:10px 16px;text-align:center;font-size:.9rem;transform:translateY(100%);transition:.25s}
+  #status{position:fixed;bottom:0;left:0;right:0;background:#141210;border-top:1px solid var(--border);padding:10px 16px;text-align:center;font-size:.9rem;transform:translateY(100%);transition:.25s}
   #status.show{transform:translateY(0)}
   .spinner{color:var(--dim);text-align:center;padding:40px}
 </style>

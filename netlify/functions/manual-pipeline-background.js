@@ -21,31 +21,21 @@
  * Full status logged at each step so failures are visible in the dashboard.
  */
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, requireOperator } = require("./supabase-client");
+const { callClaude: sharedCallClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
-// ── Claude API call (non-streaming) ──────────────────────────────────────────
+// ── Claude API call (delegates to anthropic-client; apiKey param kept for
+//    signature compatibility - the shared client reads ANTHROPIC_API_KEY itself) ──
 async function callClaude(apiKey, systemPrompt, userMessage, maxTokens = 4000) {
-  const res = await fetch(ANTHROPIC_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-    }),
+  const r = await sharedCallClaude({
+    system: systemPrompt,
+    messages: [{ role: "user", content: userMessage }],
+    max_tokens: maxTokens,
+    model: MODELS.chat,
+    functionName: "manual-pipeline-background",
   });
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Claude API ${res.status}: ${err.slice(0, 300)}`);
-  }
-  const data = await res.json();
-  return data.content?.[0]?.text || "";
+  return r.text;
 }
 
 // ── Concise pipeline system prompts ──────────────────────────────────────────

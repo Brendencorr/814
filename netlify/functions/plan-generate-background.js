@@ -13,8 +13,9 @@
  * Model: claude-sonnet-4-6 · max_tokens 4000 (Netlify Pro synchronous window)
  */
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -140,18 +141,24 @@ exports.handler = async function (event) {
 
   // Generate
   let plan;
+  let genText;
   try {
-    const resp = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6", max_tokens: 4000, system: SYSTEM,
-        messages: [{ role: "user", content: buildUserPrompt(plan_type, ctx, difficulty) }],
-      }),
+    const r = await callClaude({
+      system: SYSTEM,
+      messages: [{ role: "user", content: buildUserPrompt(plan_type, ctx, difficulty) }],
+      max_tokens: 4000,
+      model: MODELS.chat,
+      functionName: "plan-generate-background",
+      userId,
+      supabase: sb,
     });
-    if (!resp.ok) { const e = await resp.text(); console.error("Anthropic error:", resp.status, e.slice(0, 200)); return json(502, { error: "Generation failed upstream" }); }
-    const data = await resp.json();
-    plan = parseJSON(data.content?.[0]?.text || "");
+    genText = r.text;
+  } catch (e) {
+    console.error("Anthropic error:", e.status, (e.detail || e.message || "").slice(0, 200));
+    return json(502, { error: "Generation failed upstream" });
+  }
+  try {
+    plan = parseJSON(genText || "");
   } catch (e) {
     console.error("plan-generate parse/gen failed:", e.message);
     return json(500, { error: "Could not generate the plan. Try again." });

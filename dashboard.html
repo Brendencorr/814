@@ -469,7 +469,7 @@ function applyUpliftMode(){
   if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">✨</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:6px">Hope isn\'t pretending everything is okay. Hope is believing tomorrow can be better.</div><div style="font-size:11px;color:var(--smoke)">You showed up today. That\'s not nothing - that\'s everything.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🎵</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s music</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Gentle acoustic. Calming piano. Something that asks nothing of you.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">📖</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s reflection</div><div style="font-size:13px;color:var(--smoke);line-height:1.55;font-style:italic">What is one thing - however small - that I am grateful for right now?</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 // Engagement tracking - fire-and-forget, never blocks render. Logs event + bumps counters.
 function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}try{window.RileyPH&&window.RileyPH.track(type,data||{});}catch(e){}}
@@ -549,6 +549,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       // Post-checkout return with no session (e.g. paid in a window that isn't signed into Riley) - send
       // them to sign in with a clear "payment complete" note instead of dumping them on the marketing home.
       var _paid=false; try{ _paid=new URLSearchParams(location.search).get('checkout')==='success'; }catch(e){}
+      // Post-purchase: the entitlement cache predates the payment - bust it so the member's
+      // new tier renders IMMEDIATELY (pwa.js does this too, but this runs unconditionally
+      // before any entitlement read on the checkout landing page - no script-order race).
+      if(_paid){ try{ Object.keys(sessionStorage).forEach(function(k){ if(k.indexOf('ent_')===0) sessionStorage.removeItem(k); }); }catch(e){} }
       window.location.href = _paid ? 'https://riley.meetriley.us/login?paid=1' : 'https://riley.meetriley.us';
       return;
     }
@@ -599,7 +603,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const greetEl=document.getElementById('greeting');
     greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">- Riley</div>');
     document.getElementById('tbdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
-    const av=document.getElementById('sb-av');if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;
+    const av=document.getElementById('sb-av');if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;av.appendChild(_im);}else{av.textContent=initials;}
     document.getElementById('sb-name').textContent=fullName;
 
     const [briefR,sobR,ciR,goalR,habR,hdR,convR,progR,wkR,nuR]=await Promise.allSettled([
@@ -1055,17 +1059,17 @@ function lmSpotRender(){
     const by={};LM_SPOT.rows.forEach(r=>{(by[r.facet]=by[r.facet]||[]).push(r);});
     const filled=LM_SPOT_FACETS.filter(f=>(by[f.k]||[]).length),empty=LM_SPOT_FACETS.filter(f=>!(by[f.k]||[]).length);
     const inputRow=f=>'<div style="display:flex;gap:7px;margin-top:7px;width:100%"><input id="lmspot-in-'+f.k+'" placeholder="'+esc(f.ph)+'" maxlength="300" onkeydown="if(event.key===\'Enter\')lmSpotAdd(\''+f.k+'\')" style="flex:1;background:var(--ink2,#141210);border:1px solid rgba(201,168,76,0.3);border-radius:4px;padding:8px 11px;font-size:12.5px;font-family:inherit;color:var(--parchment);outline:none"><button onclick="lmSpotAdd(\''+f.k+'\')" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);color:var(--gold);border-radius:4px;padding:0 13px;font-size:12px;cursor:pointer">Add</button></div>';
-    const chip=r=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--ink3,#1c1a18);border:1px solid '+(r.source==='conversation'?'rgba(74,122,176,0.25)':'rgba(201,168,76,0.18)')+';border-radius:20px;padding:5px 11px;font-size:12px;color:var(--parchment);line-height:1.4">'+esc(r.content)+'<span onclick="lmSpotRemove(\''+r.id+'\')" title="Remove" style="color:var(--smoke2);cursor:pointer;font-size:13px;line-height:1">×</span></span>';
+    const chip=r=>'<span style="display:inline-flex;align-items:center;gap:6px;background:var(--ink3,#1c1a18);border:1px solid '+(r.source==='conversation'?'rgba(74,122,176,0.25)':'rgba(201,168,76,0.18)')+';border-radius:20px;padding:5px 11px;font-size:12px;color:var(--parchment);line-height:1.4">'+esc(r.content)+'<span role="button" tabindex="0" aria-label="Remove" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="lmSpotRemove(\''+r.id+'\')" title="Remove" style="color:var(--smoke2);cursor:pointer;font-size:13px;line-height:1">×</span></span>';
     const facetRows=filled.map(f=>{
       const items=by[f.k],shown=items.slice(0,6);
       const more=items.length>shown.length?'<a href="/lifemap" style="font-size:11px;color:var(--smoke2);align-self:center;text-decoration:none">+'+(items.length-shown.length)+' more</a>':'';
-      const plus='<span onclick="lmSpotToggle(\''+f.k+'\')" title="Add to '+esc(f.title)+'" style="display:inline-flex;align-items:center;border:1px dashed rgba(201,168,76,0.35);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--gold);cursor:pointer;line-height:1.4">'+(LM_SPOT.open===f.k?'−':'+ add')+'</span>';
+      const plus='<span role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="lmSpotToggle(\''+f.k+'\')" title="Add to '+esc(f.title)+'" style="display:inline-flex;align-items:center;border:1px dashed rgba(201,168,76,0.35);border-radius:20px;padding:5px 11px;font-size:12px;color:var(--gold);cursor:pointer;line-height:1.4">'+(LM_SPOT.open===f.k?'−':'+ add')+'</span>';
       return '<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">'+f.emoji+'</span>'+f.title+'</div><div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">'+shown.map(chip).join('')+more+plus+'</div>'+(LM_SPOT.open===f.k?inputRow(f):'')+'</div>';
     }).join('');
     const insBlock=ins.length?'<div style="margin-top:12px"><div style="font-size:12px;color:var(--smoke);margin-bottom:6px"><span style="margin-right:6px">🔎</span>What Riley\'s Noticing</div>'+ins.map(i=>'<div style="font-size:13px;color:var(--parchment);line-height:1.6;padding:3px 0">'+i+'</div>').join('')+'</div>':'';
     // Still-learning facets are tappable - one tap opens the input to start that part of the map.
     const openEmpty=empty.find(f=>LM_SPOT.open===f.k);
-    const learning=empty.length?'<div style="margin-top:14px"><div style="font-size:11.5px;color:var(--smoke2);margin-bottom:6px;font-style:italic">🌱 Still learning - tap one to add to it:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+empty.map(f=>'<span onclick="lmSpotToggle(\''+f.k+'\')" style="display:inline-flex;align-items:center;gap:5px;border:1px dashed rgba(255,255,255,0.14);border-radius:20px;padding:5px 11px;font-size:11.5px;color:'+(LM_SPOT.open===f.k?'var(--gold)':'var(--smoke)')+';cursor:pointer;line-height:1.4">'+f.emoji+' '+f.title+'</span>').join('')+'</div>'+(openEmpty?inputRow(openEmpty):'')+'</div>':'';
+    const learning=empty.length?'<div style="margin-top:14px"><div style="font-size:11.5px;color:var(--smoke2);margin-bottom:6px;font-style:italic">🌱 Still learning - tap one to add to it:</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+empty.map(f=>'<span role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="lmSpotToggle(\''+f.k+'\')" style="display:inline-flex;align-items:center;gap:5px;border:1px dashed rgba(255,255,255,0.14);border-radius:20px;padding:5px 11px;font-size:11.5px;color:'+(LM_SPOT.open===f.k?'var(--gold)':'var(--smoke)')+';cursor:pointer;line-height:1.4">'+f.emoji+' '+f.title+'</span>').join('')+'</div>'+(openEmpty?inputRow(openEmpty):'')+'</div>':'';
     slot.innerHTML='<div style="background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(201,168,76,0.18);border-radius:10px;padding:18px 20px;margin:0 0 20px">'
       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
       +'<div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--gold);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px">Your Life Map</div>'
@@ -1145,7 +1149,7 @@ async function loadRileyBrain(){
     const fy=document.getElementById('foryou-slot');
     if(fy&&brain.recommended_content&&brain.recommended_content.length){
       const icons={breathwork:'🫁',journal_prompt:'📖',music:'🎵',podcast:'🎧',book:'📚',workout:'🏋️',meditation:'🧘',recipe:'🍳',video:'🎥',article:'📄'};
-      const cards=brain.recommended_content.map(c=>`<div onclick="logRec('${c.id}','${esc(c.type)}')" style="background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:16px;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
+      const cards=brain.recommended_content.map(c=>`<div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="logRec('${c.id}','${esc(c.type)}')" style="background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:16px;cursor:pointer;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:18px">${icons[c.type]||'•'}</span>${c.loved?'<span style="font-size:9px;color:var(--gold)">♥ loved</span>':c.duration_minutes?'<span style="font-size:9px;font-family:\'DM Mono\',monospace;color:var(--smoke2)">'+c.duration_minutes+' min</span>':''}</div>
         <div style="font-size:13px;color:var(--parchment);font-weight:500;line-height:1.3;margin-bottom:4px">${esc(c.title)}</div>
         <div style="font-size:11px;color:var(--smoke);line-height:1.5">${esc((c.description||'').slice(0,90))}</div>
@@ -1512,14 +1516,16 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -1531,7 +1537,10 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){
@@ -1566,10 +1575,11 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     var d=await r.json();
     if(!d||!d.show)return;
     var content=document.querySelector('.content'); if(!content)return;
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
     var card=document.createElement('div');
     card.style.cssText='background:linear-gradient(135deg,rgba(201,168,76,0.12),var(--ink2));border:1px solid rgba(201,168,76,0.28);border-radius:12px;padding:22px 24px;margin-bottom:20px';
     card.innerHTML='<div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);margin-bottom:8px">The weekend&rsquo;s over - and I&rsquo;m still here.</div>'
-      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley Companion. If these two days felt like something you&rsquo;d want more of, Coach means we can talk like this any time - no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
+      +'<div style="font-size:13.5px;color:var(--gold2);line-height:1.65;margin-bottom:16px;max-width:560px">You&rsquo;re back on Riley '+(TL.guide||'Companion')+'. If these two days felt like something you&rsquo;d want more of, Coach means we can talk like this any time - no rush, no pressure. Either way, I&rsquo;m glad we met.</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap"><a href="/programs?src=post_weekend" class="tbtn tbtn-gold" style="text-decoration:none">See Coach</a><button class="tbtn tbtn-ghost" id="pw-dismiss">Maybe later</button></div>';
     content.insertAdjacentElement('afterbegin',card);
     try{localStorage.setItem('pw_ask_seen_'+uid,'1');}catch(e){}

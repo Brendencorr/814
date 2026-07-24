@@ -128,7 +128,7 @@ const DEEP_Q={
   6:"What's one dream you've never given up on? The one that's still there, underneath everything."
 };
 const DEEP_LABEL={2:'What gives them energy',3:'What drains them',4:'What they are most proud of',5:'What they want to change',6:'A dream they have never given up on'};
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
 async function boot(){
   const {data:{session}}=await SB.auth.getSession();
@@ -138,7 +138,7 @@ async function boot(){
   const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
   const avatarUrl=meta.avatar_url||meta.picture||'';
   const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+  const av=document.getElementById('sb-av');if(av){if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;av.appendChild(_im);}else{av.textContent=initials;}}
   document.getElementById('sb-name').textContent=fullName;
   await load();
   // Reread from Journeys (/reset?letter=1) opens the stored letter without re-granting the weekend.

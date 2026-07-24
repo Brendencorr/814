@@ -83,7 +83,12 @@ exports.handler = async function (event) {
         },
       });
       written++;
-    } catch (_) {}
+    } catch (e) {
+      // This is the crisis BACKSTOP - a failed incident write must never be invisible
+      // (audit 2026-07-24: this catch was silent). Loud log so the operator digest and
+      // function logs surface that the safety net failed to record a possible miss.
+      console.error("[post-hoc-crisis-scan] FAILED to record possible_missed_crisis:", e.message, "user_hash:", hashId(m.user_id));
+    }
   }
 
   console.log(`[post-hoc-crisis-scan] scanned=${candidates.length} flagged=${written}`);

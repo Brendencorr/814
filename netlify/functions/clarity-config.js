@@ -66,7 +66,18 @@ exports.handler = async function (event) {
   const userId = await getUserIdFromToken(sb, body.token);
   if (!userId) return json(401, { error: "Unauthorized" });
 
-  const today = /^\d{4}-\d{2}-\d{2}$/.test(body.today || "") ? body.today : new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10);
+  // Member-local 4am app-day. Prefer the client-sent value; the server fallback resolves the
+  // member's stored timezone (audit 2026-07-24: the old fallback was a bare UTC-4h shift,
+  // which lands on the wrong day for anyone far from Mountain time).
+  let today;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(body.today || "")) today = body.today;
+  else {
+    const shifted = new Date(Date.now() - 4 * 3600 * 1000);
+    let tz = "America/Denver";
+    try { const { data: _p } = await sb.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) tz = _p.timezone; } catch (_) {}
+    try { today = new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(shifted); }
+    catch (_) { today = shifted.toISOString().slice(0, 10); }
+  }
   const action = body.action || "get";
 
   // ── GET: current config + any staged change + onboarding stage ──

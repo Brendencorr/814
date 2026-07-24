@@ -316,6 +316,18 @@ Design system:
   NOTHING while the PUBLIC grant remains (roles inherit it). The revoke must ALWAYS be
   "revoke all on function <f> from public, anon, authenticated;" in the same migration.
   Verify with has_function_privilege('anon', oid, 'execute') - never trust the revoke ran.
+- **ONE proactive-touch gate (founder rule 2026-07-24): `touch-governor.js`.** Every NEW
+  proactive sender (email or push) MUST route through it: discretionary touches call
+  `governProactiveTouch()` before sending and `recordProactiveTouch()` after; member-chosen
+  touches (brief, program steps) record without gating. Emails go through `sendClientEmail`
+  (email-send.js), whose governance now also counts push touches. Policy: ONE discretionary
+  touch per member-local day across ALL channels; hard-date care touches bypass the cap but
+  never crisis suppression; crisis checks fail-safe, cap checks fail-open. Never add a sender
+  with its own private pacing again.
+- **Chat overlap rules (2026-07-24):** once a member has sent anything, NO resume prompt may
+  appear (quiet continuityHint only); composer messages arriving mid-check-in are HELD and
+  auto-send at rcHandoff; riley-chat's ONE-SPECIAL-MOMENT budget allows at most one optional
+  move (milestone/follow-up/mirror/nudge/people/keep-learning/sobriety-ask) per reply.
 - Product source of truth for collaborators/other AI chats: `docs/PRODUCT_BRIEF_2026-07-23.md` —
   regenerate/update it when tiers, member experience, or comms change materially.
 - `/docs/*` is force-404'd publicly (netlify.toml) — internal specs live there; keep it that way.

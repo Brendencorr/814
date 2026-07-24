@@ -15,7 +15,8 @@
  */
 
 const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -106,15 +107,17 @@ Return ONLY valid JSON, no other text:
   "recommended_content_types": ["pick 1-3 from: breathwork, journal_prompt, music, walk, workout, meditation, recipe, podcast, community_prompt, celebration"]
 }`;
 
-    const resp = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 600, system: sys, messages: [{ role: "user", content: `Write Day ${day_number}.` }] }),
+    const r = await callClaude({
+      system: sys,
+      messages: [{ role: "user", content: `Write Day ${day_number}.` }],
+      max_tokens: 600,
+      model: MODELS.chat,
+      functionName: "journey-step",
+      userId: _uid,
+      supabase,
     });
-    if (!resp.ok) throw new Error(`Claude ${resp.status}`);
-    const data = await resp.json();
     // Robust parse: strip markdown fences + extract the JSON object
-    let raw = (data.content?.[0]?.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    let raw = (r.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
     const s = raw.indexOf("{"), e2 = raw.lastIndexOf("}");
     if (s >= 0 && e2 > s) raw = raw.slice(s, e2 + 1);
     let step;

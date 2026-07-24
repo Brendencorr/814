@@ -14,8 +14,9 @@
  * Model: claude-sonnet-4-6.
  */
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, soberDaysForMember } = require("./supabase-client");
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (s, d) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(d) });
@@ -128,15 +129,21 @@ exports.handler = async function (event) {
   const userMsg = `Member first name: ${nm}${period ? `\nStory period: ${period}` : ""}\n\nWhat you know about them:\n${contextBlock(ctx) || "(very little yet - write a warm beginning)"}`;
 
   let doc;
+  let genText;
   try {
-    const resp = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 2500, system: sys, messages: [{ role: "user", content: userMsg }] }),
+    const r = await callClaude({
+      system: sys,
+      messages: [{ role: "user", content: userMsg }],
+      max_tokens: 2500,
+      model: MODELS.chat,
+      functionName: "member-doc-background",
+      userId,
+      supabase: sb,
     });
-    if (!resp.ok) { console.error("Anthropic error", resp.status); return json(502, { error: "upstream" }); }
-    const d = await resp.json();
-    doc = lintDoc(parseJSON(d.content?.[0]?.text || ""));
+    genText = r.text;
+  } catch (e) { console.error("Anthropic error", e.status || e.message); return json(502, { error: "upstream" }); }
+  try {
+    doc = lintDoc(parseJSON(genText || ""));
   } catch (e) { console.error("member-doc gen failed:", e.message); return json(500, { error: "generation failed" }); }
 
   try {

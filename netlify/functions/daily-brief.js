@@ -12,8 +12,9 @@
  * max_tokens: 400 - brief is short by design
  */
 
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient, getUserIdFromToken, soberDaysForMember } = require("./supabase-client");
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const CORS = {
   "Access-Control-Allow-Origin":  "*",
@@ -207,26 +208,18 @@ Return ONLY valid JSON with exactly these 11 keys - no other text:
   "music_mood": "One music mood or playlist type for today. 4 words max. (e.g. 'Gentle acoustic for quiet mornings', 'Upbeat for building momentum')"
 }`;
 
-    const apiResp = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "x-api-key":          process.env.ANTHROPIC_API_KEY,
-        "anthropic-version":  "2023-06-01",
-        "Content-Type":       "application/json",
-      },
-      body: JSON.stringify({
-        model:      "claude-sonnet-4-6",
-        max_tokens: 900,
-        system:     systemPrompt,
-        messages:   [{ role: "user", content: `USER CONTEXT:\n${ctx}\n\nGenerate the morning brief.` }],
-      }),
+    const apiResult = await callClaude({
+      system: systemPrompt,
+      messages: [{ role: "user", content: `USER CONTEXT:\n${ctx}\n\nGenerate the morning brief.` }],
+      max_tokens: 900,
+      model: MODELS.chat,
+      functionName: "daily-brief",
+      userId: user_id,
+      supabase,
     });
-
-    if (!apiResp.ok) throw new Error(`Claude API ${apiResp.status}`);
-    const apiData = await apiResp.json();
     // Robust parse: strip markdown fences + extract the JSON object so a wrapped
     // response never silently falls back to the generic brief.
-    let rawText = (apiData.content?.[0]?.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
+    let rawText = (apiResult.text || "{}").replace(/```json\s*/gi, "").replace(/```/g, "").trim();
     const _s = rawText.indexOf("{"), _e = rawText.lastIndexOf("}");
     if (_s >= 0 && _e > _s) rawText = rawText.slice(_s, _e + 1);
 

@@ -8,13 +8,14 @@
  *
  * Identity is derived from the verified access token (never a client user_id).
  * reset_days / reset_day_variants are public content; progress + enrollment are owner-scoped.
- * Model: claude-sonnet-4-6
+ * Models: utility generations (persona classify, memory opener) → MODELS.utility (Haiku) via anthropic-client.
  */
 const { getSupabaseClient, getUserIdFromToken, emitEvent } = require("./supabase-client");
 // Safety backstop for the Day-1 free-text disclosure (mirrors the chat crisis path).
 const { detectCrisis, LEVEL3_RESPONSE } = require("./crisis-detection");
 const { sendOperatorAlert } = require("./safety-alert");
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const { callClaude } = require("./anthropic-client");
+const { MODELS } = require("./model-router");
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -30,14 +31,15 @@ async function classifyPersona(text) {
     const sys = `Classify what this person is carrying into one or more of EXACTLY these five keys:
 griever (loss, death, grief), drinker (alcohol, drugs, sobriety, recovery), burnt_out (work, exhaustion, burnout), stretched (family, caregiving, marriage, overwhelmed by obligations), body_first (health, weight, energy, not recognizing their body).
 Many people are two or three at once - include all that clearly fit. Return ONLY a JSON array of the matching keys, e.g. ["burnt_out","stretched"]. If nothing is clear, return [].`;
-    const r = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 60, system: sys, messages: [{ role: "user", content: text }] }),
+    // Small utility classification → Haiku (MODELS.utility) per the house model-routing rule.
+    const r = await callClaude({
+      system: sys,
+      messages: [{ role: "user", content: text }],
+      max_tokens: 60,
+      model: MODELS.utility,
+      functionName: "reset-day",
     });
-    if (!r.ok) return [];
-    const d = await r.json();
-    let raw = (d.content?.[0]?.text || "[]").replace(/```json/gi, "").replace(/```/g, "").trim();
+    let raw = (r.text || "[]").replace(/```json/gi, "").replace(/```/g, "").trim();
     const s = raw.indexOf("["), e = raw.lastIndexOf("]");
     if (s >= 0 && e > s) raw = raw.slice(s, e + 1);
     const arr = JSON.parse(raw);
@@ -70,14 +72,17 @@ async function generateMemoryOpener(supabase, userId, dayNum, day1Sentence) {
 Rules: 1-2 short sentences (Day 7 up to 3). Use THEIR actual words and themes - never invent a memory. Never say "my memory", "I retrieved", or anything system-like - just speak like a friend who remembers. No therapy-speak, no toxic positivity. Plain hyphens only, never em-dashes. If the material is too thin to reference honestly, return an empty string.`;
     const usr = "Their own words from the Reset so far:\n" + bits.join("\n") + `\n\nWrite Riley's opening for Day ${dayNum}.`;
 
-    const r = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" },
-      body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 170, system: sys, messages: [{ role: "user", content: usr }] }),
+    // Small utility generation → Haiku (MODELS.utility) per the house model-routing rule.
+    const r = await callClaude({
+      system: sys,
+      messages: [{ role: "user", content: usr }],
+      max_tokens: 170,
+      model: MODELS.utility,
+      functionName: "reset-day",
+      userId,
+      supabase,
     });
-    if (!r.ok) return null;
-    const d = await r.json();
-    let out = (d.content && d.content[0] && d.content[0].text || "").trim();
+    let out = (r.text || "").trim();
     out = out.replace(/—/g, "-").replace(/–/g, "-"); // brand rule: no em/en dashes
     return out.length > 3 ? out.slice(0, 500) : null;
   } catch (_) { return null; }

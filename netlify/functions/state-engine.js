@@ -160,12 +160,13 @@ exports.handler = async function (event) {
   ]);
   const prev = (prevRes && prevRes.data && prevRes.data[0]) || null;
 
-  // Personal-scope milestone feathers (founder rules, 2026-07-23 + 2026-07-24):
-  // the milestone set derives from what THIS member tracks, and Riley only marks
-  // milestones SHE WAS THERE FOR - a milestone date before the member signed up
-  // never earns a feather (a 7-years-sober member's first sobriety feather is
-  // their next anniversary, not day 7). Day milestones early, calendar-correct
-  // year anniversaries after. 7-day recency window; idempotent ref; fire-and-forget.
+  // Personal-scope milestone feathers (founder rules, 2026-07-23/24): the milestone
+  // set derives from what THIS member tracks, and Riley only marks milestones SHE
+  // WAS THERE FOR - a milestone date before signup never earns a feather. Day
+  // milestones early, calendar-correct year anniversaries after. NO recency window
+  // (founder, 2026-07-24): a milestone crossed while the member was away is waiting
+  // in their bucket when they return - Riley kept track. The gap itself is never
+  // named (Never-Say law); idempotency makes catch-up awards safe.
   try {
     if (sig && sig.soberStart) {
       const dayMs = 86400000;
@@ -181,10 +182,9 @@ exports.handler = async function (event) {
         const dt = new Date(start); dt.setUTCFullYear(dt.getUTCFullYear() + y);
         cands.push({ ref: "sober-" + y + "y", label: y + " year" + (y > 1 ? "s" : "") + " sober - a milestone worth keeping", date: dt });
       }
-      const hit = cands.filter((c) =>
-        c.date <= nowD && (nowD - c.date) < 7 * dayMs && (!_signupAt || c.date >= _signupAt)
-      ).pop();
-      if (hit) require("./feathers").awardFeather(supabase, userId, "milestone", hit.ref, hit.label).catch(() => {});
+      const { awardFeather } = require("./feathers");
+      cands.filter((c) => c.date <= nowD && (!_signupAt || c.date >= _signupAt))
+        .forEach((c) => awardFeather(supabase, userId, "milestone", c.ref, c.label).catch(() => {}));
     }
   } catch (e) {}
 
@@ -192,8 +192,9 @@ exports.handler = async function (event) {
   // that reached its target this period. Bounded reads, idempotent refs, fire-and-forget.
   try {
     const { awardFeather } = require("./feathers");
+    // Last 14 days, not just today (founder, 2026-07-24: always catch up on return).
     supabase.from("habit_completions").select("habit_id, completed_date, habits(title)")
-      .eq("user_id", userId).eq("completed_date", today)
+      .eq("user_id", userId).gte("completed_date", daysAgoISO(14))
       .then(({ data }) => (data || []).forEach((h) => {
         const t = h.habits && h.habits.title ? ": " + h.habits.title : "";
         awardFeather(supabase, userId, "habit", h.habit_id + ":" + h.completed_date, "Kept a habit" + t).catch(() => {});

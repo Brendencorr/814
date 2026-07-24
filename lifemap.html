@@ -279,7 +279,7 @@ async function loadTimeline(){
     SB.from('sobriety_tracker').select('start_date').eq('user_id',UID).eq('is_active',true).order('start_date',{ascending:true}).limit(1)
   ]);const v=r=>r.status==='fulfilled'?r.value.data:null;events=v(R[0])||[];dates=v(R[1])||[];const s=(v(R[2])||[])[0];sober=s?s.start_date:null;}catch(e){}
   const items=[];
-  if(USER&&USER.created_at)items.push({d:new Date(USER.created_at),t:'You started with Riley',e:'🐦'});
+  if(USER&&USER.created_at)items.push({d:new Date(USER.created_at),t:'You started with Riley',e:'<img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:18px;width:auto;vertical-align:middle">'});
   if(sober)items.push({d:new Date(sober),t:'Your sobriety began',e:'🌱'});
   events.forEach(ev=>items.push({d:new Date(ev.created_at),t:(ev.notes||ev.event_type||'A life moment'),e:'•'}));
   dates.forEach(dt=>{if(dt.event_year&&dt.event_month&&dt.event_day)items.push({d:new Date(dt.event_year,dt.event_month-1,dt.event_day),t:dt.label,e:'📅'});});

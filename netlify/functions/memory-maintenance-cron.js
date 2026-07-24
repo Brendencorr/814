@@ -18,7 +18,11 @@ const { embed, toVectorLiteral, embeddingsEnabled } = require("./embeddings");
 const { callClaude } = require("./anthropic-client");
 const { MODELS } = require("./model-router");
 
-const BACKFILL_PER_TABLE = 200; // bounded per run; weekly cadence chips away at any backlog
+// Bounded per run; weekly cadence chips away at any backlog. Sized to FINISH inside the
+// function timeout (2026-07-24: at 200 the run was killed mid-backfill and never reached
+// its own completion log - ~119 rows fit in one invocation, so 60/table leaves room for
+// the merge/decay/promote steps and the incident insert to always run).
+const BACKFILL_PER_TABLE = 60;
 
 // 4. Theme promotion (upgrade #6, 2026-07-23): recurring riley_memory themes get promoted into
 // Life Map facets so the member-facing map keeps deepening even when they never edit it.

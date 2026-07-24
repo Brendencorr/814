@@ -12,6 +12,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Feathers v2: arrival review + every source + full member backfill
+  (founder).** (1) "You have N new feathers" arrival dialog on the dashboard: after the drift lands,
+  a modal lists what each new feather was for - repeat kinds roll up ("Checked in 3 times - 3
+  feathers"), personal ones (wins, milestones, goals) list individually; success-cardinal animation
+  on top; private framing in the copy. (2) New award sources: HABITS (each kept habit, per day, via
+  state-engine with title in the moment), GOALS (target reached this period), and CONVERSATION
+  MILESTONES (25/50/100/250/500/1000 member messages, counted at persist time in riley-chat).
+  (3) BUG FIX: the conversation-win award checked facet "wins" but the extractor emits "win" - it
+  could never fire; fixed. (4) Backfilled EVERY member from real history (idempotent on
+  (user_id,kind,ref)): 52 check-ins, 27 milestones (sobriety + messages), 20 wins, 4 habits, 1
+  program step, 1 Reset day - so every member's next dashboard open greets them with their real
+  collection. Files: dashboard.html, netlify/functions/{state-engine,riley-chat}.js.
+
+
 - `meetriley-big-build` - **Animated cardinal micro-interactions (founder's five animation boards).**
   New `cardinal-touches.js`: one CLEAN bird (814-cardinal-clean.png, extracted whole from the founder's
   mocks) + animated overlays - the pose problem solved with motion instead of crops. Modes: idle

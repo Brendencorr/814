@@ -1662,7 +1662,9 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     '#fe-modal .fe-m{font-size:13.5px;color:#e8e4de;line-height:1.55}',
     '#fe-modal .fe-d{font-family:"DM Mono",monospace;font-size:9.5px;color:#5a5450;letter-spacing:0.08em;margin-top:2px}',
     '#fe-modal .fe-close{align-self:center;margin-top:14px;background:none;border:none;color:#8a8578;font-size:12.5px;cursor:pointer;padding:6px 10px;font-family:"DM Sans",sans-serif}',
-    '#fe-modal .fe-empty{font-size:13px;color:#8a8578;line-height:1.7;padding:6px 0 10px}'
+    '#fe-modal .fe-empty{font-size:13px;color:#8a8578;line-height:1.7;padding:6px 0 10px}',
+    '#fe-modal .fe-count{font-family:"DM Mono",monospace;font-size:10.5px;color:var(--gold,#c9a84c);letter-spacing:0.06em;white-space:nowrap;margin-left:auto;padding-left:12px;flex-shrink:0}',
+    '#fe-modal .fe-bird{display:flex;justify-content:center;margin-bottom:12px}'
   ].join('\n');
   document.head.appendChild(css);
 
@@ -1696,6 +1698,35 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
     }
     requestAnimationFrame(step);
   }
+  // Arrival review (founder, 2026-07-24): "You have N new feathers" + a grouped
+  // list of what they were for. Repeat kinds roll up ("Checked in 3 times - 3
+  // feathers"); personal ones (wins, milestones) list individually. Private, calm,
+  // dismissible - shown once per batch of new feathers.
+  function groupNew(list){
+    var out=[], counts={};
+    var ROLL={showed_up:['Checked in','Checked in NUM times'],reset_day:['A day of the 8:14 Reset','NUM days of the 8:14 Reset'],program_step:['A step in your program','NUM steps in your program'],habit:['Kept a habit','Kept your habits NUM times']};
+    list.forEach(function(f){
+      if(ROLL[f.kind]){ counts[f.kind]=(counts[f.kind]||0)+1; }
+      else out.push({label:f.moment||'A moment kept',n:1});
+    });
+    Object.keys(ROLL).forEach(function(k){
+      if(counts[k]) out.unshift({label:counts[k]===1?ROLL[k][0]:ROLL[k][1].replace('NUM',counts[k]),n:counts[k]});
+    });
+    return out;
+  }
+  function openArrival(newList){
+    if(document.getElementById('fe-modal'))return;
+    var m=document.createElement('div'); m.id='fe-modal';
+    var n=newList.length;
+    var rows=groupNew(newList).map(function(g){
+      return '<div class="fe-row"><img src="'+FEATHER_IMG+'" alt=""><div class="fe-m">'+g.label+'</div><span class="fe-count">'+g.n+(g.n===1?' feather':' feathers')+'</span></div>';
+    }).join('');
+    var bird=(window.RileyCardinal?'<div class="fe-bird">'+RileyCardinal.html('success',{width:86})+'</div>':'');
+    m.innerHTML='<div class="fe-box">'+bird+'<h3>You have '+n+' new feather'+(n===1?'':'s')+'</h3><div class="fe-sub">Each one marks a moment - here is what they were for. They are in your keepsakes now, and only you can see them.</div><div class="fe-list">'+rows+'</div><button class="fe-close" type="button">Keep going</button></div>';
+    m.addEventListener('click',function(e){ if(e.target===m)m.remove(); });
+    m.querySelector('.fe-close').addEventListener('click',function(){ m.remove(); });
+    document.body.appendChild(m);
+  }
   function init(){
     if(typeof UID==='undefined'||!UID||typeof SB==='undefined')return false;
     var acts=document.querySelector('.tb-actions'); if(!acts)return false;
@@ -1707,8 +1738,11 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
       chip.addEventListener('click',openModal);
       acts.insertBefore(chip,acts.firstChild);
       var key='riley_feathers_seen_'+UID, seen=parseInt(localStorage.getItem(key)||'0',10);
-      if(FE.length>seen){
-        drift(chip,function(){ localStorage.setItem(key,String(FE.length)); });
+      var fresh=FE.length-seen;
+      if(fresh>0){
+        var newList=FE.slice(0,fresh);
+        localStorage.setItem(key,String(FE.length));
+        drift(chip,function(){ openArrival(newList); });
       } else { localStorage.setItem(key,String(FE.length)); }
     },function(){});
     return true;

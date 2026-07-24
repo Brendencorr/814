@@ -10,6 +10,20 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ---
 
+## 2026-07-24
+
+- `b14cdb4` - **Every bird emoji replaced with real cardinal pose art (founder rule).** All 17
+  generic bird/dove emojis across dashboard.html, journey.html, lifemap.html, reset.html, and
+  account-delete.js now render the cardinal asset kit, pose matched to the moment: perched (notes/
+  questions/About Riley/timeline), thank-you with heart bubble (gratitude modals incl. WHO-5 and
+  PHQ/GAD), success (sobriety date saved), keep-going (encouragement), gentle-reminder (hard-day
+  card), loading-walking (Journey loader), flying (account-deletion and data-cleared goodbyes).
+  Sized per context (15px nav icon to 52px modals). Verified in headless Chromium.
+
+- `8fc5631` - **PR #10 merged to main**: locked program cards (LOCKED pill design), Feathers v1 +
+  personal sobriety milestones, The Cardinal section on home/about/reset with repaired icon assets,
+  pixel-exact icon centering. Details in the 2026-07-23 entries below.
+
 ## 2026-07-23
 
 - `meetriley-big-build` - **Personal-scope milestone feathers + The Cardinal on site and program

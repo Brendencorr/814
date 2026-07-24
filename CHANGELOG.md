@@ -12,6 +12,14 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Feathers always catch up on return (founder: "Riley still notices and
+  keeps track").** The 7-day recency window on milestone awards is gone: a milestone crossed while
+  the member was away is waiting in their bucket when they come back - the arrival dialog presents
+  the batch, the gap itself is never named (Never-Say law intact; the moments are named, not the
+  absence). Habit feathers now sweep the last 14 days instead of only today. Idempotent refs make
+  catch-up awards safe. File: netlify/functions/state-engine.js.
+
+
 - `meetriley-big-build` - **Milestones count only from signup (founder rule: Riley marks what she
   was there for).** A milestone date before the member's signup never earns a feather - a
   years-sober member's first sobriety feather is their NEXT anniversary, not day 7. state-engine

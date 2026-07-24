@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-23
 
+- `meetriley-big-build` - **Personal-scope milestone feathers + The Cardinal on site and program
+  (founder).** (1) Milestone feathers: state-engine now awards a feather when a member crosses a
+  sobriety milestone (1/7/14/30/60/90/120/180/270/365/500/730/1000 days, from THEIR own active
+  tracker via sig.soberDays - the scope is personal by construction). Awarded only within a 7-day
+  window of the milestone (no back-catalog flood at launch), idempotent (ref sober-N), fire-and-
+  forget. Conversation-driven wins (Riley noticing) were already live from Feathers v1. (2) The
+  Cardinal section (perched cardinal + "A symbol of hope, love, connection & trust..." + the five
+  Emotional Connection icons: Warmth/Hope/Connection/Guidance/Purpose) added to home.html (after
+  ethos, before FAQ), about.html (after Meet Riley), and reset.html (under the day content) - CMS-
+  editable copy hooks on the marketing pages. (3) The five 814-icon-*@2x.png files were broken
+  crops (clipped edges, mockup-board remnants); replaced with the clean art extracted from the
+  founder's Emotional_Connection mock. Icons render via a CSS gold tint (detail-preserving invert
+  filter) on the ink ground. Files: netlify/functions/state-engine.js, home.html, about.html,
+  reset.html, assets/cardinal/png/814-icon-*.png.
+
 - `meetriley-big-build` - **Feathers v1: keepsake moments (founder decision).** The cardinal's feathers
   as kept moments - NEVER logins, NEVER streaks; the collection only ever grows; visible only to the
   member (RLS) and operator (service key). (1) Migration 100_feathers.sql (APPLIED to prod + advisor

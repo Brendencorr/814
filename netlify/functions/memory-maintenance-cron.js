@@ -53,7 +53,8 @@ async function promoteThemes(supabase) {
         if (!mems || mems.length < 20) continue; // not enough signal to find a theme
         const sys = `You look at everything a wellness companion remembers about one person and find at most TWO strong RECURRING themes that belong on their Life Map but aren't there yet. Facets: ${PROMOTE_FACETS.join(", ")}.
 Return ONLY a JSON array (possibly empty): [{"facet": "...", "content": "one concise entry in plain words"}].
-Rules: only themes supported by SEVERAL memories (a pattern, not a mention); never anything already on the map below; never grief/loss/trauma details; plain hyphens only. When in doubt, return [].
+Rules: only themes supported by AT LEAST THREE distinct memories (a pattern, not a mention - NEVER promote from a single entry); never anything already on the map below; never grief/loss/trauma details; plain hyphens only. When in doubt, return [].
+GROUNDING (absolute): use ONLY facts and words present in the memories. NEVER add specifics the person did not say - no invented plans, purchases, places, amounts, or people ("wants stability" must not become "wants to buy a house" unless a memory says so). Every noun in your entry must be traceable to a memory.
 Facet accuracy: "win" is ONLY for things that actually happened - an accomplishment already achieved. An aspiration, a goal being worked toward, or a direction of change belongs under "vision" (or "why"), never "win". "joy" is what lifts them; "recovery_dna" is what keeps them steady.
 ALREADY ON THE MAP: ${(maps || []).map((r) => r.content).join(" | ") || "nothing"}`;
         let raw;

@@ -21,10 +21,11 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:focus-visible{outline:2px solid #c9a84c;outline-offset:2px}  /* a11y: keyboard focus (WCAG 2.4.7) */
 :root{
   --ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;--parchment:#f5f0e8;--warm:#faf8f4;
   --gold:#c9a84c;--gold2:#e8d5a3;--gold-dim:rgba(201,168,76,0.12);
-  --green:#3a7c56;--green2:#4aad72;--smoke:#8a8578;--smoke2:#5a5450;
+  --green:#3a7c56;--green2:#4aad72;--smoke:#9a9488;--smoke2:#8f897c; /* a11y: lifted from #8a8578/#5a5450 - AA contrast at small text sizes */
 }
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);line-height:1.6;overflow-x:hidden}

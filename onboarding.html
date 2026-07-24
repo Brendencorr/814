@@ -171,6 +171,9 @@ async function boot(){
   if(p&&p.preferred_name){FIRST=p.preferred_name.split(' ')[0];A.preferred_name=p.preferred_name;}
   if(!p||!p.onboarding_started_at)await save({onboarding_started_at:new Date().toISOString()},0);
   try{window.trackEvent&&window.trackEvent('onboarding_started',{version:2});}catch(e){}
+  // Punch 6: PostHog funnel - signup_completed fires ONCE per device, at the first onboarding boot
+  // (login.html's OAuth return lands on riley-auth, so this is the reliable single spot).
+  try{ if(window.RileyPH&&!localStorage.getItem('814_signup_completed')){ localStorage.setItem('814_signup_completed','1'); RileyPH.track('signup_completed',{}); } }catch(e){}
   renderWelcome(); // resume is answer-preserving within a session; a fresh load restarts at welcome (short flow)
 }
 

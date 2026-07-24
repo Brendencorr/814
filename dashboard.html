@@ -558,6 +558,13 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     }
     USER=session.user;UID=USER.id;
     track('app_open');
+    // Punch 6: PostHog funnel - checkout_completed once per browser session on the Stripe success return.
+    try{
+      if(new URLSearchParams(location.search).get('checkout')==='success' && !sessionStorage.getItem('814_checkout_completed')){
+        sessionStorage.setItem('814_checkout_completed','1');
+        track('checkout_completed',{});
+      }
+    }catch(e){}
     loadClientAlerts();
     // Onboarding guard - new users build their profile with Riley first.
     try{
@@ -575,7 +582,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
             const _tok=(await SB.auth.getSession()).data.session?.access_token||null;
             const _cr=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:_tok,lookup_key:_buy})});
             const _cj=await _cr.json();
-            if(_cj&&_cj.url){window.location.href=_cj.url;return;}
+            if(_cj&&_cj.url){ try{track('checkout_started',{lookup_key:_buy});}catch(e){} window.location.href=_cj.url;return;}
           }
         }
       }catch(e){}

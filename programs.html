@@ -213,7 +213,7 @@ function rileyUnlockWaitlist(){
       if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
       const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:plan+'_monthly'})});
       const d=await r.json();
-      if(d.url){ window.location.href=d.url; return; }
+      if(d.url){ try{window.RileyPH&&RileyPH.track('checkout_started',{lookup_key:plan+'_monthly'});}catch(e){} window.location.href=d.url; return; }
       document.getElementById('rw-body').textContent='Checkout error: '+(d.error||'please try again'); btn.disabled=false; btn.textContent='Continue to checkout →';
     }catch(e){ btn.disabled=false; btn.textContent='Continue to checkout →'; }
   };
@@ -341,7 +341,7 @@ async function buyProgram(key){
     if(!tok){ window.location.href='https://riley.meetriley.us/login'; return; }
     const r=await fetch('/.netlify/functions/stripe-checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,lookup_key:key})});
     const d=await r.json();
-    if(d.url){ window.location.href=d.url; }
+    if(d.url){ try{window.RileyPH&&RileyPH.track('checkout_started',{lookup_key:key});}catch(e){} window.location.href=d.url; }
     else{ A('pg-alert','Checkout error: '+(d.error||'please try again'),false); }
   }catch(e){ A('pg-alert','Checkout error: '+(e.message||e),false); }
 }

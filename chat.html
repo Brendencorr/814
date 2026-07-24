@@ -1191,6 +1191,8 @@ var _aiNoteShown = false;
 function showAiNote(){
   if(_aiNoteShown) return; _aiNoteShown = true;
   try { if (window.RileyPH) window.RileyPH.track('first_riley_message', {}); } catch (e) {}
+  // Punch 6: first_message_sent is the canon funnel name - keep both events.
+  try { if (window.RileyPH) window.RileyPH.track('first_message_sent', {}); } catch (e) {}
   var box = document.getElementById('messages'); if(!box) return;
   var n = document.createElement('div');
   n.style.cssText = "align-self:center;max-width:82%;text-align:center;font-size:11px;color:var(--smoke2);font-family:'DM Mono',monospace;margin:6px 0 2px;line-height:1.55;opacity:0.8";

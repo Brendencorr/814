@@ -12,6 +12,17 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Milestones count only from signup (founder rule: Riley marks what she
+  was there for).** A milestone date before the member's signup never earns a feather - a
+  years-sober member's first sobriety feather is their NEXT anniversary, not day 7. state-engine
+  now builds calendar-correct candidates (day milestones 1-270, then true year anniversaries via
+  calendar math, refs sober-Ny) and gates them on user_profiles.created_at + the 7-day recency
+  window. DB cleanup executed: 26 pre-signup sobriety-milestone feathers removed across the base
+  (milestone date computed from each member's tracker vs their signup); 4 fabricated demo rows
+  removed from the founder's account. Check-ins/habits/wins/steps/messages are inherently
+  post-signup and unchanged. File: netlify/functions/state-engine.js.
+
+
 - `meetriley-big-build` - **Feathers v2: arrival review + every source + full member backfill
   (founder).** (1) "You have N new feathers" arrival dialog on the dashboard: after the drift lands,
   a modal lists what each new feather was for - repeat kinds roll up ("Checked in 3 times - 3

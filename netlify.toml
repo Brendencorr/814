@@ -246,7 +246,9 @@
 # merges near-duplicate memories, decays stale low-confidence ones. Gated + fail-open; a no-op
 # until an embedding key is set. Logs each run to system_incidents.
 [functions."memory-maintenance-cron"]
-  schedule = "0 9 * * 1"
+  # TEMPORARY (2026-07-24): every 15 min so the embeddings backfill runs today instead of
+  # Monday - the function is idempotent and bounded. REVERT to "0 9 * * 1" once backfilled.
+  schedule = "*/15 * * * *"
 
 # Post-hoc crisis safety backstop (Master Build Spec §7.3) — nightly ~08:00 UTC (~1am MT).
 # Re-reads the last day of UNFLAGGED member messages on STANDARD Haiku (never batched) and

@@ -19,7 +19,9 @@
 // Clear first-person, past-tense disclosures of a slip/use. Kept tight on purpose.
 const SLIP = [
   /\bi (?:relapsed|used again|drank again|slipped(?: up)?|picked (?:it |back )?up(?: again)?|broke my (?:streak|sobriety)|fell off(?: the wagon)?|caved|gave in|lost my streak)\b/i,
-  /\bi (?:drank|got (?:drunk|high|wasted|loaded|blackout)|used|smoked|shot up|got loaded)\b(?!\s+(?:water|coffee|tea|soda|juice|a smoothie|kombucha|milk|nothing|way too much water))/i,
+  // "used" must NOT fire on the habitual idiom "I used to <verb>" (2026-07-24 false positive:
+  // "I used to only audible when I traveled" -> RELAPSE RISK) or everyday objects ("I used my phone").
+  /\bi (?:drank|got (?:drunk|high|wasted|loaded|blackout)|used(?!\s+to\b)(?!\s+(?:my|the|a|an|it|this|that|them|some))|smoked|shot up|got loaded)\b(?!\s+(?:water|coffee|tea|soda|juice|a smoothie|kombucha|milk|nothing|way too much water))/i,
   /\bi had (?:a drink|a few(?: drinks)?|some drinks|a beer|a glass of wine|a relapse|a slip|a bottle)\b/i,
   /\bi (?:ended up|wound up) (?:drinking|using|drunk|high|getting drunk|getting high)\b/i,
   /\bi(?:'ve| have) been (?:drinking|using|drunk|high) (?:again|lately|the last (?:few|couple))/i,

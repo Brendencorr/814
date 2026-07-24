@@ -1474,6 +1474,22 @@ exports.handler = async function (event) {
   // L1/L2 directive, because "put distance from the substance" is the wrong response once it's happened.
   // Level 3 self-harm already short-circuited above, so it can never be overridden here.
   const slip = detectSlipDisclosure(latestUserText);
+  // Contextual verification (founder call 2026-07-24): slip + Level-2 flags are judged in the
+  // context of the CONVERSATION before they flip Riley's register and page the operator - a
+  // pattern hit on an idiom ("I used to travel", "losing yourself in a book") must not become
+  // a RELAPSE RISK alert. FAIL-SAFE: any error confirms the flag. Level 3 short-circuited
+  // above and is NEVER gated. Suppressions are logged (level 0, 'suppressed_fp:') for audit.
+  if (slip.isSlip || crisis.level === 2) {
+    const { verifyRiskInContext } = require("./crisis-context");
+    const kind = slip.isSlip ? "slip" : "level2";
+    const matches = slip.isSlip ? ["slip-disclosure", ...slip.matches] : crisis.matches;
+    const verdict = await verifyRiskInContext(supabase, { text: latestUserText, history: conversationHistory.slice(0, -1), kind, matches, userId: user_id });
+    if (!verdict.confirmed) {
+      await logCrisis(supabase, user_id, session_id, 0, ["suppressed_fp:" + kind, verdict.reason, ...matches].slice(0, 6), latestUserText, anonKey);
+      if (slip.isSlip) slip.isSlip = false;
+      if (crisis.level === 2) crisis.level = 0;
+    }
+  }
   if (slip.isSlip) {
     const canonLine = await getCanonLapseLine(supabase);
     safetyDirective += lapseRepairDirective(canonLine) + "\n\n";

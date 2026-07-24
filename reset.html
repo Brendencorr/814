@@ -116,8 +116,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
   .cardinal-band .ct{max-width:360px}
   .cb-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
   .econn{display:flex;justify-content:center;gap:34px;flex-wrap:wrap;margin:36px auto 10px;max-width:640px}
-  .ec{display:flex;flex-direction:column;align-items:center;gap:11px}
-  .ec img{height:38px;width:auto;opacity:0.92;filter:invert(1) sepia(0.9) saturate(2.4) hue-rotate(-18deg) brightness(1.15)}
+  .ec{display:flex;flex-direction:column;align-items:center;gap:11px;width:88px}
+  .ec .ec-ico{height:40px;display:flex;align-items:center;justify-content:center}
+  .ec img{max-height:38px;max-width:100%;width:auto;opacity:0.92;filter:invert(1) sepia(0.9) saturate(2.4) hue-rotate(-18deg) brightness(1.15)}
   .ec span{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--smoke)}
   @media(max-width:640px){.cardinal-band{text-align:center}}
   </style>
@@ -129,11 +130,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
     </div>
   </div>
   <div class="econn">
-    <div class="ec"><img src="/assets/cardinal/png/814-icon-warmth-heart@2x.png" alt="" loading="lazy"><span>Warmth</span></div>
-    <div class="ec"><img src="/assets/cardinal/png/814-icon-hope-leaf@2x.png" alt="" loading="lazy"><span>Hope</span></div>
-    <div class="ec"><img src="/assets/cardinal/png/814-icon-connection-people@2x.png" alt="" loading="lazy"><span>Connection</span></div>
-    <div class="ec"><img src="/assets/cardinal/png/814-icon-guidance-compass@2x.png" alt="" loading="lazy"><span>Guidance</span></div>
-    <div class="ec"><img src="/assets/cardinal/png/814-icon-purpose-mountain@2x.png" alt="" loading="lazy"><span>Purpose</span></div>
+    <div class="ec"><span class="ec-ico"><img src="/assets/cardinal/png/814-icon-warmth-heart@2x.png" alt="" loading="lazy"></span><span>Warmth</span></div>
+    <div class="ec"><span class="ec-ico"><img src="/assets/cardinal/png/814-icon-hope-leaf@2x.png" alt="" loading="lazy"></span><span>Hope</span></div>
+    <div class="ec"><span class="ec-ico"><img src="/assets/cardinal/png/814-icon-connection-people@2x.png" alt="" loading="lazy"></span><span>Connection</span></div>
+    <div class="ec"><span class="ec-ico"><img src="/assets/cardinal/png/814-icon-guidance-compass@2x.png" alt="" loading="lazy"></span><span>Guidance</span></div>
+    <div class="ec"><span class="ec-ico"><img src="/assets/cardinal/png/814-icon-purpose-mountain@2x.png" alt="" loading="lazy"></span><span>Purpose</span></div>
   </div>
 </main>
 </div>

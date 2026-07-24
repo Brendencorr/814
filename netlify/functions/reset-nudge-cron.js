@@ -8,6 +8,7 @@
  * Model: n/a
  */
 const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig } = require("./supabase-client");
+const { recordProactiveTouch } = require("./touch-governor");
 const { nextNudgeGap, rhythmEnabled } = require("./rhythm");
 const webpush = require("web-push");
 
@@ -97,6 +98,9 @@ exports.handler = async (event) => {
       const upd = { updated_at: nowIso }; upd[col] = date;
       await supabase.from("notification_consents").update(upd).eq("user_id", c.user_id).eq("program_key", c.program_key);
       sent++;
+      // Member-CHOSEN program touch: never blocked by the shared gate, but COUNTED in the
+      // ledger so no discretionary touch (rhythm nudge, capped email) follows it today.
+      recordProactiveTouch(supabase, c.user_id, amDue ? "reset_am" : "reset_pm", "push");
 
       // Advance the ladder: consent.updated_at was the LAST nudge time - activity since it means
       // this member answers nudges (counter resets, no quiet period). Silence stretches the next

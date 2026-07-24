@@ -98,6 +98,13 @@ async function governCappedSend(sb, userId) {
       const today = memberDay(tz);
       if (evs.some((e) => memberDay(tz, e.sent_at) === today)) return "daily_cap";
     }
+    // ONE gate across channels (touch-governor, 2026-07-24): a PUSH nudge earlier today
+    // also claims the member's day - a capped email must not follow it.
+    try {
+      const { data: pts, error: ptErr } = await sb.from("events").select("created_at")
+        .eq("user_id", userId).eq("name", "proactive_touch").gte("created_at", win).limit(20);
+      if (!ptErr && (pts || []).some((e) => memberDay(tz, e.created_at) === memberDay(tz))) return "daily_cap";
+    } catch (_) {}
   } catch (_) { /* fail-open on cap check only */ }
 
   return null;

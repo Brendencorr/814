@@ -11,6 +11,7 @@
  */
 const { getSupabaseClient, requireScheduledOrOperator, getVapidConfig, emitEvent } = require("./supabase-client");
 const { nextNudgeIntervalDays } = require("./rhythm-utils");
+const { governProactiveTouch, recordProactiveTouch } = require("./touch-governor");
 const webpush = require("web-push");
 
 const DAY = 86400000;
@@ -62,9 +63,16 @@ exports.handler = async (event) => {
     const due = daysSinceNudge >= interval && daysSilent >= (Number(p.personal_cadence) || 1) + 1;
     if (!hd && !due) continue;
     if (hd && daysSinceNudge < 1) continue;                       // even a care touch: max one/day
+    // ONE gate across channels (touch-governor, 2026-07-24): if anything already touched
+    // this member today (brief email, lifecycle email, another push), hold. Hard-date
+    // care touches bypass the cap (never the crisis check) - showing up on the day that
+    // matters is the promise.
+    const _gate = await governProactiveTouch(sb, c.user_id, { careTouch: !!hd });
+    if (_gate) { emitEvent(sb, c.user_id, "nudge_suppressed", { reason: _gate, source: hd ? "harddate_touch" : "rhythm_nudge" }); continue; }
     try {
       await webpush.sendNotification(c.push_subscription, JSON.stringify(touchCopy(daysSilent, hd && hd.label)));
       sent++;
+      recordProactiveTouch(sb, c.user_id, hd ? "harddate_touch" : "rhythm_nudge", "push");
       // Un-opened until session-return sees a session within 48h (which resets the ladder).
       const unanswered = (p.nudge_unanswered || 0) + 1;
       const cadence = Math.min(7, Math.max(1, Number(p.personal_cadence) || 1));

@@ -88,7 +88,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
 <script>
 const SB=supabase.createClient('https://tglljvjixlolaguycvbb.supabase.co','sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8');
 let USER=null,UID=null,TODAY=new Date(Date.now()-4*3600*1000).toLocaleDateString('en-CA'),ENROLL=null,STEP=null,PROGRAM=null;   // "app day": 4am-local rollover (matches the daily check-in)
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function qs(k){return new URLSearchParams(location.search).get(k);}
 // P1.10.6: open the Riley conversation layer with this step as context. Falls back to /chat.
 function askRiley(ctx){ if(window.openRileyLayer)window.openRileyLayer({message:ctx}); else location.href='/chat'; }
@@ -101,7 +101,7 @@ async function boot(){
   const fullName=meta.full_name||meta.name||USER.email.split('@')[0]||'Member';
   const avatarUrl=meta.avatar_url||meta.picture||'';
   const initials=fullName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)||'?';
-  const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;}
+  const av=document.getElementById('sb-av');if(av){if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;av.appendChild(_im);}else{av.textContent=initials;}}
   document.getElementById('sb-name').textContent=fullName;
   await loadJourney();
   await showWeekOneLetterCard();

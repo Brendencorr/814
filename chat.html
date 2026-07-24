@@ -324,7 +324,7 @@ let _db, _user, _uid, _sessionId, _history = [];
   const _g = document.getElementById('greeting'); if (_g) _g.textContent = 'Riley · Hey, ' + firstName;
   // Populate the sidebar identity (null-safe - these live in the sidebar, absent in embed mode).
   const av = document.getElementById('sb-av');
-  if (av) { if (avatarUrl) av.innerHTML = '<img src="' + avatarUrl + '" alt="' + initials + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover">'; else av.textContent = initials; }
+  if (av) { if (avatarUrl) { av.textContent = ''; var _im = document.createElement('img'); _im.src = avatarUrl; _im.alt = initials; _im.setAttribute('style', 'width:100%;height:100%;border-radius:50%;object-fit:cover'); av.appendChild(_im); } else av.textContent = initials; }
   const nm = document.getElementById('sb-name'); if (nm) nm.textContent = fullName;
 
   // ── Smart resume (Option A): auto-continue the latest thread if it last spoke

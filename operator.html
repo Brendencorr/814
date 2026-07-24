@@ -2653,7 +2653,7 @@ function renderUserDetail(d){
   // Header
   var initials=((profile.full_name||profile.email||'?').slice(0,1)).toUpperCase();
   var avEl=document.getElementById('ud-av');
-  if(profile.avatar_url){avEl.innerHTML='<img src="'+x(profile.avatar_url)+'" alt="">';}
+  if(profile.avatar_url){avEl.textContent='';var _im=document.createElement('img');_im.src=profile.avatar_url;_im.alt='';avEl.appendChild(_im);}
   else{avEl.textContent=initials;}
   document.getElementById('ud-name').textContent=profile.full_name||profile.email||'Unknown';
   document.getElementById('ud-email').textContent=profile.email||'';

@@ -469,7 +469,7 @@ function applyUpliftMode(){
   if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><span style="font-size:20px">✨</span><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:6px">Hope isn\'t pretending everything is okay. Hope is believing tomorrow can be better.</div><div style="font-size:11px;color:var(--smoke)">You showed up today. That\'s not nothing - that\'s everything.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🎵</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s music</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Gentle acoustic. Calming piano. Something that asks nothing of you.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">📖</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s reflection</div><div style="font-size:13px;color:var(--smoke);line-height:1.55;font-style:italic">What is one thing - however small - that I am grateful for right now?</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function dAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d.toLocaleDateString('en-CA');}
 // Engagement tracking - fire-and-forget, never blocks render. Logs event + bumps counters.
 function track(type,data){try{SB.rpc('log_engagement',{p_event_type:type,p_event_data:data||{}});}catch(e){}try{window.RileyPH&&window.RileyPH.track(type,data||{});}catch(e){}}
@@ -603,7 +603,7 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     const greetEl=document.getElementById('greeting');
     greetEl.insertAdjacentHTML('afterend','<div class="riley-warm">'+warmLine+'</div><div class="riley-sig">- Riley</div>');
     document.getElementById('tbdate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
-    const av=document.getElementById('sb-av');if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}">`;else av.textContent=initials;
+    const av=document.getElementById('sb-av');if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;av.appendChild(_im);}else{av.textContent=initials;}
     document.getElementById('sb-name').textContent=fullName;
 
     const [briefR,sobR,ciR,goalR,habR,hdR,convR,progR,wkR,nuR]=await Promise.allSettled([

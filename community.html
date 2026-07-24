@@ -125,7 +125,7 @@ async function boot(){
     const h=new Date().getHours();
     const gEl=document.getElementById('tb-greeting');if(gEl)gEl.textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+firstName+'.';
     const dEl=document.getElementById('tb-date');if(dEl)dEl.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-    const av=document.getElementById('sb-av');if(av){if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}" alt="${initials}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;else av.textContent=initials;}
+    const av=document.getElementById('sb-av');if(av){if(avatarUrl){av.textContent='';var _im=document.createElement('img');_im.src=avatarUrl;_im.alt=initials;_im.setAttribute('style','width:100%;height:100%;object-fit:cover;border-radius:50%');av.appendChild(_im);}else{av.textContent=initials;}}
     const nm=document.getElementById('sb-name');if(nm)nm.textContent=fullName;
     // Pre-fill email
     const emailEl=document.getElementById('comm-email');

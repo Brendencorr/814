@@ -123,7 +123,7 @@ const TIME_LABEL={morning:'each morning',lunch:'around lunch',afternoon:'in the 
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const el=()=>document.getElementById('moment');
-function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function swap(html){const m=el();m.style.animation='fadeout .3s forwards';setTimeout(()=>{m.innerHTML=html;m.style.animation='rise .7s cubic-bezier(.2,.7,.2,1) backwards';window.scrollTo(0,0);},300);}
 function dots(n){return `<div class="progress-dots">${[1,2,3,4,5,6,7,8,9].map(i=>`<div class="pdot ${i<=n?'on':''}"></div>`).join('')}</div>`;}
 async function save(patch,step){try{await SB.from('user_profiles').upsert({id:UID,email:USER.email,onboarding_version:2,...patch,...(step!=null?{onboarding_step:step}:{})},{onConflict:'id'});}catch(e){console.warn('save',e.message);}}

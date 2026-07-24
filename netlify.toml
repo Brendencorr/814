@@ -869,6 +869,12 @@
   to   = "https://riley.meetriley.us/talk"
   status = 302
 
+# The Journal (punch list item 1): /journal is the canonical name for the blog page.
+[[redirects]]
+  from = "/journal"
+  to   = "/blog.html"
+  status = 200
+
 # ── Riley catch-all (anonymous chat for everything else) ──
 # No force=true here — lets actual files (CSS, JS, HTML) be served directly.
 # Only applies to paths that don't match an existing file.

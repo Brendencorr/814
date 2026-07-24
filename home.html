@@ -9,18 +9,19 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Meet Riley">
-<title>Riley - Start where you are. Riley will meet you there.</title>
-<meta name="description" content="Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over - built by someone who's been through them. Free to start at meetriley.us.">
-<meta property="og:title" content="Riley - Start where you are. Riley will meet you there.">
-<meta property="og:description" content="Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over - built by someone who's been through them. Free to start at meetriley.us.">
+<title>Riley - a companion for life's hard chapters</title>
+<meta name="description" content="Riley is an AI companion for grief, burnout, habits, sobriety, and starting over - built by someone who's been through it. Free, forever, to start.">
+<link rel="canonical" href="https://meetriley.us/">
+<meta property="og:title" content="Riley - a companion for life's hard chapters">
+<meta property="og:description" content="Riley is an AI companion for grief, burnout, habits, sobriety, and starting over - built by someone who's been through it. Free, forever, to start.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://www.meetriley.us/">
+<meta property="og:url" content="https://meetriley.us/">
 <meta property="og:site_name" content="Meet Riley">
-<meta property="og:image" content="https://www.meetriley.us/assets/hero-logo/meet-riley.png">
+<meta property="og:image" content="https://meetriley.us/assets/og/riley-og.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Riley - Start where you are. Riley will meet you there.">
-<meta name="twitter:description" content="Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over - built by someone who's been through them. Free to start at meetriley.us.">
-<meta name="twitter:image" content="https://www.meetriley.us/assets/hero-logo/meet-riley.png">
+<meta name="twitter:title" content="Riley - a companion for life's hard chapters">
+<meta name="twitter:description" content="Riley is an AI companion for grief, burnout, habits, sobriety, and starting over - built by someone who's been through it. Free, forever, to start.">
+<meta name="twitter:image" content="https://meetriley.us/assets/og/riley-og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>
@@ -238,10 +239,16 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="lede">Not every change needs to be a reinvention.</div>
     <p class="body">Riley is a companion for life's hard chapters - grief, burnout, habits, sobriety, starting over. She knows this road from day one, and she learns yours from the first hello.</p>
     <div class="cta-row">
-      <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-lg">Meet Riley - free</a>
+      <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-lg">Come meet Riley</a>
       <a href="/about" class="btn btn-ghost btn-lg">Read the story &rarr;</a>
     </div>
-    <div class="micro">No card. No trial clock.</div>
+    <div class="micro">Free, forever. No card.</div>
+    <!-- Punch 5: trust cue at the CTA - consented Casey K. excerpt (verbatim contiguous), faceless, no ratings -->
+    <div class="hero-trust" style="max-width:520px;margin:18px auto 0;text-align:center">
+      <div style="font-size:14px;line-height:1.65;color:var(--parchment,#f5f0e8);font-style:italic">"It felt like talking to someone who genuinely understood what I was going through. I walked away feeling lighter, calmer, and much more grounded."</div>
+      <div style="font-size:12px;color:var(--gold,#c9a84c);font-family:'DM Mono',monospace;margin-top:6px">- Casey K.</div>
+      <div style="font-size:12px;color:var(--smoke,#9a9488);margin-top:10px">30-day money-back guarantee &middot; Private by design</div>
+    </div>
   </div>
 </header>
 
@@ -294,7 +301,8 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
   <div class="wrap center">
     <div class="eyebrow mt-e" data-cms-text="programs_eyebrow" data-cms-label="Membership eyebrow">Membership</div>
     <div class="h2" data-cms-text="programs_title" data-cms-label="Membership title">Start where you are.</div>
-    <p class="sub" data-cms-text="programs_offering" data-cms-label="Membership offering line" style="max-width:560px;margin:6px auto 18px;font-size:15px">Riley is free to start. $8.14 gets you a program. $19 a month gets you all of Riley.</p>
+    <p class="sub" data-cms-text="programs_offering" data-cms-label="Membership offering line" style="max-width:560px;margin:6px auto 6px;font-size:15px">Riley is free to start. $8.14 gets you a program. $19 a month gets you all of Riley.</p>
+    <p style="margin:0 auto 18px"><a href="#" class="why814-link" onclick="return openWhy814()">Why 8:14? &rarr;</a></p>
     <!-- Billing toggle - annual pre-selected (Doc 0 §2 / Doc 1 §1) -->
     <div class="bill-toggle" role="group" aria-label="Billing period" style="display:inline-flex;gap:3px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:999px;padding:4px;margin:4px auto 26px">
       <button type="button" id="bt-annual" aria-pressed="true" onclick="setBilling('annual')" style="padding:7px 18px;border:none;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;background:var(--gold,#c9a84c);color:#0a0908">Annual</button>
@@ -305,15 +313,15 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
         <div class="ptag">Free, forever</div>
         <h3 data-cms-text="guide_title" data-cms-label="Companion card title">The Riley Companion</h3>
         <div class="price" data-price>Free</div>
-        <div class="pdesc" data-cms-text="guide_desc" data-cms-label="Companion card text">Riley shows you where you stand. In your corner from the very first message - not a trial, not a timer. Every topic open, real support the moment you need it, and The 8:14 Reset to begin.</div>
-        <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm">Meet Riley, free</a>
+        <div class="pdesc" data-cms-text="guide_desc" data-cms-label="Companion card text">Riley shows you where you stand. In your corner from the very first message - not a trial, not a timer. Every topic open, real support the moment you need it, and The <span class="tdef" title="Seven quiet days, 8 minutes 14 seconds each. Free, forever.">8:14 Reset</span> to begin.</div>
+        <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm">Come meet Riley</a>
       </div>
       <div class="pcard feat reveal" data-plan="companion">
         <div class="ptag" data-badge>The primary membership</div>
         <h3 data-cms-text="companion_title" data-cms-label="Coach card title">The Riley Coach</h3>
         <div class="price" data-price>$175<span>/yr</span></div>
         <div class="psave" data-save style="font-size:11px;color:var(--gold,#c9a84c);font-family:'DM Mono',monospace;letter-spacing:0.04em;min-height:15px;margin:-4px 0 8px">Save $53/yr vs monthly</div>
-        <div class="pdesc" data-cms-text="companion_desc" data-cms-label="Coach card text">Riley walks with you. Coach is the whole of Riley now - unlimited conversation, your full personal Clarity Score, daily check-ins and habit tracker, every program (self-guided and Riley-led), adaptive movement and nourishment, proactive check-ins Riley starts, and your Life Map. Everything, in one place.</div>
+        <div class="pdesc" data-cms-text="companion_desc" data-cms-label="Coach card text">Riley walks with you. Coach is the whole of Riley now - unlimited conversation, your full personal <span class="tdef" title="One honest number for how today is going - sleep, mood, habits, in Riley's voice.">Clarity Score</span>, daily check-ins and habit tracker, every program (self-guided and Riley-led), adaptive movement and nourishment, proactive check-ins Riley starts, and your <span class="tdef" title="What Riley remembers for you: your people, your dates, what keeps you steady.">Life Map</span>. Everything, in one place.</div>
         <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="companion">Start with Coach</a>
       </div>
     </div>
@@ -342,7 +350,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Every topic, always</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley conversations</td><td style="text-align:center;opacity:0.7;font-size:12px">A few a day</td><td style="text-align:center;color:var(--gold,#c9a84c)">Unlimited</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley remembers you</td><td style="text-align:center;opacity:0.35">-</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
-          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Self-guided programs<span style="display:block;font-size:11px;opacity:0.6">Sobriety &middot; Grief &amp; Life Transitions &middot; Body Rebuild</span></td><td style="text-align:center;opacity:0.7;font-size:12px">&agrave; la carte $8.14</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
+          <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Self-guided programs<span style="display:block;font-size:11px;opacity:0.6">Sobriety &middot; Grief &amp; Life Transitions &middot; Body Rebuild</span></td><td style="text-align:center;opacity:0.7;font-size:12px">&agrave; la carte $8.14 <a href="#" class="why814-link" style="font-size:10px" onclick="return openWhy814()">Why 8:14? &rarr;</a></td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Riley-led interactive programs</td><td style="text-align:center;opacity:0.35">-</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Daily check-ins + habit tracker</td><td style="text-align:center;opacity:0.35">-</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
           <tr style="border-top:1px solid rgba(255,255,255,0.07)"><td style="padding:9px 6px">Adaptive workouts + nutrition</td><td style="text-align:center;opacity:0.35">-</td><td style="text-align:center;color:var(--gold,#c9a84c)">&#10003;</td></tr>
@@ -362,13 +370,13 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
     <div class="eyebrow" data-cms-text="alacarte_eyebrow" data-cms-label="À-la-carte eyebrow">Prefer to go it alone?</div>
     <p class="sub" data-cms-text="alacarte_sub" data-cms-label="À-la-carte text" style="max-width:560px;margin:10px auto 30px">No Riley, no tracking, no subscription - just the program content, yours to keep. Think of it as the book, not the coach.</p>
     <div class="prog-grid" style="max-width:840px;margin:0 auto">
-      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Sobriety</h3><div class="price">$8.14</div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_sobriety">Get it</a></div>
-      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Grief &amp; Life Transitions</h3><div class="price">$8.14</div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_grief">Get it</a></div>
-      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Body Rebuild</h3><div class="price">$8.14</div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_body">Get it</a></div>
+      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Sobriety</h3><div class="price">$8.14 <a href="#" class="why814-link" style="font-size:11px;vertical-align:middle" onclick="return openWhy814()">Why 8:14? &rarr;</a></div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_sobriety">Get it</a></div>
+      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Grief &amp; Life Transitions</h3><div class="price">$8.14 <a href="#" class="why814-link" style="font-size:11px;vertical-align:middle" onclick="return openWhy814()">Why 8:14? &rarr;</a></div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_grief">Get it</a></div>
+      <div class="pcard" style="padding:22px"><h3 style="font-size:18px">Body Rebuild</h3><div class="price">$8.14 <a href="#" class="why814-link" style="font-size:11px;vertical-align:middle" onclick="return openWhy814()">Why 8:14? &rarr;</a></div><div class="pdesc">Full program - 14 modules, lifetime access.</div><a href="https://riley.meetriley.us/login" class="btn btn-ghost btn-sm" data-cta data-plan-id="prog_body">Get it</a></div>
     </div>
     <div style="max-width:560px;margin:18px auto 0;background:linear-gradient(165deg,#1a160e,var(--ink));border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:18px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
       <div style="text-align:left"><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment)">The Self-Guided Bundle</div><div style="font-size:12px;color:var(--smoke);margin-top:3px">All three books, no coach - $18.14 &middot; Sobriety, Grief &amp; Life Transitions, Body Rebuild &middot; lifetime access.</div></div>
-      <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--gold2)">$18.14</span><a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="prog_bundle_selfguided">Get all 3</a></div>
+      <div style="display:flex;align-items:center;gap:14px"><span style="font-family:'DM Serif Display',serif;font-size:26px;color:var(--gold2)">$18.14</span><a href="#" class="why814-link" style="font-size:11px" onclick="return openWhy814()">Why 8:14? &rarr;</a><a href="https://riley.meetriley.us/login" class="btn btn-gold btn-sm" data-cta data-plan-id="prog_bundle_selfguided">Get all 3</a></div>
     </div>
     <p class="sub" style="font-size:13px;margin:22px auto 0;max-width:520px;opacity:0.85">Every program purchase counts - $8.14 off Coach if you upgrade within 90 days.</p>
   </div>
@@ -494,7 +502,7 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 <section class="finalcta">
   <div class="wrap">
     <h2>The light's on. Come say hi.</h2>
-    <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-lg">Meet Riley - free</a>
+    <a href="https://riley.meetriley.us/login" class="btn btn-gold btn-lg">Come meet Riley</a>
   </div>
 </section>
 
@@ -621,5 +629,29 @@ function storySubmit(){
 <script src="/posthog.js"></script>
 <script src="/site-cms.js" defer></script>
 <script src="/marketing-pill.js" defer></script>
+
+<!-- Punch 3: Why 8:14 modal (copy verbatim from the punch list) + Punch 4 term styles -->
+<style>
+.why814-link{color:var(--gold,#c9a84c);font-size:12px;font-family:'DM Mono',monospace;text-decoration:none;letter-spacing:0.03em;margin-left:8px}
+.why814-link:hover{text-decoration:underline}
+.tdef{border-bottom:1px dotted rgba(201,168,76,0.55);cursor:help}
+#why814-overlay{position:fixed;inset:0;z-index:99;display:none;align-items:center;justify-content:center;background:rgba(8,7,6,0.88);backdrop-filter:blur(6px);padding:20px}
+#why814-card{max-width:430px;background:#141210;border:1px solid rgba(201,168,76,0.3);border-radius:10px;padding:30px 32px;text-align:left}
+#why814-card h3{font-family:'DM Serif Display',serif;font-size:26px;color:var(--gold2,#e8d5a3);margin:0 0 12px}
+#why814-card p{font-size:14.5px;line-height:1.7;color:var(--parchment,#f5f0e8);margin:0 0 18px}
+#why814-close{background:none;border:1px solid rgba(201,168,76,0.35);color:var(--parchment,#f5f0e8);border-radius:3px;padding:8px 18px;font-size:13px;cursor:pointer;font-family:inherit}
+</style>
+<div id="why814-overlay" role="dialog" aria-modal="true" aria-labelledby="why814-title" onclick="if(event.target===this)closeWhy814()">
+  <div id="why814-card">
+    <h3 id="why814-title">8:14.</h3>
+    <p>The minute the light comes back. Eight minutes, fourteen seconds a day - the daily practice Riley is built around - and the reason the price is what it is. It's not a number we picked. It's one we kept.</p>
+    <button id="why814-close" onclick="closeWhy814()">Close</button>
+  </div>
+</div>
+<script>
+function openWhy814(){var o=document.getElementById('why814-overlay');o.style.display='flex';document.getElementById('why814-close').focus();try{window.RileyPH&&window.RileyPH.track('why814_opened',{});}catch(e){}return false;}
+function closeWhy814(){document.getElementById('why814-overlay').style.display='none';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeWhy814();});
+</script>
 </body>
 </html>

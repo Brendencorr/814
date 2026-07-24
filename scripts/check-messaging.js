@@ -40,6 +40,12 @@ const RETIRED = [
   "Riley Guide",
   "Let's Rebuild Together",
   "she's been through it", // Riley claiming lived experience - always "built by someone who's..."
+  // CTA canon change 2026-07-24 (pre-launch punch list item 0): the free CTA is
+  // "Come meet Riley" everywhere. These button strings are retired.
+  "Meet Riley, free",
+  "Meet Riley - free",
+  ">Start free<",
+  ">Get started free<",
 ];
 for (const f of [...htmlFiles, ...clientJs, "manifest.json"]) {
   const t = norm(read(f));

@@ -1,5 +1,6 @@
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
 const { getSupabaseClient } = require('./supabase-client');
+const { callClaude } = require('./anthropic-client');
+const { MODELS } = require('./model-router');
 
 const SYSTEM_PROMPT = `You are Atlas - the publishing and operations agent for Meet Riley (meetriley.us).
 
@@ -223,33 +224,24 @@ exports.handler = async function (event) {
       };
     }
 
-    const response = await fetch(ANTHROPIC_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4000,
+    let reply;
+    try {
+      const r = await callClaude({
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: message }],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error("Anthropic API error:", response.status, errorBody);
+        max_tokens: 4000,
+        model: MODELS.chat,
+        functionName: "atlas",
+      });
+      reply = r.text;
+    } catch (apiErr) {
+      console.error("Anthropic API error:", apiErr.status, apiErr.detail || apiErr.message);
       return {
         statusCode: 502,
         headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
-        body: JSON.stringify({ error: "Upstream API error", detail: errorBody }),
+        body: JSON.stringify({ error: "Upstream API error", detail: apiErr.detail || apiErr.message }),
       };
     }
-
-    const data = await response.json();
-    const reply = data.content && data.content[0] && data.content[0].text;
 
     // Save published posts to Supabase (non-blocking)
     try {

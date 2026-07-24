@@ -215,7 +215,7 @@ let _sess={};
   for(const [mo,ss] of Object.entries(byMonth)){
     html+=`<div style="padding:6px 16px 3px;font-size:8px;font-family:'DM Mono',monospace;color:var(--smoke2);text-transform:uppercase;letter-spacing:0.14em;border-bottom:1px solid rgba(255,255,255,0.04)">${mo}</div>`;
     for(const s of ss){
-      html+=`<div id="si-${s.id}" class="cv-row" style="position:relative;padding:10px 34px 10px 16px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'"><div onclick="openSess('${s.id}')"><div id="sit-${s.id}" style="font-size:12px;font-weight:500;color:var(--parchment);margin-bottom:2px">${esc(_displayTitle(s))}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><button class="cv-pencil" title="Rename" onclick="event.stopPropagation();renameSess('${s.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--smoke2);font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s;padding:2px 4px;line-height:1">✎</button></div>`;}
+      html+=`<div id="si-${s.id}" class="cv-row" style="position:relative;padding:10px 34px 10px 16px;border-bottom:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:background .12s" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'"><div role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="openSess('${s.id}')"><div id="sit-${s.id}" style="font-size:12px;font-weight:500;color:var(--parchment);margin-bottom:2px">${esc(_displayTitle(s))}</div>${s.tags.slice(0,2).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div><button class="cv-pencil" title="Rename" onclick="event.stopPropagation();renameSess('${s.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--smoke2);font-size:12px;cursor:pointer;opacity:0;transition:opacity .12s;padding:2px 4px;line-height:1">✎</button></div>`;}
   }
   el.innerHTML=html;
 
@@ -322,14 +322,16 @@ function openSess(sid){
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -341,7 +343,10 @@ function openSess(sid){
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

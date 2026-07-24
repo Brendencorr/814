@@ -93,7 +93,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchmen
   <!-- AI disclosure (launch blocker Task 2.2; SB 243-class): always visible at chat start on the anonymous surface. -->
   <div style="text-align:center;margin-top:7px;font-size:10.5px;color:var(--smoke2,#5a5450);font-family:'DM Mono',monospace;line-height:1.5">Riley is an AI companion - not a therapist, doctor, or crisis service. In crisis? Call or text 988.</div>
   <div class="signin-nudge" id="nudge" style="display:none">
-    <span class="snlink" onclick="requestSignin()">Sign in</span> to save your conversation and access all of Riley.
+    <span class="snlink" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="requestSignin()">Sign in</span> to save your conversation and access all of Riley.
   </div>
   <div class="rate-notice" id="rate-notice" style="display:none"></div>
 </div>
@@ -210,9 +210,9 @@ function clearRateNotice() {
 function showUpgradeNudge() {
   showRateNotice(
     "That's your free chat with me for today - and I'm glad we got to talk. "
-    + '<span class="snlink" onclick="requestSignin()">Riley Coach</span> '
+    + '<span class="snlink" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="requestSignin()">Riley Coach</span> '
     + 'is unlimited - we can pick up right where we left off. '
-    + '<span class="snlink" onclick="requestSignin()">Sign in or create a free account</span> to continue.'
+    + '<span class="snlink" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="requestSignin()">Sign in or create a free account</span> to continue.'
   );
   // Also show the sign-in nudge in case it was hidden
   nudgeEl.style.display = 'block';
@@ -256,7 +256,7 @@ function send() {
   // Show gentle notice when getting close (3 left) - server headers also trigger this
   if (sessionMsgCount === SESSION_CAP - 3) {
     showRateNotice(
-      'You have 3 free messages left today. <span class="snlink" onclick="requestSignin()">Sign in free</span> for unlimited access.'
+      'You have 3 free messages left today. <span class="snlink" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="requestSignin()">Sign in free</span> for unlimited access.'
     );
   }
 
@@ -316,7 +316,7 @@ function send() {
               // Getting close - surface a gentle notice
               showRateNotice(
                 'You have ' + remaining + ' free message' + (remaining === 1 ? '' : 's') + ' left today. '
-                + '<span class="snlink" onclick="requestSignin()">Sign in free</span> for more.'
+                + '<span class="snlink" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}" onclick="requestSignin()">Sign in free</span> for more.'
               );
             }
           }

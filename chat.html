@@ -1208,6 +1208,7 @@ async function send() {
 // Placeholder reflects the combined daily total (check-in + free-form) positively.
 function applyChatCap(){
   const input=document.getElementById('msg-input'), btn=document.getElementById('send-btn'), cap=document.getElementById('cap-caption');
+  if(cap){ var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'}; var _a=cap.querySelector('a'); if(_a) _a.textContent='Riley '+(TL.companion||'Coach')+' means no limit, ever'; }
   if(input){ input.disabled=true; input.placeholder="You've made the most of today with Riley - more opens up tomorrow."; }
   if(btn){ btn.disabled=true; btn.style.opacity='.4'; }
   if(cap) cap.style.display='block';
@@ -1280,14 +1281,16 @@ async function signOut() {
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -1299,7 +1302,10 @@ async function signOut() {
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

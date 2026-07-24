@@ -158,7 +158,7 @@ async function loadDates(){
   let rows=[];
   try{const {data}=await SB.from('important_dates').select('id,label,event_month,event_day,event_year,is_sensitive').eq('user_id',UID).order('event_month',{ascending:true}).order('event_day',{ascending:true});rows=data||[];}catch(e){}
   const fmt=r=>{const d=new Date(2000,(r.event_month||1)-1,r.event_day||1);let s=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});if(r.event_year)s+=', '+r.event_year;return s;};
-  const chips=rows.length?`<div class="chips">${rows.map(r=>`<span class="chip">${r.is_sensitive?'🕯 ':''}${esc(r.label)} · <span style="color:var(--smoke)">${fmt(r)}</span><span class="x" onclick="removeDate('${r.id}',${r.event_year||'null'},${r.event_month},${r.event_day})">×</span></span>`).join('')}</div>`:`<div class="empty">Nothing here yet - add the dates you carry, and I'll carry them with you.</div>`;
+  const chips=rows.length?`<div class="chips">${rows.map(r=>`<span class="chip">${r.is_sensitive?'🕯 ':''}${esc(r.label)} · <span style="color:var(--smoke)">${fmt(r)}</span><span class="x" role="button" tabindex="0" aria-label="Remove" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="removeDate('${r.id}',${r.event_year||'null'},${r.event_month},${r.event_day})">×</span></span>`).join('')}</div>`:`<div class="empty">Nothing here yet - add the dates you carry, and I'll carry them with you.</div>`;
   slot.innerHTML=`<div class="fcard"><div class="fhead"><span class="femoji">📅</span><span class="ftitle">Important Dates</span></div><div class="fsub">The days that matter - bright or heavy. I'll remember them every year, and I'm extra gentle around the heavy ones.</div>${chips}
     <div class="addrow" style="flex-wrap:wrap">
       <input type="date" id="id-date" style="flex:0 0 150px">
@@ -349,11 +349,11 @@ async function loadMap(){
   // P1.11: a section renders as a full card ONLY once it has content. The empty ones collapse into ONE
   // quiet expandable line - never a wall of "nothing here yet" boxes (the brand is positioned against forms).
   const filled=FACETS.filter(f=>(by[f.k]||[]).length), empty=FACETS.filter(f=>!(by[f.k]||[]).length);
-  const cards=filled.map(f=>facetCard(f,`<div class="chips">${(by[f.k]||[]).map(r=>`<span class="chip${r.source==='conversation'?' riley':''}">${esc(r.content)}<span class="x" onclick="removeEntry('${r.id}')">×</span></span>`).join('')}</div>`)).join('');
+  const cards=filled.map(f=>facetCard(f,`<div class="chips">${(by[f.k]||[]).map(r=>`<span class="chip${r.source==='conversation'?' riley':''}">${esc(r.content)}<span class="x" role="button" tabindex="0" aria-label="Remove" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" onclick="removeEntry('${r.id}')">×</span></span>`).join('')}</div>`)).join('');
   let emptyBlock='';
   if(empty.length){
     const inner=empty.map(f=>facetCard(f,`<div class="empty" style="padding:6px 0;font-style:italic">I'll hold this as we talk.</div>`)).join('');
-    emptyBlock=`<div class="fcard" style="cursor:pointer" onclick="var e=document.getElementById('map-empties'),c=this.querySelector('.mx-chev');var open=e.style.display==='none';e.style.display=open?'block':'none';c.textContent=open?'▾':'▸';"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">🌱</span><span class="ftitle">Riley's still learning these</span></div><span class="mx-chev" style="color:var(--smoke2)">▸</span></div><div class="fsub">Add one, or just keep talking - I fill these in as I get to know you.</div></div><div id="map-empties" style="display:none">${inner}</div>`;
+    emptyBlock=`<div class="fcard" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" style="cursor:pointer" onclick="var e=document.getElementById('map-empties'),c=this.querySelector('.mx-chev');var open=e.style.display==='none';e.style.display=open?'block':'none';c.textContent=open?'▾':'▸';"><div class="fhead" style="justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="femoji">🌱</span><span class="ftitle">Riley's still learning these</span></div><span class="mx-chev" style="color:var(--smoke2)">▸</span></div><div class="fsub">Add one, or just keep talking - I fill these in as I get to know you.</div></div><div id="map-empties" style="display:none">${inner}</div>`;
   }
   slot.innerHTML=(cards+emptyBlock)||`<div class="empty">I'm still getting to know you - just keep talking, and this fills in.</div>`;
 }
@@ -425,14 +425,16 @@ boot();
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -444,7 +446,10 @@ boot();
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

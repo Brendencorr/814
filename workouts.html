@@ -202,13 +202,15 @@ async function coachEntitled(featureKey){
     return !!(d&&d.features&&d.features[featureKey]&&d.features[featureKey].access);
   }catch(e){return true;} // fail open - never block on a network hiccup
 }
+const COACH_TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+const COACH_NAME='Riley '+(COACH_TL.companion||'Coach');
 function coachLockCard(slot,title,body){
-  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with Riley Coach →</a></div>`;
+  slot.innerHTML=`<div class="card" style="border-color:rgba(201,168,76,0.28);text-align:center"><div style="font-size:34px;margin-bottom:10px;opacity:0.7">🔒</div><div class="card-title">${title}</div><div class="card-sub">${body}</div><a href="/programs?unlock=adaptive_workouts" class="btn btn-gold" style="display:inline-block;text-decoration:none">Unlock with ${COACH_NAME} →</a></div>`;
 }
 async function loadWellness(){
   const slot=document.getElementById('plan-slot');if(!slot)return;
   if(!(await coachEntitled('adaptive_workouts'))){
-    return coachLockCard(slot,'Your adaptive workout plan','Riley Coach builds a personalized 7-day plan that adapts to your week - part of Riley Coach. Your workout log below still works on the free plan.');
+    return coachLockCard(slot,'Your adaptive workout plan',''+COACH_NAME+' builds a personalized 7-day plan that adapts to your week - part of '+COACH_NAME+'. Your workout log below still works on the free plan.');
   }
   let prof=null;
   try{const {data}=await SB.from('wellness_profile').select('*').eq('user_id',UID).maybeSingle();prof=data;}catch(e){}
@@ -357,14 +359,16 @@ async function logWorkout(){
   };
 
   function wall(ent,feat){
+    var TL={guide:'Companion',reset_free:'Companion',companion:'Coach',coach:'Mentor',mentor:'Mentor',concierge:'Mentor',alacarte:'Self-guided'};
+    var COACH='Riley '+(TL.companion||'Coach');
     const fmap={
-      daily_checkin:{name:'Daily Check-In',need:'Riley Coach'},
-      adaptive_programming:{name:'Your Daily Brief',need:'Riley Coach'},
-      tracker_fitness:{name:'Workout Tracking',need:'Riley Coach'},
-      tracker_nutrition:{name:'Nutrition Tracking',need:'Riley Coach'},
-      tracker_sleep:{name:'Sleep Tracking',need:'Riley Coach'},
-      tracker_calendar:{name:'Calendar',need:'Riley Coach'},
-      knowledge_graph:{name:'Your Life Map',need:'Riley Coach'}
+      daily_checkin:{name:'Daily Check-In',need:COACH},
+      adaptive_programming:{name:'Your Daily Brief',need:COACH},
+      tracker_fitness:{name:'Workout Tracking',need:COACH},
+      tracker_nutrition:{name:'Nutrition Tracking',need:COACH},
+      tracker_sleep:{name:'Sleep Tracking',need:COACH},
+      tracker_calendar:{name:'Calendar',need:COACH},
+      knowledge_graph:{name:'Your Life Map',need:COACH}
     };
     const f=fmap[feat]||{name:'This feature',need:'a subscription'};
     const ov=document.createElement('div');
@@ -376,7 +380,10 @@ async function logWorkout(){
       <a href="/programs?unlock=${feat}" style="display:inline-block;background:linear-gradient(135deg,#c9a84c,#d4942a);color:#0a0908;padding:13px 28px;font-size:13px;font-weight:600;text-decoration:none;border-radius:3px;letter-spacing:0.04em;box-shadow:0 4px 20px rgba(201,168,76,0.3)">Unlock with ${f.need} →</a>
       <div style="margin-top:16px"><a href="/dashboard" style="font-size:12px;color:#8a8578;text-decoration:none">← Back to Home</a></div>
     </div>`;
+    ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
     document.body.appendChild(ov);
+    document.addEventListener('keydown',function(e){if(e.key==='Escape')location.href='/dashboard';});
+    var _wf=ov.querySelector('a');if(_wf)_wf.focus();
   }
 
   async function run(){

@@ -174,6 +174,25 @@ exports.handler = async function (event) {
       }
     }
   } catch (e) {}
+
+  // Habit + goal feathers (founder, 2026-07-24): today's kept habits, and any goal
+  // that reached its target this period. Bounded reads, idempotent refs, fire-and-forget.
+  try {
+    const { awardFeather } = require("./feathers");
+    supabase.from("habit_completions").select("habit_id, completed_date, habits(title)")
+      .eq("user_id", userId).eq("completed_date", today)
+      .then(({ data }) => (data || []).forEach((h) => {
+        const t = h.habits && h.habits.title ? ": " + h.habits.title : "";
+        awardFeather(supabase, userId, "habit", h.habit_id + ":" + h.completed_date, "Kept a habit" + t).catch(() => {});
+      }), () => {});
+    supabase.from("user_goals").select("id, title, target_value, current_value, period_start")
+      .eq("user_id", userId).eq("is_active", true)
+      .then(({ data }) => (data || []).forEach((g) => {
+        if (g.target_value != null && g.current_value != null && Number(g.target_value) > 0 && Number(g.current_value) >= Number(g.target_value)) {
+          awardFeather(supabase, userId, "goal", g.id + ":" + (g.period_start || "all"), "Reached your goal" + (g.title ? ": " + g.title : "")).catch(() => {});
+        }
+      }), () => {});
+  } catch (e) {}
   const flaggedToday = !!(prev && prev.date === today && prev.crisis_flag);
 
   // ── Step 0 - Crisis Check (always first) ──────────────────────────────────

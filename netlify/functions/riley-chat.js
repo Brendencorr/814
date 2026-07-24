@@ -944,6 +944,15 @@ async function persistMessages(supabase, userId, sessionId, userMsg, reply) {
       { user_id: userId, session_id: sessionId, role: "user",      content: userMsg },
       { user_id: userId, session_id: sessionId, role: "assistant", content: reply },
     ]);
+    // Feather: conversation milestones (founder, 2026-07-24) - 25/50/100/250/500/1000
+    // member messages. One cheap indexed count; idempotent ref; fire-and-forget.
+    try {
+      const { count } = await supabase.from("riley_conversations")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId).eq("role", "user");
+      const M = [25, 50, 100, 250, 500, 1000].filter((n) => count >= n).pop();
+      if (M) require("./feathers").awardFeather(supabase, userId, "milestone", "messages-" + M, M + " messages with Riley").catch(() => {});
+    } catch (_) {}
   } catch (e) { console.warn("persistMessages failed (non-fatal):", e.message); }
 }
 
@@ -1128,7 +1137,7 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
         await supabase.from(table).insert(baseRow);
         // Feather keepsake (founder rule 2026-07-23): a NEW win Riley noticed is a
         // moment. Slugged ref = idempotent; reinforce/supersede never re-award.
-        if (isFacet && m.facet === "wins") {
+        if (isFacet && m.facet === "win") {
           require("./feathers").awardFeather(supabase, userId, "win",
             content.trim().toLowerCase().slice(0, 80),
             "A win Riley noticed: " + content.slice(0, 140)).catch(() => {});

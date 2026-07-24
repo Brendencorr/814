@@ -77,6 +77,10 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <h2>Your data</h2>
     <div class="cdesc">Your information is yours - take it or erase it, anytime.</div>
     <div class="row">
+      <div class="lbl">Count me on the porch<div class="val">The homepage shows how many members are here tonight - a count, never a name. Turn this off and you're never counted.</div></div>
+      <button class="linkbtn" id="porch-toggle" aria-pressed="true">On</button>
+    </div>
+    <div class="row">
       <div class="lbl">Export your data<div class="val">Download everything Riley has stored for you as JSON</div></div>
       <button class="linkbtn" id="export-btn">Export</button>
     </div>
@@ -141,7 +145,24 @@ async function load(){
   USER=session.user; UID=USER.id;
   $('acct-email').textContent=USER.email||'';
   try{
-    const {data:prof}=await SB.from('user_profiles').select('sobriety_date,email_notifications,push_notifications,is_admin,stripe_customer_id').eq('id',UID).maybeSingle();
+    const {data:prof}=await SB.from('user_profiles').select('sobriety_date,email_notifications,push_notifications,is_admin,stripe_customer_id,porch_opt_out').eq('id',UID).maybeSingle();
+    // Porch Lights opt-out (2026-07-24): default ON (counted); the toggle flips porch_opt_out.
+    // Opting out also clears the presence row server-side on the next heartbeat attempt.
+    (function(){
+      var pb=document.getElementById('porch-toggle'); if(!pb) return;
+      var counted=!(prof&&prof.porch_opt_out===true);
+      function render(){ pb.textContent=counted?'On':'Off'; pb.setAttribute('aria-pressed',counted?'true':'false'); }
+      render();
+      pb.onclick=async function(){
+        counted=!counted; render();
+        try{ await SB.from('user_profiles').update({porch_opt_out:!counted}).eq('id',UID);
+          if(!counted){ try{ localStorage.removeItem('porch_hb_'+UID); }catch(e){}
+            var tok=(await SB.auth.getSession()).data.session?.access_token;
+            fetch('/.netlify/functions/porch-presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,action:'heartbeat'})}).catch(function(){});
+          }
+        }catch(e){ counted=!counted; render(); }
+      };
+    })();
     if(prof&&prof.sobriety_date) $('f-date').value=prof.sobriety_date;
     setEmailToggle(!prof || prof.email_notifications !== false);   // default ON
     setPushToggle(!prof || prof.push_notifications !== false);

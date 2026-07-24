@@ -1,5 +1,17 @@
 # 8:14 Project — Claude Code Instructions
 
+## PRODUCT LAW: North Star + design test (founder-approved 2026-07-24, verbatim)
+> **North Star:** Tell me how I am. Show me what matters. Give me one clear thing to do next.
+> **The five-question design test:** every screen must answer at least one of: How am I? What matters today? What should I do next? What is Riley noticing? What has helped me before? A screen that answers none of these does not ship.
+> **The experience standard:** the dashboard should feel like a decision has already been made for the member - never like a checklist requiring energy to organize.
+
+Experience roadmap source of truth: `docs/EXPERIENCE_ROADMAP_2026-07-24.md`. NOW = Porch Lights
+Level 1 ONLY (view-only presence; Levels 2-5 are vision, DO NOT build - no dormant buttons, no
+post schema). NEXT (post-launch): check-in funnel + Daily Three, Clarity subdimensions (dark-run;
+three founder decisions pending). THEN: pattern engine. DEFERRED: "What works for me" library,
+named Clarity states. Porch privacy laws: min-count 12 per lane, aggregate-only API, opt-out
+`Count me on the porch`, closing line never omitted.
+
 ## CRITICAL: Model Name
 The **member conversation** model is:
 claude-sonnet-4-6

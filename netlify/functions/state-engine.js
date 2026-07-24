@@ -100,6 +100,7 @@ async function gatherSignals(supabase, userId) {
     habitRate,
     checkinDays7,
     soberDays,
+    soberStart: soberRow && soberRow.start_date ? soberRow.start_date : null,
     activeJourney,
     recentMoods,
   };
@@ -144,8 +145,8 @@ exports.handler = async function (event) {
   // Tier 2 - log only, no recompute. This is the scaling fix.
   if (tier === 2) return json(200, { tier: 2, recompute: false });
 
-  let _tz = "America/Denver";
-  try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+  let _tz = "America/Denver", _signupAt = null;
+  try { const { data: _p } = await supabase.from("user_profiles").select("timezone, created_at").eq("id", userId).maybeSingle(); if (_p) { if (_p.timezone) _tz = _p.timezone; if (_p.created_at) _signupAt = new Date(_p.created_at); } } catch (e) {}
 
   // Feather keepsake: showing up for the day's check-in (founder rule 2026-07-23 -
   // moments, never logins/streaks). One per member-day (ref = appDay); fire-and-forget.
@@ -159,19 +160,31 @@ exports.handler = async function (event) {
   ]);
   const prev = (prevRes && prevRes.data && prevRes.data[0]) || null;
 
-  // Personal-scope milestone feathers (founder, 2026-07-23): the milestone set derives
-  // from what THIS member tracks - sobriety day counts come from their own active
-  // tracker (sig.soberDays), so the scope is personal by construction. Awarded only
-  // within a 7-day window of the milestone (no back-catalog flood on feature launch),
-  // idempotent per milestone (ref), fire-and-forget - never blocks the recompute.
+  // Personal-scope milestone feathers (founder rules, 2026-07-23 + 2026-07-24):
+  // the milestone set derives from what THIS member tracks, and Riley only marks
+  // milestones SHE WAS THERE FOR - a milestone date before the member signed up
+  // never earns a feather (a 7-years-sober member's first sobriety feather is
+  // their next anniversary, not day 7). Day milestones early, calendar-correct
+  // year anniversaries after. 7-day recency window; idempotent ref; fire-and-forget.
   try {
-    if (sig && typeof sig.soberDays === "number" && sig.soberDays > 0) {
-      const MILESTONES = [1, 7, 14, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000];
-      const m = MILESTONES.filter((n) => sig.soberDays >= n && sig.soberDays < n + 7).pop();
-      if (m) {
-        const label = m === 1 ? "Day 1 sober - the bravest one" : m + " days sober - a milestone worth keeping";
-        require("./feathers").awardFeather(supabase, userId, "milestone", "sober-" + m, label).catch(() => {});
+    if (sig && sig.soberStart) {
+      const dayMs = 86400000;
+      const start = new Date(sig.soberStart + "T12:00:00Z");
+      const nowD = new Date();
+      const cands = [];
+      [1, 7, 14, 30, 60, 90, 120, 180, 270].forEach((d) => cands.push({
+        ref: "sober-" + d,
+        label: d === 1 ? "Day 1 sober - the bravest one" : d + " days sober - a milestone worth keeping",
+        date: new Date(start.getTime() + d * dayMs),
+      }));
+      for (let y = 1; y <= 60; y++) {
+        const dt = new Date(start); dt.setUTCFullYear(dt.getUTCFullYear() + y);
+        cands.push({ ref: "sober-" + y + "y", label: y + " year" + (y > 1 ? "s" : "") + " sober - a milestone worth keeping", date: dt });
       }
+      const hit = cands.filter((c) =>
+        c.date <= nowD && (nowD - c.date) < 7 * dayMs && (!_signupAt || c.date >= _signupAt)
+      ).pop();
+      if (hit) require("./feathers").awardFeather(supabase, userId, "milestone", hit.ref, hit.label).catch(() => {});
     }
   } catch (e) {}
 

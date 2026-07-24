@@ -306,6 +306,8 @@ const SB_KEY = 'sb_publishable_VZFFDQYMJ9yuFbDvLKim4g_k1LhfTJ8';
 const RILEY_URL = '/.netlify/functions/riley-chat';
 
 let _db, _user, _uid, _sessionId, _history = [];
+let _engaged = false;    // true once the member has sent anything - suppresses resume prompts
+let _resumeUI = null;    // the rendered resume prompt (buttons), so engagement can clear it
 
 (async function() {
   _db = supabase.createClient(SB_URL, SB_KEY);
@@ -356,7 +358,9 @@ async function openConversation() {
   const _inp = document.getElementById('msg-input');
   const _snd = document.getElementById('send-btn');
   const _live = loadLiveChat();
-  if (_live) { resumeSession(_live.sid, _live.history); return; }
+  // Engaged already (composer handoff raced ahead of this async boot)? Rehydrating would
+  // WIPE the live exchange - offer the quiet hint instead. (bug 2026-07-24)
+  if (_live) { if (_engaged) continuityHint(_live.sid, _live.history); else resumeSession(_live.sid, _live.history); return; }
   if (_inp) { _inp.disabled = true; _inp.placeholder = 'One moment…'; }
   if (_snd) _snd.disabled = true;
   let _landed = false;   // a resume view rendered - the static welcome stays hidden
@@ -371,8 +375,9 @@ async function openConversation() {
       const history = (s.messages || []).map(m => ({ role: m.role, content: m.content }));
       if (history.length && s.last_session_id) {
         const hoursSince = s.last_at ? (Date.now() - new Date(s.last_at).getTime()) / 3600000 : 0;
-        if (hoursSince < 24) resumeSession(s.last_session_id, history);
-        else                 offerResume(s.last_session_id, history);
+        if (_engaged)             continuityHint(s.last_session_id, history);   // they're already talking - never interrupt
+        else if (hoursSince < 24) resumeSession(s.last_session_id, history);
+        else                      offerResume(s.last_session_id, history);
         _landed = true;
       }
     }
@@ -380,7 +385,7 @@ async function openConversation() {
   finally {
     // Only a genuinely fresh session shows the static welcome (it boots hidden so it can
     // never flash before the check-in / resume takes over).
-    if (!_landed) { const _w = document.getElementById('welcome'); if (_w) _w.style.display = 'block'; }
+    if (!_landed && !_engaged) { const _w = document.getElementById('welcome'); if (_w) _w.style.display = 'block'; }
     if (_inp) { _inp.disabled = false; _inp.placeholder = 'Message Riley…'; _inp.focus(); }
     if (_snd) _snd.disabled = false;
   }
@@ -993,6 +998,7 @@ async function rcHandoff(quiet){
     }catch(e){}
   }
   if(cand && cand.history && cand.history.length){
+    if(_engaged){ continuityHint(cand.sid, cand.history); return; }   // already talking - quiet hint only
     appendMsg('riley', "We were mid-conversation last time - want to pick up where we left off, or start something new?");
     rcOfferContinue(cand.sid, cand.history);
   }
@@ -1011,6 +1017,7 @@ function rcOfferContinue(sid, history){
   b2.onclick = function(){ btns.remove(); };   // fresh - Riley already asked what's on your mind
   btns.appendChild(b1); btns.appendChild(b2);
   box.appendChild(btns); box.scrollTop = 999999;
+  _resumeUI = btns;   // engagement (typing/sending) clears this instantly
 }
 
 // ── Live-chat continuity across pages ────────────────────────────────────────
@@ -1051,8 +1058,40 @@ function resumeSession(sid, history) {
   saveLiveChat();
 }
 
+// The member already started a NEW conversation (e.g. typed into the dashboard composer
+// before the resume check finished). Never interrupt with a prompt - show ONE quiet,
+// dismissible line instead: Riley still remembers, and the old thread is one tap away.
+// Tapping it merges: the previous conversation rehydrates ABOVE what was just said, and
+// the chat continues under the original session so nothing is lost either way.
+function continuityHint(sid, history) {
+  if (!history || !history.length) return;
+  const box = document.getElementById('messages');
+  if (!box) return;
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:2px 0 8px 6px;font-size:12px;color:var(--smoke,#8a8578)';
+  const t = document.createElement('span');
+  t.textContent = 'New conversation - Riley still remembers everything.';
+  const a = document.createElement('a');
+  a.href = '#'; a.textContent = 'Bring back where we left off';
+  a.setAttribute('role', 'button');
+  a.style.cssText = 'color:var(--gold);text-decoration:underline;cursor:pointer';
+  a.onclick = function (ev) {
+    ev.preventDefault(); row.remove();
+    resumeSession(sid, history.concat(_history.slice()));   // old thread + what was just said
+  };
+  const x = document.createElement('span');
+  x.textContent = '×'; x.setAttribute('role', 'button'); x.setAttribute('tabindex', '0'); x.setAttribute('aria-label', 'Dismiss');
+  x.style.cssText = 'cursor:pointer;color:var(--smoke2,#5a5450);padding:0 4px';
+  x.onclick = function () { row.remove(); };
+  x.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); row.remove(); } };
+  row.appendChild(t); row.appendChild(a); row.appendChild(x);
+  box.appendChild(row); box.scrollTop = 999999;
+}
+
 // Older thread: Riley asks whether to pick up where we left off or start fresh.
+// ONLY for an idle, empty chat - once the member has spoken, continuityHint is used instead.
 function offerResume(sid, history) {
+  if (_engaged) { continuityHint(sid, history); return; }
   document.getElementById('welcome').style.display = 'none';
   const box = document.getElementById('messages');
   const wrap = document.createElement('div');
@@ -1073,6 +1112,7 @@ function offerResume(sid, history) {
   btns.appendChild(b1); btns.appendChild(b2);
   wrap.appendChild(bubble); wrap.appendChild(btns);
   box.appendChild(wrap);
+  _resumeUI = wrap;   // engagement (typing/sending) clears this instantly
 }
 
 function starter(btn) {
@@ -1136,6 +1176,13 @@ async function send() {
   const btn   = document.getElementById('send-btn');
   const text  = input.value.trim();
   if (!text) return;
+
+  // The member is talking - from here on, NO resume prompt may appear (a "want to pick up
+  // where we left off?" landing AFTER a live exchange reads as a broken bot - bug 2026-07-24).
+  // If the prompt is already on screen when they start typing, clear it; the quiet
+  // continuity hint (continuityHint) is the only resume affordance once engaged.
+  _engaged = true;
+  if (_resumeUI) { try { _resumeUI.remove(); } catch (e) {} _resumeUI = null; }
 
   // Collecting the optional check-in reflection note → capture it, do NOT send to the LLM.
   if (_awaitingNote){

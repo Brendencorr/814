@@ -1486,7 +1486,12 @@ exports.handler = async function (event) {
       const cfgIntent = detectClarityConfigIntent(latestUserText);
       if (cfgIntent) {
         const isFull = userTier === "companion" || userTier === "coach" || userTier === "mentor" || userTier === "concierge";
-        const today = new Date(Date.now() - 4 * 3600 * 1000).toISOString().slice(0, 10); // 4am member-day
+        // Member-LOCAL 4am app-day (audit 2026-07-24: the old UTC-4h shift landed config
+        // changes on the wrong day for anyone far from Mountain time). Rare branch (only
+        // when a config intent was detected), so the one extra timezone read is fine.
+        let _cfgTz = "America/Denver";
+        try { const { data: _tp } = await supabase.from("user_profiles").select("timezone").eq("id", user_id).maybeSingle(); if (_tp && _tp.timezone) _cfgTz = _tp.timezone; } catch (_) {}
+        const today = appDay(_cfgTz);
         const res = await applyClarityConfigChange(supabase, user_id, today, cfgIntent, isFull);
         const note = clarityConfigNote(res, cfgIntent);
         if (note) systemPrompt = note + "\n\n----\n\n" + systemPrompt;

@@ -549,6 +549,10 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
       // Post-checkout return with no session (e.g. paid in a window that isn't signed into Riley) - send
       // them to sign in with a clear "payment complete" note instead of dumping them on the marketing home.
       var _paid=false; try{ _paid=new URLSearchParams(location.search).get('checkout')==='success'; }catch(e){}
+      // Post-purchase: the entitlement cache predates the payment - bust it so the member's
+      // new tier renders IMMEDIATELY (pwa.js does this too, but this runs unconditionally
+      // before any entitlement read on the checkout landing page - no script-order race).
+      if(_paid){ try{ Object.keys(sessionStorage).forEach(function(k){ if(k.indexOf('ent_')===0) sessionStorage.removeItem(k); }); }catch(e){} }
       window.location.href = _paid ? 'https://riley.meetriley.us/login?paid=1' : 'https://riley.meetriley.us';
       return;
     }

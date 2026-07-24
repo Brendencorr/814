@@ -404,29 +404,51 @@
       var raw = localStorage.getItem('sb-tglljvjixlolaguycvbb-auth-token'); if (!raw) return;
       var tok = null; try { tok = (JSON.parse(raw) || {}).access_token; } catch (e) {}
       if (!tok) return;
-      // Presence heartbeat, throttled locally to 1/10min (server throttles + honors opt-out too).
+      // Initial presence heartbeat (throttled ~4min; server throttles + honors opt-out too).
       try {
-        var last = parseInt(localStorage.getItem('porch_hb') || '0', 10);
-        if (Date.now() - last > 600000) {
+        var last0 = parseInt(localStorage.getItem('porch_hb') || '0', 10);
+        if (Date.now() - last0 > 240000) {
           localStorage.setItem('porch_hb', String(Date.now()));
           fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'heartbeat' }) }).catch(function () {});
         }
       } catch (e) {}
-      fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'counts' }) })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (!d || !d.light || document.getElementById('porch-nav')) return;
-          var n = (typeof d.total === 'number' && d.total > 0) ? d.total : null;
-          // Pre-launch window is weekly (see porch-presence.js) - copy matches the window.
-          var line = n ? (n + ' porch light' + (n === 1 ? ' was' : 's were') + ' on this week') : 'The porch light is on today';
-          var wrap = document.createElement('div');
-          wrap.id = 'porch-nav';
-          wrap.innerHTML = '<div style="font-size:9px;font-family:\'DM Mono\',monospace;color:#8f897c;letter-spacing:0.16em;text-transform:uppercase;padding:14px 20px 6px">Riley\'s Community</div>'
-            + '<div style="display:flex;align-items:center;gap:8px;padding:2px 20px 10px;font-size:12px;color:#8a8578;line-height:1.5"><span style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 60%);box-shadow:0 0 8px rgba(201,168,76,0.6);flex-shrink:0" aria-hidden="true"></span><span></span></div>';
-          wrap.querySelectorAll('span')[1].textContent = line;
-          var spacer = sb.querySelector('.sb-spacer');
-          if (spacer) sb.insertBefore(wrap, spacer); else sb.appendChild(wrap);
-        }).catch(function () {});
+      // LIVE count (founder 2026-07-24): render once, then keep it breathing - refresh the
+      // number every 60s and re-ping presence every ~5min while the tab is visible, so the
+      // porch reflects people arriving and leaving in near-real time. Riley is always light #1.
+      function refreshCount() {
+        if (document.visibilityState !== 'visible') return;
+        fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'counts' }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (!d || !d.light) return;
+            var n = (typeof d.total === 'number' && d.total > 0) ? d.total : 1;
+            var line = n + ' porch light' + (n === 1 ? ' is' : 's are') + ' on right now';
+            var wrap = document.getElementById('porch-nav');
+            if (!wrap) {
+              wrap = document.createElement('div');
+              wrap.id = 'porch-nav';
+              wrap.innerHTML = '<div style="font-size:9px;font-family:\'DM Mono\',monospace;color:#8f897c;letter-spacing:0.16em;text-transform:uppercase;padding:14px 20px 6px">Riley\'s Community</div>'
+                + '<div style="display:flex;align-items:center;gap:8px;padding:2px 20px 10px;font-size:12px;color:#8a8578;line-height:1.5"><span style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 60%);box-shadow:0 0 8px rgba(201,168,76,0.6);flex-shrink:0" aria-hidden="true"></span><span id="porch-line"></span></div>';
+              var spacer = sb.querySelector('.sb-spacer');
+              if (spacer) sb.insertBefore(wrap, spacer); else sb.appendChild(wrap);
+            }
+            var t = document.getElementById('porch-line');
+            if (t) t.textContent = line;
+          }).catch(function () {});
+      }
+      function heartbeat() {
+        if (document.visibilityState !== 'visible') return;
+        try {
+          var last = parseInt(localStorage.getItem('porch_hb') || '0', 10);
+          if (Date.now() - last > 240000) {
+            localStorage.setItem('porch_hb', String(Date.now()));
+            fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'heartbeat' }) }).catch(function () {});
+          }
+        } catch (e) {}
+      }
+      refreshCount();
+      setInterval(refreshCount, 60000);
+      setInterval(heartbeat, 300000);
     } catch (e) {}
   }
 

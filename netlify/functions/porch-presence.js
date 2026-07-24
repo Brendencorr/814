@@ -21,11 +21,15 @@ const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (s, b) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(b) });
 const MIN_LANE = 12;          // minimum-count rule: never display a per-lane count below this
-// PRE-LAUNCH (founder call 2026-07-24): a 7-day window so the count is warm AND true -
-// "N porch lights were on this week." At launch flip to 24 (daily, "on today"); post-launch,
-// live online-now. The number is NEVER fabricated - founder-agreed, permanent law.
-const WINDOW_H = 168;
-const THROTTLE_MIN = 10;
+// LIVE COUNT (founder call 2026-07-24, supersedes the weekly window): members seen in the
+// last LIVE_WINDOW_MIN minutes, PLUS Riley herself - Riley is ALWAYS the first light on the
+// porch (she is genuinely always present; that is the product). So the count starts at 1,
+// moves to 2 when one member signs in, and breathes as people come and go. The member count
+// itself is NEVER fabricated - founder-agreed, permanent law; Riley's own light is the only
+// non-member in the number, by design and disclosed in canon.
+const RILEY_LIGHT = 1;
+const LIVE_WINDOW_MIN = 15;
+const THROTTLE_MIN = 4;       // client pings ~5min; row stays fresh inside the live window
 
 // Lane copy (Riley's voice; sentence case; no urgency). 'other' reads as starting over.
 const LANE_COPY = {
@@ -64,9 +68,9 @@ exports.handler = async (event) => {
 
   // counts - aggregate only. Never identities, at any level of the stack.
   try {
-    const since = new Date(Date.now() - WINDOW_H * 3600000).toISOString();
+    const since = new Date(Date.now() - LIVE_WINDOW_MIN * 60000).toISOString();
     const { data: rows } = await sb.from("porch_presence").select("lane,seen_at").gte("seen_at", since).limit(20000);
-    const total = (rows || []).length;
+    const total = (rows || []).length + RILEY_LIGHT;   // Riley is always on the porch
 
     // Crisis mode for THIS viewer: card stays, lane labels drop.
     let crisis = false;

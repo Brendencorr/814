@@ -11,11 +11,12 @@ post schema). NEXT (post-launch): check-in funnel + Daily Three, Clarity subdime
 three founder decisions pending). THEN: pattern engine. DEFERRED: "What works for me" library,
 named Clarity states. Porch privacy laws: min-count 12 per LANE, aggregate-only API, opt-out
 `Count me on the porch`. Porch lives in the SIDEBAR as "Riley's Community" (founder 2026-07-24,
-supersedes the dashboard card) - injected by pwa.js on every member page. PRE-LAUNCH the window
-is 7 days ("N porch lights were on this week" - warm AND true); at launch flip WINDOW_H to 24
-("on today"); post-launch, live online-now. THE COUNT IS NEVER FABRICATED - random/inflated
-numbers were proposed and rejected (founder agreed 2026-07-24); this is permanent law. Lane
-breakdowns stay server-gated (min-count 12) for future surfaces.
+supersedes the dashboard card) - injected by pwa.js on every member page. The count is LIVE
+(founder 2026-07-24): members seen in the last 15 min PLUS Riley herself - Riley is ALWAYS the
+first light (she is genuinely always present; the only non-member in the number, by design).
+"N porch lights are on right now", refreshed every 60s, heartbeat ~5min while visible. THE
+MEMBER COUNT IS NEVER FABRICATED - random/inflated numbers were proposed and rejected (founder
+agreed 2026-07-24); permanent law. Lane breakdowns stay server-gated (min-count 12).
 
 ## CRITICAL: Model Name
 The **member conversation** model is:

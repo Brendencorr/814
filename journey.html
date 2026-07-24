@@ -146,7 +146,7 @@ async function loadJourney(){
   // Fetch the step content - pre-written if it exists, else generate on demand
   let {data:step}=await SB.from('journey_steps').select('*').eq('program_slug',pslug).eq('day_number',currentDay).maybeSingle();
   if(!step){
-    document.getElementById('content').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:48px 0;text-align:center"><div style="font-size:28px">🐦</div><div style="color:var(--smoke);font-size:13px;line-height:1.6">Riley is preparing today\'s step…<br>Just a moment.</div></div>';
+    document.getElementById('content').innerHTML='<div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:48px 0;text-align:center"><div><img src="/assets/cardinal/webp/814-cardinal-loading-walking.webp" alt="" style="height:44px;width:auto"></div><div style="color:var(--smoke);font-size:13px;line-height:1.6">Riley is preparing today\'s step…<br>Just a moment.</div></div>';
     try{
       const res=await fetch('/.netlify/functions/journey-step',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({program_slug:pslug,day_number:currentDay,token:(await SB.auth.getSession()).data.session?.access_token})});
       const j=await res.json();

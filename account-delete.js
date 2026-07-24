@@ -106,7 +106,7 @@
         var data = await res.json().catch(function () { return {}; });
         if (!res.ok || !data.success) throw new Error(data.error || "Deletion failed. Please try again.");
 
-        card.innerHTML = '<div style="padding:14px 0"><div style="font-size:30px;margin-bottom:12px">🕊️</div>' +
+        card.innerHTML = '<div style="padding:14px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-flying.webp" alt="" style="height:52px;width:auto"></div>' +
           '<div style="font-family:\'DM Serif Display\',Georgia,serif;font-size:22px;line-height:1.4">Your account has been deleted.</div>' +
           '<div style="font-size:14px;color:#8a8578;margin-top:10px;line-height:1.6">Thank you for trusting Riley with your story. Take good care.</div></div>';
         try { await sb.auth.signOut(); } catch (e) {}

@@ -21,6 +21,9 @@ function resolveProvider() {
   if (key && explicit === "voyage") return { provider: "voyage", key };
   if (key && (explicit === "openai" || !explicit)) return { provider: "openai", key };
   if (process.env.OPENAI_API_KEY) return { provider: "openai", key: process.env.OPENAI_API_KEY };
+  // OPENAI_SEMANTIC: the name the operator chose for the embeddings key in Netlify
+  // (2026-07-24) - honored as a first-class alias so the env never needs renaming.
+  if (process.env.OPENAI_SEMANTIC) return { provider: "openai", key: process.env.OPENAI_SEMANTIC };
   if (process.env.VOYAGE_API_KEY) return { provider: "voyage", key: process.env.VOYAGE_API_KEY };
   return null; // dark
 }

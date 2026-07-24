@@ -75,6 +75,9 @@ exports.handler = async (event) => {
         { user_id: userId, program_key: programKey, module_number: n, done_at: new Date().toISOString() },
         { onConflict: "user_id,program_key,module_number" }
       );
+      // Feather keepsake (founder rule 2026-07-23): a completed step is a moment.
+      // Idempotent per module; unchecking never removes a feather (they only grow).
+      try { require("./feathers").awardFeather(sb, userId, "program_step", programKey + ":" + n, "Took a step in your program").catch(() => {}); } catch (e) {}
     }
     return json(200, { ok: true });
   }

@@ -146,12 +146,34 @@ exports.handler = async function (event) {
 
   let _tz = "America/Denver";
   try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+
+  // Feather keepsake: showing up for the day's check-in (founder rule 2026-07-23 -
+  // moments, never logins/streaks). One per member-day (ref = appDay); fire-and-forget.
+  if (event_type === "mood_checked_in") {
+    try { require("./feathers").awardFeather(supabase, userId, "showed_up", appDay(_tz), "Showed up for your check-in").catch(() => {}); } catch (e) {}
+  }
   const today = appDay(_tz);   // member-local 4am app-day (was UTC)
   const [sig, prevRes] = await Promise.all([
     gatherSignals(supabase, userId),
     supabase.from("user_daily_state").select("*").eq("user_id", userId).lte("date", today).order("date", { ascending: false }).limit(1),
   ]);
   const prev = (prevRes && prevRes.data && prevRes.data[0]) || null;
+
+  // Personal-scope milestone feathers (founder, 2026-07-23): the milestone set derives
+  // from what THIS member tracks - sobriety day counts come from their own active
+  // tracker (sig.soberDays), so the scope is personal by construction. Awarded only
+  // within a 7-day window of the milestone (no back-catalog flood on feature launch),
+  // idempotent per milestone (ref), fire-and-forget - never blocks the recompute.
+  try {
+    if (sig && typeof sig.soberDays === "number" && sig.soberDays > 0) {
+      const MILESTONES = [1, 7, 14, 30, 60, 90, 120, 180, 270, 365, 500, 730, 1000];
+      const m = MILESTONES.filter((n) => sig.soberDays >= n && sig.soberDays < n + 7).pop();
+      if (m) {
+        const label = m === 1 ? "Day 1 sober - the bravest one" : m + " days sober - a milestone worth keeping";
+        require("./feathers").awardFeather(supabase, userId, "milestone", "sober-" + m, label).catch(() => {});
+      }
+    }
+  } catch (e) {}
   const flaggedToday = !!(prev && prev.date === today && prev.crisis_flag);
 
   // ── Step 0 - Crisis Check (always first) ──────────────────────────────────

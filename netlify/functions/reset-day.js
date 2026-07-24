@@ -137,6 +137,13 @@ exports.handler = async (event) => {
       if (body.touch !== "evening") {
         emitEvent(supabase, userId, "reset_day_completed", { day: dayNum });
         if (dayNum >= 7) emitEvent(supabase, userId, "reset_completed", {});
+        // Feather keepsakes (founder rule 2026-07-23): the completed day is a moment.
+        // Idempotent per day; fire-and-forget - never blocks the response.
+        try {
+          const { awardFeather } = require("./feathers");
+          awardFeather(supabase, userId, "reset_day", "day-" + dayNum, "Finished Day " + dayNum + " of the 8:14 Reset").catch(() => {});
+          if (dayNum >= 7) awardFeather(supabase, userId, "reset_complete", "once", "Completed the 8:14 Reset - all seven days").catch(() => {});
+        } catch (e) {}
       }
       return json(200, { ok: true });
     }

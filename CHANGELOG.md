@@ -12,6 +12,36 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-23
 
+- `meetriley-big-build` - **Personal-scope milestone feathers + The Cardinal on site and program
+  (founder).** (1) Milestone feathers: state-engine now awards a feather when a member crosses a
+  sobriety milestone (1/7/14/30/60/90/120/180/270/365/500/730/1000 days, from THEIR own active
+  tracker via sig.soberDays - the scope is personal by construction). Awarded only within a 7-day
+  window of the milestone (no back-catalog flood at launch), idempotent (ref sober-N), fire-and-
+  forget. Conversation-driven wins (Riley noticing) were already live from Feathers v1. (2) The
+  Cardinal section (perched cardinal + "A symbol of hope, love, connection & trust..." + the five
+  Emotional Connection icons: Warmth/Hope/Connection/Guidance/Purpose) added to home.html (after
+  ethos, before FAQ), about.html (after Meet Riley), and reset.html (under the day content) - CMS-
+  editable copy hooks on the marketing pages. (3) The five 814-icon-*@2x.png files were broken
+  crops (clipped edges, mockup-board remnants); replaced with the clean art extracted from the
+  founder's Emotional_Connection mock. Icons render via a CSS gold tint (detail-preserving invert
+  filter) on the ink ground. Files: netlify/functions/state-engine.js, home.html, about.html,
+  reset.html, assets/cardinal/png/814-icon-*.png.
+
+- `meetriley-big-build` - **Feathers v1: keepsake moments (founder decision).** The cardinal's feathers
+  as kept moments - NEVER logins, NEVER streaks; the collection only ever grows; visible only to the
+  member (RLS) and operator (service key). (1) Migration 100_feathers.sql (APPLIED to prod + advisor
+  clean): feathers table, unique (user_id,kind,ref) idempotency, member-read RLS, server-only writes.
+  (2) netlify/functions/feathers.js awardFeather() - fail-open, fire-and-forget by contract.
+  (3) Award moments wired: check-in completed (state-engine, one per member-day), Reset day + full
+  Reset completed (reset-day), program step completed (program-content; unchecking never removes),
+  NEW win Riley notices in conversation (riley-chat extractMemories, wins facet only, reinforce/
+  supersede never re-award). (4) dashboard.html: FEATHERS chip in the topbar (DM Mono pill, real
+  feather art from assets/cardinal), keepsake modal ("Each one marks a moment. They only ever add
+  up."), red-feather drift animation when new feathers arrived since last seen (prefers-reduced-motion
+  skips it). Verified in a headless harness: chip, drift, and keepsake view render with the cardinal
+  feather asset. Files: supabase/migrations/100_feathers.sql, netlify/functions/{feathers,state-engine,
+  reset-day,program-content,riley-chat}.js, dashboard.html.
+
 - `meetriley-big-build` - **Third homepage testimonial (Curtis, MI).** Added to the Real Stories band in
   home.html after Samantha's, same card pattern with CMS override hooks (`testimonial_curtis` /
   `testimonial_curtis_author`). Founder-supplied copy, verbatim with straight apostrophes; the memory

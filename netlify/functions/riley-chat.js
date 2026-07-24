@@ -1124,7 +1124,16 @@ Already known (do not repeat unless superseding): ${known.length ? known.join(" 
       }
 
       // ── NEW ──
-      try { await supabase.from(table).insert(baseRow); } catch (_) {}
+      try {
+        await supabase.from(table).insert(baseRow);
+        // Feather keepsake (founder rule 2026-07-23): a NEW win Riley noticed is a
+        // moment. Slugged ref = idempotent; reinforce/supersede never re-award.
+        if (isFacet && m.facet === "wins") {
+          require("./feathers").awardFeather(supabase, userId, "win",
+            content.trim().toLowerCase().slice(0, 80),
+            "A win Riley noticed: " + content.slice(0, 140)).catch(() => {});
+        }
+      } catch (_) {}
     }
   } catch (e) { console.warn("extractMemories failed (non-fatal):", e.message); }
 }

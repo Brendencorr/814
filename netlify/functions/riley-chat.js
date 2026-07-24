@@ -1045,7 +1045,7 @@ async function extractMemories(supabase, userId, conversation) {
     const sys = `You update Riley's long-term model of a person (their Life Map) from a wellness conversation. Today is ${todayStr}.
 Return ONLY a JSON array (possibly empty). Each item: {"facet": one of [win, fear, joy, relationship, recovery_dna, value, strength, why, vision, energy, general, followup], "memory_type": one of [long_term, preference, sensitive, journey] (only when facet is "general"), "content": "one concise entry in plain words", "confidence": 0.0-1.0, "supersedes": "<verbatim text of an existing memory this CORRECTS or CONTRADICTS, or omit>", "due": "YYYY-MM-DD (ONLY for facet followup)"}.
 Capture these facets especially - they matter most:
-- win: ANY victory, however small ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father").
+- win: ANY victory, however small, that ACTUALLY HAPPENED ("made it through today", "30 days", "apologized", "went to the gym", "forgave my father"). A win is something done or achieved - an aspiration, plan, or work-in-progress is NEVER a win (file those under vision or why).
 - fear: something they're afraid of.
 - joy: a thing that brings them joy (hiking, dogs, music, coffee, a person, a place).
 - relationship: a person who matters - put the person and role in content ("his sponsor Mike", "her daughter Ava"). When a specific person is identifiable by name, ALSO set "person_name" (just the name), and optionally "person_role" ("his sponsor") and "person_sentiment" (one of warm|strained|complicated - only if clear).

@@ -12,6 +12,16 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Win accuracy: a win is something that HAPPENED (founder catch).** The
+  theme-promotion job filed an aspiration ("building financial freedom - moving toward...") as a
+  'win' on the founder's Life Map - the promotion prompt had no facet definitions and the
+  extractor's win rule was too loose. Both prompts now state: a win is an accomplishment already
+  achieved; aspirations/goals-in-progress belong under vision or why. Data corrected in prod: that
+  row reclassified win->vision; the 1 feather derived from a consolidation-source 'win' removed
+  (win feathers should come from wins Riley noticed in conversation, and the live path already
+  does only that). Files: netlify/functions/{riley-chat,memory-maintenance-cron}.js.
+
+
 - `meetriley-big-build` - **Feathers always catch up on return (founder: "Riley still notices and
   keeps track").** The 7-day recency window on milestone awards is gone: a milestone crossed while
   the member was away is waiting in their bucket when they come back - the arrival dialog presents

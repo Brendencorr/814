@@ -460,7 +460,7 @@ function applyMoodEngine(n){
 
 function applyEncourageMode(){
   const slot=document.getElementById('notices-slot');
-  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:30px;width:auto;flex-shrink:0"><div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing - four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
+  if(slot)slot.innerHTML='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:6px;padding:16px 18px">'+RileyCardinal.html('reminder',{width:54})+'<div><div style="font-family:\'DM Serif Display\',serif;font-size:16px;font-style:italic;color:var(--parchment);line-height:1.65;margin-bottom:8px">Today\'s goal is just to breathe. Nothing else matters until you take care of yourself.</div><div style="font-size:11px;color:var(--smoke)">No productivity. No hustle. Just kindness.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🌿</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s movement</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">A ten-minute walk. Nothing more.</div></div></div><div style="display:flex;align-items:flex-start;gap:11px;background:rgba(16,14,12,0.4);border:1px solid rgba(255,255,255,0.05);border-radius:6px;padding:12px 14px"><span style="font-size:15px">🫁</span><div><div style="font-family:DM Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:3px;opacity:0.8">Today\'s breathwork</div><div style="font-size:13px;color:var(--smoke);line-height:1.55">Box breathing - four in, four hold, four out, four hold. Five minutes.</div></div></div></div>';
   const mr=document.getElementById('mood-response');if(mr)mr.style.display='none';
 }
 
@@ -1188,7 +1188,7 @@ function contentFeedback(contentId,type){
 }
 async function sendFeedback(contentId,type,fb){
   contentEvent(contentId,type,{feedback:fb});
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:10px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:48px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you - that helps me learn.</div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:10px;display:flex;justify-content:center">'+RileyCardinal.html('success',{width:84})+'</div><div style="font-family:\'DM Serif Display\',serif;font-size:17px;color:var(--parchment)">Thank you - that helps me learn.</div></div>');
   setTimeout(closeP2,1500);
 }
 
@@ -1268,7 +1268,7 @@ function renderPhase2(q){
   if(q.type==='text'){input=`<input type="text" id="p2-in" placeholder="${esc(q.ph||'')}" autofocus style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">`;}
   else if(q.type==='choice'){input=`<div id="p2-opts" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">${q.opts.map(o=>`<button onclick="p2pick(this,'${esc(o)}')" style="padding:10px 16px;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:22px;font-size:14px;color:var(--parchment);cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="if(!this.dataset.sel)this.style.borderColor='rgba(255,255,255,0.12)'">${esc(o)}</button>`).join('')}</div>`;}
   p2Modal(`
-    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:46px;width:auto;flex-shrink:0"><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">${esc(q.prompt)}</div></div></div>
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px">${RileyCardinal.html('idle',{width:64})}<div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">${esc(q.prompt)}</div></div></div>
     ${input}
     <div style="display:flex;align-items:center;gap:14px;margin-top:4px"><button onclick="p2save('${q.key}','${q.store}','${q.col||''}','${q.bucket}')" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 26px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Share</button><button onclick="p2skip('${q.key}')" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Maybe later</button></div>`);
   window._p2val=null;
@@ -1285,7 +1285,7 @@ async function p2save(key,store,col,bucket){
     else if(store==='profile'&&col){const patch={};patch[col]=val;if(col==='preferred_encouragement')patch.communication_style=val;await SB.from('user_profiles').update(patch).eq('id',UID);}
     await markP2(key);
     await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:phase2MemoryLine(key,val),source:'phase2',confidence:0.95,is_active:true});
-    p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you. I have got that.<br><span style="color:var(--smoke);font-size:15px">It helps more than you know.</span></div></div>');
+    p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px;display:flex;justify-content:center">'+RileyCardinal.html('success',{width:92})+'</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you. I have got that.<br><span style="color:var(--smoke);font-size:15px">It helps more than you know.</span></div></div>');
     setTimeout(closeP2,1800);
   }catch(e){console.warn('p2save',e.message);closeP2();}
 }
@@ -1309,7 +1309,7 @@ async function p2saveSobrietyStatus(val){
       renderSoberDateAsk();
     }else if(val==='Want to get sober'){
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They want to get sober but have not started yet. Be supportive and non-judgmental, let them set the pace, do not assume a start date or push a plan.',source:'phase2',confidence:0.95,is_active:true});
-      p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready - even just to talk it through - I am here.</span></div></div>');
+      p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px;display:flex;justify-content:center">'+RileyCardinal.html('success',{width:92})+'</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Thank you for trusting me with that.<br><span style="color:var(--smoke);font-size:15px">Whenever you are ready - even just to talk it through - I am here.</span></div></div>');
       setTimeout(closeP2,2400);
     }else{
       await SB.from('riley_memory').insert({user_id:UID,memory_type:'preference',content:'They were asked about sobriety and said not right now. Do not bring it up unprompted going forward, let them lead.',source:'phase2',confidence:0.95,is_active:true});
@@ -1319,7 +1319,7 @@ async function p2saveSobrietyStatus(val){
 }
 function renderSoberDateAsk(){
   p2Modal(`
-    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:46px;width:auto;flex-shrink:0"><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">That's wonderful. What's your sobriety date? I'll start tracking your streak right on your dashboard.</div></div></div>
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px">${RileyCardinal.html('idle',{width:64})}<div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A note from Riley</div><div style="font-family:'DM Serif Display',serif;font-size:19px;color:var(--parchment);line-height:1.5">That's wonderful. What's your sobriety date? I'll start tracking your streak right on your dashboard.</div></div></div>
     <input type="date" id="s-date" max="${TODAY}" style="width:100%;background:var(--ink3);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:13px 15px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--parchment);outline:none;margin-bottom:16px">
     <div style="display:flex;align-items:center;gap:14px"><button onclick="p2saveSoberDate()" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 26px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Save</button><button onclick="p2skipSoberDate()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">I'll add it later</button></div>`);
 }
@@ -1330,11 +1330,11 @@ async function p2saveSoberDate(){
     await SB.from('sobriety_tracker').update({is_active:false}).eq('user_id',UID);
     await SB.from('sobriety_tracker').insert({user_id:UID,start_date:dt,is_active:true,milestone_days:[]});
   }catch(e){console.warn('p2saveSoberDate',e.message);}
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it - saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px;display:flex;justify-content:center">'+RileyCardinal.html('success',{width:92})+'</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Got it - saved.<br><span style="color:var(--smoke);font-size:15px">I am tracking it with you now.</span></div></div>');
   setTimeout(closeP2,2000);
 }
 function p2skipSoberDate(){
-  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:52px;width:auto"></div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Whenever you are ready.<br><span style="color:var(--smoke);font-size:15px">Tracker is right there for you.</span></div></div>');
+  p2Modal('<div style="text-align:center;padding:12px 0"><div style="margin-bottom:12px;display:flex;justify-content:center">'+RileyCardinal.html('idle',{width:84})+'</div><div style="font-family:\'DM Serif Display\',serif;font-size:18px;color:var(--parchment);line-height:1.5">Whenever you are ready.<br><span style="color:var(--smoke);font-size:15px">Tracker is right there for you.</span></div></div>');
   setTimeout(closeP2,2000);
 }
 
@@ -1342,7 +1342,7 @@ function p2skipSoberDate(){
 function renderWellnessBaseline(){
   const dims=[['sleep','Sleep'],['stress','Stress'],['energy','Energy'],['motivation','Motivation'],['confidence','Confidence'],['purpose','Purpose'],['relationships','Relationships'],['nutrition','Nutrition'],['fitness','Fitness'],['overall_happiness','Overall happiness']];
   p2Modal(`
-    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px"><img src="/assets/cardinal/webp/814-cardinal-perched.webp" alt="" style="height:46px;width:auto;flex-shrink:0"><div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A quick baseline</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Where are you starting from? Rate each from 1 to 10 - so one day we can look back and see how far you've come.</div></div></div>
+    <div style="display:flex;gap:13px;align-items:flex-start;margin-bottom:18px">${RileyCardinal.html('idle',{width:64})}<div><div style="font-size:9px;font-family:'DM Mono',monospace;color:var(--gold);letter-spacing:0.16em;text-transform:uppercase;margin-bottom:7px">A quick baseline</div><div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--parchment);line-height:1.5">Where are you starting from? Rate each from 1 to 10 - so one day we can look back and see how far you've come.</div></div></div>
     <div id="wb-grid" style="display:flex;flex-direction:column;gap:9px;margin-bottom:16px;max-height:46vh;overflow-y:auto">${dims.map(([k,l])=>`<div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--parchment);width:100px;flex-shrink:0">${l}</span><div style="display:flex;gap:3px;flex-wrap:wrap">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<button onclick="wbPick('${k}',${n},this)" data-k="${k}" style="width:25px;height:25px;border-radius:50%;border:1px solid rgba(255,255,255,0.12);background:transparent;color:var(--smoke);font-size:10px;cursor:pointer;transition:all .12s">${n}</button>`).join('')}</div></div>`).join('')}</div>
     <div style="display:flex;align-items:center;gap:14px"><button onclick="wbSave()" style="background:linear-gradient(135deg,var(--gold),#d4942a);color:var(--ink);border:none;padding:11px 24px;font-size:13px;font-weight:600;border-radius:3px;cursor:pointer">Save my baseline</button><button onclick="p2skipBaseline()" style="background:none;border:none;color:var(--smoke);font-size:13px;cursor:pointer">Not now</button></div>`);
   window._wb={};
@@ -1716,6 +1716,7 @@ async function doSignOut(){try{Object.keys(sessionStorage).forEach(function(k){i
   var tries=0,iv=setInterval(function(){ tries++; if(init()||tries>60)clearInterval(iv); },250);
 })();
 </script>
+<script src="/cardinal-touches.js"></script>
 <script src="/posthog.js"></script>
 </body>
 </html>

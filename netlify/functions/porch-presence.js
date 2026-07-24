@@ -21,7 +21,10 @@ const { getSupabaseClient, getUserIdFromToken } = require("./supabase-client");
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (s, b) => ({ statusCode: s, headers: { ...CORS, "Content-Type": "application/json" }, body: JSON.stringify(b) });
 const MIN_LANE = 12;          // minimum-count rule: never display a per-lane count below this
-const WINDOW_H = 24;
+// PRE-LAUNCH (founder call 2026-07-24): a 7-day window so the count is warm AND true -
+// "N porch lights were on this week." At launch flip to 24 (daily, "on today"); post-launch,
+// live online-now. The number is NEVER fabricated - founder-agreed, permanent law.
+const WINDOW_H = 168;
 const THROTTLE_MIN = 10;
 
 // Lane copy (Riley's voice; sentence case; no urgency). 'other' reads as starting over.

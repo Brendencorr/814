@@ -417,7 +417,8 @@
         .then(function (d) {
           if (!d || !d.light || document.getElementById('porch-nav')) return;
           var n = (typeof d.total === 'number' && d.total > 0) ? d.total : null;
-          var line = n ? (n + ' porch light' + (n === 1 ? ' is' : 's are') + ' on today') : 'The porch light is on today';
+          // Pre-launch window is weekly (see porch-presence.js) - copy matches the window.
+          var line = n ? (n + ' porch light' + (n === 1 ? ' was' : 's were') + ' on this week') : 'The porch light is on today';
           var wrap = document.createElement('div');
           wrap.id = 'porch-nav';
           wrap.innerHTML = '<div style="font-size:9px;font-family:\'DM Mono\',monospace;color:#8f897c;letter-spacing:0.16em;text-transform:uppercase;padding:14px 20px 6px">Riley\'s Community</div>'

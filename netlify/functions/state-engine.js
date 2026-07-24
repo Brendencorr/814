@@ -146,6 +146,12 @@ exports.handler = async function (event) {
 
   let _tz = "America/Denver";
   try { const { data: _p } = await supabase.from("user_profiles").select("timezone").eq("id", userId).maybeSingle(); if (_p && _p.timezone) _tz = _p.timezone; } catch (e) {}
+
+  // Feather keepsake: showing up for the day's check-in (founder rule 2026-07-23 -
+  // moments, never logins/streaks). One per member-day (ref = appDay); fire-and-forget.
+  if (event_type === "mood_checked_in") {
+    try { require("./feathers").awardFeather(supabase, userId, "showed_up", appDay(_tz), "Showed up for your check-in").catch(() => {}); } catch (e) {}
+  }
   const today = appDay(_tz);   // member-local 4am app-day (was UTC)
   const [sig, prevRes] = await Promise.all([
     gatherSignals(supabase, userId),

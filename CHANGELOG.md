@@ -12,6 +12,21 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-23
 
+- `meetriley-big-build` - **Feathers v1: keepsake moments (founder decision).** The cardinal's feathers
+  as kept moments - NEVER logins, NEVER streaks; the collection only ever grows; visible only to the
+  member (RLS) and operator (service key). (1) Migration 100_feathers.sql (APPLIED to prod + advisor
+  clean): feathers table, unique (user_id,kind,ref) idempotency, member-read RLS, server-only writes.
+  (2) netlify/functions/feathers.js awardFeather() - fail-open, fire-and-forget by contract.
+  (3) Award moments wired: check-in completed (state-engine, one per member-day), Reset day + full
+  Reset completed (reset-day), program step completed (program-content; unchecking never removes),
+  NEW win Riley notices in conversation (riley-chat extractMemories, wins facet only, reinforce/
+  supersede never re-award). (4) dashboard.html: FEATHERS chip in the topbar (DM Mono pill, real
+  feather art from assets/cardinal), keepsake modal ("Each one marks a moment. They only ever add
+  up."), red-feather drift animation when new feathers arrived since last seen (prefers-reduced-motion
+  skips it). Verified in a headless harness: chip, drift, and keepsake view render with the cardinal
+  feather asset. Files: supabase/migrations/100_feathers.sql, netlify/functions/{feathers,state-engine,
+  reset-day,program-content,riley-chat}.js, dashboard.html.
+
 - `meetriley-big-build` - **Third homepage testimonial (Curtis, MI).** Added to the Real Stories band in
   home.html after Samantha's, same card pattern with CMS override hooks (`testimonial_curtis` /
   `testimonial_curtis_author`). Founder-supplied copy, verbatim with straight apostrophes; the memory

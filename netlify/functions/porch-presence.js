@@ -73,7 +73,10 @@ exports.handler = async (event) => {
       crisis = !!(cr && cr.length);
     } catch (_) { crisis = true; }  // fail-safe: uncertain -> quieter card
 
-    if (total < MIN_LANE) return json(200, { light: true, lines: ["The porch light is on tonight."], closing: "You don't have to say anything to be here." });
+    // Founder call 2026-07-24 (sidebar move): the TOTAL is always returned truthfully -
+    // "the true number of community members who have logged in." The min-count law
+    // continues to govern LANE breakdowns only.
+    if (total < MIN_LANE) return json(200, { light: true, total, lines: ["The porch light is on tonight."], closing: "You don't have to say anything to be here." });
 
     const lines = [`${total} porch lights are on tonight.`];
     if (!crisis) {
@@ -83,7 +86,7 @@ exports.handler = async (event) => {
       if (laneLines.length) lines.push(...laneLines.slice(0, 3));
       else lines.push("You're not the only one here.");
     }
-    return json(200, { light: true, lines, closing: "You don't have to say anything to be here." });
+    return json(200, { light: true, total, lines, closing: "You don't have to say anything to be here." });
   } catch (e) {
     return json(200, { light: true, lines: ["The porch light is on tonight."], closing: "You don't have to say anything to be here." });
   }

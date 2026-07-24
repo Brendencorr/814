@@ -11,7 +11,7 @@ met with welcome.
 - DEFERRED (do not build): "What works for me" library; named Clarity states.
 
 ## 1 PORCH LIGHTS - participation ladder (vision map; LEVEL 1 is the whole current scope)
-L1 See the lights (ambient counts, view-only - SHIPPED) · L2 Sit on the porch (anonymous join) ·
+L1 See the lights (ambient counts, view-only - SHIPPED; lives in the sidebar as "Riley's Community" per founder 2026-07-24, true total shown, lane min-counts server-gated) · L2 Sit on the porch (anonymous join) ·
 L3 Leave a light on (one moderated sentence) · L4 Circles · L5 Sessions.
 Level 1 card (Level-2 dashboard area, never above Clarity/next-step):
 "The porch tonight / N porch lights are on tonight. X people are sitting with grief. ... /

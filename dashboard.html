@@ -339,10 +339,7 @@ body.quiet-hours .trends,body.quiet-hours #foryou-slot,body.quiet-hours .brief,b
          what Riley's noticing + what she's holding, with a member "Dismiss". loadLifemapSpotlight fills it. -->
     <div id="lifemap-spot-slot"></div>
 
-    <!-- Porch Lights LEVEL 1 (experience roadmap 2026-07-24): view-only ambient presence.
-         Level-2 area by design - never above Clarity/next-step. Levels 2-5 are NOT built:
-         no join, no posts, nothing interactive lives here. -->
-    <div id="porch-slot"></div>
+    <!-- Porch Lights moved to the sidebar ("Riley's Community", founder 2026-07-24) - see pwa.js. -->
 
     <!-- TREND CARDS -->
     <div class="trends" id="trends"></div>
@@ -639,7 +636,6 @@ function areaSpark(id,data,color){if(!data.length)return'';const w=100,h=32;cons
     // Guide hides the module entirely - never an empty "Habits: 0". Fail-open if entitlements missing.
     if(ENT.entitlements && ENT.entitlements.habit_tracker==='false'){ ['habits-panel','goals-panel'].forEach(function(id){var el=document.getElementById(id); if(el)el.style.display='none';}); }
     loadLifemapSpotlight(ENT,checkins); // fire-and-forget; renders nothing if dismissed or locked
-    loadPorch(); // Porch Lights L1 - heartbeat (10-min local throttle) + aggregate card; fail-quiet
     // Phase 2 calendar connect card - fire-and-forget; renders nothing while the server flag is off.
     try{ if(window.RileyCalendarCard&&RileyCalendarCard.mountGoogle){ const _cg=document.getElementById('calendar-google-slot'); if(_cg) RileyCalendarCard.mountGoogle(_cg, SB, UID).then(function(){ if(_cg.innerHTML) _cg.style.cssText='margin-bottom:16px;background:linear-gradient(160deg,rgba(26,23,20,0.7),rgba(16,14,12,0.5));border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px'; }); } }catch(e){}
     const todayCI=checkins.find(c=>c.checkin_date===TODAY);
@@ -1046,30 +1042,6 @@ window.lmSpotRemove=async function(id){
 async function lmSpotRefresh(){
   try{const {data}=await SB.from('life_map').select('id,facet,content,source').eq('user_id',UID).eq('is_active',true).order('created_at',{ascending:false});LM_SPOT.rows=data||[];}catch(e){}
   lmSpotRender();
-}
-// ── Porch Lights LEVEL 1 (2026-07-24): view-only presence. The server enforces every privacy
-// law (aggregate-only, min-count 12 per lane, crisis lane-drop); this renders what it's given
-// and ALWAYS includes the closing line. No interactions - Levels 2-5 are deliberately absent.
-async function loadPorch(){
-  try{
-    const slot=document.getElementById('porch-slot'); if(!slot) return;
-    const tok=await authToken(); if(!tok) return;
-    // Heartbeat, throttled locally to 1/10min (server throttles too).
-    try{
-      const k='porch_hb_'+UID, last=parseInt(localStorage.getItem(k)||'0',10);
-      if(Date.now()-last>600000){ localStorage.setItem(k,String(Date.now()));
-        fetch('/.netlify/functions/porch-presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,action:'heartbeat'})}).catch(function(){});
-      }
-    }catch(e){}
-    const r=await fetch('/.netlify/functions/porch-presence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:tok,action:'counts'})});
-    const d=await r.json(); if(!d||!d.light||!Array.isArray(d.lines)) return;
-    const esc2=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
-    slot.innerHTML='<div style="background:linear-gradient(160deg,rgba(26,23,20,0.55),rgba(16,14,12,0.45));border:1px solid rgba(201,168,76,0.16);border-radius:10px;padding:16px 18px;margin:14px 0">'
-      +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--gold,#c9a84c);margin-bottom:7px">The porch tonight</div>'
-      +'<div style="font-size:13.5px;line-height:1.65;color:var(--parchment,#f5f0e8)">'+d.lines.map(esc2).join(' ')+'</div>'
-      +'<div style="font-size:12px;color:var(--smoke,#9a9488);font-style:italic;margin-top:7px">'+esc2(d.closing||"You don't have to say anything to be here.")+'</div>'
-      +'</div>';
-  }catch(e){}
 }
 async function loadLifemapSpotlight(ent,checkins){
   try{

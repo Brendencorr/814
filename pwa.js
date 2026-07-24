@@ -393,6 +393,42 @@
     if (t) t.onclick = function () { if (window.openRileyLayer) window.openRileyLayer({}); else location.href = '/chat'; };
   }
 
+  // ── Riley's Community - porch lights in the SIDEBAR (founder call 2026-07-24, replaces the
+  // dashboard card). One injection here covers every member page. Shows the TRUE count of
+  // members seen in the rolling day; lane breakdowns (min-count 12) stay server-gated for any
+  // future surface. Post-launch upgrade path: live "online now" verbiage. View-only - L2-5 absent.
+  function porchSidebar() {
+    try {
+      var sb = document.querySelector('.sidebar');
+      if (!sb || document.getElementById('porch-nav')) return;
+      var raw = localStorage.getItem('sb-tglljvjixlolaguycvbb-auth-token'); if (!raw) return;
+      var tok = null; try { tok = (JSON.parse(raw) || {}).access_token; } catch (e) {}
+      if (!tok) return;
+      // Presence heartbeat, throttled locally to 1/10min (server throttles + honors opt-out too).
+      try {
+        var last = parseInt(localStorage.getItem('porch_hb') || '0', 10);
+        if (Date.now() - last > 600000) {
+          localStorage.setItem('porch_hb', String(Date.now()));
+          fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'heartbeat' }) }).catch(function () {});
+        }
+      } catch (e) {}
+      fetch('/.netlify/functions/porch-presence', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: tok, action: 'counts' }) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (!d || !d.light || document.getElementById('porch-nav')) return;
+          var n = (typeof d.total === 'number' && d.total > 0) ? d.total : null;
+          var line = n ? (n + ' porch light' + (n === 1 ? ' is' : 's are') + ' on today') : 'The porch light is on today';
+          var wrap = document.createElement('div');
+          wrap.id = 'porch-nav';
+          wrap.innerHTML = '<div style="font-size:9px;font-family:\'DM Mono\',monospace;color:#8f897c;letter-spacing:0.16em;text-transform:uppercase;padding:14px 20px 6px">Riley\'s Community</div>'
+            + '<div style="display:flex;align-items:center;gap:8px;padding:2px 20px 10px;font-size:12px;color:#8a8578;line-height:1.5"><span style="width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 60%);box-shadow:0 0 8px rgba(201,168,76,0.6);flex-shrink:0" aria-hidden="true"></span><span></span></div>';
+          wrap.querySelectorAll('span')[1].textContent = line;
+          var spacer = sb.querySelector('.sb-spacer');
+          if (spacer) sb.insertBefore(wrap, spacer); else sb.appendChild(wrap);
+        }).catch(function () {});
+    } catch (e) {}
+  }
+
   window.addEventListener('load', function () {
     setTimeout(function () {
       // P1.10.7: the floating "Chat with Riley" pill is RETIRED inside the member app (it duplicated the
@@ -400,6 +436,7 @@
       // conversion path and there's no member nav. Member app pages carry the #sb-tiers nav mount; marketing does not.
       if (!onChatPage && !document.getElementById('sb-tiers')) chatPill();
       if (!onChatPage && document.getElementById('sb-tiers')) mobileBottomBar();   // P2.8: mobile bottom bar (member app)
+      porchSidebar();                                      // Riley's Community - porch lights in the nav
       autoOpenDaily();                                     // once/day → Riley's day-aware check-in
       if (!isOnboarded()) return;                          // app-install is offered only AFTER onboarding
       if (onLogin && isMobile) { loginPopup(); return; }   // phone login → app popup (once/session)

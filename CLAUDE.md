@@ -9,8 +9,11 @@ Experience roadmap source of truth: `docs/EXPERIENCE_ROADMAP_2026-07-24.md`. NOW
 Level 1 ONLY (view-only presence; Levels 2-5 are vision, DO NOT build - no dormant buttons, no
 post schema). NEXT (post-launch): check-in funnel + Daily Three, Clarity subdimensions (dark-run;
 three founder decisions pending). THEN: pattern engine. DEFERRED: "What works for me" library,
-named Clarity states. Porch privacy laws: min-count 12 per lane, aggregate-only API, opt-out
-`Count me on the porch`, closing line never omitted.
+named Clarity states. Porch privacy laws: min-count 12 per LANE, aggregate-only API, opt-out
+`Count me on the porch`. Porch lives in the SIDEBAR as "Riley's Community" (founder 2026-07-24,
+supersedes the dashboard card) - injected by pwa.js on every member page, shows the TRUE total
+seen in the rolling day ("N porch lights are on today"); post-launch upgrade: live online-now
+count. Lane breakdowns stay server-gated for future surfaces.
 
 ## CRITICAL: Model Name
 The **member conversation** model is:

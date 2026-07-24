@@ -12,6 +12,19 @@ Keep it benign — this file is committed to a public-served repo, so **never pu
 
 ## 2026-07-24
 
+- `meetriley-big-build` - **Animated cardinal micro-interactions (founder's five animation boards).**
+  New `cardinal-touches.js`: one CLEAN bird (814-cardinal-clean.png, extracted whole from the founder's
+  mocks) + animated overlays - the pose problem solved with motion instead of crops. Modes: idle
+  (breathe), success (natural double-squash hop + heart burst), reminder (attentive tilt + "!" speech
+  bubble), notify (look up + floating heart), walk (double hop + dashed trail). All keyframes taken
+  verbatim from the founder's boards; prefers-reduced-motion stops all motion and hides overlays.
+  Wired: success -> the thank-you/saved modals (dashboard x4, reset WHO-5 + PHQ/GAD), reminder -> the
+  hard-day card, idle -> note-from-Riley question cards + "whenever you are ready", walk -> the Journey
+  loader. The Cardinal band art on home/about/reset now breathes (reduced-motion off). Heart sprites
+  added to assets/cardinal/png. Files: cardinal-touches.js (new), dashboard.html, journey.html,
+  reset.html, home.html, about.html, assets/cardinal/png/{814-cardinal-clean,814-heart-a,814-heart-b}.png.
+
+
 - `b14cdb4` - **Every bird emoji replaced with real cardinal pose art (founder rule).** All 17
   generic bird/dove emojis across dashboard.html, journey.html, lifemap.html, reset.html, and
   account-delete.js now render the cardinal asset kit, pose matched to the moment: perched (notes/

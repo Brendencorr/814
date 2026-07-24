@@ -196,7 +196,8 @@ footer{border-top:1px solid rgba(255,255,255,0.06);padding:52px 0 40px}
 ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.25);border-radius:4px}
 /* ── Cardinal ── */
 .cardinal-band{display:flex;align-items:center;gap:40px;max-width:760px;margin:0 auto;flex-wrap:wrap;justify-content:center;text-align:left}
-.cardinal-band img{width:132px;height:auto;flex-shrink:0}
+.cardinal-band img{width:132px;height:auto;flex-shrink:0;animation:breathe 5s ease-in-out infinite;transform-origin:58% 92%}
+@media(prefers-reduced-motion:reduce){.cardinal-band img{animation:none}}
 .cardinal-band .ct{max-width:380px}
 .econn{display:flex;justify-content:center;gap:40px;flex-wrap:wrap;margin-top:44px}
 .ec img{max-height:46px;max-width:100%;width:auto;filter:invert(1) sepia(0.9) saturate(2.4) hue-rotate(-18deg) brightness(1.15)}

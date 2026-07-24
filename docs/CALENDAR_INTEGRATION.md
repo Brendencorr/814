@@ -83,6 +83,36 @@ Required env before flipping:
 - [ ] Scope: https://www.googleapis.com/auth/calendar.readonly (sensitive class -
       verification required, NOT the paid restricted-scope assessment)
 
+### Console click-path (Brenden, ~15 min - every value ready to paste)
+1. console.cloud.google.com signed in as brenden@meetriley.us → project picker → **New project**
+   → name `riley-app` → Create (select the meetriley.us organization if offered).
+2. APIs & Services → **Library** → search "Google Calendar API" → Enable.
+3. APIs & Services → **OAuth consent screen** → User type **External** → Create.
+   - App name: `Riley` · support email: brenden@meetriley.us
+   - Logo: the white-card sun asset (brand kit)
+   - App domain: homepage `https://meetriley.us` · privacy `https://meetriley.us/privacy`
+     · terms `https://meetriley.us/terms`
+   - Authorized domain: `meetriley.us` · developer contact: brenden@meetriley.us
+4. Consent screen → **Scopes** → Add or remove scopes → filter "calendar" → tick
+   `.../auth/calendar.readonly` → Update → Save.
+5. APIs & Services → **Credentials** → Create credentials → **OAuth client ID** →
+   type **Web application** → name `Riley web` →
+   Authorized redirect URI: `https://riley.meetriley.us/.netlify/functions/calendar-callback`
+   → Create → copy the Client ID + Client secret.
+6. Netlify → Site configuration → Environment variables → add:
+   - `GOOGLE_CAL_CLIENT_ID` = (client id)
+   - `GOOGLE_CAL_CLIENT_SECRET` = (client secret)
+   - `CAL_TOKEN_KEY` = output of `openssl rand -hex 32` (keep a copy in the password manager)
+   - leave `CALENDAR_GOOGLE_ENABLED` UNSET (off) until verification clears.
+7. Consent screen → Audience → **Publish app** → it enters "needs verification"; complete the
+   verification questionnaire with the scope justification text above and the demo video link.
+   (Search Console: search.google.com/search-console → add property `meetriley.us` → DNS TXT
+   verify, if not already verified.)
+8. While verification is pending the app is usable in **Testing** mode: add brenden@… (and any
+   QA accounts, max 100) as test users, set `CALENDAR_GOOGLE_ENABLED=true` on a DEPLOY PREVIEW
+   or temporarily for internal QA, run the connect → brief → disconnect loop, then turn it back
+   off for members until Google approves.
+
 ## Phase 3 - write access (DO NOT BUILD YET)
 Incremental auth (`calendar.events`) requested only at the member's first "add" tap,
 never bundled into Phase 2 consent. File the scope update only when Phase 2 connect

@@ -282,6 +282,12 @@ exports.handler = async (event) => {
         const line = obj.lines && obj.lines.data && obj.lines.data[0];
         const lk = lookupOf(line);
         const term = (lk && PLAN_BY_LOOKUP[lk] && PLAN_BY_LOOKUP[lk].term) || "monthly";
+        // Catalog-drift alarm (audit 2026-07-24): an unknown/archived lookup_key silently
+        // defaults term to "monthly" above, which under-extends an ANNUAL sub's grace window.
+        // Keep the safe default, but make the drift loud so it gets fixed instead of recurring.
+        if (uid && !(lk && PLAN_BY_LOOKUP[lk])) {
+          try { await sb.from("system_incidents").insert({ kind: "stripe_lookup_drift", function_name: "stripe-webhook", detail: { lookup_key: lk || null, invoice: obj.id || null, defaulted_term: "monthly" } }); } catch (_) {}
+        }
         if (uid) await sb.from("subscriptions").update({ status: "active", expires_at: graceISO(term) }).eq("user_id", uid).eq("status", "active");
         await log(uid ? "renewed" : "unmatched", { user_id: uid, term });
         // FALLBACK purchase emails: a paying subscriber who somehow never got paid_1/paid_2 via

@@ -6,21 +6,27 @@
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0a0908">
 <title>Email Preferences - Riley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap');
+:root{
+  --ink:#0a0908;--ink2:#141210;--ink3:#1c1a18;
+  --parchment:#f5f0e8;--gold:#c9a84c;--gold2:#e8d5a3;
+  --smoke:#8a8578;--smoke2:#5a5450;--border:rgba(255,255,255,0.08);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#0a0908;color:#f5f0e8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
-.card{max-width:460px;width:100%;background:#141210;border:1px solid rgba(201,168,76,.18);border-radius:14px;padding:30px 28px}
-.sun{width:38px;height:38px;border-radius:50%;margin-bottom:18px;background:radial-gradient(circle at 40% 35%,#e8d5a3,#c9a84c 55%,#a8842f)}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--parchment);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{max-width:460px;width:100%;background:var(--ink2);border:1px solid rgba(201,168,76,.18);border-radius:10px;padding:30px 28px}
+.sun{width:38px;height:38px;border-radius:50%;margin-bottom:18px;background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 55%,#a8842f)}
 h1{font-family:'DM Serif Display',serif;font-size:24px;margin-bottom:6px}
-.sub{font-size:13px;color:#8a8578;line-height:1.6;margin-bottom:24px}
-.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-top:1px solid rgba(255,255,255,.07)}
-.row .t{font-size:14px;color:#f5f0e8}.row .d{font-size:12px;color:#8a8578;margin-top:3px;line-height:1.5}
-.btn{background:transparent;border:1px solid #c9a84c;color:#c9a84c;padding:8px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.sub{font-size:13px;color:var(--smoke);line-height:1.6;margin-bottom:24px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 0;border-top:1px solid var(--border)}
+.row .t{font-size:14px;color:var(--parchment)}.row .d{font-size:12px;color:var(--smoke);margin-top:3px;line-height:1.5}
+.btn{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:8px 14px;border-radius:4px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
 .btn:hover{background:rgba(201,168,76,.08)}
-.btn.on{background:#c9a84c;color:#0a0908}
+.btn.on{background:var(--gold);color:var(--ink)}
 .msg{font-size:12px;color:#4aad72;min-height:16px;margin-top:14px;font-family:'DM Mono',monospace}
-.note{font-size:11px;color:#5a5450;margin-top:20px;line-height:1.6}
+.note{font-size:11px;color:var(--smoke2);margin-top:20px;line-height:1.6}
 </style>
 </head>
 <body>

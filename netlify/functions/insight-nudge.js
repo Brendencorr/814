@@ -32,25 +32,29 @@ const avg = (a) => (a.length ? a.reduce((s, x) => s + x, 0) / a.length : null);
 async function maybeInsightNudge(sb, userId) {
   try {
     if (!sb || !userId) return null;
-    // cap: max one per 7 days
-    const { data: ev, error: evErr } = await sb.from("events").select("id").eq("user_id", userId)
-      .eq("name", "insight_nudge_shown").gte("created_at", daysAgoISO(7)).limit(1);
-    if (evErr || (ev && ev.length)) return null;
-    // crisis suppression - FAIL-SAFE: an error checking means suppress
-    try {
-      const { data: cr, error: crErr } = await sb.from("crisis_log").select("id").eq("user_id", userId)
-        .gte("level", 2).gte("created_at", daysAgoISO(7)).limit(1);
-      if (crErr || (cr && cr.length)) return null;
-    } catch (_) { return null; }
-    // protected windows: today flagged hard, or within +-1 day of any hard date
+    // This runs in the riley-chat reply hot path - the four reads go out IN PARALLEL
+    // (audit 2026-07-24: they were sequential, serializing 4 round-trips onto every turn).
     const today = appDay();
-    const { data: hd } = await sb.from("hard_dates").select("date").eq("user_id", userId)
-      .gte("date", daysAgoISO(2)).lte("date", dayISO(new Date(Date.now() + 2 * DAY)));
+    const [evRes, crRes, hdRes, ckRes] = await Promise.all([
+      sb.from("events").select("id").eq("user_id", userId)
+        .eq("name", "insight_nudge_shown").gte("created_at", daysAgoISO(7)).limit(1),
+      sb.from("crisis_log").select("id").eq("user_id", userId)
+        .gte("level", 2).gte("created_at", daysAgoISO(7)).limit(1),
+      sb.from("hard_dates").select("date").eq("user_id", userId)
+        .gte("date", daysAgoISO(2)).lte("date", dayISO(new Date(Date.now() + 2 * DAY))),
+      sb.from("daily_checkins")
+        .select("checkin_date,mood,outside,connection,hard_day").eq("user_id", userId)
+        .gte("checkin_date", daysAgoISO(28)).order("checkin_date", { ascending: true }),
+    ]);
+    // cap: max one per 7 days
+    if (evRes.error || (evRes.data && evRes.data.length)) return null;
+    // crisis suppression - FAIL-SAFE: an error checking means suppress
+    if (crRes.error || (crRes.data && crRes.data.length)) return null;
+    // protected windows: today flagged hard, or within +-1 day of any hard date
+    const hd = hdRes.data;
     const t = Date.parse(today + "T00:00:00Z");
     if ((hd || []).some((h) => Math.abs(Date.parse(h.date + "T00:00:00Z") - t) <= DAY)) return null;
-    const { data: cks } = await sb.from("daily_checkins")
-      .select("checkin_date,mood,outside,connection,hard_day").eq("user_id", userId)
-      .gte("checkin_date", daysAgoISO(28)).order("checkin_date", { ascending: true });
+    const cks = ckRes.data;
     const rows = (cks || []).filter((c) => typeof c.mood === "number");
     if (rows.some((c) => c.checkin_date === today && c.hard_day === true)) return null;
     if (rows.length < 10) return null;

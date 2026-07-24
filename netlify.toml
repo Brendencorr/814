@@ -687,16 +687,10 @@
   status = 200
   force  = true
 
-[[redirects]]
-  from = "https://riley.meetriley.us/finance"
-  to   = "/finance.html"
-  status = 200
-
-[[redirects]]
-  from = "https://riley.meetriley.us/finance/"
-  to   = "/finance.html"
-  status = 200
-
+# (audit 2026-07-24: the /finance clean-URL host rules were removed - they were DEAD,
+# permanently shadowed by the relative force-302 "/finance -> /dashboard" retirement rule
+# above. Direct /finance.html access is deliberately kept below for the P1.2 data-preserved
+# retirement.)
 [[redirects]]
   from   = "https://riley.meetriley.us/finance.html"
   to     = "/finance.html"
@@ -997,16 +991,6 @@
 [[redirects]]
   from = "https://riley.meetriley.us/sleep/"
   to   = "/sleep.html"
-  status = 200
-
-[[redirects]]
-  from = "https://riley.meetriley.us/finance"
-  to   = "/finance.html"
-  status = 200
-
-[[redirects]]
-  from = "https://riley.meetriley.us/finance/"
-  to   = "/finance.html"
   status = 200
 
 [[redirects]]

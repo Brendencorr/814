@@ -301,10 +301,14 @@ function pgPrice(c){ return '$'+(Number(c||0)/100).toFixed(2); }
 function pgKind(k){ return k==='guided'?'Riley-guided':k==='interactive'?'Riley-led':k==='bundle'?'Bundle · all 3':'Self-guided'; }
 function pgIcon(k){ return k==='guided'?'🧭':k==='interactive'?'🤝':k==='bundle'?'🎁':'📘'; }
 function programCard(p,owned){
-  var head='<div style="font-size:34px;margin-bottom:10px">'+pgIcon(p.kind)+'</div>'
-    +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;margin-bottom:4px">'+esc(p.name)+'</div>'
-    +'<div style="font-size:12px;color:var(--smoke);margin-bottom:10px;line-height:1.5">'+esc(p.blurb||'')+'</div>'
+  // Founder rule (2026-07-23): programs a member does NOT own are always VISIBLE,
+  // but greyed out with a lock - never hidden. The buy path stays live on the card.
+  var locked=!owned;
+  var head='<div style="font-size:34px;margin-bottom:10px'+(locked?';opacity:.45;filter:grayscale(0.5)':'')+'">'+pgIcon(p.kind)+'</div>'
+    +'<div style="font-family:\'DM Serif Display\',serif;font-size:17px;margin-bottom:4px'+(locked?';color:var(--smoke)':'')+'">'+esc(p.name)+'</div>'
+    +'<div style="font-size:12px;color:var(--smoke);margin-bottom:10px;line-height:1.5'+(locked?';opacity:.75':'')+'">'+esc(p.blurb||'')+'</div>'
     +'<div style="font-size:10px;font-family:\'DM Mono\',monospace;color:var(--smoke2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px">'+pgKind(p.kind)+'</div>';
+  var lockBadge='<div style="position:absolute;top:14px;right:16px;font-size:15px;opacity:.75" aria-label="Locked" title="Not in your plan yet">🔒</div>';
   if(owned){
     if(p.status && p.status!=='live')
       return '<div class="card">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">In your plan · coming soon</div></div>';
@@ -312,8 +316,8 @@ function programCard(p,owned){
     return '<div class="card">'+head+'<a href="'+readerPath+'?p='+encodeURIComponent(p.key)+'" class="btn btn-gold" style="width:100%;text-align:center;display:block;text-decoration:none">Open →</a></div>';
   }
   if(p.status==='draft')
-    return '<div class="card" style="opacity:.9">'+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';
-  return '<div class="card">'+head+'<button class="btn btn-gold" style="width:100%;text-align:center" onclick="buyProgram(\''+p.key+'\')">Get it · '+pgPrice(p.price_cents)+'</button></div>';
+    return '<div class="card" style="position:relative;opacity:.85">'+lockBadge+head+'<div class="btn btn-ghost" style="width:100%;text-align:center;opacity:.7;border-style:dashed">Coming soon</div></div>';
+  return '<div class="card" style="position:relative">'+lockBadge+head+'<button class="btn btn-gold" style="width:100%;text-align:center" onclick="buyProgram(\''+p.key+'\')">Get it · '+pgPrice(p.price_cents)+'</button></div>';
 }
 // Payments gate - the in-app buy buttons take real money ONLY when app_settings.payments_live=true
 // (the single go-live switch, shared with the marketing site). Fail-closed: any error → blocked.

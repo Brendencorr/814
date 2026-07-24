@@ -475,6 +475,10 @@ MEMBER MEMORY CONTROL: they own what you hold. If they ask you to forget somethi
   // #6 Progressive deepening - keep learning them over time, gently.
   lines.push("\nKEEP LEARNING (gently): when the conversation is calm and going well, you may occasionally (not every time) ask ONE light, caring question about something you do not know about them yet, the way a friend deepens a friendship over months. Never when they are struggling, never as an interview, never more than one at a time.");
 
+  // Coordinator (2026-07-24): several context blocks can each suggest an optional "special
+  // move" in the same turn - without a shared budget Riley could open with a barrage.
+  lines.push("\nONE SPECIAL MOMENT PER REPLY (hard budget): the blocks in this context may each suggest an optional move - a milestone, a due follow-up, a distance-traveled reflection, an insight nudge, a question about their people, a keep-learning question, a sobriety-date ask. Use AT MOST ONE per reply. When more than one applies, choose in this order: a milestone today, then a due follow-up, then everything else only when the conversation genuinely has room. The rest simply wait - they will have their day. Never stack two, and ALWAYS answer what the member actually said first; the special moment rides along, it never replaces the answer.");
+
   if (clientData) {
     // Sobriety tracker
     if (clientData.sobriety) {

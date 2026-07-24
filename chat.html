@@ -288,6 +288,23 @@ body.embed .topbar-actions{display:none}
       if (e.origin !== location.origin) return;
       var d = e.data || {};
       if (d.type === 'riley-say' && d.text) {
+        // Mid-check-in? HOLD the message instead of firing it into the scored flow
+        // (same race family as the resume-prompt bug, 2026-07-24). rcHandoff sends it
+        // the moment the check-in finishes; a small caption says it's held, not lost.
+        if (window._ciActive) {
+          window._queuedSay = String(d.text);
+          try {
+            var _qb = document.getElementById('messages');
+            if (_qb && !document.getElementById('queued-say-note')) {
+              var _qn = document.createElement('div');
+              _qn.id = 'queued-say-note';
+              _qn.style.cssText = "align-self:center;text-align:center;font-size:11px;color:var(--smoke2,#5a5450);font-family:'DM Mono',monospace;margin:6px 0 2px;opacity:0.85";
+              _qn.textContent = 'Got your message - right after this quick check-in.';
+              _qb.appendChild(_qn); _qb.scrollTop = 999999;
+            }
+          } catch (err) {}
+          return;
+        }
         var inp = document.getElementById('msg-input');
         if (inp) inp.value = String(d.text);
         if (typeof send === 'function') send();
@@ -405,6 +422,7 @@ function riToD(){ const h = new Date().getHours(); return h < 12 ? 'morning' : (
 // mandatory check-in is in progress. Same-origin only; no-op on the full-page /chat.
 function postLock(status){
   _ciActive = (status === 'pending');            // track so an uncaught error can never trap the member
+  window._ciActive = _ciActive;                  // mirrored: the embed bootstrap (separate script block) holds composer messages on it
   try{
     if(document.body.classList.contains('embed') && window.parent && window.parent !== window)
       window.parent.postMessage({ type:'riley-checkin', status:status }, location.origin);
@@ -987,6 +1005,15 @@ async function rcAfter(){
 async function rcHandoff(quiet){
   const _inp = document.getElementById('msg-input'), _snd = document.getElementById('send-btn');
   if(_inp){ _inp.disabled=false; _inp.placeholder='Message Riley…'; _inp.focus(); } if(_snd) _snd.disabled=false;
+  // A composer message held during the check-in sends NOW - the member is clearly talking,
+  // so no resume offer either (their message is the conversation).
+  if(window._queuedSay){
+    const _q = window._queuedSay; window._queuedSay = null;
+    const _qn = document.getElementById('queued-say-note'); if(_qn) _qn.remove();
+    if(_inp) _inp.value = _q;
+    send();
+    return;
+  }
   if(quiet) return;                                      // crisis/support already spoke - let them just talk
   // Offer to continue the last conversation or start fresh (24h window).
   let cand = loadLiveChat();

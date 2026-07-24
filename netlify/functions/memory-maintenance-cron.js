@@ -30,6 +30,13 @@ const PROMOTE_FACETS = ["why", "vision", "recovery_dna", "win", "joy", "relation
 async function promoteThemes(supabase) {
   let promoted = 0;
   try {
+    // Rate-guard: promotion is a WEEKLY-cadence job regardless of how often the cron fires
+    // (a temporary tighter schedule for the embeddings backfill must not spam life_map).
+    const { data: recent } = await supabase.from("system_incidents").select("id")
+      .eq("function_name", "memory-maintenance-cron")
+      .gte("created_at", new Date(Date.now() - 5 * 86400000).toISOString())
+      .filter("detail->>promoted", "gt", "0").limit(1);
+    if (recent && recent.length) return 0;
     const { data: members } = await supabase.from("user_profiles").select("id")
       .gte("last_active_at", new Date(Date.now() - 30 * 86400000).toISOString())
       .order("last_active_at", { ascending: false }).limit(PROMOTE_MEMBERS_PER_RUN);
